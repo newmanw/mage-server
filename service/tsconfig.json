@@ -1,5 +1,5 @@
 {
-  "include": [ "*", "authentication", "manifold", "provision", "routes" ],
+  "include": [ "*", "authentication", "manifold", "migrations", "provision", "routes" ],
   "exclude": [
     "node_modules",
     "functionalTests",

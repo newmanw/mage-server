@@ -24,7 +24,10 @@ class MigrationContext {
 
   onProgress(id, result) {
     if (result.status == 'error') {
-      log.error(`migration ${id} error: `, result.error);
+      log.error(`[migration] ${id} error: `, result.error);
+    }
+    else {
+      log.info(`[migration] ${id} finished`);
     }
   }
 
@@ -34,6 +37,7 @@ class MigrationContext {
       log.error('migration results:\n' + JSON.stringify(results, null, 2));
       process.exit(1);
     }
+    log.info(`[migration] all migrations complete`, results);
     this.resolve();
   }
 }

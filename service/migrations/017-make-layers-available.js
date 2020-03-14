@@ -1,18 +1,17 @@
 const mongoose = require('mongoose'),
   path = require('path'),
   geopackage = require('../utilities/geopackage'),
-  environment = require('../environment/env');
+  environment = require('../environment/env'),
+  log = require('../logger');
 
 exports.id = 'make-layers-available';
 
 exports.up = async function(done) {
-  console.log('\nUpdating all layers to have the state available');
-
+  log.info('[migration][${exports.id}] updating all layers to the available state');
   try {
     await migrateLayers();
     done();
   } catch(err) {
-    console.log('Failed layer migration', err);
     done(err);
   }
 };
@@ -27,12 +26,12 @@ async function migrateLayers() {
 
   for (const layer of layers) {
     if (layer.type === 'GeoPackage') {
+      const geopackagePath = path.join(environment.layerBaseDirectory, layer.file.relativePath);
       try {
-        const geopackagePath = path.join(environment.layerBaseDirectory, layer.file.relativePath);
         const gp = await geopackage.open(geopackagePath);
         layer.tables = geopackage.getTables(gp.geoPackage);
       } catch (err) {
-        console.log('Error opening GeoPackage file, skipping', err);
+        console.log(`[migration][${exports.id}] error opening GeoPackage file ${geopackagePath}; skipping`, err);
       }
     }
 
