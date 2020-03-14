@@ -75,7 +75,8 @@
     "wkx": "0.4.8",
     "wms-capabilities": "^0.4.0",
     "xmldom": "0.1.22",
-    "xpath": "0.0.23"
+    "xpath": "0.0.23",
+    "yaml": "^1.8.2"
   },
   "devDependencies": {
     "@types/async": "^3.0.5",
@@ -117,8 +118,7 @@
     "supertest": "4.0.2",
     "ts-mockito": "^2.5.0",
     "ts-node": "^8.6.2",
-    "typescript": "3.8.3",
-    "yaml": "^1.7.2"
+    "typescript": "3.8.3"
   },
   "nyc": {
     "temp-dir": "./.test_run",
