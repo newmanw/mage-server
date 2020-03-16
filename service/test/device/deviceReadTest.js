@@ -2,13 +2,13 @@ var request = require('supertest')
   , sinon = require('sinon')
   , should = require('chai').should()
   , mongoose = require('mongoose')
-  , app = require('../../express')
+  , app = require('../../src/express')
   , MockToken = require('../mockToken')
   , TokenModel = mongoose.model('Token');
 
 require('sinon-mongoose');
 
-require('../../models/device');
+require('../../src/models/device');
 var DeviceModel = mongoose.model('Device');
 
 describe("device read tests", function() {

@@ -2,7 +2,7 @@ const request = require('supertest')
   , sinon = require('sinon')
   , chai = require('chai')
   , mongoose = require('mongoose')
-  , app = require('../../express')
+  , app = require('../../src/express')
   , MockToken = require('../mockToken');
 
 const expect = chai.expect;
@@ -10,7 +10,7 @@ const should = chai.should();
 
 require('sinon-mongoose');
 
-require('../../models/device');
+require('../../src/models/device');
 const DeviceModel = mongoose.model('Device');
 const TokenModel = mongoose.model('Token');
 const UserModel = mongoose.model('User');

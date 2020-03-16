@@ -2,7 +2,7 @@ const request = require('supertest')
   , sinon = require('sinon')
   , chai = require('chai')
   , mongoose = require('mongoose')
-  , app = require('../../express')
+  , app = require('../../src/express')
   , createToken = require('../mockToken')
   , TokenModel = mongoose.model('Token');
 
@@ -11,10 +11,10 @@ require('sinon-mongoose');
 const expect = chai.expect;
 const should = chai.should();
 
-const DeviceOperations = require('../../models/device');
+const DeviceOperations = require('../../src/models/device');
 const DeviceModel = mongoose.model('Device');
 
-const UserOperations = require('../../models/user');
+const UserOperations = require('../../src/models/user');
 const UserModel = UserOperations.Model;
 
 describe("device create tests", function() {
@@ -264,7 +264,7 @@ describe("device create tests", function() {
       .resolves({
         _id: mongoose.Types.ObjectId(),
         type: 'security',
-        settings: { 
+        settings: {
           local: { usersReqAdmin: { enabled: true }, devicesReqAdmin: { enabled: false } } }
       });
 
@@ -279,7 +279,7 @@ describe("device create tests", function() {
       .resolves({
         _id: mongoose.Types.ObjectId(),
         type: 'security',
-        settings: { 
+        settings: {
           local: { usersReqAdmin: { enabled: true }, devicesReqAdmin: { enabled: true } } }
       });
 

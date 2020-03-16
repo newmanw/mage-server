@@ -2,14 +2,14 @@ import { expect, assert } from 'chai'
 import { mock, reset, instance, when } from 'ts-mockito'
 import request from 'supertest'
 import express, { Request, Response, NextFunction } from 'express'
-import { SourceRepository, AdapterRepository } from '../../manifold/repositories'
-import { SourceDescriptorEntity, SourceDescriptorModel, ManifoldModels, SourceDescriptorSchema } from '../../manifold/models'
+import { SourceRepository, AdapterRepository } from '../../src/manifold/repositories'
+import { SourceDescriptorEntity, SourceDescriptorModel, ManifoldModels, SourceDescriptorSchema } from '../../src/manifold/models'
 import mongoose from 'mongoose'
-import { ManifoldService } from '../../manifold/services'
-import { ManifoldController, createRouter } from '../../manifold'
-import OgcApiFeatures from '../../manifold/ogcapi-features'
-import { ManifoldAdapter, SourceConnection } from '../../manifold/adapters'
-import log = require('../../logger')
+import { ManifoldService } from '../../src/manifold/services'
+import { ManifoldController, createRouter } from '../../src/manifold'
+import OgcApiFeatures from '../../src/manifold/ogcapi-features'
+import { ManifoldAdapter, SourceConnection } from '../../src/manifold/adapters'
+import log = require('../../src/logger')
 
 describe('manifold source routes', function() {
 

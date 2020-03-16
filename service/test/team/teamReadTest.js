@@ -2,13 +2,13 @@ var request = require('supertest')
   , sinon = require('sinon')
   , mongoose = require('mongoose')
   , MockToken = require('../mockToken')
-  , app = require('../../express')
+  , app = require('../../src/express')
   , TokenModel = mongoose.model('Token');
 
 require('chai').should();
 require('sinon-mongoose');
 
-require('../../models/team');
+require('../../src/models/team');
 var TeamModel = mongoose.model('Team');
 
 describe("team read tests", function() {

@@ -1,13 +1,13 @@
 var request = require('supertest')
   , sinon = require('sinon')
   , MockToken = require('../mockToken')
-  , app = require('../../express')
+  , app = require('../../src/express')
   , mongoose = require('mongoose');
 
-require('../../models/token');
+require('../../src/models/token');
 var TokenModel = mongoose.model('Token');
 
-require('../../models/user');
+require('../../src/models/user');
 var UserModel = mongoose.model('User');
 
 require('sinon-mongoose');

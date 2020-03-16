@@ -4,15 +4,15 @@ const request = require('supertest')
   , expect = require('chai').expect
   , mongoose = require('mongoose')
   , MockToken = require('../mockToken')
-  , app = require('../../express')
+  , app = require('../../src/express')
   , TokenModel = mongoose.model('Token');
 
 require('sinon-mongoose');
 
-require('../../models/event');
+require('../../src/models/event');
 var EventModel = mongoose.model('Event');
 
-var Observation = require('../../models/observation');
+var Observation = require('../../src/models/observation');
 var observationModel = Observation.observationModel;
 
 describe("marking favorite observations", function() {

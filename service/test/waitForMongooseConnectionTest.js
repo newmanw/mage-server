@@ -5,7 +5,7 @@ chai = require('chai'),
 sinon = require('sinon'),
 sinonChai = require('sinon-chai'),
 expect = chai.expect,
-env = require('../environment/env'),
+env = require('../src/environment/env'),
 mongoose = require('mongoose'),
 proxyquire = require('proxyquire').noPreserveCache();
 
@@ -14,14 +14,14 @@ chai.use(sinonChai);
 const mocks = sinon.createSandbox();
 
 describe('waitForMongooseConnection', function() {
-  
+
   const retryDelay = env.mongo.connectRetryDelay;
   const connectTimeout = env.mongo.connectTimeout;
-  const waitForMongooseConnection = proxyquire('../utilities/waitForMongooseConnection', {
+  const waitForMongooseConnection = proxyquire('../src/utilities/waitForMongooseConnection', {
     'mongoose': mongoose
   });
   let connectStub;
-  
+
   beforeEach(function() {
     connectStub = mocks.stub(mongoose, 'connect');
   });

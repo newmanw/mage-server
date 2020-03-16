@@ -3,22 +3,22 @@ var request = require('supertest')
   , expect = require('chai').expect
   , moment = require('moment')
   , MockToken = require('../mockToken')
-  , app = require('../../express')
+  , app = require('../../src/express')
   , mongoose = require('mongoose');
 
-require('../../models/token');
+require('../../src/models/token');
 var TokenModel = mongoose.model('Token');
 
-require('../../models/login');
+require('../../src/models/login');
 var LoginModel = mongoose.model('Login');
 
-require('../../models/device');
+require('../../src/models/device');
 var DeviceModel = mongoose.model('Device');
 
-require('../../models/user');
+require('../../src/models/user');
 var UserModel = mongoose.model('User');
 
-require('../../models/setting');
+require('../../src/models/setting');
 var SettingModel = mongoose.model('Setting');
 
 require('sinon-mongoose');

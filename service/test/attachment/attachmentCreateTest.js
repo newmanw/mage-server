@@ -4,20 +4,20 @@ const mongoose = require('mongoose');
 const mockfs = require('mock-fs');
 const expect = require('chai').expect;
 const MockToken = require('../mockToken');
-const app = require('../../express');
+const app = require('../../src/express');
 const TokenModel = mongoose.model('Token');
-const env = require('../../environment/env');
+const env = require('../../src/environment/env');
 
 require('chai').should();
 require('sinon-mongoose');
 
-require('../../models/team');
+require('../../src/models/team');
 const TeamModel = mongoose.model('Team');
 
-require('../../models/event');
+require('../../src/models/event');
 const EventModel = mongoose.model('Event');
 
-const Observation = require('../../models/observation');
+const Observation = require('../../src/models/observation');
 const observationModel = Observation.observationModel;
 
 describe("creating attachments", function() {

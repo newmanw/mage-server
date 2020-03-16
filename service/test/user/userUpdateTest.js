@@ -3,16 +3,16 @@ var request = require('supertest')
   , should = require('chai').should()
   , expect = require('chai').expect
   , MockToken = require('../mockToken')
-  , app = require('../../express')
+  , app = require('../../src/express')
   , mongoose = require('mongoose');
 
-require('../../models/token');
+require('../../src/models/token');
 var TokenModel = mongoose.model('Token');
 
-var User = require('../../models/user');
+var User = require('../../src/models/user');
 var UserModel = mongoose.model('User');
 
-require('../../models/event');
+require('../../src/models/event');
 var EventModel = mongoose.model('Event');
 
 require('sinon-mongoose');

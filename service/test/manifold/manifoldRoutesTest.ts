@@ -2,13 +2,13 @@ import { expect } from 'chai'
 import { mock, reset, instance, when, deepEqual } from 'ts-mockito'
 import request from 'supertest'
 import express, { Request, Response, NextFunction } from 'express'
-import { SourceRepository, AdapterRepository } from '../../manifold/repositories'
-import { SourceDescriptor, SourceDescriptorModel, AdapterDescriptorModel, ManifoldModels, SourceDescriptorSchema, AdapterDescriptorSchema } from '../../manifold/models'
-import { createRouter, ManifoldController } from '../../manifold'
+import { SourceRepository, AdapterRepository } from '../../src/manifold/repositories'
+import { SourceDescriptor, SourceDescriptorModel, AdapterDescriptorModel, ManifoldModels, SourceDescriptorSchema, AdapterDescriptorSchema } from '../../src/manifold/models'
+import { createRouter, ManifoldController } from '../../src/manifold'
 import mongoose from 'mongoose'
 import { parseEntity, transformObject as transformJson } from '../utils'
-import { ManifoldDescriptor, ManifoldService } from '../../manifold/services'
-const log = require('../../logger')
+import { ManifoldDescriptor, ManifoldService } from '../../src/manifold/services'
+const log = require('../../src/logger')
 
 
 describe('manifold routes', function() {

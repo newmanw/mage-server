@@ -1,12 +1,12 @@
 var request = require('supertest')
   , sinon = require('sinon')
-  , app = require('../express')
+  , app = require('../src/express')
   , mongoose = require('mongoose');
 
-require('../models/setting');
+require('../src/models/setting');
 var SettingModel = mongoose.model('Setting');
 
-require('../models/user');
+require('../src/models/user');
 var UserModel = mongoose.model('User');
 
 require('sinon-mongoose');

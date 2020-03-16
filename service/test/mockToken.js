@@ -1,9 +1,9 @@
 var mongoose = require('mongoose');
 
-require('../models/user');
+require('../src/models/user');
 var UserModel = mongoose.model('User');
 
-require('../models/role');
+require('../src/models/role');
 var RoleModel = mongoose.model('Role');
 
 function createToken(userId, permissions) {

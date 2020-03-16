@@ -4,16 +4,16 @@ var request = require('supertest')
   , expect = require('chai').expect
   , mongoose = require('mongoose')
   , MockToken = require('../mockToken')
-  , app = require('../../express')
+  , app = require('../../src/express')
   , TokenModel = mongoose.model('Token');
 
 require('chai').should();
 require('sinon-mongoose');
 
-require('../../models/team');
+require('../../src/models/team');
 var TeamModel = mongoose.model('Team');
 
-require('../../models/event');
+require('../../src/models/event');
 var EventModel = mongoose.model('Event');
 
 describe("event read tests", function() {

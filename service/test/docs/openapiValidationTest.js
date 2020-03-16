@@ -6,7 +6,7 @@ describe('mage openapi document', function() {
 
   it('is valid', async function() {
 
-    const openapiDocPath = path.resolve(__dirname, '..', '..', 'docs', 'openapi.yaml');
+    const openapiDocPath = path.resolve(__dirname, '..', '..', 'src', 'docs', 'openapi.yaml');
     const { error, warning } = await Enforcer(openapiDocPath, { fullResult: true });
 
     if (error) {

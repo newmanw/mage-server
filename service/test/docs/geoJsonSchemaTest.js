@@ -218,7 +218,7 @@ expect(fixture.FeatureCollection.valid['featurecollection with all features'].fe
 
 describe('GeoJSON schema', function() {
 
-  const schemaPath = path.join(__dirname, '..', '..', 'docs', 'geojson.yaml');
+  const schemaPath = path.join(__dirname, '..', '..', 'src', 'docs', 'geojson.yaml');
   const schemaDoc = YAML.parse(fs.readFileSync(schemaPath).toString('utf-8'));
   const ajv = new Ajv({ schemaId: 'id', allErrors: true, nullable: true });
   ajv.addMetaSchema(require('ajv/lib/refs/json-schema-draft-04.json'));

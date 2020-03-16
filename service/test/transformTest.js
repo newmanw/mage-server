@@ -1,5 +1,5 @@
 var expect = require("chai").expect
- , transformUser = require('../transformers/user.js');
+ , transformUser = require('../src/transformers/user.js');
 
 describe("Transformer tests", function() {
 

@@ -1,18 +1,4 @@
-const packageJson = (() => {
-  try {
-    return require('./package');
-  }
-  catch (err) {
-  }
-  console.log('package.json not found; trying dist-package.json');
-  try {
-    return require('./dist-package');
-  }
-  catch (err) {
-  }
-  console.log('dist-package.json not found')
-  throw new Error('fail to locate package descriptor for api version compatibility');
-})();
+const packageJson = require('../package');
 
 const version = packageJson.version.split(".");
 

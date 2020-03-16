@@ -2,9 +2,9 @@ import { describe, it, beforeEach } from 'mocha';
 import request from 'supertest';
 import { expect } from 'chai';
 import express from 'express';
-import initializePluginsRoutes from '../../../routes/plugins';
-import mageApp from '../../../express'
-import { PluginService } from '../../../api/plugins';
+import initializePluginsRoutes from '../../../src/routes/plugins';
+import mageApp from '../../../src/express'
+import { PluginService } from '../../../src/api/plugins';
 
 describe('plugins routes', function() {
 

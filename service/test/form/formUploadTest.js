@@ -41,7 +41,7 @@ describe("form upload tests", function() {
       };
     }
 
-    let Form = proxyquire('../../api/form', {
+    let Form = proxyquire('../../src/api/form', {
       'adm-zip': Zip
     });
 
@@ -85,7 +85,7 @@ describe("form upload tests", function() {
       };
     }
 
-    let Form = proxyquire('../../api/form', {
+    let Form = proxyquire('../../src/api/form', {
       'adm-zip': Zip
     });
 
@@ -131,7 +131,7 @@ describe("form upload tests", function() {
       };
     }
 
-    let Form = proxyquire('../../api/form', {
+    let Form = proxyquire('../../src/api/form', {
       'adm-zip': Zip
     });
 
@@ -177,7 +177,7 @@ describe("form upload tests", function() {
       };
     }
 
-    let Form = proxyquire('../../api/form', {
+    let Form = proxyquire('../../src/api/form', {
       'adm-zip': Zip
     });
 
@@ -220,7 +220,7 @@ describe("form upload tests", function() {
       };
     }
 
-    let Form = proxyquire('../../api/form', {
+    let Form = proxyquire('../../src/api/form', {
       'adm-zip': Zip
     });
 
@@ -263,7 +263,7 @@ describe("form upload tests", function() {
       };
     }
 
-    let Form = proxyquire('../../api/form', {
+    let Form = proxyquire('../../src/api/form', {
       'adm-zip': Zip
     });
 

@@ -32,7 +32,7 @@ describe("environment", function() {
 
   it("provides default values", function() {
 
-    const environment = proxyquire('../../environment/env', {});
+    const environment = proxyquire('../../src/environment/env', {});
 
     expect(environment).to.have.property('address', '0.0.0.0');
     expect(environment).to.have.property('port', 4242);
@@ -70,7 +70,7 @@ describe("environment", function() {
         MAGE_MONGO_CONN_TIMEOUT: '12345',
         MAGE_MONGO_CONN_RETRY_DELAY: '15'
       });
-      const environment = proxyquire('../../environment/env', {});
+      const environment = proxyquire('../../src/environment/env', {});
 
       expect(environment).to.have.property('address', '64.32.16.8');
       expect(environment).to.have.property('port', 2424);
@@ -105,7 +105,7 @@ describe("environment", function() {
         MAGE_MONGO_X509_CA_CERT_FILE: caCertFile
       });
 
-      const env = proxyquire('../../environment/env', {});
+      const env = proxyquire('../../src/environment/env', {});
       const mongo = env.mongo;
       const options = mongo.options;
 
@@ -143,7 +143,7 @@ describe("environment", function() {
         MAGE_MONGO_X509_CA_CERT_FILE: caCertFile
       });
 
-      const env = proxyquire('../../environment/env', {});
+      const env = proxyquire('../../src/environment/env', {});
       const mongo = env.mongo;
       const options = mongo.options;
 
@@ -183,7 +183,7 @@ describe("environment", function() {
           }
         ]
       });
-      const environment = proxyquire('../../environment/env', {});
+      const environment = proxyquire('../../src/environment/env', {});
 
       expect(environment).to.have.property('port', 2424);
       expect(environment).to.have.property('address', '0.0.0.0');

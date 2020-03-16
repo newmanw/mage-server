@@ -4,18 +4,18 @@ var request = require('supertest')
   , mongoose = require('mongoose')
   , moment = require('moment')
   , MockToken = require('../mockToken')
-  , app = require('../../express')
+  , app = require('../../src/express')
   , TokenModel = mongoose.model('Token');
 
 require('sinon-mongoose');
 
-require('../../models/team');
+require('../../src/models/team');
 var TeamModel = mongoose.model('Team');
 
-require('../../models/event');
+require('../../src/models/event');
 var EventModel = mongoose.model('Event');
 
-var Observation = require('../../models/observation');
+var Observation = require('../../src/models/observation');
 var observationModel = Observation.observationModel;
 
 describe("observation read tests", function() {
