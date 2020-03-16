@@ -3,6 +3,7 @@ const request = require('supertest')
   , chai = require('chai')
   , mongoose = require('mongoose')
   , app = require('../../src/express')
+  , Setting = require('../../src/models/setting')
   , createToken = require('../mockToken')
   , TokenModel = mongoose.model('Token');
 
