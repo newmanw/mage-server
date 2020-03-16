@@ -1,12 +1,7 @@
 {
-  "include": [ "*", "authentication", "manifold", "migrations", "provision", "routes" ],
+  "include": [ "src/**/*" ],
   "exclude": [
-    "node_modules",
-    "functionalTests",
-    "plugins",
-    "scratch",
-    "scripts",
-    "test"
+
   ],
   "compilerOptions": {
     "baseUrl": ".",
