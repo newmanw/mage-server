@@ -15,9 +15,10 @@
         <div class="col-md-10">
           <h2>Layer: {{$ctrl.layer.name}}</h2>
         </div>
-        <div class="col-md-2" ng-if="$ctrl.hasLayerEditPermission && !$ctrl.layer.processing && !$ctrl.layer.validating">
+        <div class="col-md-2" ng-if="$ctrl.hasUpdatePermission() && !$ctrl.layer.processing && !$ctrl.layer.validating">
           <h2>
             <button class="btn btn-default pull-right" ng-click="$ctrl.editLayer($ctrl.layer)"><i class="fa fa-edit"></i> Edit</button>
+            <button class="btn btn-default pull-right right-gap" ng-click="$ctrl.editAccess($ctrl.layer)"><i class="fa fa-shield"></i> Access</button>
           </h2>
         </div>
       </div>
@@ -126,7 +127,7 @@
           </div>
 
           <div class="col-md-6">
-            <div class="card" ng-if="$ctrl.hasLayerDeletePermission">
+            <div class="card" ng-if="$ctrl.hasDeletePermission()">
               <div class="card-content">
                 <strong class="text-danger">Delete layer</strong>
                 <p class="text-danger">Deleting layer will remove all information. This cannot be undone, all layer data will be unrecoverable.</p>
@@ -139,7 +140,7 @@
         <div class="row" ng-if="$ctrl.layer.type == 'Feature'">
           <hr>
           <div class="col-md-12 col-xs-12">
-            <div class="row" ng-if="$ctrl.layer.type === 'Feature' && $ctrl.hasLayerEditPermission">
+            <div class="row" ng-if="$ctrl.layer.type === 'Feature' && $ctrl.hasUpdatePermission()">
               <div class="col-md-12">
                 <nav class="navbar navbar-default admin-dashboard-navbar">
                   <div class="container-fluid">

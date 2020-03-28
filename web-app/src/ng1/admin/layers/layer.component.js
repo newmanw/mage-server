@@ -18,9 +18,6 @@ class AdminLayerController {
     this.eventsPerPage = 10;
     this.status = {};
 
-    this.hasLayerEditPermission = _.contains(UserService.myself.role.permissions, 'UPDATE_LAYER');
-    this.hasLayerDeletePermission = _.contains(UserService.myself.role.permissions, 'DELETE_LAYER');
-
     this.fileUploadOptions = {
       acceptFileTypes: /(\.|\/)(kml)$/i,
       url: '/api/layers/' + $stateParams.layerId + '/kml?access_token=' + LocalStorageService.getToken(),
@@ -78,6 +75,26 @@ class AdminLayerController {
     return filteredEvents && filteredEvents.length;
   }
 
+  hasUpdatePermission() {
+    return this.hasPermission(this.layer, 'update');
+  }
+
+  hasDeletePermission() {
+    return this.hasPermission(this.layer, 'delete');
+  }
+
+  hasPermission(layer, permission) {
+    const myAccess = layer.acl[this.UserService.myself.id];
+    const aclPermissions = myAccess ? myAccess.permissions : [];
+
+    switch (permission) {
+      case 'update':
+        return _.contains(this.UserService.myself.role.permissions, 'UPDATE_LAYER') || _.contains(aclPermissions, 'update');
+      case 'delete':
+        return _.contains(this.UserService.myself.role.permissions, 'DELETE_LAYER') || _.contains(aclPermissions, 'delete');
+    }
+  }
+
   updateUrlLayers() {
     const mapping = [];
     if (this.layer.tables) {
@@ -117,6 +134,10 @@ class AdminLayerController {
 
   editLayer(layer) {
     this.$state.go('admin.layerEdit', { layerId: layer.id });
+  }
+
+  editAccess(layer) {
+    this.$state.go('admin.layerAccess', { layerId: layer.id });
   }
 
   gotoEvent(event) {

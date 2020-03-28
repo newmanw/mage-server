@@ -1,4 +1,7 @@
-module.exports = Layer;
+module.exports = {
+  Layer: Layer,
+  LayerAccess: LayerAccess
+};
 
 Layer.$inject = ['$resource'];
 
@@ -78,4 +81,32 @@ function Layer($resource) {
   };
 
   return Layer;
+}
+
+LayerAccess.$inject = ['$resource'];
+
+function LayerAccess($resource) {
+  var LayerAccess = $resource('/api/layers/:layerId/acl', {
+    layerId: '@layerId',
+    userId: '@userId'
+  }, {
+    update: {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      url: '/api/layers/:layerId/acl/:userId',
+      isArray: false
+    },
+    delete: {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      isArray: false,
+      url: '/api/layers/:layerId/acl/:userId'
+    }
+  });
+
+  return LayerAccess;
 }

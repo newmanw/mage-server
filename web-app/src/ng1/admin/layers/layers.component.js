@@ -49,6 +49,26 @@ class AdminLayersController {
     this.layerSearch = '';
   }
 
+  hasUpdatePermission(layer) {
+    return this.hasPermission(layer, 'update');
+  }
+
+  hasDeletePermission(layer) {
+    return this.hasPermission(layer, 'delete');
+  }
+
+  hasPermission(layer, permission) {
+    const myAccess = layer.acl[this.UserService.myself.id];
+    const aclPermissions = myAccess ? myAccess.permissions : [];
+
+    switch (permission) {
+      case 'update':
+        return _.contains(this.UserService.myself.role.permissions, 'UPDATE_LAYER') || _.contains(aclPermissions, 'update');
+      case 'delete':
+        return _.contains(this.UserService.myself.role.permissions, 'DELETE_LAYER') || _.contains(aclPermissions, 'delete');
+    }
+  }
+
   newLayer() {
     this.$state.go('admin.layerCreate');
   }

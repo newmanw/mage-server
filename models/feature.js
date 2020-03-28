@@ -42,7 +42,7 @@ function featureModel(layer) {
 
 exports.featureModel = featureModel;
 
-exports.getFeatures = function(layer) {
+exports.getFeatures = function(layer, options) {
   return featureModel(layer).find({}).exec();
 };
 

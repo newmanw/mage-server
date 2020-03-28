@@ -4,6 +4,7 @@ module.exports = function(app, security) {
     request = require('request'),
     WMSCapabilities = require('wms-capabilities'),
     DOMParser = require('xmldom').DOMParser,
+    Layer = require('../models/layer'),
     Event = require('../models/event'),
     access = require('../access'),
     api = require('../api'),
@@ -14,6 +15,46 @@ module.exports = function(app, security) {
 
   const passport = security.authentication.passport;
   app.all('/api/layers*', passport.authenticate('bearer'));
+
+  function determineReadAccess(req, res, next) {
+    if (!access.userHasPermission(req.user, 'READ_LAYER_ALL')) {
+      req.access = { user: req.user, permission: 'read' };
+    }
+
+    next();
+  }
+
+  function authorizeAccess(collectionPermission, aclPermission) {
+    return function (req, res, next) {
+      if (access.userHasPermission(req.user, collectionPermission)) {
+        next();
+      } else if (Layer.userHasLayerPermission(req.layer, req.user._id, aclPermission)) {
+          next();
+      } else {
+        res.sendStatus(403);
+      }
+    };
+  }
+
+  // TODO trying to read layers
+  // 1. ADMIN READ_LAYER_ALL permission is a go
+  // 2. READ_LAYER_EVENT permission means I can read layers for an event I am part of
+  function validateEventAccess(req, res, next) {
+    if (access.userHasPermission(req.user, 'READ_LAYER_ALL')) {
+      next();
+    } else if (access.userHasPermission(req.user, 'READ_LAYER_EVENT')) {
+      // Make sure I am part of this event
+      Event.userHasEventPermission(req.event, req.user._id, 'read', function (err, hasPermission) {
+        if (hasPermission) {
+          return next();
+        } else {
+          return res.sendStatus(403);
+        }
+      });
+    } else {
+      res.sendStatus(403);
+    }
+  }
 
   function validateLayerParams(req, res, next) {
     const layer = req.body;
@@ -61,6 +102,18 @@ module.exports = function(app, security) {
     } catch (err) {
       return res.status(400).send('cannot create layer, geopackage is not valid ' + err.toString());
     }
+  }
+
+  function parseQueryParams(req, res, next) {
+    req.parameters = {
+      type: req.param('type')
+    };
+
+    if (req.param('includeUnavailable')) {
+      req.parameters.includeUnavailable = req.param('includeUnavailable');
+    }
+
+    next();
   }
 
   async function processGeoPackage(req, res, next) {
@@ -168,42 +221,14 @@ module.exports = function(app, security) {
       });
   }
 
-  function validateEventAccess(req, res, next) {
-    if (access.userHasPermission(req.user, 'READ_LAYER_ALL')) {
-      next();
-    } else if (access.userHasPermission(req.user, 'READ_LAYER_EVENT')) {
-      // Make sure I am part of this event
-      Event.userHasEventPermission(req.event, req.user._id, 'read', function(err, hasPermission) {
-        if (hasPermission) {
-          return next();
-        } else {
-          return res.sendStatus(403);
-        }
-      });
-    } else {
-      res.sendStatus(403);
-    }
-  }
-
-  function parseQueryParams(req, res, next) {
-    req.parameters = {
-      type: req.param('type')
-    };
-
-    if (req.param('includeUnavailable')) {
-      req.parameters.includeUnavailable = req.param('includeUnavailable');
-    }
-
-    next();
-  }
-
   // get all layers
   app.get('/api/layers', 
-    access.authorize('READ_LAYER_ALL'), 
+    determineReadAccess, 
     parseQueryParams, 
     function(req, res, next) {
+      const filter = { includeUnavailable: req.parameters.includeUnavailable }
       new api.Layer()
-        .getLayers({ includeUnavailable: req.parameters.includeUnavailable })
+        .getLayers({ access: req.access, filter: filter })
         .then(layers => {
           const response = layerXform.transform(layers, { path: req.getPath() });
           res.json(response);
@@ -212,17 +237,19 @@ module.exports = function(app, security) {
     }
   );
 
-  app.get('/api/layers/count', access.authorize('READ_LAYER_ALL'), function(req, res, next) {
-    new api.Layer()
-      .count()
-      .then(count => res.json({ count: count }))
-      .catch(function(err) {
-        next(err);
-      });
+  app.get('/api/layers/count', 
+    determineReadAccess, 
+    function(req, res, next) {
+      new api.Layer()
+        .count({ access: req.access })
+        .then(count => res.json({ count: count }))
+        .catch(function(err) {
+          next(err);
+        });
   });
 
   app.post('/api/layers/features',
-    // TODO Dan
+    // TODO Dan, I think this should validate event access, probably also a get if url limits 
     // access.authorize('READ_LAYER_ALL'),
     async function(req, res, next) {
       const clientLayers = req.body.layerIds;
@@ -260,12 +287,12 @@ module.exports = function(app, security) {
 
   // get features for layer (must be a feature layer)
   app.get('/api/layers/:layerId/features',
-    access.authorize('READ_LAYER_ALL'), 
+    determineReadAccess, 
     function(req, res, next) {
       if (req.layer.type !== 'Feature') return res.status(400).send('cannot get features, layer type is not "Feature"');
 
       new api.Feature(req.layer)
-        .getAll()
+        .getAll({access: req.access})
         .then(features => {
           res.json({
             type: 'FeatureCollection',
@@ -277,7 +304,7 @@ module.exports = function(app, security) {
   );
 
   app.get('/api/layers/:layerId/:tableName/:z(\\d+)/:x(\\d+)/:y(\\d+).:format',
-    access.authorize('READ_LAYER_ALL'),
+    determineReadAccess,
     function(req, res, next) {
       const tileParams = {
         x: Number(req.params.x),
@@ -311,37 +338,39 @@ module.exports = function(app, security) {
     validateEventAccess,
     parseQueryParams,
     function(req, res, next) {
-      console.log('req.parameters.includeUnavailable', req.parameters);
-      new api.Layer()
-        .getLayers({
-          layerIds: req.event.layerIds,
-          type: req.parameters.type,
-          includeUnavailable: req.parameters.includeUnavailable
-        })
-        .then(layers => {
-          const response = layerXform.transform(layers, { path: req.getPath() });
-          res.json(response);
-        })
-        .catch(err => next(err));
+      new api.Layer().getLayers({
+        layerIds: req.event.layerIds,
+        type: req.parameters.type,
+        includeUnavailable: req.parameters.includeUnavailable
+      })
+      .then(layers => {
+        const response = layerXform.transform(layers, { path: req.getPath() });
+        res.json(response);
+      })
+      .catch(err => next(err));
     }
   );
 
   // get layer
-  app.get('/api/layers/:layerId', 
-    access.authorize('READ_LAYER_ALL'), 
-    function(req, res) {
-      if (req.accepts('application/json')) {
-        const response = layerXform.transform(req.layer, { path: req.getPath() });
-        res.json(response);
-      } else if (req.layer.file) {
-        // TODO verify accepts header req.accepts(req.layer.contentType), Android needs to be fixed first
-        const stream = fs.createReadStream(path.join(environment.layerBaseDirectory, req.layer.file.relativePath));
-        stream.on('open', () => {
-          res.type(req.layer.file.contentType);
-          res.header('Content-Length', req.layer.file.size);
-          stream.pipe(res);
-        });
-      }
+  app.get('/api/layers/:id', 
+    determineReadAccess, 
+    function(req, res, next) {
+      new api.Layer().getLayer(req.params.id, { access: req.access }).then(layer => {
+        if (!layer) return res.sendStatus(404);
+
+        if (req.accepts('application/json')) {
+          const response = layerXform.transform(layer, { path: req.getPath() });
+          res.json(response);
+        } else if (layer.file) {
+          // TODO verify accepts header req.accepts(req.layer.contentType), Android needs to be fixed first
+          const stream = fs.createReadStream(path.join(environment.layerBaseDirectory, layer.file.relativePath));
+          stream.on('open', () => {
+            res.type(layer.file.contentType);
+            res.header('Content-Length', layer.file.size);
+            stream.pipe(res);
+          });
+        }
+      }).catch(err => next(err));
     }
   );
 
@@ -448,7 +477,7 @@ module.exports = function(app, security) {
       }
       req.newLayer.state = 'available';
       new api.Layer()
-        .create(req.newLayer)
+        .create(req.newLayer, req.user)
         .then(layer => {
           req.layer = layer;
             const response = layerXform.transform(layer, { path: req.getPath() });
@@ -464,7 +493,7 @@ module.exports = function(app, security) {
     validateGeopackage,
     function(req, res, next) {
       new api.Layer()
-        .create(req.newLayer)
+        .create(req.newLayer, req.user)
         .then(layer => {
           req.layer = layer;
           if (req.layer.invalid) {
@@ -484,7 +513,7 @@ module.exports = function(app, security) {
   );
 
   app.put('/api/layers/:layerId/available',
-    access.authorize('UPDATE_LAYER'),
+    authorizeAccess('UPDATE_LAYER', 'update'),
     processGeoPackage,
     function(req, res) {
       const layer = req.layer;
@@ -493,30 +522,55 @@ module.exports = function(app, security) {
     }
   );
 
-  app.put('/api/layers/:layerId', access.authorize('UPDATE_LAYER'), validateLayerParams, function(req, res, next) {
-    new api.Layer(req.layer.id)
-      .update(req.newLayer)
-      .then(layer => {
-        const response = layerXform.transform(layer, { path: req.getPath() });
-        res.json(response);
-      })
-      .catch(err => next(err));
+  app.put('/api/layers/:layerId', 
+    authorizeAccess('UPDATE_LAYER', 'update'),
+    validateLayerParams, 
+    function(req, res, next) {
+      new api.Layer(req.layer.id)
+        .update(req.newLayer)
+        .then(layer => {
+          const response = layerXform.transform(layer, { path: req.getPath() });
+          res.json(response);
+        })
+        .catch(err => next(err));
   });
 
-  app.post('/api/layers/wms/getcapabilities', function(req, res) {
-    request.get({ url: req.body.url + '?SERVICE=WMS&REQUEST=GetCapabilities', gzip: true }, function(
-      err,
-      response,
-      body,
-    ) {
-      if (err) {
-        return res.sendStatus(400);
-      }
+  app.post('/api/layers/wms/getcapabilities', 
+    function(req, res) {
+      request.get({ 
+        url: req.body.url + '?SERVICE=WMS&REQUEST=GetCapabilities', 
+        gzip: true }, function(err, response, body) {
+        if (err) return res.sendStatus(400);
 
-      const json = new WMSCapabilities(body, DOMParser).toJSON();
-      res.json(json);
-    });
-  });
+        const json = new WMSCapabilities(body, DOMParser).toJSON();
+        res.json(json);
+      });
+    }
+  );
+
+  app.put(
+    '/api/layers/:layerId/acl/:targetUserId',
+    passport.authenticate('bearer'),
+    authorizeAccess('UPDATE_LAYER', 'update'),
+    function (req, res, next) {
+      Layer.updateUserInAcl(req.layer._id, req.params.targetUserId, req.body.role, function (err, layer) {
+        if (err) return next(err);
+        res.json(layer);
+      });
+    }
+  );
+
+  app.delete(
+    '/api/events/:eventId/acl/:targetUserId',
+    passport.authenticate('bearer'),
+    authorizeAccess('UPDATE_LAYER', 'update'),
+    function (req, res, next) {
+      Layer.removeUserFromAcl(req.layer._id, req.params.targetUserId, function (err, layer) {
+        if (err) return next(err);
+        res.json(layer);
+      });
+    }
+  );
 
   app.delete('/api/layers/:layerId', access.authorize('DELETE_LAYER'), function(req, res, next) {
     new api.Layer()

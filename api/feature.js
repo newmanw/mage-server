@@ -5,8 +5,8 @@ class Feature {
     this._layer = layer;
   }
 
-  getAll() {
-    return FeatureModel.getFeatures(this._layer);
+  getAll(options) {
+    return FeatureModel.getFeatures(this._layer, options);
   }
 
   createFeatures(features) {

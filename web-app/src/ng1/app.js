@@ -366,6 +366,12 @@ function config($httpProvider, $stateProvider, $urlRouterProvider, $urlServicePr
     resolve: resolveAdmin()
   });
 
+  $stateProvider.state('admin.layerAccess', {
+    url: '/layers/:layerId/access',
+    component: "adminLayerAccess",
+    resolve: resolveAdmin()
+  });
+
   // Admin settings routes
   $stateProvider.state('admin.settings', {
     url: '/settings',
