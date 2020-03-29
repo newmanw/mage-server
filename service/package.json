@@ -134,7 +134,7 @@
     "build": "npm-run-all build:tsc build:copy_docs build:copy_package",
     "test": "mocha",
     "dist-test:build": "npm run build && cd lib && cpy --parents '**/*' ../dist-test/ && cd .. && tsc --project tsconfig.dist-test.json",
-    "dist-test:test": "cd dist-test && mocha '**/*Test.js'",
+    "dist-test:test": "cd dist-test && mocha",
     "dist-test": "npm-run-all dist-test:build dist-test:test",
     "report": "nyc report",
     "coverage": "nyc mocha",
