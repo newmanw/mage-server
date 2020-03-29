@@ -4,7 +4,7 @@ import { expect } from 'chai';
 import express from 'express';
 import initializePluginsRoutes from '../../../src/routes/plugins';
 import mageApp from '../../../src/express'
-import { PluginService } from '../../../src/api/plugins';
+import { PluginFunctions } from '../../../src/plugins/application/plugins.functions';
 
 describe('plugins routes', function() {
 
@@ -12,7 +12,7 @@ describe('plugins routes', function() {
 
   beforeEach(async function() {
     app = express();
-    const pluginService = {} as PluginService
+    const pluginService = {} as PluginFunctions
     const routes = await initializePluginsRoutes(app, {});
   });
 

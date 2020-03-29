@@ -3,7 +3,7 @@ import { mock, reset, instance, when } from 'ts-mockito'
 import request from 'supertest'
 import express, { Request, Response, NextFunction } from 'express'
 import { SourceRepository, AdapterRepository } from '../../src/manifold/repositories'
-import { SourceDescriptorEntity, SourceDescriptorModel, ManifoldModels, SourceDescriptorSchema } from '../../src/manifold/models'
+import { SourceDescriptorModel, ManifoldModels, SourceDescriptorSchema, SourceDescriptorDocument } from '../../src/manifold/models'
 import mongoose from 'mongoose'
 import { ManifoldService } from '../../src/manifold/services'
 import { ManifoldController, createRouter } from '../../src/manifold'
@@ -79,7 +79,7 @@ describe('manifold source routes', function() {
           }
         }
 
-        const source: SourceDescriptorEntity = new SourceDescriptorModel({
+        const source: SourceDescriptorDocument = new SourceDescriptorModel({
           title: 'Source 1',
           adapter: mongoose.Types.ObjectId().toHexString(),
           isReadable: true,

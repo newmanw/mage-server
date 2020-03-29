@@ -45,7 +45,7 @@ export const AdapterDescriptorSchema = new mongoose.Schema(
   {
     toJSON: {
       getters: true,
-      transform: (entity: AdapterDescriptorEntity, json: any & AdapterDescriptor, options: SchemaOptions) => {
+      transform: (entity: AdapterDescriptorDocument, json: any & AdapterDescriptor, options: SchemaOptions) => {
         delete json._id
         delete json.modulePath
       }
@@ -64,7 +64,7 @@ export const SourceDescriptorSchema = new mongoose.Schema(
   {
     toJSON: {
       getters: true,
-      transform: (entity: SourceDescriptorEntity, json: any & SourceDescriptor, options: SchemaOptions) => {
+      transform: (entity: SourceDescriptorDocument, json: any & SourceDescriptor, options: SchemaOptions) => {
         delete json._id
         if (!entity.populated('adapter') && entity.adapter instanceof mongoose.Types.ObjectId) {
           json.adapter = json.adapter.toHexString()
@@ -73,7 +73,7 @@ export const SourceDescriptorSchema = new mongoose.Schema(
     }
   })
 
-export type AdapterDescriptorEntity = AdapterDescriptor & mongoose.Document
-export type SourceDescriptorEntity = SourceDescriptor & mongoose.Document
-export type AdapterDescriptorModel = Model<AdapterDescriptorEntity>
-export type SourceDescriptorModel = Model<SourceDescriptorEntity>
+export type AdapterDescriptorDocument = AdapterDescriptor & mongoose.Document
+export type SourceDescriptorDocument = SourceDescriptor & mongoose.Document
+export type AdapterDescriptorModel = Model<AdapterDescriptorDocument>
+export type SourceDescriptorModel = Model<SourceDescriptorDocument>

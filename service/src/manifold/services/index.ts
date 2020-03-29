@@ -1,4 +1,4 @@
-import { AdapterDescriptor, SourceDescriptor, AdapterDescriptorEntity } from "../models"
+import { AdapterDescriptor, SourceDescriptor, AdapterDescriptorDocument } from "../models"
 import { AdapterRepository, SourceRepository } from "../repositories"
 import OgcApiFeatures from "../ogcapi-features"
 import { ManifoldAdapter, ManifoldPlugin } from "../adapters"
@@ -32,11 +32,11 @@ export class ManifoldService {
     const sources = await this.sourceRepo.readAll()
     const desc: ManifoldDescriptor = {
       adapters: adapters.reduce((prev, curr) => {
-        prev[curr.id] = curr.toJSON()
+        prev[curr.id!] = curr
         return prev
       }, {} as { [id: string]: AdapterDescriptor }),
       sources: sources.reduce((prev, curr) => {
-        prev[curr.id] = curr.toJSON()
+        prev[curr.id!] = curr
         return prev
       }, {} as { [id: string]: SourceDescriptor })
     }
@@ -46,7 +46,7 @@ export class ManifoldService {
   async getAdapterForSource(source: SourceDescriptor): Promise<ManifoldAdapter> {
     let adapterDesc = source.adapter
     if (typeof adapterDesc === 'string') {
-      adapterDesc = (await this.adapterRepo.findById(adapterDesc)) as AdapterDescriptorEntity
+      adapterDesc = (await this.adapterRepo.findById(adapterDesc)) as AdapterDescriptorDocument
     }
     const path = adapterDesc.modulePath
     if (!adapterDesc.id) {

@@ -5,7 +5,7 @@ import { mock, instance, reset, spy, when, verify } from 'ts-mockito'
 import mongoose from 'mongoose'
 import { ManifoldService } from '../../../src/manifold/services'
 import { AdapterRepository, SourceRepository } from '../../../src/manifold/repositories'
-import { SourceDescriptor, AdapterDescriptorSchema, ManifoldModels, AdapterDescriptorEntity } from '../../../src/manifold/models'
+import { SourceDescriptor, AdapterDescriptorSchema, ManifoldModels, AdapterDescriptorDocument } from '../../../src/manifold/models'
 import { ManifoldAdapter } from '../../../src/manifold/adapters'
 import path from 'path'
 import plugin = require('./manifold_plugin_1')
@@ -20,7 +20,7 @@ describe('manifold service', function() {
   const adapterRepo = instance(adpaterRepoMock)
   const sourceRepoMock = mock<SourceRepository>()
   const sourceRepo = instance(sourceRepoMock)
-  const AdapterDescriptorModel = mongoose.model<AdapterDescriptorEntity>(ManifoldModels.AdapterDescriptor, AdapterDescriptorSchema)
+  const AdapterDescriptorModel = mongoose.model<AdapterDescriptorDocument>(ManifoldModels.AdapterDescriptor, AdapterDescriptorSchema)
   let service: ManifoldService
 
   ;(adapterMock as any).__tsmockitoMocker.excludedPropertyNames.push('then')

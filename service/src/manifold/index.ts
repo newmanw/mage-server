@@ -1,21 +1,19 @@
 
 import path from 'path'
-import { Request, Response, NextFunction, Application, Router, ErrorRequestHandler, Handler, RequestParamHandler, RequestHandler } from 'express'
-import OpenapiEnforcerMiddleware, { MiddlewareFunction } from 'openapi-enforcer-middleware'
+import { Request, Response, NextFunction, Application, Router, RequestHandler } from 'express'
+import OpenapiEnforcerMiddleware from 'openapi-enforcer-middleware'
 import mongoose from 'mongoose'
 import { SourceRepository, AdapterRepository } from './repositories'
 import { ManifoldService } from './services'
-import OgcApiFeatures from './ogcapi-features'
-import { SourceDescriptorEntity, ManifoldModels, AdapterDescriptorSchema, AdapterDescriptorModel, SourceDescriptorModel, SourceDescriptorSchema } from './models'
+import { ManifoldModels, AdapterDescriptorSchema, AdapterDescriptorModel, SourceDescriptorModel, SourceDescriptorSchema, SourceDescriptor } from './models'
 import OpenApiEnforcerMiddleware from 'openapi-enforcer-middleware'
 import { ManifoldAdapter } from './adapters'
-import log = require('../logger')
 
 declare global {
   namespace Express {
     interface Request {
       manifold: {
-        contextSource?: SourceDescriptorEntity
+        contextSource?: SourceDescriptor
         adapter?: ManifoldAdapter
         readonly requiredAdapter: ManifoldAdapter
       }
@@ -96,14 +94,14 @@ function manifoldController(injection: ManifoldController.Injection): ManifoldCo
 
     async createSource(req: Request, res: Response, next: NextFunction): Promise<Response> {
       const created = await sourceRepo.create(req.body)
-      return res.status(201).location(`${req.baseUrl}/sources/${created.id}`).send(created.toJSON())
+      return res.status(201).location(`${req.baseUrl}/sources/${created.id}`).send(created)
     },
 
     async getSource(req: Request, res: Response, next: NextFunction): Promise<Response> {
       if (!req.manifold.contextSource) {
         return res.status(404).json('not found')
       }
-      return res.send(req.manifold.contextSource.toJSON())
+      return res.send(req.manifold.contextSource)
     },
 
     async getSourceApi(req: Request, res: Response, next: NextFunction): Promise<Response> {
