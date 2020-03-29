@@ -1,5 +1,6 @@
 import express, { Router } from 'express';
-import { PluginService, PluginDescriptor } from '../api/plugins';
+import { PluginDescriptor } from '../plugins/entities/plugins.entities';
+import { PluginFunctions } from '../plugins/application/plugins.functions';
 
 
 
@@ -15,7 +16,7 @@ export = function initialize(app: express.Application, security: any) {
 
 };
 
-async function initializeRoutes(pluginService: PluginService): Promise<express.Router> {
+async function initializeRoutes(pluginService: PluginFunctions): Promise<express.Router> {
 
   const pluginRouters = new Map<string, Router>();
   const router = express.Router();
@@ -28,8 +29,8 @@ async function initializeRoutes(pluginService: PluginService): Promise<express.R
   });
 
   router.get('/plugins', async (req, res) => {
-    const descriptors = await pluginService.getPlugins();
-    return res.json(descriptors.values());
+    const descriptors = await pluginService.listPlugins();
+    return res.json(descriptors);
   });
 
   router.put('/:pluginId/enabled', async (req, res) => {
@@ -47,10 +48,10 @@ async function initializeRoutes(pluginService: PluginService): Promise<express.R
     }
     let updated: PluginDescriptor = desc;
     if (enable === true) {
-      updated = await pluginService.enablePlugin(desc);
+      updated = await pluginService.enablePlugin(desc.id);
     }
     else if (enable === false) {
-      updated = await pluginService.disablePlugin(desc);
+      updated = await pluginService.disablePlugin(desc.id);
     }
     return res.json(updated);
   });

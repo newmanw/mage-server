@@ -1,10 +1,10 @@
-const fs = require('fs-extra'),
-  path = require('path'),
-  GP = require('@ngageoint/geopackage'),
-  GeoPackageAPI = require('@ngageoint/geopackage').GeoPackage,
-  FeatureTile = require('@ngageoint/geopackage').FeatureTiles,
-  ShadedFeaturesTile = require('@ngageoint/geopackage').ShadedFeaturesTile,
-  environment = require('../environment/env');
+const fs = require('fs-extra');
+const path = require('path');
+const GP = require('@ngageoint/geopackage');
+const GeoPackageAPI = require('@ngageoint/geopackage').GeoPackage;
+const FeatureTile = require('@ngageoint/geopackage').FeatureTiles;
+const ShadedFeaturesTile = require('@ngageoint/geopackage').ShadedFeaturesTile;
+const environment = require('../environment/env');
 
 const tileSize = 256;
 

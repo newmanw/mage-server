@@ -1,6 +1,6 @@
 
 import mongoose from 'mongoose';
-import { PluginDescriptor } from '../api/plugins'
+import { PluginDescriptor } from '../plugins/entities'
 
 const PluginDescriptorSchema = new mongoose.Schema({
   version: { type: Number, required: false, default: 0 },
