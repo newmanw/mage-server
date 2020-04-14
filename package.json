@@ -6,6 +6,5 @@
     "service",
     "web-app"
   ],
-  "devDependencies": {
-  }
+  "devDependencies": {}
 }

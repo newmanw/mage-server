@@ -1,6 +1,6 @@
 
 import { SourceDescriptor, SourceDescriptorModel, AdapterDescriptorModel, AdapterDescriptor, SourceDescriptorDocument, AdapterDescriptorDocument } from '../models'
-import { BaseMongoRepository } from '../../architecture/adapters/base.adapters.db.mongoose'
+import { BaseMongooseRepository } from '../../architecture/adapters/base.adapters.db.mongoose'
 
 
 export type EntityReference = {
@@ -8,7 +8,7 @@ export type EntityReference = {
 }
 
 
-export class AdapterRepository extends BaseMongoRepository<AdapterDescriptorDocument, AdapterDescriptorModel, AdapterDescriptor> {
+export class AdapterRepository extends BaseMongooseRepository<AdapterDescriptorDocument, AdapterDescriptorModel, AdapterDescriptor> {
 
   constructor(model: AdapterDescriptorModel) {
     super(model)
@@ -16,7 +16,7 @@ export class AdapterRepository extends BaseMongoRepository<AdapterDescriptorDocu
 }
 
 
-export class SourceRepository extends BaseMongoRepository<SourceDescriptorDocument, SourceDescriptorModel, SourceDescriptor> {
+export class SourceRepository extends BaseMongooseRepository<SourceDescriptorDocument, SourceDescriptorModel, SourceDescriptor> {
 
   constructor(model: SourceDescriptorModel) {
     super(model)

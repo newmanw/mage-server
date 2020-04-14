@@ -15,7 +15,13 @@ export type MageService = {
   open(): MageService,
 };
 export const MageReadyEvent = 'comingOfMage';
-export const boot = async function(): Promise<MageService> {
+export type BootConfig = {
+  /**
+   * An array of plugin package names
+   */
+  plugins: string[]
+}
+export const boot = async function(config: BootConfig): Promise<MageService> {
   if (service) {
     return service;
   }

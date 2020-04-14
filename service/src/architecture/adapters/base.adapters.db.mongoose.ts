@@ -9,7 +9,7 @@ function createDefaultDocMapping<D extends mongoose.Document, E extends object>(
   return (d) => d.toJSON();
 }
 
-export class BaseMongoRepository<D extends mongoose.Document, M extends mongoose.Model<D>, E extends object> implements Repository<E> {
+export class BaseMongooseRepository<D extends mongoose.Document, M extends mongoose.Model<D>, E extends object> implements Repository<E> {
 
   readonly model: M
   /**
