@@ -2,7 +2,7 @@ import mongoose from 'mongoose'
 import { describe, it, before, beforeEach, after, afterEach } from 'mocha'
 import { expect } from 'chai'
 import { mongoTestAfterAllHook, mongoTestBeforeAllHook, MongoTestContext } from '../../mongo.test'
-import { BaseMongoRepository } from '../../../src/architecture/adapters/base.adapters.db.mongoose'
+import { BaseMongooseRepository } from '../../../src/architecture/adapters/base.adapters.db.mongoose'
 import { EntityReference } from '../../../src/architecture/entities/base.entities'
 
 
@@ -31,14 +31,14 @@ describe('base mongoose repository', async function() {
   })
   let mongo: MongoTestContext
   let model: mongoose.Model<BaseDocument>
-  let repo: BaseMongoRepository<BaseDocument, BaseModel, BaseEntity>
+  let repo: BaseMongooseRepository<BaseDocument, BaseModel, BaseEntity>
 
   before(mongoTestBeforeAllHook())
 
   before('create model', function() {
     mongo = this.mongo
     model = mongo.conn.model('Base', schema, collection)
-    repo = new BaseMongoRepository(model)
+    repo = new BaseMongooseRepository(model)
   })
 
   afterEach('clear db', async function() {

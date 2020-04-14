@@ -1,21 +1,21 @@
 const request = require('supertest')
   , sinon = require('sinon')
   , mongoose = require('mongoose')
-  , app = require('../../express')
-  , Setting = require('../../models/setting');
+  , app = require('../../src/express')
+  , Setting = require('../../src/models/setting');
 
 require('sinon-mongoose');
 
-require('../../models/token');
+require('../../src/models/token');
 var TokenModel = mongoose.model('Token');
 
-require('../../models/login');
+require('../../src/models/login');
 var LoginModel = mongoose.model('Login');
 
-require('../../models/device');
+require('../../src/models/device');
 var DeviceModel = mongoose.model('Device');
 
-require('../../models/user');
+require('../../src/models/user');
 var UserModel = mongoose.model('User');
 
 let userId = mongoose.Types.ObjectId();

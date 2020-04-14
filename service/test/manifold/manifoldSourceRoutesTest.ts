@@ -6,7 +6,7 @@ import { SourceRepository, AdapterRepository } from '../../src/manifold/reposito
 import { SourceDescriptorModel, ManifoldModels, SourceDescriptorSchema, SourceDescriptorDocument } from '../../src/manifold/models'
 import mongoose from 'mongoose'
 import { ManifoldService } from '../../src/manifold/services'
-import { ManifoldController, createRouter } from '../../src/manifold'
+import { ManifoldController, createRouter, Injection as ManifoldInjection } from '../../src/manifold'
 import OgcApiFeatures from '../../src/manifold/ogcapi-features'
 import { ManifoldAdapter, SourceConnection } from '../../src/manifold/adapters'
 import log = require('../../src/logger')
@@ -29,7 +29,7 @@ describe('manifold source routes', function() {
   ;(connectionMock as any).__tsmockitoMocker.excludedPropertyNames.push('then')
   const app = express()
   app.use(express.json())
-  const injection: ManifoldController.Injection = {
+  const injection: ManifoldInjection = {
     adapterRepo,
     sourceRepo,
     manifoldService

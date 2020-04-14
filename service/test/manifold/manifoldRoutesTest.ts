@@ -5,7 +5,7 @@ import request from 'supertest'
 import express, { Request, Response, NextFunction } from 'express'
 import { SourceRepository, AdapterRepository } from '../../src/manifold/repositories'
 import { SourceDescriptor, SourceDescriptorModel, AdapterDescriptorModel, ManifoldModels, SourceDescriptorSchema, AdapterDescriptorSchema } from '../../src/manifold/models'
-import { createRouter, ManifoldController } from '../../src/manifold'
+import { createRouter, Injection } from '../../src/manifold'
 import mongoose from 'mongoose'
 import { parseEntity, transformObject as transformJson } from '../utils'
 import { ManifoldDescriptor, ManifoldService } from '../../src/manifold/services'
@@ -24,7 +24,7 @@ describe('manifold routes', function() {
   const manifoldService = instance(manifoldServiceMock)
   const app = express()
   app.use(express.json())
-  const injection: ManifoldController.Injection = {
+  const injection: Injection = {
     adapterRepo,
     sourceRepo,
     manifoldService

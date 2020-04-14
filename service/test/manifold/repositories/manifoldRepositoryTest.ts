@@ -3,7 +3,7 @@ import mongoose from 'mongoose'
 import { describe, it, before, beforeEach, after, afterEach } from 'mocha'
 import { expect } from 'chai'
 import { MongoMemoryServer } from 'mongodb-memory-server'
-import { BaseMongoRepository } from '../../../src/architecture/adapters/base.adapters.db.mongoose'
+import { BaseMongooseRepository } from '../../../src/architecture/adapters/base.adapters.db.mongoose'
 import { AdapterRepository, EntityReference, SourceRepository } from '../../../src/manifold/repositories'
 import { AdapterDescriptor, AdapterDescriptorModel, ManifoldModels, AdapterDescriptorSchema, SourceDescriptorModel, SourceDescriptorSchema } from '../../../src/manifold/models'
 
@@ -51,7 +51,7 @@ describe('manifold repositories', function() {
     })
 
     it('does what base repository can do', function() {
-      expect(repo).to.be.instanceOf(BaseMongoRepository)
+      expect(repo).to.be.instanceOf(BaseMongooseRepository)
     })
 
     it('creates an adatper descriptor record', async function() {
@@ -163,7 +163,7 @@ describe('manifold repositories', function() {
     })
 
     it('does what base repository can do', async function() {
-      expect(repo).to.be.instanceOf(BaseMongoRepository)
+      expect(repo).to.be.instanceOf(BaseMongooseRepository)
     })
   })
 })
