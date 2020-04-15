@@ -1,3 +1,10 @@
+
+declare module 'mocha' {
+  namespace Mocha {
+    interface MochaOptions {}
+  }
+}
+
 import { MongoMemoryServer } from 'mongodb-memory-server';
 
 // start the test mongodb server
