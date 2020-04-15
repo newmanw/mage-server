@@ -11,6 +11,7 @@ export function modulesPathsInDir(dir: string): string[] {
   return fs.readdirSync(dir).filter(file => {
     return !(
       file[0] === '.' ||
+      !/\.(ts|js|json)$/.test(file) ||
       /^index\./.test(file) ||
       /\.d\.ts/.test(file) ||
       /\.map$/.test(file)
