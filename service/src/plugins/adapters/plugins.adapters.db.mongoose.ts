@@ -1,5 +1,5 @@
 import mongoose from 'mongoose'
-import { BaseMongooseRepository } from 'src/architecture/adapters/base.adapters.db.mongoose'
+import { BaseMongooseRepository } from '../../architecture/adapters/base.adapters.db.mongoose'
 import { PluginDescriptor } from '../entities/plugins.entities'
 import { PluginRepository } from '../application/plugins.app.contracts'
 
