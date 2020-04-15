@@ -1,6 +1,7 @@
 import { describe, it } from 'mocha'
 import chai from 'chai'
-import { PluginDescriptor, PluginDescriptorAttrs } from '../../src/plugins/entities/plugins.entities'
+import { PluginDescriptor, PluginDescriptorAttrs } from '../../lib//plugins/entities/plugins.entities'
+import { PluginRepository } from '../../lib//plugins/application/plugins.app.contracts'
 
 const expect = chai.expect
 
@@ -38,17 +39,33 @@ describe.only('plugins administration', function() {
   })
 })
 
+class TestPluginRepository implements PluginRepository {
+
+  readonly plugins = new Map<string, PluginDescriptor>()
+
+  async readAll(): Promise<PluginDescriptor[]> {
+    return Array.from(this.plugins.values())
+  }
+
+  findById(id: string): Promise<PluginDescriptor> {
+    throw new Error("Method not implemented.")
+  }
+
+  update(attrs: Partial<PluginDescriptor>): Promise<PluginDescriptor> {
+    throw new Error("Method not implemented.")
+  }
+}
+
+import { ListPluginsFn } from '../../lib/plugins/application/plugins.app.fn'
+
 class PluginsTestAdapter {
 
-  constructor() {
+  readonly repo = new TestPluginRepository()
+  readonly listPlugins = ListPluginsFn(this.repo)
 
-  }
-
-  setRegisteredPlugins(...pluginDescriptor: Partial<PluginDescriptorAttrs>[]) {
-
-  }
-
-  async listPlugins(): Promise<PluginDescriptor[]> {
-    return []
+  setRegisteredPlugins(...descs: PluginDescriptorAttrs[]) {
+    descs.forEach(desc => {
+      this.repo.plugins.set(desc.id, new PluginDescriptor(desc))
+    })
   }
 }
