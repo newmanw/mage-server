@@ -1,5 +1,6 @@
-const fs = require('fs');
 const Setting = require('../models/setting');
+const { modulesPathsInDir } = require('../utilities/loader');
+const log = require('../logger');
 
 /**
  * `Provision` constructor.
@@ -61,10 +62,11 @@ Provision.prototype.check = function(type, options, callback) {
 const provision = new Provision();
 
 // Dynamically add all provisioning strategies
-fs.readdirSync(__dirname).forEach(function (file) {
-  if (file[0] === '.' || file === 'index.js' || file.indexOf('.js') === -1) return;
-  const strategy = file.substr(0, file.indexOf('.'));
-  require('./' + strategy)(provision);
+modulesPathsInDir(__dirname).forEach(modulePath => {
+  const moduleName = modulePath.substr(0, modulePath.indexOf('.'));
+  log.debug(`loading ${moduleName} provision strategy from ${modulePath}`);
+  const initStrategy = require('./' + moduleName);
+  initStrategy(provision);
 });
 
 /**
