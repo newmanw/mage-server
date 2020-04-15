@@ -4,22 +4,22 @@ var request = require('supertest')
   , mongoose = require('mongoose')
   , mockfs = require('mock-fs')
   , MockToken = require('../mockToken')
-  , app = require('../../src/express')
+  , app = require('../../lib/express')
   , TokenModel = mongoose.model('Token');
 
 require('chai').should();
 require('sinon-mongoose');
 
-require('../../src/models/counter');
+require('../../lib/models/counter');
 var CounterModel = mongoose.model('Counter');
 
-require('../../src/models/team');
+require('../../lib/models/team');
 var TeamModel = mongoose.model('Team');
 
-require('../../src/models/event');
+require('../../lib/models/event');
 const EventModel = mongoose.model('Event');
 
-require('../../src/models/icon');
+require('../../lib/models/icon');
 const IconModel = mongoose.model('Icon');
 
 describe("event create tests", function() {
@@ -90,7 +90,7 @@ describe("event create tests", function() {
       .expects('findByIdAndUpdate').withArgs(eventId)
       .yields(null, mockEvent);
 
-    const defaultIcon = require('../../src/api/icon').defaultIconPath;
+    const defaultIcon = require('../../lib/api/icon').defaultIconPath;
     const fs = {
       '/var/lib/mage': {}
     };

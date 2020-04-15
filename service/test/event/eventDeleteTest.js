@@ -3,22 +3,22 @@ var request = require('supertest')
   , mongoose = require('mongoose')
   , mockfs = require('mock-fs')
   , MockToken = require('../mockToken')
-  , app = require('../../src/express')
+  , app = require('../../lib/express')
   , TokenModel = mongoose.model('Token');
 
 require('chai').should();
 require('sinon-mongoose');
 
-require('../../src/models/team');
+require('../../lib/models/team');
 var TeamModel = mongoose.model('Team');
 
-require('../../src/models/event');
+require('../../lib/models/event');
 var EventModel = mongoose.model('Event');
 
-require('../../src/models/icon');
+require('../../lib/models/icon');
 var IconModel = mongoose.model('Icon');
 
-require('../../src/models/user');
+require('../../lib/models/user');
 var UserModel = mongoose.model('User');
 
 describe("event delete tests", function() {

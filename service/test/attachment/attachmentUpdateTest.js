@@ -4,19 +4,19 @@ const sinon = require('sinon');
 const mongoose = require('mongoose');
 const mockfs = require('mock-fs');
 const MockToken = require('../mockToken');
-const app = require('../../src/express');
+const app = require('../../lib/express');
 const TokenModel = mongoose.model('Token');
-const env = require('../../src/environment/env');
+const env = require('../../lib/environment/env');
 
 require('sinon-mongoose');
 
-require('../../src/models/team');
+require('../../lib/models/team');
 var TeamModel = mongoose.model('Team');
 
-require('../../src/models/event');
+require('../../lib/models/event');
 var EventModel = mongoose.model('Event');
 
-var Observation = require('../../src/models/observation');
+var Observation = require('../../lib/models/observation');
 var observationModel = Observation.observationModel;
 var AttachmentModel = mongoose.model('Attachment');
 

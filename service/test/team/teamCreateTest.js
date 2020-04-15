@@ -2,12 +2,12 @@ var request = require('supertest')
   , sinon = require('sinon')
   , mongoose = require('mongoose')
   , MockToken = require('../mockToken')
-  , app = require('../../src/express')
+  , app = require('../../lib/express')
   , TokenModel = mongoose.model('Token');
 
 require('sinon-mongoose');
 
-require('../../src/models/team');
+require('../../lib/models/team');
 var TeamModel = mongoose.model('Team');
 
 describe("team create tests", function() {

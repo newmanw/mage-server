@@ -2,19 +2,19 @@ var request = require('supertest')
   , sinon = require('sinon')
   , should = require('chai').should()
   , MockToken = require('../mockToken')
-  , app = require('../../src/express')
+  , app = require('../../lib/express')
   , mongoose = require('mongoose');
 
-require('../../src/models/token');
+require('../../lib/models/token');
 var TokenModel = mongoose.model('Token');
 
-require('../../src/models/role');
+require('../../lib/models/role');
 var RoleModel = mongoose.model('Role');
 
-require('../../src/models/user');
+require('../../lib/models/user');
 var UserModel = mongoose.model('User');
 
-const Setting = require('../../src/models/setting');
+const Setting = require('../../lib/models/setting');
 
 require('sinon-mongoose');
 

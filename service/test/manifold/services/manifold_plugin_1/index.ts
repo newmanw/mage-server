@@ -1,4 +1,4 @@
-import { ManifoldPlugin, ManifoldAdapter } from "../../../../src/manifold/adapters"
+import { ManifoldPlugin, ManifoldAdapter } from "../../../../lib/manifold/adapters"
 
 
 class TestManifoldPlugin implements ManifoldPlugin {
@@ -9,5 +9,4 @@ class TestManifoldPlugin implements ManifoldPlugin {
 }
 
 const plugin = new TestManifoldPlugin()
-console.log(plugin)
 export = plugin

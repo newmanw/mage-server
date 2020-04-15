@@ -3,9 +3,9 @@ import mongoose from 'mongoose'
 import { describe, it, before, beforeEach, after, afterEach } from 'mocha'
 import { expect } from 'chai'
 import { MongoMemoryServer } from 'mongodb-memory-server'
-import { BaseMongooseRepository } from '../../../src/architecture/adapters/base.adapters.db.mongoose'
-import { AdapterRepository, EntityReference, SourceRepository } from '../../../src/manifold/repositories'
-import { AdapterDescriptor, AdapterDescriptorModel, ManifoldModels, AdapterDescriptorSchema, SourceDescriptorModel, SourceDescriptorSchema } from '../../../src/manifold/models'
+import { BaseMongooseRepository } from '../../../lib/architecture/adapters/base.adapters.db.mongoose'
+import { AdapterRepository, EntityReference, SourceRepository } from '../../../lib/manifold/repositories'
+import { AdapterDescriptor, AdapterDescriptorModel, ManifoldModels, AdapterDescriptorSchema, SourceDescriptorModel, SourceDescriptorSchema } from '../../../lib/manifold/models'
 
 describe('manifold repositories', function() {
 

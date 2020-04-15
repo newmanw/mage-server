@@ -2,8 +2,8 @@ const request = require('supertest')
   , sinon = require('sinon')
   , chai = require('chai')
   , mongoose = require('mongoose')
-  , app = require('../../src/express')
-  , Setting = require('../../src/models/setting')
+  , app = require('../../lib/express')
+  , Setting = require('../../lib/models/setting')
   , createToken = require('../mockToken')
   , TokenModel = mongoose.model('Token');
 
@@ -12,10 +12,10 @@ require('sinon-mongoose');
 const expect = chai.expect;
 const should = chai.should();
 
-const DeviceOperations = require('../../src/models/device');
+const DeviceOperations = require('../../lib/models/device');
 const DeviceModel = mongoose.model('Device');
 
-const UserOperations = require('../../src/models/user');
+const UserOperations = require('../../lib/models/user');
 const UserModel = UserOperations.Model;
 
 describe("device create tests", function() {

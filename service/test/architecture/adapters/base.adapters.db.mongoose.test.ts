@@ -2,8 +2,8 @@ import mongoose from 'mongoose'
 import { describe, it, before, beforeEach, after, afterEach } from 'mocha'
 import { expect } from 'chai'
 import { mongoTestAfterAllHook, mongoTestBeforeAllHook, MongoTestContext } from '../../mongo.test'
-import { BaseMongooseRepository } from '../../../src/architecture/adapters/base.adapters.db.mongoose'
-import { EntityReference } from '../../../src/architecture/entities/base.entities'
+import { BaseMongooseRepository } from '../../../lib/architecture/adapters/base.adapters.db.mongoose'
+import { EntityReference } from '../../../lib/architecture/entities/base.entities'
 
 
 describe('base mongoose repository', async function() {

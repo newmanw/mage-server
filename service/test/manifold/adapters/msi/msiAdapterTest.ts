@@ -1,9 +1,9 @@
 import { describe, it } from 'mocha'
 import { expect } from 'chai'
 import nock from 'nock'
-import NgaMsi from '../../../../src/manifold/adapters/msi'
-import { SourceDescriptor } from '../../../../src/manifold/models'
-import OgcApiFeatures from '../../../../src/manifold/ogcapi-features'
+import NgaMsi from '../../../../lib/manifold/adapters/msi'
+import { SourceDescriptor } from '../../../../lib/manifold/models'
+import OgcApiFeatures from '../../../../lib/manifold/ogcapi-features'
 
 type QueryStringMatcher = (query: any) => boolean
 

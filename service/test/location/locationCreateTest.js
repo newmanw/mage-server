@@ -2,22 +2,22 @@ var request = require('supertest')
   , sinon = require('sinon')
   , should = require('chai').should()
   , mongoose = require('mongoose')
-  , app = require('../../src/express')
+  , app = require('../../lib/express')
   , MockToken = require('../mockToken')
   , TokenModel = mongoose.model('Token');
 
 require('sinon-mongoose');
 
-require('../../src/models/team');
+require('../../lib/models/team');
 var TeamModel = mongoose.model('Team');
 
-require('../../src/models/event');
+require('../../lib/models/event');
 var EventModel = mongoose.model('Event');
 
-require('../../src/models/location');
+require('../../lib/models/location');
 var LocationModel = mongoose.model('Location');
 
-require('../../src/models/cappedLocation');
+require('../../lib/models/cappedLocation');
 var CappedLocationModel = mongoose.model('CappedLocation');
 
 describe("location create tests", function() {

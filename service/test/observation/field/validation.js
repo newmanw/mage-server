@@ -1,5 +1,5 @@
 var expect = require('chai').expect
-  , FieldFactory = require('../../../src/api/field');
+  , FieldFactory = require('../../../lib/api/field');
 
 var factory = new FieldFactory();
 

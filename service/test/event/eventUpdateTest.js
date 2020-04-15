@@ -3,16 +3,16 @@ var request = require('supertest')
   , sinon = require('sinon')
   , mongoose = require('mongoose')
   , MockToken = require('../mockToken')
-  , app = require('../../src/express')
+  , app = require('../../lib/express')
   , TokenModel = mongoose.model('Token');
 
 require('chai').should();
 require('sinon-mongoose');
 
-require('../../src/models/team');
+require('../../lib/models/team');
 var TeamModel = mongoose.model('Team');
 
-require('../../src/models/event');
+require('../../lib/models/event');
 var EventModel = mongoose.model('Event');
 
 describe("event update tests", function() {

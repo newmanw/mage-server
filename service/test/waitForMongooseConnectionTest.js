@@ -5,7 +5,7 @@ chai = require('chai'),
 sinon = require('sinon'),
 sinonChai = require('sinon-chai'),
 expect = chai.expect,
-env = require('../src/environment/env'),
+env = require('../lib/environment/env'),
 mongoose = require('mongoose'),
 proxyquire = require('proxyquire').noPreserveCache();
 
@@ -17,7 +17,7 @@ describe('waitForMongooseConnection', function() {
 
   const retryDelay = env.mongo.connectRetryDelay;
   const connectTimeout = env.mongo.connectTimeout;
-  const waitForMongooseConnection = proxyquire('../src/utilities/waitForMongooseConnection', {
+  const waitForMongooseConnection = proxyquire('../lib/utilities/waitForMongooseConnection', {
     'mongoose': mongoose
   });
   let connectStub;

@@ -1,5 +1,5 @@
 var crypto = require('crypto')
-  , pbkdf2 = require('../src/utilities/pbkdf2.js');
+  , pbkdf2 = require('../lib/utilities/pbkdf2.js');
 
 describe("PBKDF2 tests", function() {
   var hasher = new pbkdf2();
