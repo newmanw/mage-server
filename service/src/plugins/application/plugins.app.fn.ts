@@ -19,3 +19,12 @@ export function GetPluginFn(repo: PluginRepository): GetPluginFn {
     return await repo.findById(pluginId)
   }
 }
+
+export interface SavePluginSettingsFn {
+  (pluginId: string, settings: object): Promise<PluginDescriptor>
+}
+export function SavePluginSettingsFn(repo: PluginRepository): SavePluginSettingsFn {
+  return async function(pluginId: string, settings: object): ReturnType<SavePluginSettingsFn> {
+    return await repo.savePluginSettings(pluginId, settings)
+  }
+}

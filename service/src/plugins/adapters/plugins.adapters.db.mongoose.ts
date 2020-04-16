@@ -21,4 +21,8 @@ export class MongoosePluginRepository extends BaseMongooseRepository<PluginDescr
   constructor() {
     super(PluginDescriptorModel)
   }
+
+  savePluginSettings(pluginId: string, settings: object): Promise<PluginDescriptor> {
+    throw new Error("Method not implemented.")
+  }
 }
