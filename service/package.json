@@ -78,8 +78,11 @@
     "yaml": "^1.8.2"
   },
   "devDependencies": {
+    "@fluffy-spoon/substitute": "^1.130.0",
     "@types/async": "^3.0.5",
     "@types/chai": "^4.2.7",
+    "@types/chai-as-promised": "^7.1.2",
+    "@types/deep-equal": "^1.0.1",
     "@types/express": "^4.17.6",
     "@types/express-serve-static-core": "^4.17.4",
     "@types/fs-extra": "^8.0.1",
@@ -96,8 +99,10 @@
     "ajv": "^6.11.0",
     "assert": "2.0.0",
     "chai": "4.2.0",
+    "chai-as-promised": "^7.1.1",
     "coveralls": "3.0.4",
     "cpy-cli": "^2.0.0",
+    "deep-equal": "^2.0.2",
     "eslint": "^6.8.0",
     "eslint-config-prettier": "^6.9.0",
     "eslint-plugin-prettier": "^3.1.2",

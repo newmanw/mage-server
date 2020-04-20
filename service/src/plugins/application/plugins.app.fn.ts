@@ -1,6 +1,6 @@
 
-import { PluginDescriptor, Plugin } from "../entities/plugins.entities"
-import { PluginRepository } from "./plugins.app.contracts"
+import { PluginDescriptor, PluginModule } from "../entities/plugins.entities"
+import { PluginRepository, PluginManager } from "./plugins.app.contracts"
 
 export interface ListPluginsFn {
   (): Promise<PluginDescriptor[]>
@@ -23,8 +23,10 @@ export function GetPluginFn(repo: PluginRepository): GetPluginFn {
 export interface SavePluginSettingsFn {
   (pluginId: string, settings: object): Promise<PluginDescriptor>
 }
-export function SavePluginSettingsFn(repo: PluginRepository): SavePluginSettingsFn {
+export function SavePluginSettingsFn(repo: PluginRepository, manager: PluginManager): SavePluginSettingsFn {
   return async function(pluginId: string, settings: object): ReturnType<SavePluginSettingsFn> {
+    const pluginModule = await manager.getPlugin(pluginId)
+    await pluginModule.applySettings(settings)
     return await repo.savePluginSettings(pluginId, settings)
   }
 }

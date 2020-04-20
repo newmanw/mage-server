@@ -16,7 +16,7 @@ export type PluginStateChange = {
   data?: any
 }
 
-export interface Plugin {
+export interface PluginModule {
   start(settings: object): Promise<PluginStateChange>
   stop(): Promise<PluginStateChange>
   applySettings(settings: object): Promise<this>

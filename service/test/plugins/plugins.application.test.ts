@@ -1,7 +1,12 @@
 import { describe, it } from 'mocha'
-import { expect } from 'chai'
-import { PluginDescriptor, PluginDescriptorAttrs } from '../../lib//plugins/entities/plugins.entities'
-import { PluginRepository } from '../../lib//plugins/application/plugins.app.contracts'
+import chai, { expect } from 'chai'
+import asPromised from 'chai-as-promised'
+import { Substitute as Sub, Arg } from '@fluffy-spoon/substitute'
+import { PluginDescriptor, PluginDescriptorAttrs, PluginModule } from '../../lib//plugins/entities/plugins.entities'
+import { PluginRepository, PluginManager } from '../../lib//plugins/application/plugins.app.contracts'
+import deepEqual from 'deep-equal'
+
+chai.use(asPromised)
 
 const plugin1Attrs: PluginDescriptorAttrs = {
   id: 'plugin1',
@@ -39,7 +44,7 @@ describe.only('plugins administration', function() {
       new PluginDescriptor(plugin1Attrs),
       new PluginDescriptor(plugin2Attrs)
     ]
-    app.setRegisteredPlugins(...registeredPlugins)
+    app.registerPlugins(...registeredPlugins.map(x => [ x, null ] as RegisterPluginTuple))
     const plugins = await app.listPlugins()
 
     expect(plugins).to.have.deep.members(registeredPlugins)
@@ -47,66 +52,145 @@ describe.only('plugins administration', function() {
 
   describe("saving plugin settings", function() {
 
-    it('saves the settings to storage', async function() {
+    it('applies settings to plugin and saves settings to storage', async function() {
 
       const desc = new PluginDescriptor(plugin1Attrs)
-      app.setRegisteredPlugins(desc)
+      const plugin = Sub.for<PluginModule>()
+      app.registerPlugins([ desc, plugin ])
       const settings = {
-        flur: true,
-        crep: 456,
-        lena: 'gurt'
+        flep: 'vemp',
+        slu: 1234
       }
+
+      plugin.applySettings(Arg.is(x => deepEqual(x, settings))).resolves(plugin)
       const saved = await app.savePluginSettings(desc.id, settings)
       const fetched = await app.getPlugin(desc.id)
+      const inDb = app.repo.db.get(desc.id)!
 
-      expect(desc)
+      plugin.received(1).applySettings(Arg.is(x => deepEqual(x, settings)))
       expect(saved.settings).to.deep.equal(settings)
-      expect(fetched).to.deep.equal(saved)
+      expect(fetched?.settings).to.deep.equal(settings)
+      expect(inDb.settings).to.deep.equal(settings)
     })
 
-    it('applies the settings to the plugin component', async function() {
-      expect.fail('todo')
+    it('does not store the settings if applying the settings failed', async function() {
+
+      const desc = new PluginDescriptor(plugin1Attrs)
+      const originalSettings = JSON.parse(JSON.stringify(desc.settings))
+      const plugin = Sub.for<PluginModule>()
+      app.registerPlugins([ desc, plugin ])
+
+      const settings = {
+        flep: 'vemp',
+        slu: 1234,
+        sew: 'lop'
+      }
+      plugin.applySettings(Arg.all()).rejects(new Error('invalid settings'))
+
+      await expect(app.savePluginSettings(desc.id, settings)).to.eventually.be.rejectedWith('invalid settings')
+      const fetched = await app.getPlugin(desc.id)
+      const inDb = app.repo.db.get(desc.id)!
+
+      plugin.received(1).applySettings(Arg.is(x => deepEqual(x, settings)))
+      expect(fetched?.settings).to.deep.equal(originalSettings)
+      expect(inDb.settings).to.deep.equal(originalSettings)
     })
   })
 })
 
 import { ListPluginsFn, GetPluginFn, SavePluginSettingsFn } from '../../lib/plugins/application/plugins.app.fn'
 
+type RegisterPluginTuple = [
+  PluginDescriptor,
+  PluginModule | null,
+]
+
 class PluginsTestAdapter {
 
   readonly repo = new TestPluginRepository()
+  readonly manager = new TestPluginManager()
   readonly listPlugins = ListPluginsFn(this.repo)
   readonly getPlugin = GetPluginFn(this.repo)
-  readonly savePluginSettings = SavePluginSettingsFn(this.repo)
+  readonly savePluginSettings = SavePluginSettingsFn(this.repo, this.manager)
 
-  setRegisteredPlugins(...descs: PluginDescriptorAttrs[]) {
-    descs.forEach(desc => {
-      this.repo.plugins.set(desc.id, new PluginDescriptor(desc))
+  registerPlugins(...pluginRegs: (RegisterPluginTuple)[]): void {
+    pluginRegs.forEach(reg => {
+      const [ desc, plugin ] = reg
+      this.repo.db.set(desc.id, new PluginDescriptor(desc))
+      this.manager.plugins.set(desc.id, plugin)
     })
   }
 }
 
 class TestPluginRepository implements PluginRepository {
 
-  readonly plugins = new Map<string, PluginDescriptor>()
+  readonly db = new Map<string, PluginDescriptor>()
 
   async readAll(): Promise<PluginDescriptor[]> {
-    return Array.from(this.plugins.values())
+    return Array.from(this.db.values())
   }
 
   async findById(id: string): Promise<PluginDescriptor | null> {
-    return this.plugins.get(id) || null
+    return this.db.get(id) || null
   }
 
   async savePluginSettings(pluginId: string, settings: object): Promise<PluginDescriptor> {
     const current = await this.findById(pluginId)
     const updated = new PluginDescriptor(current!)
     updated.settings = settings
-    this.plugins.set(pluginId, updated)
+    this.db.set(pluginId, updated)
     return updated
   }
 
   async update(attrs: Partial<PluginDescriptor>): Promise<PluginDescriptor> {
     throw new Error('unimplemented')
+  }
+}
+
+class TestPluginManager implements PluginManager {
+
+  readonly plugins = new Map<string, PluginModule | null>()
+
+  async getPlugin(pluginId: string): Promise<PluginModule> {
+    const plugin = this.plugins.get(pluginId)
+    if (!plugin) {
+      throw new Error(`plugin module not found: ${pluginId}`)
+    }
+    return plugin
+  }
+}
+
+
+class ImperativePromiseExecuteContext<T> {
+  resolve: ResolveFunction<T> = () => {}
+  reject: RejectFunction = () => {}
+  capture(resolve: ResolveFunction<T>, reject: RejectFunction): void {
+    this.resolve = resolve
+    this.reject = reject
+  }
+}
+type ResolveFunction<T> = (value?: T | PromiseLike<T>) => void
+type RejectFunction = (reason?: any) => void
+/**
+ * This promise resolves or rejects only when explicitly instructed from the
+ * main thread.
+ */
+class ImperativePromise<T> extends Promise<T> {
+
+  static create<T>(): ImperativePromise<T> {
+    const executeContext = new ImperativePromiseExecuteContext<T>()
+    const imperative = new ImperativePromise<T>(executeContext)
+    imperative.resolve = executeContext.resolve
+    imperative.reject = executeContext.reject
+    return imperative
+  }
+
+  resolve: ResolveFunction<T> = () => {}
+  reject: RejectFunction = () => {}
+
+  constructor(executeContext: ImperativePromiseExecuteContext<T>) {
+    super(executeContext.capture.bind(executeContext))
+    this.resolve = executeContext.resolve
+    this.reject = executeContext.reject
   }
 }
