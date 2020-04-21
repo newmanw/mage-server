@@ -1,3 +1,6 @@
+
+import * as OgcApiFeatures from '../../ogcapi-features/entities/ogcapi-features.entities'
+
 /**
  * An AdapterDescriptor represents a type of data source and the translation
  * from that data source type's data to data that MAGE can understand, and vice
@@ -24,4 +27,19 @@ export interface SourceDescriptor {
   isReadable: boolean
   isWritable: boolean
   url: string
+}
+
+// eslint-disable-next-line @typescript-eslint/no-empty-interface
+export interface SourceConnection extends OgcApiFeatures.ServiceAdapter {
+
+}
+
+export interface ManifoldAdapter {
+
+  connectTo(source: SourceDescriptor): Promise<SourceConnection>
+}
+
+export interface ManifoldPlugin {
+
+  createAdapter(): Promise<ManifoldAdapter>
 }
