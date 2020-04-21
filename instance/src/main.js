@@ -4,7 +4,7 @@ const { boot } = require('@ngageoint/mage.service/lib/app');
 
 const webappPackage = require.resolve('@ngageoint/mage.web-app/package');
 const webappDir = path.resolve(path.dirname(webappPackage), 'dist');
-const plugins = require('plugins');
+const plugins = require('./plugins');
 
 // TODO: collect environment variables
 
