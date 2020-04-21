@@ -6,7 +6,7 @@ import { Repository } from './base.adapters.db';
 type DocumentMapping<D extends mongoose.Document, E extends object> = (doc: D) => E;
 
 function createDefaultDocMapping<D extends mongoose.Document, E extends object>(): DocumentMapping<D, E> {
-  return (d) => d.toJSON();
+  return (d): any => d.toJSON();
 }
 
 export class BaseMongooseRepository<D extends mongoose.Document, M extends mongoose.Model<D>, E extends object> implements Repository<E> {

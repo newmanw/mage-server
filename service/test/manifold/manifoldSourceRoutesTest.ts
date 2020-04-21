@@ -2,13 +2,12 @@ import { expect, assert } from 'chai'
 import { mock, reset, instance, when } from 'ts-mockito'
 import request from 'supertest'
 import express, { Request, Response, NextFunction } from 'express'
-import { SourceRepository, AdapterRepository } from '../../lib/manifold/repositories'
-import { SourceDescriptorModel, ManifoldModels, SourceDescriptorSchema, SourceDescriptorDocument } from '../../lib/manifold/models'
+import { SourceRepository, AdapterRepository } from '../../lib/manifold/application/manifold.app.contracts'
+import { SourceDescriptorModel, ManifoldModels, SourceDescriptorSchema, SourceDescriptorDocument } from '../../lib/manifold/adapters/manifold.adapters.db.mongoose'
 import mongoose from 'mongoose'
-import { ManifoldService } from '../../lib/manifold/services'
-import { ManifoldController, createRouter, Injection as ManifoldInjection } from '../../lib/manifold'
-import OgcApiFeatures from '../../lib/manifold/ogcapi-features'
-import { ManifoldAdapter, SourceConnection } from '../../lib/manifold/adapters'
+import { createRouter, Injection as ManifoldInjection } from '../../lib/manifold/adapters/manifold.adapters.controllers.web'
+import { ManifoldAdapter, SourceConnection, ManifoldManager } from '../../lib/manifold/entities/manifold.entities'
+import * as OgcApiFeatures from '../../lib/ogcapi-features/entities/ogcapi-features.entities'
 import log = require('../../lib/logger')
 
 describe('manifold source routes', function() {
@@ -18,7 +17,7 @@ describe('manifold source routes', function() {
   const adapterRepo = instance(adapterRepoMock)
   const sourceRepoMock = mock<SourceRepository>()
   const sourceRepo = instance(sourceRepoMock)
-  const manifoldServiceMock = mock<ManifoldService>()
+  const manifoldServiceMock = mock<ManifoldManager>()
   const manifoldService = instance(manifoldServiceMock)
   const manifoldAdapterMock = mock<ManifoldAdapter>()
   const manifoldAdapter = instance(manifoldAdapterMock)
@@ -32,7 +31,6 @@ describe('manifold source routes', function() {
   const injection: ManifoldInjection = {
     adapterRepo,
     sourceRepo,
-    manifoldService
   }
   const manifold = createRouter(injection)
   app.use('/manifold', manifold)
@@ -112,7 +110,7 @@ describe('manifold source routes', function() {
         const sourceEntity = new SourceDescriptorModel({
           adapter: new mongoose.Types.ObjectId().toHexString(),
           title: 'Source A',
-          description: 'All the As',
+          summary: 'All the As',
           url: 'https://a.test/data'
         })
         const page: OgcApiFeatures.CollectionPage = {

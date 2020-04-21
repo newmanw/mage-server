@@ -12,11 +12,8 @@ declare global {
   }
 }
 
-import mongoose from 'mongoose'
-import { SourceRepository, AdapterRepository } from './repositories'
-import { ManifoldService } from './services'
-import { ManifoldModels, AdapterDescriptorSchema, AdapterDescriptorModel, SourceDescriptorModel, SourceDescriptorSchema, SourceDescriptor } from './models'
-import { ManifoldAdapter } from './adapters'
+import { AdapterRepository, SourceRepository } from '../application/manifold.app.contracts'
+import { ManifoldAdapter, SourceDescriptor } from '../entities/manifold.entities'
 import { Request, Response, NextFunction, RequestHandler, Router, Application } from 'express'
 
 export type ManifoldController = {
@@ -27,9 +24,8 @@ export type ManifoldController = {
 }
 
 export type Injection = {
-  adapterRepo: AdapterRepository,
-  sourceRepo: SourceRepository,
-  manifoldService: ManifoldService
+  adapterRepo: AdapterRepository
+  sourceRepo: SourceRepository
 }
 
 const sourceRouter = Router()
@@ -55,48 +51,50 @@ sourceRouter.route('/collections/:collectionId/items')
 sourceRouter.route('/collections/:collectionId/items/:featureId')
 
 function manifoldController(injection: Injection): ManifoldController {
-  const { sourceRepo, manifoldService } = injection
+  const { adapterRepo, sourceRepo } = injection
   return {
     async getManifoldDescriptor(req: Request, res: Response, next: NextFunction): Promise<any> {
-      const desc = await manifoldService.getManifoldDescriptor()
-      return res.send(desc)
+      throw new Error('unimplemented')
     },
 
     async createSource(req: Request, res: Response, next: NextFunction): Promise<any> {
-      const created = await sourceRepo.create(req.body)
-      return res.status(201).location(`${req.baseUrl}/sources/${created.id}`).send(created)
+      throw new Error('unimplemented')
+      // const created = await repo.create(req.body)
+      // return res.status(201).location(`${req.baseUrl}/sources/${created.id}`).send(created)
     },
 
     async getSource(req: Request, res: Response, next: NextFunction): Promise<any> {
-      if (!req.manifold.contextSource) {
-        return res.status(404).json('not found')
-      }
-      return res.send(req.manifold.contextSource)
+      throw new Error('unimplemented')
+      // if (!req.manifold.contextSource) {
+      //   return res.status(404).json('not found')
+      // }
+      // return res.send(req.manifold.contextSource)
     },
 
     async getSourceApi(req: Request, res: Response, next: NextFunction): Promise<any> {
-      return res.send({})
+      throw new Error('unimplemented')
+      // return res.send({})
     }
   }
 }
 
-function contextSourceParamHandler(injection: Injection): RequestHandler {
-  const { sourceRepo, manifoldService } = injection
-  return async (req: Request, res: Response, next: NextFunction): Promise<any> => {
-    if (!req.params.hasOwnProperty('sourceId')) {
-      return next()
-    }
-    const sourceId = req.params.sourceId
-    const sourceDesc = sourceId ? await sourceRepo.findById(sourceId) : null
-    if (sourceDesc === null) {
-      return res.status(404).json('not found')
-    }
-    req.manifold.contextSource = sourceDesc
-    const adapter = await manifoldService.getAdapterForSource(sourceDesc)
-    req.manifold.adapter = adapter
-    next()
-  }
-}
+// function contextSourceParamHandler(injection: Injection): RequestHandler {
+//   const { sourceRepo, adapterRepo, manager } = injection
+//   return async (req: Request, res: Response, next: NextFunction): Promise<any> => {
+//     if (!req.params.hasOwnProperty('sourceId')) {
+//       return next()
+//     }
+//     const sourceId = req.params.sourceId
+//     const sourceDesc = sourceId ? await sourceRepo.findById(sourceId) : null
+//     if (sourceDesc === null) {
+//       return res.status(404).json('not found')
+//     }
+//     req.manifold.contextSource = sourceDesc
+//     const adapter = await manifoldService.getAdapterForSource(sourceDesc)
+//     req.manifold.adapter = adapter
+//     next()
+//   }
+// }
 
 export function createRouter(injection: Injection): Router {
   const controller = manifoldController(injection)
@@ -109,35 +107,22 @@ export function createRouter(injection: Injection): Router {
     .get(controller.getSource)
   main.route('/sources/:sourceId/api')
     .get(controller.getSourceApi)
-  const setContextSource = contextSourceParamHandler(injection)
+  // const setContextSource = contextSourceParamHandler(injection)
   const root = Router()
-  root.use((req: Request, res: Response, next: NextFunction) => {
-    req.manifold = {
-      get requiredAdapter(): ManifoldAdapter {
-        const adapter = req.manifold.adapter
-        if (!adapter) {
-          throw new Error(`no adapter on request ${req.path}`)
-        }
-        return adapter
-      }
-    }
-    next()
-  })
-  root.use('/sources/:sourceId', setContextSource)
+  // root.use((req: Request, res: Response, next: NextFunction) => {
+  //   req.manifold = {
+  //     get requiredAdapter(): ManifoldAdapter {
+  //       const adapter = req.manifold.adapter
+  //       if (!adapter) {
+  //         throw new Error(`no adapter on request ${req.path}`)
+  //       }
+  //       return adapter
+  //     }
+  //   }
+  //   next()
+  // })
+  // root.use('/sources/:sourceId', setContextSource)
   root.use('/sources/:sourceId/', sourceRouter)
   root.use(main)
   return root
-}
-
-export default function initialize(app: Application, callback: (err?: Error | null) => void): void {
-  const adapterDescriptorModel: AdapterDescriptorModel = mongoose.model(ManifoldModels.AdapterDescriptor, AdapterDescriptorSchema)
-  const sourceDescriptorModel: SourceDescriptorModel = mongoose.model(ManifoldModels.SourceDescriptor, SourceDescriptorSchema)
-  const adapterRepo = new AdapterRepository(adapterDescriptorModel)
-  const sourceRepo = new SourceRepository(sourceDescriptorModel)
-  const manifoldService = new ManifoldService(adapterRepo, sourceRepo)
-  const injection = { adapterRepo, sourceRepo, manifoldService }
-  // TODO: instead make plugins return a Router that the app can mount
-  const router = createRouter(injection)
-  app.use('/plugins/manifold', router)
-  setImmediate(() => callback())
 }

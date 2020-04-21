@@ -1,5 +1,8 @@
 
 import mongoose, { Model, SchemaOptions } from 'mongoose'
+import { BaseMongooseRepository } from '../../architecture/adapters/base.adapters.db.mongoose'
+import { AdapterDescriptor, SourceDescriptor } from '../entities/manifold.entities'
+import { AdapterRepository, SourceRepository } from '../application/manifold.app.contracts'
 
 
 
@@ -19,7 +22,7 @@ export const AdapterDescriptorSchema = new mongoose.Schema(
   {
     toJSON: {
       getters: true,
-      transform: (entity: AdapterDescriptorDocument, json: any & AdapterDescriptor, options: SchemaOptions) => {
+      transform: (entity: AdapterDescriptorDocument, json: any & AdapterDescriptor, options: SchemaOptions): void => {
         delete json._id
         delete json.modulePath
       }
@@ -38,7 +41,7 @@ export const SourceDescriptorSchema = new mongoose.Schema(
   {
     toJSON: {
       getters: true,
-      transform: (entity: SourceDescriptorDocument, json: any & SourceDescriptor, options: SchemaOptions) => {
+      transform: (entity: SourceDescriptorDocument, json: any & SourceDescriptor, options: SchemaOptions): void => {
         delete json._id
         if (!entity.populated('adapter') && entity.adapter instanceof mongoose.Types.ObjectId) {
           json.adapter = json.adapter.toHexString()
@@ -51,3 +54,18 @@ export type AdapterDescriptorDocument = AdapterDescriptor & mongoose.Document
 export type SourceDescriptorDocument = SourceDescriptor & mongoose.Document
 export type AdapterDescriptorModel = Model<AdapterDescriptorDocument>
 export type SourceDescriptorModel = Model<SourceDescriptorDocument>
+
+export class MongooseAdapterRepository extends BaseMongooseRepository<AdapterDescriptorDocument, AdapterDescriptorModel, AdapterDescriptor> implements AdapterRepository{
+
+  constructor(model: AdapterDescriptorModel) {
+    super(model)
+  }
+}
+
+
+export class MongooseSourceRepository extends BaseMongooseRepository<SourceDescriptorDocument, SourceDescriptorModel, SourceDescriptor> implements SourceRepository {
+
+  constructor(model: SourceDescriptorModel) {
+    super(model)
+  }
+}

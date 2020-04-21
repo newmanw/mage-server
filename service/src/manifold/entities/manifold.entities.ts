@@ -7,9 +7,9 @@ import * as OgcApiFeatures from '../../ogcapi-features/entities/ogcapi-features.
  * versa.
  */
 export interface AdapterDescriptor {
-  id?: string
+  id: string
   title: string
-  description: string
+  summary: string | null
   isReadable: boolean
   isWritable: boolean
   modulePath: string
@@ -17,16 +17,29 @@ export interface AdapterDescriptor {
 
 /**
  * A SourceDescriptor represents an actual data endpoint whose data a
- * corresponding [[AdapterDescriptor|adapter]] can retrieve and transform.
+ * corresponding [[AdapterDescriptor | adapter]] can retrieve and transform.
  */
 export interface SourceDescriptor {
-  id?: string
+  id: string
   adapter: string | AdapterDescriptor
   title: string
-  description: string
+  summary: string | null
   isReadable: boolean
   isWritable: boolean
   url: string
+}
+
+/**
+ * The ManifoldDescriptor contains all the currently available adapters and
+ * configured sources, each keyed by their IDs.
+ */
+export class ManifoldDescriptor {
+
+  readonly adapters: Map<string, AdapterDescriptor> = new Map()
+  readonly sources: Map<string, SourceDescriptor> = new Map()
+
+  constructor(adapters: AdapterDescriptor[], sources: SourceDescriptor[]) {
+  }
 }
 
 // eslint-disable-next-line @typescript-eslint/no-empty-interface
@@ -42,4 +55,10 @@ export interface ManifoldAdapter {
 export interface ManifoldPlugin {
 
   createAdapter(): Promise<ManifoldAdapter>
+}
+
+export class ManifoldManager {
+  async getAdapterForSource(source: SourceDescriptor): Promise<ManifoldAdapter> {
+    throw new Error('unimplemented')
+  }
 }
