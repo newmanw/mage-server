@@ -1,5 +1,5 @@
 
-import { PluginDescriptor, PluginModule } from "../entities/plugins.entities"
+import { PluginDescriptor } from "../entities/plugins.entities"
 import { PluginRepository, PluginManager } from "./plugins.app.contracts"
 
 export interface ListPluginsFn {
