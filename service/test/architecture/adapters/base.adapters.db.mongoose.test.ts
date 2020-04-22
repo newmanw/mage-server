@@ -157,7 +157,7 @@ describe('base mongoose repository', async function() {
     }
     const created = await repo.create(seed)
     const beforeDelete = await repo.readAll()
-    await repo.deleteById(created.id)
+    await repo.removeById(created.id)
     const afterDelete = await repo.readAll()
 
     expect(beforeDelete.length).to.equal(1)

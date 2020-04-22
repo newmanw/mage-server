@@ -12,5 +12,5 @@ export interface Repository<E extends object> {
 
   update(attrs: Partial<E> & EntityReference): Promise<E>
 
-  deleteById(id: any): Promise<void>
+  removeById(id: any): Promise<void>
 }

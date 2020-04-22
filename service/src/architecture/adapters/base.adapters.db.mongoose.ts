@@ -44,7 +44,7 @@ export class BaseMongooseRepository<D extends mongoose.Document, M extends mongo
     return this.docToEntity(doc);
   }
 
-  async deleteById(id: any): Promise<void> {
+  async removeById(id: any): Promise<void> {
     await this.model.findByIdAndRemove(id)
   }
 }

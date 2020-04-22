@@ -1,4 +1,4 @@
-import { ManifoldPlugin, ManifoldAdapter } from "../../../../lib/manifold/adapters"
+import { ManifoldPlugin, ManifoldAdapter } from "../../../../lib/manifold/entities/manifold.entities"
 
 
 class TestManifoldPlugin implements ManifoldPlugin {

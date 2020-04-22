@@ -4,8 +4,9 @@ import { describe, it, before, beforeEach, after, afterEach } from 'mocha'
 import { expect } from 'chai'
 import { MongoMemoryServer } from 'mongodb-memory-server'
 import { BaseMongooseRepository } from '../../../lib/architecture/adapters/base.adapters.db.mongoose'
-import { AdapterRepository, EntityReference, SourceRepository } from '../../../lib/manifold/repositories'
-import { AdapterDescriptor, AdapterDescriptorModel, ManifoldModels, AdapterDescriptorSchema, SourceDescriptorModel, SourceDescriptorSchema } from '../../../lib/manifold/models'
+import { AdapterRepository, SourceRepository } from '../../../lib/manifold/application/manifold.app.contracts'
+import { AdapterDescriptorModel, ManifoldModels, AdapterDescriptorSchema, SourceDescriptorModel, SourceDescriptorSchema, MongooseAdapterRepository, MongooseSourceRepository } from '../../../lib/manifold/adapters/manifold.adapters.db.mongoose'
+import { AdapterDescriptor } from '../../../src/manifold/entities/manifold.entities'
 
 describe('manifold repositories', function() {
 
@@ -43,7 +44,7 @@ describe('manifold repositories', function() {
 
     beforeEach(async function() {
       model = conn.model(ManifoldModels.AdapterDescriptor, AdapterDescriptorSchema, collection)
-      repo = new AdapterRepository(model)
+      repo = new MongooseAdapterRepository(model)
     })
 
     afterEach(async function() {
@@ -56,9 +57,9 @@ describe('manifold repositories', function() {
 
     it('creates an adatper descriptor record', async function() {
 
-      const seed: AdapterDescriptor = {
+      const seed: Partial<AdapterDescriptor> = {
         title: 'Xyz Adapter',
-        description: 'Adapting Xyz services',
+        summary: 'Adapting Xyz services',
         isReadable: true,
         isWritable: true,
         modulePath: '/var/mage/manifold/xyz'
@@ -78,16 +79,16 @@ describe('manifold repositories', function() {
 
     it('reads all adapter descriptor records', async function() {
 
-      const seed1: AdapterDescriptor = {
+      const seed1: Partial<AdapterDescriptor> = {
         title: 'Abc Adapter',
-        description: 'Adapting Abc services',
+        summary: 'Adapting Abc services',
         isReadable: true,
         isWritable: false,
         modulePath: '/var/mage/manifold/abc'
       }
-      const seed2: AdapterDescriptor = {
+      const seed2: Partial<AdapterDescriptor> = {
         title: 'Xyz Adapter',
-        description: 'Adapting Xyz services',
+        summary: 'Adapting Xyz services',
         isReadable: true,
         isWritable: false,
         modulePath: '/var/mage/manifold/xyz'
@@ -104,9 +105,9 @@ describe('manifold repositories', function() {
 
     it('updates an adapter descriptor record', async function() {
 
-      const seed: AdapterDescriptor = {
+      const seed: Partial<AdapterDescriptor> = {
         title: 'Adapter 123',
-        description: 'Needs an update',
+        summary: 'Needs an update',
         isReadable: true,
         isWritable: true,
         modulePath: '/var/mage/manifold/adapter123'
@@ -133,16 +134,16 @@ describe('manifold repositories', function() {
 
     it('deletes an adapter descriptor record', async function() {
 
-      const seed: AdapterDescriptor = {
+      const seed: Partial<AdapterDescriptor> = {
         title: 'Doomed',
-        description: 'Marked for delete',
+        summary: 'Marked for delete',
         isReadable: true,
         isWritable: false,
         modulePath: '/var/mage/manifold/doomed'
       }
       const created = await repo.create(seed)
       const beforeDelete = await repo.readAll()
-      await repo.deleteById(created.id)
+      await repo.removeById(created.id)
       const afterDelete = await repo.readAll()
 
       expect(beforeDelete.length).to.equal(1)
@@ -159,7 +160,7 @@ describe('manifold repositories', function() {
 
     beforeEach(function() {
       model = conn.model(ManifoldModels.SourceDescriptor, SourceDescriptorSchema, collection)
-      repo = new SourceRepository(model)
+      repo = new MongooseSourceRepository(model)
     })
 
     it('does what base repository can do', async function() {
