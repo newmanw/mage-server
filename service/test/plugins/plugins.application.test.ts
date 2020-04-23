@@ -30,7 +30,7 @@ const plugin2Attrs: PluginDescriptorAttrs = {
   settings: { 'lorp': 'snef' }
 }
 
-describe.only('plugins administration', function() {
+describe('plugins administration', function() {
 
   let app: PluginsTestAdapter
 

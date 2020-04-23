@@ -18,6 +18,7 @@ export const MODEL_NAME = 'PluginDescriptor'
 export const PluginDescriptorModel = mongoose.model<PluginDescriptorDocument>(MODEL_NAME, PluginDescriptorSchema)
 
 export class MongoosePluginRepository extends BaseMongooseRepository<PluginDescriptorDocument, PluginDescriptorModel, PluginDescriptor> implements PluginRepository {
+
   constructor() {
     super(PluginDescriptorModel)
   }

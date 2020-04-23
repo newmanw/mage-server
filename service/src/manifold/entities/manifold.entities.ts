@@ -12,7 +12,6 @@ export interface AdapterDescriptor {
   summary: string | null
   isReadable: boolean
   isWritable: boolean
-  modulePath: string
 }
 
 /**

@@ -40,7 +40,7 @@ describe('manifold repositories', function() {
 
     const collection = 'adapters'
     let model: AdapterDescriptorModel
-    let repo: AdapterRepository
+    let repo: MongooseAdapterRepository
 
     beforeEach(async function() {
       model = conn.model(ManifoldModels.AdapterDescriptor, AdapterDescriptorSchema, collection)
@@ -62,7 +62,6 @@ describe('manifold repositories', function() {
         summary: 'Adapting Xyz services',
         isReadable: true,
         isWritable: true,
-        modulePath: '/var/mage/manifold/xyz'
       }
       const created = await repo.create({
         id: 'ignore',
@@ -84,14 +83,12 @@ describe('manifold repositories', function() {
         summary: 'Adapting Abc services',
         isReadable: true,
         isWritable: false,
-        modulePath: '/var/mage/manifold/abc'
       }
       const seed2: Partial<AdapterDescriptor> = {
         title: 'Xyz Adapter',
         summary: 'Adapting Xyz services',
         isReadable: true,
         isWritable: false,
-        modulePath: '/var/mage/manifold/xyz'
       }
       await Promise.all([
         repo.create(seed1),
@@ -110,7 +107,6 @@ describe('manifold repositories', function() {
         summary: 'Needs an update',
         isReadable: true,
         isWritable: true,
-        modulePath: '/var/mage/manifold/adapter123'
       }
       const existing = await repo.create(seed)
       const update = {
@@ -139,7 +135,6 @@ describe('manifold repositories', function() {
         summary: 'Marked for delete',
         isReadable: true,
         isWritable: false,
-        modulePath: '/var/mage/manifold/doomed'
       }
       const created = await repo.create(seed)
       const beforeDelete = await repo.readAll()
