@@ -7,6 +7,7 @@ export interface AdapterRepository {
 }
 
 export interface SourceRepository {
+  create(sourceAttrs: Partial<SourceDescriptor>): Promise<SourceDescriptor>
   readAll(): Promise<SourceDescriptor[]>
   findById(sourceId: string): Promise<SourceDescriptor | null>
 }
