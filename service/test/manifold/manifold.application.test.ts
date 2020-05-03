@@ -7,7 +7,7 @@ import { AdapterDescriptor, SourceDescriptor } from '../../lib/manifold/entities
 import { ListAdaptersFn, CreateSourceFn } from '../../lib/manifold/application/manifold.app.fn'
 import { AdapterRepository, SourceRepository, ManifoldAuthorizationService } from '../../lib/manifold/application/manifold.app.contracts'
 import { AdapterDescriptorSchema } from '../../lib/manifold/adapters/manifold.adapters.db.mongoose'
-import { MageErrorCode } from '../../lib/application/app.global.errors'
+import { MageErrorCode, MageError } from '../../lib/application/app.global.errors'
 
 chai.use(asPromised)
 
@@ -109,7 +109,7 @@ class TestApp {
   readonly adapterRepo = new TestAdapterRepo()
   readonly sourceRepo = new TestSourceRepo()
   readonly authzService = new TestAuthzService()
-  readonly listAdapters = ListAdaptersFn(this.adapterRepo)
+  readonly listAdapters = ListAdaptersFn(this.adapterRepo, this.authzService)
   readonly createSource = CreateSourceFn(this.adapterRepo, this.sourceRepo)
 
   regiserAdapters(... adapters: AdapterDescriptor[]): void {
@@ -162,7 +162,9 @@ class TestAuthzService implements ManifoldAuthorizationService {
 
   readonly privleges = new Map<string, boolean>()
 
-  currentUserCanListAdapters() {
-    return !!this.privleges.get('list_adapters')
+  async checkCurrentUserListAdapters(): Promise<void> {
+    if (!this.privleges.get('list_adapters')) {
+      throw new MageError(MageErrorCode.PermissionDenied)
+    }
   }
 }

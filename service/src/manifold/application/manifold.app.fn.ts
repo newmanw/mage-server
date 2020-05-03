@@ -1,11 +1,12 @@
 import { AdapterDescriptor, SourceDescriptor } from '../entities/manifold.entities';
-import { AdapterRepository, SourceRepository } from './manifold.app.contracts';
+import { AdapterRepository, SourceRepository, ManifoldAuthorizationService } from './manifold.app.contracts';
 
 export interface ListAdaptersFn {
   (): Promise<AdapterDescriptor[]>
 }
-export function ListAdaptersFn(repo: AdapterRepository): ListAdaptersFn {
+export function ListAdaptersFn(repo: AdapterRepository, authzService: ManifoldAuthorizationService): ListAdaptersFn {
   return async function(): ReturnType<ListAdaptersFn> {
+    await authzService.checkCurrentUserListAdapters()
     return await repo.readAll()
   }
 }
