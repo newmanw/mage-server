@@ -11,3 +11,7 @@ export interface SourceRepository {
   readAll(): Promise<SourceDescriptor[]>
   findById(sourceId: string): Promise<SourceDescriptor | null>
 }
+
+export interface ManifoldAuthorizationService {
+
+}

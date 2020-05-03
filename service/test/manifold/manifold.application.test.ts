@@ -3,10 +3,11 @@ import chai, { expect } from 'chai'
 import asPromised from 'chai-as-promised'
 import { Substitute as Sub, Arg } from '@fluffy-spoon/substitute'
 import deepEqual from 'deep-equal'
-import { AdapterDescriptor, SourceDescriptor } from '../../src/manifold/entities/manifold.entities'
+import { AdapterDescriptor, SourceDescriptor } from '../../lib/manifold/entities/manifold.entities'
 import { ListAdaptersFn, CreateSourceFn } from '../../lib/manifold/application/manifold.app.fn'
-import { AdapterRepository, SourceRepository } from '../../src/manifold/application/manifold.app.contracts'
-import { AdapterDescriptorSchema } from '../../src/manifold/adapters/manifold.adapters.db.mongoose'
+import { AdapterRepository, SourceRepository, ManifoldAuthorizationService } from '../../lib/manifold/application/manifold.app.contracts'
+import { AdapterDescriptorSchema } from '../../lib/manifold/adapters/manifold.adapters.db.mongoose'
+import { MageErrorCode } from '../../lib/application/app.global.errors'
 
 chai.use(asPromised)
 
@@ -18,7 +19,7 @@ describe.only('manifold administration', function() {
     app = new TestApp()
   })
 
-  it('fetches the manifold descriptor with all sources and adapters', async function() {
+  it('fetches the available adapters', async function() {
 
     const adapters: AdapterDescriptor[] = [
       {
@@ -73,12 +74,41 @@ describe.only('manifold administration', function() {
   it('can preview source data', async function() {
     expect.fail('todo')
   })
+
+  describe('authorization', function() {
+
+    beforeEach(function() {
+      const adapters: AdapterDescriptor[] = [
+        {
+          id: 'adapter1',
+          title: 'Adapter 1',
+          summary: null,
+          isReadable: true,
+          isWritable: false,
+        },
+        {
+          id: 'adapter2',
+          title: 'Adapter 2',
+          summary: null,
+          isReadable: true,
+          isWritable: false,
+        }
+      ]
+      app.regiserAdapters(...adapters)
+    })
+
+    it('checks permission for listing adapters', async function() {
+
+      await expect(app.listAdapters()).to.eventually.be.rejectedWith(MageErrorCode.PermissionDenied)
+    })
+  })
 })
 
 class TestApp {
 
   readonly adapterRepo = new TestAdapterRepo()
   readonly sourceRepo = new TestSourceRepo()
+  readonly authzService = new TestAuthzService()
   readonly listAdapters = ListAdaptersFn(this.adapterRepo)
   readonly createSource = CreateSourceFn(this.adapterRepo, this.sourceRepo)
 
@@ -125,5 +155,14 @@ class TestSourceRepo implements SourceRepository {
 
   async findById(sourceId: string): Promise<SourceDescriptor | null> {
     throw new Error('Method not implemented.')
+  }
+}
+
+class TestAuthzService implements ManifoldAuthorizationService {
+
+  readonly privleges = new Map<string, boolean>()
+
+  currentUserCanListAdapters() {
+    return !!this.privleges.get('list_adapters')
   }
 }
