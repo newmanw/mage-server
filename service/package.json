@@ -133,14 +133,15 @@
     ]
   },
   "scripts": {
-    "build:tsc": "tsc -b",
+    "build:tsc": "tsc -b src",
     "build:copy_docs": "cpy --parents 'docs/**/*' lib/",
     "build:copy_package": "cpy --rename=dist-package.json package.json lib/",
     "build": "npm-run-all build:tsc build:copy_docs build:copy_package",
     "test:run": "mocha --config .mocharc.dev.js",
     "test": "npm-run-all build test:run",
+    "dist-test:build": "tsc -b test",
     "dist-test:test": "mocha --config .mocharc.dist.js",
-    "dist-test": "npm-run-all build dist-test:test",
+    "dist-test": "npm-run-all dist-test:build dist-test:test",
     "report": "nyc report",
     "coverage": "nyc mocha",
     "coveralls": "nyc report --reporter=text-lcov | coveralls",
