@@ -95,6 +95,7 @@ describe.only('manifold administration', function() {
         }
       ]
       app.regiserAdapters(...adapters)
+      app.denyAllPrivileges()
     })
 
     it('checks permission for listing adapters', async function() {
@@ -116,6 +117,14 @@ class TestApp {
     for (const desc of adapters) {
       this.adapterRepo.db.set(desc.id, desc)
     }
+  }
+
+  allowAllPrivileges() {
+    this.authzService.allowAll()
+  }
+
+  denyAllPrivileges() {
+    this.authzService.denyAll()
   }
 }
 
@@ -160,11 +169,25 @@ class TestSourceRepo implements SourceRepository {
 
 class TestAuthzService implements ManifoldAuthorizationService {
 
-  readonly privleges = new Map<string, boolean>()
+  readonly privleges = {
+    [ListAdaptersFn.name]: true,
+  }
 
   async checkCurrentUserListAdapters(): Promise<void> {
-    if (!this.privleges.get('list_adapters')) {
+    if (!this.privleges[ListAdaptersFn.name]) {
       throw new MageError(MageErrorCode.PermissionDenied)
     }
+  }
+
+  allowAll() {
+    Object.keys(this.privleges).forEach(priv => {
+      this.privleges[priv] = true
+    })
+  }
+
+  denyAll() {
+    Object.keys(this.privleges).forEach(priv => {
+      this.privleges[priv] = false
+    })
   }
 }
