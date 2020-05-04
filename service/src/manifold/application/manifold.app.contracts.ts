@@ -2,6 +2,15 @@ import { AdapterDescriptor, SourceDescriptor } from "../entities/manifold.entiti
 
 export interface AdapterRepository {
   readAll(): Promise<AdapterDescriptor[]>
+  /**
+   *
+   * @param adapterId
+   */
+  findById(adapterId: string): Promise<AdapterDescriptor | null>
+  /**
+   * Reject if there is no adapter descriptor with the given ID.
+   * @param attrs the attributes to update on the referenced adapter descriptor
+   */
   update(attrs: Partial<AdapterDescriptor> & { id: string }): Promise<AdapterDescriptor>
   removeById(adapterId: string): Promise<void>
 }

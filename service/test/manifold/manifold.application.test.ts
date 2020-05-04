@@ -51,6 +51,11 @@ describe.only('manifold administration', function() {
 
   describe('creating a source', function() {
 
+    it('provides the source stub from the adapter', async function() {
+
+
+    })
+
     it('saves a source descriptor', async function() {
 
       const sourceAttrs: Partial<SourceDescriptor> = {
@@ -83,10 +88,30 @@ describe.only('manifold administration', function() {
 
       await expect(app.createSource(sourceAttrs)).to.eventually.be.rejectedWith(MageErrorCode.PermissionDenied)
     })
+
+    it('validates the source has a valid adapter', async function() {
+
+      const sourceAttrs: Partial<SourceDescriptor> = {
+        title: 'Boor Lum',
+        summary: 'Lem do sot',
+        url: 'socket://boor-lum.ner'
+      }
+
+      await expect(app.createSource(sourceAttrs), 'without adapter id')
+        .to.eventually.be.rejectedWith(MageErrorCode.InvalidInput)
+
+      sourceAttrs.adapter = someAdapters[0].id + '.invalid'
+
+      await expect(app.createSource(sourceAttrs), 'with invalid adapter id')
+        .to.eventually.be.rejectedWith(MageErrorCode.InvalidInput)
+    })
   })
 
-  it('can preview source data', async function() {
-    expect.fail('todo')
+  describe('previewing source data', function() {
+
+    it('can preview source data', async function() {
+      expect.fail('todo')
+    })
   })
 })
 
@@ -119,6 +144,10 @@ class TestAdapterRepo implements AdapterRepository {
 
   async readAll(): Promise<AdapterDescriptor[]> {
     return Array.from(this.db.values())
+  }
+
+  async findById(adapterId: string): Promise<AdapterDescriptor | null> {
+    return this.db.get(adapterId) ?? null
   }
 
   update(attrs: Partial<AdapterDescriptor> & { id: string }): Promise<AdapterDescriptor> {
