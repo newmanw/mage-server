@@ -14,8 +14,9 @@ export function ListAdaptersFn(repo: AdapterRepository, authzService: ManifoldAu
 export interface CreateSourceFn {
   (sourceAttrs: Partial<SourceDescriptor>): Promise<SourceDescriptor>
 }
-export function CreateSourceFn(adapterRepo: AdapterRepository, sourceRepo: SourceRepository): CreateSourceFn {
+export function CreateSourceFn(adapterRepo: AdapterRepository, sourceRepo: SourceRepository, authzService: ManifoldAuthorizationService): CreateSourceFn {
   return async function createSource(sourceAttrs: Partial<SourceDescriptor>): ReturnType<CreateSourceFn> {
+    await authzService.checkCurrentUserCreateSource()
     return await sourceRepo.create(sourceAttrs)
   }
 }

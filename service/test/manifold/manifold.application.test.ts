@@ -1,15 +1,29 @@
 import { describe, it, beforeEach } from 'mocha'
 import chai, { expect } from 'chai'
 import asPromised from 'chai-as-promised'
-import { Substitute as Sub, Arg } from '@fluffy-spoon/substitute'
-import deepEqual from 'deep-equal'
 import { AdapterDescriptor, SourceDescriptor } from '../../lib/manifold/entities/manifold.entities'
 import { ListAdaptersFn, CreateSourceFn } from '../../lib/manifold/application/manifold.app.fn'
 import { AdapterRepository, SourceRepository, ManifoldAuthorizationService } from '../../lib/manifold/application/manifold.app.contracts'
-import { AdapterDescriptorSchema } from '../../lib/manifold/adapters/manifold.adapters.db.mongoose'
 import { MageErrorCode, MageError } from '../../lib/application/app.global.errors'
 
 chai.use(asPromised)
+
+const someAdapters: AdapterDescriptor[] = [
+  Object.freeze({
+    id: 'adapter1',
+    title: 'Adapter 1',
+    summary: null,
+    isReadable: true,
+    isWritable: false,
+  }),
+  Object.freeze({
+    id: 'adapter2',
+    title: 'Adapter 2',
+    summary: null,
+    isReadable: true,
+    isWritable: false,
+  })
+]
 
 describe.only('manifold administration', function() {
 
@@ -19,89 +33,60 @@ describe.only('manifold administration', function() {
     app = new TestApp()
   })
 
-  it('fetches the available adapters', async function() {
+  describe('listing available adapters', async function() {
 
-    const adapters: AdapterDescriptor[] = [
-      {
-        id: 'adapter1',
-        title: 'Adapter 1',
-        summary: null,
-        isReadable: true,
-        isWritable: false,
-      },
-      {
-        id: 'adapter2',
-        title: 'Adapter 2',
-        summary: null,
-        isReadable: true,
-        isWritable: false,
-      }
-    ]
-    app.regiserAdapters(...adapters)
+    it('returns all the adapter descriptors', async function() {
 
-    const read = await app.listAdapters()
-
-    expect(read).to.have.deep.members(adapters)
-  })
-
-  it('creates a source', async function() {
-
-    const adapter: AdapterDescriptor = {
-      id: 'a1',
-      title: 'Hupna',
-      summary: null,
-      isReadable: true,
-      isWritable: false
-    }
-    const sourceAttrs: Partial<SourceDescriptor> = {
-      adapter: 'a1',
-      title: 'Slurm',
-      summary: 'Bur wen',
-      url: 'https://slurm.io/api'
-    }
-    app.regiserAdapters(adapter)
-
-    const created = await app.createSource(sourceAttrs)
-    const inDb = app.sourceRepo.db.get(created.id)
-
-    expect(created).to.deep.include({
-      ...sourceAttrs
-    })
-    expect(created.id).to.exist
-    expect(created).to.deep.equal(inDb)
-  })
-
-  it('can preview source data', async function() {
-    expect.fail('todo')
-  })
-
-  describe('authorization', function() {
-
-    beforeEach(function() {
-      const adapters: AdapterDescriptor[] = [
-        {
-          id: 'adapter1',
-          title: 'Adapter 1',
-          summary: null,
-          isReadable: true,
-          isWritable: false,
-        },
-        {
-          id: 'adapter2',
-          title: 'Adapter 2',
-          summary: null,
-          isReadable: true,
-          isWritable: false,
-        }
-      ]
-      app.regiserAdapters(...adapters)
-      app.denyAllPrivileges()
+      app.regiserAdapters(...someAdapters)
+      const read = await app.listAdapters()
+      expect(read).to.have.deep.members(someAdapters)
     })
 
     it('checks permission for listing adapters', async function() {
 
+      app.denyAllPrivileges()
       await expect(app.listAdapters()).to.eventually.be.rejectedWith(MageErrorCode.PermissionDenied)
     })
+  })
+
+  describe('creating a source', function() {
+
+    it('saves a source descriptor', async function() {
+
+      const sourceAttrs: Partial<SourceDescriptor> = {
+        adapter: someAdapters[0].id,
+        title: 'Slurm',
+        summary: 'Bur wen',
+        url: 'https://slurm.io/api'
+      }
+      app.regiserAdapters(...someAdapters)
+
+      const created = await app.createSource(sourceAttrs)
+      const inDb = app.sourceRepo.db.get(created.id)
+
+      expect(created).to.deep.include({
+        ...sourceAttrs
+      })
+      expect(created.id).to.exist
+      expect(created).to.deep.equal(inDb)
+    })
+
+    it('checks permission for creating a source', async function() {
+
+      const sourceAttrs: Partial<SourceDescriptor> = {
+        adapter: someAdapters[0].id,
+        title: 'Boor Lum',
+        summary: 'Lem do sot',
+        url: 'socket://boor-lum.ner'
+      }
+      app.denyAllPrivileges()
+
+      await expect(app.createSource(sourceAttrs)).to.eventually.be.rejectedWith(MageErrorCode.PermissionDenied)
+    })
+  })
+
+  it('can preview source data', async function() {
+    expect.fail('todo')
   })
 })
 
@@ -111,7 +96,7 @@ class TestApp {
   readonly sourceRepo = new TestSourceRepo()
   readonly authzService = new TestAuthzService()
   readonly listAdapters = ListAdaptersFn(this.adapterRepo, this.authzService)
-  readonly createSource = CreateSourceFn(this.adapterRepo, this.sourceRepo)
+  readonly createSource = CreateSourceFn(this.adapterRepo, this.sourceRepo, this.authzService)
 
   regiserAdapters(... adapters: AdapterDescriptor[]): void {
     for (const desc of adapters) {
@@ -171,10 +156,19 @@ class TestAuthzService implements ManifoldAuthorizationService {
 
   readonly privleges = {
     [ListAdaptersFn.name]: true,
+    [CreateSourceFn.name]: true,
   }
 
   async checkCurrentUserListAdapters(): Promise<void> {
-    if (!this.privleges[ListAdaptersFn.name]) {
+    this.checkPrivilege(ListAdaptersFn.name)
+  }
+
+  async checkCurrentUserCreateSource(): Promise<void> {
+    this.checkPrivilege(CreateSourceFn.name)
+  }
+
+  checkPrivilege(privilege: string) {
+    if (!this.privleges[privilege]) {
       throw new MageError(MageErrorCode.PermissionDenied)
     }
   }

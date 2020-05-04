@@ -14,4 +14,5 @@ export interface SourceRepository {
 
 export interface ManifoldAuthorizationService {
   checkCurrentUserListAdapters(): Promise<void>
+  checkCurrentUserCreateSource(): Promise<void>
 }
