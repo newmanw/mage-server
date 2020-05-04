@@ -14,3 +14,24 @@ import { MongoMemoryServer } from 'mongodb-memory-server';
 //     dbName: 'mage_test'
 //   }
 // });
+
+
+import chai, { Assertion } from 'chai'
+import asPromised from 'chai-as-promised'
+
+declare global {
+  namespace Chai {
+    interface Eventually {
+      rejectWith: PromisedThrow
+    }
+  }
+}
+
+before(function() {
+  chai.use(asPromised)
+  const assertionProto = Assertion.prototype as any
+  const rejectedWith = assertionProto.rejectedWith as Function
+  Assertion.addMethod('rejectWith', function(...args: any[]): any {
+    return rejectedWith.apply(this, args)
+  })
+})

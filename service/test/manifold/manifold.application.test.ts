@@ -1,12 +1,9 @@
 import { describe, it, beforeEach } from 'mocha'
-import chai, { expect } from 'chai'
-import asPromised from 'chai-as-promised'
+import { expect } from 'chai'
 import { AdapterDescriptor, SourceDescriptor } from '../../lib/manifold/entities/manifold.entities'
 import { ListAdaptersFn, CreateSourceFn } from '../../lib/manifold/application/manifold.app.fn'
 import { AdapterRepository, SourceRepository, ManifoldAuthorizationService } from '../../lib/manifold/application/manifold.app.contracts'
 import { MageErrorCode, MageError } from '../../lib/application/app.global.errors'
-
-chai.use(asPromised)
 
 const someAdapters: AdapterDescriptor[] = [
   Object.freeze({
@@ -45,7 +42,7 @@ describe.only('manifold administration', function() {
     it('checks permission for listing adapters', async function() {
 
       app.denyAllPrivileges()
-      await expect(app.listAdapters()).to.eventually.be.rejectedWith(MageErrorCode.PermissionDenied)
+      await expect(app.listAdapters()).to.eventually.rejectWith(MageErrorCode.PermissionDenied)
     })
   })
 
@@ -86,7 +83,7 @@ describe.only('manifold administration', function() {
       }
       app.denyAllPrivileges()
 
-      await expect(app.createSource(sourceAttrs)).to.eventually.be.rejectedWith(MageErrorCode.PermissionDenied)
+      await expect(app.createSource(sourceAttrs)).to.eventually.rejectWith(MageErrorCode.PermissionDenied)
     })
 
     it('validates the source has a valid adapter', async function() {
@@ -98,12 +95,12 @@ describe.only('manifold administration', function() {
       }
 
       await expect(app.createSource(sourceAttrs), 'without adapter id')
-        .to.eventually.be.rejectedWith(MageErrorCode.InvalidInput)
+        .to.eventually.rejectWith(MageErrorCode.InvalidInput)
 
       sourceAttrs.adapter = someAdapters[0].id + '.invalid'
 
       await expect(app.createSource(sourceAttrs), 'with invalid adapter id')
-        .to.eventually.be.rejectedWith(MageErrorCode.InvalidInput)
+        .to.eventually.rejectWith(MageErrorCode.InvalidInput)
     })
   })
 
