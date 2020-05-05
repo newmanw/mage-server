@@ -50,7 +50,7 @@ describe.only('manifold administration', function() {
 
     it('provides the source stub from the adapter', async function() {
 
-
+      expect.fail('todo')
     })
 
     it('saves a source descriptor', async function() {
