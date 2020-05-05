@@ -1,6 +1,5 @@
 import mongoose from 'mongoose';
-import { EntityReference } from '../entities/base.entities';
-import { Repository } from './base.adapters.db';
+import { Repository, EntityReference } from '../../application/app.global.support.db';
 
 
 type DocumentMapping<D extends mongoose.Document, E extends object> = (doc: D) => E;
@@ -38,7 +37,7 @@ export class BaseMongooseRepository<D extends mongoose.Document, M extends mongo
   }
 
   async update(attrs: Partial<E> & EntityReference): Promise<E> {
-    let doc = (await this.model.findById(attrs.id!))!;
+    let doc = (await this.model.findById(attrs.id));
     doc.set(attrs);
     doc = await doc.save();
     return this.docToEntity(doc);
