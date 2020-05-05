@@ -1,8 +1,8 @@
 
 import mongoose, { Model, SchemaOptions } from 'mongoose'
-import { BaseMongooseRepository } from '../../architecture/adapters/base.adapters.db.mongoose'
-import { AdapterDescriptor, SourceDescriptor } from '../entities/manifold.entities'
-import { AdapterRepository, SourceRepository } from '../application/manifold.app.contracts'
+import { BaseMongooseRepository } from '../base/adapters.base.db.mongoose'
+import { AdapterDescriptor, SourceDescriptor } from '../../entities/manifold/entities.manifold'
+import { AdapterRepository, SourceRepository } from '../../application/manifold/app.manifold.use_cases'
 
 
 

@@ -1,8 +1,8 @@
 import { Application } from 'express'
 import mongoose from 'mongoose'
-import { AdapterDescriptorModel, ManifoldModels, AdapterDescriptorSchema, SourceDescriptorModel, SourceDescriptorSchema, MongooseAdapterRepository, MongooseSourceRepository } from './adapters/manifold.adapters.db.mongoose'
-import { createRouter } from './adapters/manifold.adapters.controllers.web'
-import { ManifoldManager } from './entities/manifold.entities'
+import { AdapterDescriptorModel, ManifoldModels, AdapterDescriptorSchema, SourceDescriptorModel, SourceDescriptorSchema, MongooseAdapterRepository, MongooseSourceRepository } from '../../adapters/manifold/adapters.manifold.db.mongoose'
+import { createRouter } from '../../adapters/manifold/adapters.manifold.controllers.web'
+import { ManifoldManager } from '../../entities/manifold/entities.manifold'
 
 
 export default function initialize(app: Application, callback: (err?: Error | null) => void): void {
