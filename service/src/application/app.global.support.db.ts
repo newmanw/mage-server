@@ -1,5 +1,4 @@
 
-
 export type EntityReference = { id: string | number }
 
 export interface Repository<E extends object> {
