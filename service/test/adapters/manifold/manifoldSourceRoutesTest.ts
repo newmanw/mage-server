@@ -2,13 +2,13 @@ import { expect, assert } from 'chai'
 import { mock, reset, instance, when } from 'ts-mockito'
 import request from 'supertest'
 import express, { Request, Response, NextFunction } from 'express'
-import { SourceRepository, AdapterRepository } from '../../lib/manifold/application/manifold.app.contracts'
-import { SourceDescriptorModel, ManifoldModels, SourceDescriptorSchema, SourceDescriptorDocument } from '../../lib/manifold/adapters/manifold.adapters.db.mongoose'
+import { SourceRepository, AdapterRepository } from '../../../lib/application/manifold/app.manifold.use_cases'
+import { SourceDescriptorModel, ManifoldModels, SourceDescriptorSchema, SourceDescriptorDocument } from '../../../lib/adapters/manifold/adapters.manifold.db.mongoose'
 import mongoose from 'mongoose'
-import { createRouter, Injection as ManifoldInjection } from '../../lib/manifold/adapters/manifold.adapters.controllers.web'
-import { ManifoldAdapter, SourceConnection, ManifoldManager } from '../../lib/manifold/entities/manifold.entities'
-import * as OgcApiFeatures from '../../lib/ogcapi-features/entities/ogcapi-features.entities'
-import log = require('../../lib/logger')
+import { createRouter, Injection as ManifoldInjection } from '../../../lib/adapters/manifold/adapters.manifold.controllers.web'
+import { ManifoldAdapter, SourceConnection, ManifoldManager } from '../../../lib/entities/manifold/entities.manifold'
+import * as OgcApiFeatures from '../../../lib/entities/ogcapi-features/entities.ogcapi-features'
+import log = require('../../../lib/logger')
 
 describe('manifold source routes', function() {
 

@@ -1,5 +1,5 @@
 
-import * as OgcApiFeatures from '../../ogcapi-features/entities/ogcapi-features.entities'
+import * as OgcApiFeatures from '../ogcapi-features/entities.ogcapi-features'
 
 /**
  * An AdapterDescriptor represents a type of data source and the translation

@@ -2,14 +2,14 @@ import mongoose from 'mongoose'
 import { describe, it, before, beforeEach, after, afterEach } from 'mocha'
 import { expect } from 'chai'
 import { mongoTestAfterAllHook, mongoTestBeforeAllHook, MongoTestContext } from '../../mongo.test'
-import { BaseMongooseRepository } from '../../../lib/architecture/adapters/base.adapters.db.mongoose'
-import { EntityReference } from '../../../lib/architecture/entities/base.entities'
+import { BaseMongooseRepository } from '../../../lib/adapters/base/adapters.base.db.mongoose'
+import { EntityReference } from '../../../lib/application/app.global.support.db'
 
 
 describe('base mongoose repository', async function() {
 
   interface BaseEntity {
-    id?: string
+    id: string
     derp: string
     lerp?: string
     squee?: boolean
@@ -49,7 +49,7 @@ describe('base mongoose repository', async function() {
 
   it('creates a record', async function() {
 
-    const seed: BaseEntity = {
+    const seed: Partial<BaseEntity> = {
       derp: 'sloo',
       lerp: 'noich',
       squee: true,
@@ -70,13 +70,13 @@ describe('base mongoose repository', async function() {
 
   it('reads all records', async function() {
 
-    const seed1: BaseEntity = {
+    const seed1: Partial<BaseEntity> = {
       derp: 'bam',
       lerp: 'plop',
       squee: true,
       noo: 11
     }
-    const seed2: BaseEntity = {
+    const seed2: Partial<BaseEntity> = {
       derp: 'sloo',
       lerp: 'tum',
       squee: false,
@@ -95,13 +95,13 @@ describe('base mongoose repository', async function() {
 
   it('finds a record by id', async function() {
 
-    const seed1: BaseEntity = {
+    const seed1: Partial<BaseEntity> = {
       derp: 'bam',
       lerp: 'plop',
       squee: true,
       noo: 11
     }
-    const seed2: BaseEntity = {
+    const seed2: Partial<BaseEntity> = {
       derp: 'sloo',
       lerp: 'tum',
       squee: false,
@@ -121,7 +121,7 @@ describe('base mongoose repository', async function() {
 
   it('updates a record', async function() {
 
-    const seed: BaseEntity = {
+    const seed: Partial<BaseEntity> = {
       derp: 'spor',
       lerp: 'jeb',
       squee: true,
@@ -149,7 +149,7 @@ describe('base mongoose repository', async function() {
 
   it('deletes a record', async function() {
 
-    const seed: BaseEntity = {
+    const seed: Partial<BaseEntity> = {
       derp: 'spor',
       lerp: 'jeb',
       squee: true,

@@ -1,8 +1,8 @@
 import { describe, it, beforeEach } from 'mocha'
 import { expect } from 'chai'
-import { AdapterDescriptor, SourceDescriptor } from '../../lib/entities/manifold/entities.manifold'
-import { ListAdaptersFn, CreateSourceFn, AdapterRepository, SourceRepository, ManifoldAuthorizationService } from '../../lib/application/manifold/app.manifold.use_cases'
-import { MageErrorCode, MageError } from '../../lib/application/app.global.errors'
+import { AdapterDescriptor, SourceDescriptor } from '../../../lib/entities/manifold/entities.manifold'
+import { ListAdaptersFn, CreateSourceFn, AdapterRepository, SourceRepository, ManifoldAuthorizationService } from '../../../lib/application/manifold/app.manifold.use_cases'
+import { MageErrorCode, MageError } from '../../../lib/application/app.global.errors'
 
 const someAdapters: AdapterDescriptor[] = [
   Object.freeze({
