@@ -1,5 +1,6 @@
-import { AdapterDescriptor, SourceDescriptor } from '../../entities/manifold/entities.manifold';
-import { MageError, MageErrorCode } from '../../application/app.global.errors';
+import { AdapterDescriptor, SourceDescriptor, ManifoldAdapter } from '../../entities/manifold/entities.manifold';
+import { MageError, MageErrorCode, EntityNotFoundError } from '../../application/app.global.errors';
+import { Json } from '../../entities/entities.global.json';
 
 export interface ListAdaptersFn {
   (): Promise<AdapterDescriptor[]>
@@ -28,6 +29,27 @@ export function CreateSourceFn(adapterRepo: AdapterRepository, sourceRepo: Sourc
   }
 }
 
+export interface GetSourcePreviewParameters {
+  (sourceId: string): Promise<Json>
+}
+export function GetSourcePreviewParameters(adapterRepo: AdapterRepository, sourceRepo: SourceRepository, authzService: ManifoldAuthorizationService, manager: ManifoldAdapterRegistry): GetSourcePreviewParameters {
+  return async function getSourcePreviewParameters(sourceId: string): Promise<Json> {
+    const sourceDesc = await sourceRepo.findById(sourceId)
+    if (!sourceDesc) {
+      throw new EntityNotFoundError('source descriptor', sourceId)
+    }
+    let adapterId = sourceDesc.adapter
+    if (typeof adapterId === 'object') {
+      adapterId = adapterId.id
+    }
+    const adapter = await manager.getAdapterForId(adapterId)
+    if (!adapter) {
+      throw new Error('adapter not registered: ' + adapterId)
+    }
+    return await adapter.getPreviewParametersForSource(sourceDesc)
+  }
+}
+
 export interface AdapterRepository {
   readAll(): Promise<AdapterDescriptor[]>
   /**
@@ -52,4 +74,12 @@ export interface SourceRepository {
 export interface ManifoldAuthorizationService {
   checkCurrentUserListAdapters(): Promise<void>
   checkCurrentUserCreateSource(): Promise<void>
+}
+
+export interface ManifoldPlugin {
+  initializeAdapter(): Promise<ManifoldAdapter>
+}
+
+export interface ManifoldAdapterRegistry {
+  getAdapterForId(adapterId: string): Promise<ManifoldAdapter | null>
 }

@@ -1,8 +1,10 @@
 import { describe, it, beforeEach } from 'mocha'
 import { expect } from 'chai'
-import { AdapterDescriptor, SourceDescriptor } from '../../../lib/entities/manifold/entities.manifold'
-import { ListAdaptersFn, CreateSourceFn, AdapterRepository, SourceRepository, ManifoldAuthorizationService } from '../../../lib/application/manifold/app.manifold.use_cases'
-import { MageErrorCode, MageError } from '../../../lib/application/app.global.errors'
+import Substitute, { Substitute as Sub, SubstituteOf } from '@fluffy-spoon/substitute'
+import { AdapterDescriptor, SourceDescriptor, ManifoldAdapter, SourceConnection } from '../../../lib/entities/manifold/entities.manifold'
+import { ListAdaptersFn, CreateSourceFn, GetSourcePreviewParameters, AdapterRepository, SourceRepository, ManifoldAuthorizationService, ManifoldAdapterRegistry } from '../../../lib/application/manifold/app.manifold.use_cases'
+import { MageErrorCode, MageError, EntityNotFoundError } from '../../../lib/application/app.global.errors'
+import { Json } from '../../../lib/entities/entities.global.json'
 
 const someAdapters: AdapterDescriptor[] = [
   Object.freeze({
@@ -105,7 +107,50 @@ describe.only('manifold administration', function() {
 
   describe('previewing source data', function() {
 
-    it('can preview source data', async function() {
+    let source1Desc: SourceDescriptor
+    let source2Desc: SourceDescriptor
+    let adapter: SubstituteOf<ManifoldAdapter>
+
+    beforeEach(async function() {
+      adapter = Sub.for<ManifoldAdapter>()
+      app.regiserAdapters([ someAdapters[0], adapter ], someAdapters[1])
+      source1Desc = await app.createSource({
+        adapter: someAdapters[0].id,
+        title: 'Preview 1',
+        summary: 'Only for 1 previews'
+      })
+      source2Desc = await app.createSource({
+        adapter: someAdapters[0].id,
+        title: 'Preview 2',
+        summary: 'Only for 2 previews'
+      })
+    })
+
+    describe('presenting the preview parameters', async function() {
+
+      it('presents preview parameters from the source adapter', async function() {
+
+        const params = {
+          tag: source1Desc.id,
+          slur: true,
+          norb: 10,
+          newerThan: Date.now() - 7 * 24 * 60 * 60 * 1000
+        }
+        adapter.getPreviewParametersForSource(source1Desc).resolves(params)
+        const fetchedParams = await app.getPreviewParametersForSource(source1Desc.id)
+
+        expect(fetchedParams).to.deep.equal(params)
+      })
+
+      it('rejects when the source is not found', async function() {
+
+        await expect(app.getPreviewParametersForSource(source1Desc.id + '... not'))
+          .to.eventually.rejectWith(EntityNotFoundError)
+      })
+    })
+
+    it('fetches preview data', async function() {
+
       expect.fail('todo')
     })
   })
@@ -116,11 +161,18 @@ class TestApp {
   readonly adapterRepo = new TestAdapterRepo()
   readonly sourceRepo = new TestSourceRepo()
   readonly authzService = new TestAuthzService()
+  readonly adapterRegistry = new TestAdapterRegistry()
   readonly listAdapters = ListAdaptersFn(this.adapterRepo, this.authzService)
   readonly createSource = CreateSourceFn(this.adapterRepo, this.sourceRepo, this.authzService)
+  readonly getPreviewParametersForSource = GetSourcePreviewParameters(this.adapterRepo, this.sourceRepo, this.authzService, this.adapterRegistry)
 
-  regiserAdapters(... adapters: AdapterDescriptor[]): void {
-    for (const desc of adapters) {
+  regiserAdapters(... adapters: (AdapterDescriptor | [AdapterDescriptor, ManifoldAdapter])[]): void {
+    for (let desc of adapters) {
+      if (Array.isArray(desc)) {
+        const adapter = desc[1]
+        desc = desc[0]
+        this.adapterRegistry.set(desc.id, adapter)
+      }
       this.adapterRepo.db.set(desc.id, desc)
     }
   }
@@ -173,7 +225,7 @@ class TestSourceRepo implements SourceRepository {
   }
 
   async findById(sourceId: string): Promise<SourceDescriptor | null> {
-    throw new Error('Method not implemented.')
+    return this.db.get(sourceId) || null
   }
 }
 
@@ -208,5 +260,12 @@ class TestAuthzService implements ManifoldAuthorizationService {
     Object.keys(this.privleges).forEach(priv => {
       this.privleges[priv] = false
     })
+  }
+}
+
+class TestAdapterRegistry extends Map<string, ManifoldAdapter> implements ManifoldAdapterRegistry {
+
+  async getAdapterForId(adapterId: string): Promise<ManifoldAdapter | null> {
+    return this.get(adapterId) || null
   }
 }

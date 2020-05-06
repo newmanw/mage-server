@@ -1,5 +1,6 @@
 
 import * as OgcApiFeatures from '../ogcapi-features/entities.ogcapi-features'
+import { Json } from '../entities.global.json'
 
 /**
  * An AdapterDescriptor represents a type of data source and the translation
@@ -47,17 +48,6 @@ export interface SourceConnection extends OgcApiFeatures.ServiceAdapter {
 }
 
 export interface ManifoldAdapter {
-
+  getPreviewParametersForSource(sourceDesc: SourceDescriptor): Promise<Json>
   connectTo(source: SourceDescriptor): Promise<SourceConnection>
-}
-
-export interface ManifoldPlugin {
-
-  createAdapter(): Promise<ManifoldAdapter>
-}
-
-export class ManifoldManager {
-  async getAdapterForSource(source: SourceDescriptor): Promise<ManifoldAdapter> {
-    throw new Error('unimplemented')
-  }
 }

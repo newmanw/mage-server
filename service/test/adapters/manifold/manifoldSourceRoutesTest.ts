@@ -2,11 +2,11 @@ import { expect, assert } from 'chai'
 import { mock, reset, instance, when } from 'ts-mockito'
 import request from 'supertest'
 import express, { Request, Response, NextFunction } from 'express'
-import { SourceRepository, AdapterRepository } from '../../../lib/application/manifold/app.manifold.use_cases'
+import { SourceRepository, AdapterRepository, ManifoldAdapterRegistry } from '../../../lib/application/manifold/app.manifold.use_cases'
 import { SourceDescriptorModel, ManifoldModels, SourceDescriptorSchema, SourceDescriptorDocument } from '../../../lib/adapters/manifold/adapters.manifold.db.mongoose'
 import mongoose from 'mongoose'
 import { createRouter, Injection as ManifoldInjection } from '../../../lib/adapters/manifold/adapters.manifold.controllers.web'
-import { ManifoldAdapter, SourceConnection, ManifoldManager } from '../../../lib/entities/manifold/entities.manifold'
+import { ManifoldAdapter, SourceConnection } from '../../../lib/entities/manifold/entities.manifold'
 import * as OgcApiFeatures from '../../../lib/entities/ogcapi-features/entities.ogcapi-features'
 import log = require('../../../lib/logger')
 
@@ -17,7 +17,7 @@ describe('manifold source routes', function() {
   const adapterRepo = instance(adapterRepoMock)
   const sourceRepoMock = mock<SourceRepository>()
   const sourceRepo = instance(sourceRepoMock)
-  const manifoldServiceMock = mock<ManifoldManager>()
+  const manifoldServiceMock = mock<ManifoldAdapterRegistry>()
   const manifoldService = instance(manifoldServiceMock)
   const manifoldAdapterMock = mock<ManifoldAdapter>()
   const manifoldAdapter = instance(manifoldAdapterMock)
@@ -88,7 +88,7 @@ describe('manifold source routes', function() {
           [ colId, colDesc ]
         ])
         when(sourceRepoMock.findById(source.id as string)).thenResolve(source)
-        when(manifoldServiceMock.getAdapterForSource(source)).thenResolve(manifoldAdapter)
+        when(manifoldServiceMock.getAdapterForId(source.adapter as string)).thenResolve(manifoldAdapter)
         when(manifoldAdapterMock.connectTo(source)).thenResolve(connection)
         when(connectionMock.getCollections()).thenResolve(collectionDescriptors)
 
@@ -152,7 +152,7 @@ describe('manifold source routes', function() {
           }
         }
         when(sourceRepoMock.findById(sourceEntity.id)).thenResolve(sourceEntity)
-        when(manifoldServiceMock.getAdapterForSource(sourceEntity)).thenResolve(manifoldAdapter)
+        when(manifoldServiceMock.getAdapterForId(sourceEntity.adapter as string)).thenResolve(manifoldAdapter)
         when(manifoldAdapterMock.connectTo(sourceEntity)).thenResolve(connection)
         when(connectionMock.getItemsInCollection(page.collectionId)).thenResolve(page)
 
