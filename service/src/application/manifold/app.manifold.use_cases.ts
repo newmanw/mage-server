@@ -44,7 +44,7 @@ export function GetSourcePreviewParameters(adapterRepo: AdapterRepository, sourc
     }
     const adapter = await manager.getAdapterForId(adapterId)
     if (!adapter) {
-      throw new Error('adapter not registered: ' + adapterId)
+      throw new MageError(MageErrorCode.InternalError, 'adapter not registered: ' + adapterId)
     }
     return await adapter.getPreviewParametersForSource(sourceDesc)
   }

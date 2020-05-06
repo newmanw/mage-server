@@ -3,12 +3,16 @@ export enum MageErrorCode {
   PermissionDenied = 'permission_denied',
   InvalidInput = 'invalid_input',
   EntityNotFound = 'entity_not_found',
+  /**
+   * There is some error in the state of the app, like a configuration problem.
+   */
+  InternalError = 'internal_error',
 }
 
 export class MageError extends Error {
 
   constructor(public readonly code: MageErrorCode, message?: string) {
-    super(message || code)
+    super(code + (message ? `: ${message}` : ''))
   }
 }
 

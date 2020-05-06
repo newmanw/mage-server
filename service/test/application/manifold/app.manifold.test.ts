@@ -35,7 +35,7 @@ describe.only('manifold administration', function() {
 
     it('returns all the adapter descriptors', async function() {
 
-      app.regiserAdapters(...someAdapters)
+      app.registerAdapters(...someAdapters)
       const read = await app.listAdapters()
       expect(read).to.have.deep.members(someAdapters)
     })
@@ -62,7 +62,7 @@ describe.only('manifold administration', function() {
         summary: 'Bur wen',
         url: 'https://slurm.io/api'
       }
-      app.regiserAdapters(...someAdapters)
+      app.registerAdapters(...someAdapters)
 
       const created = await app.createSource(sourceAttrs)
       const inDb = app.sourceRepo.db.get(created.id)
@@ -107,23 +107,30 @@ describe.only('manifold administration', function() {
 
   describe('previewing source data', function() {
 
-    let source1Desc: SourceDescriptor
-    let source2Desc: SourceDescriptor
+    const source1Desc: SourceDescriptor = {
+      id: 'source1',
+      adapter: someAdapters[0].id,
+      title: 'Preview 1',
+      summary: 'Only for 1 previews',
+      isReadable: true,
+      isWritable: false,
+      url: `${someAdapters[0].id}://source1`
+    }
+    const source2Desc: SourceDescriptor = {
+      id: 'source2',
+      adapter: someAdapters[0].id,
+      title: 'Preview 2',
+      summary: 'Only for 2 previews',
+      isReadable: true,
+      isWritable: false,
+      url: `${someAdapters[0].id}://source2`
+    }
     let adapter: SubstituteOf<ManifoldAdapter>
 
     beforeEach(async function() {
       adapter = Sub.for<ManifoldAdapter>()
-      app.regiserAdapters([ someAdapters[0], adapter ], someAdapters[1])
-      source1Desc = await app.createSource({
-        adapter: someAdapters[0].id,
-        title: 'Preview 1',
-        summary: 'Only for 1 previews'
-      })
-      source2Desc = await app.createSource({
-        adapter: someAdapters[0].id,
-        title: 'Preview 2',
-        summary: 'Only for 2 previews'
-      })
+      app.registerAdapters([ someAdapters[0], adapter ], someAdapters[1])
+      app.registerSources(source1Desc, source2Desc)
     })
 
     describe('presenting the preview parameters', async function() {
@@ -147,6 +154,23 @@ describe.only('manifold administration', function() {
         await expect(app.getPreviewParametersForSource(source1Desc.id + '... not'))
           .to.eventually.rejectWith(EntityNotFoundError)
       })
+
+      it('rejects when the adapter is not registered', async function() {
+
+        const orphan: SourceDescriptor = {
+          id: 'orphan',
+          adapter: 'wut',
+          title: 'Orphan',
+          summary: 'Missing adapter',
+          isReadable: false,
+          isWritable: false,
+          url: 'missing://gone'
+        }
+        app.registerSources(orphan)
+
+        await expect(app.getPreviewParametersForSource(orphan.id))
+          .to.eventually.rejectWith(MageError).with.property('code', MageErrorCode.InternalError)
+      })
     })
 
     it('fetches preview data', async function() {
@@ -166,7 +190,7 @@ class TestApp {
   readonly createSource = CreateSourceFn(this.adapterRepo, this.sourceRepo, this.authzService)
   readonly getPreviewParametersForSource = GetSourcePreviewParameters(this.adapterRepo, this.sourceRepo, this.authzService, this.adapterRegistry)
 
-  regiserAdapters(... adapters: (AdapterDescriptor | [AdapterDescriptor, ManifoldAdapter])[]): void {
+  registerAdapters(... adapters: (AdapterDescriptor | [AdapterDescriptor, ManifoldAdapter])[]): void {
     for (let desc of adapters) {
       if (Array.isArray(desc)) {
         const adapter = desc[1]
@@ -174,6 +198,12 @@ class TestApp {
         this.adapterRegistry.set(desc.id, adapter)
       }
       this.adapterRepo.db.set(desc.id, desc)
+    }
+  }
+
+  registerSources(...sources: SourceDescriptor[]): void {
+    for (const source of sources) {
+      this.sourceRepo.db.set(source.id, source)
     }
   }
 
