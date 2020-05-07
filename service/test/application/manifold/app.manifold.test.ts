@@ -1,10 +1,10 @@
 import { describe, it, beforeEach } from 'mocha'
 import { expect } from 'chai'
-import Substitute, { Substitute as Sub, SubstituteOf } from '@fluffy-spoon/substitute'
+import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
 import { AdapterDescriptor, SourceDescriptor, ManifoldAdapter, SourceConnection } from '../../../lib/entities/manifold/entities.manifold'
 import { ListAdaptersFn, CreateSourceFn, GetSourcePreviewParameters, AdapterRepository, SourceRepository, ManifoldAuthorizationService, ManifoldAdapterRegistry } from '../../../lib/application/manifold/app.manifold.use_cases'
 import { MageErrorCode, MageError, EntityNotFoundError } from '../../../lib/application/app.global.errors'
-import { Json } from '../../../lib/entities/entities.global.json'
+import deepEqual from 'deep-equal'
 
 const someAdapters: AdapterDescriptor[] = [
   Object.freeze({
@@ -143,10 +143,11 @@ describe.only('manifold administration', function() {
           norb: 10,
           newerThan: Date.now() - 7 * 24 * 60 * 60 * 1000
         }
-        adapter.getPreviewParametersForSource(source1Desc).resolves(params)
+        adapter.getPreviewParametersForSource(Arg.deepEquals(source1Desc)).resolves(params)
         const fetchedParams = await app.getPreviewParametersForSource(source1Desc.id)
 
         expect(fetchedParams).to.deep.equal(params)
+        adapter.received(1).getPreviewParametersForSource(Arg.deepEquals(source1Desc))
       })
 
       it('rejects when the source is not found', async function() {
@@ -169,7 +170,8 @@ describe.only('manifold administration', function() {
         app.registerSources(orphan)
 
         await expect(app.getPreviewParametersForSource(orphan.id))
-          .to.eventually.rejectWith(MageError).with.property('code', MageErrorCode.InternalError)
+          .to.eventually.rejectWith(MageError)
+          .with.property('code', MageErrorCode.InternalError)
       })
     })
 
