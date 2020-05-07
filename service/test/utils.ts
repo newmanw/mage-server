@@ -1,6 +1,19 @@
 
-import mongoose, { Document } from 'mongoose'
+import { Argument, Arg } from '@fluffy-spoon/substitute/dist/src/Arguments'
+import deepEqual from 'deep-equal';
 
+declare module '@fluffy-spoon/substitute' {
+  class Arg {
+    static deepEquals<T>(x: T): Argument<T>
+  }
+}
+
+Arg.deepEquals = <T>(expected: T): Argument<T> => {
+  return Arg.is(x => deepEqual(x, expected))
+}
+
+
+import mongoose, { Document } from 'mongoose'
 
 const DELETE_KEY = Symbol('DELETE_KEY')
 export function transformObject<T>(x: any, transform: any, target: any = {}): T {
