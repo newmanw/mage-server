@@ -16,3 +16,5 @@ lib/
 npm-debug.log
 pnpm-debug.log
 scratch/
+*.scratch/
+*.scratch.*
