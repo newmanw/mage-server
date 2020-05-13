@@ -100,6 +100,7 @@
     "assert": "2.0.0",
     "chai": "4.2.0",
     "chai-as-promised": "^7.1.1",
+    "commander": "^5.1.0",
     "coveralls": "3.0.4",
     "cpy-cli": "^2.0.0",
     "deep-equal": "^2.0.2",

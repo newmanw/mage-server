@@ -31,11 +31,19 @@ A feed implementation should be a plugin that can be deployed alongside core MAG
 1. P1 requests to add a feed to the active event.
 1. The app presents a list of feeds available for the active event with brief summaries of their content.
 1. P1 selects the desired feed.
-1. The app begins fetching the feed data and presents an indication the feed data is loading.
-1. The app indicates the feed data fetch is complete and presents the feed data.
+1. The app begins fetching the feed content and presents an indication the feed content is loading.
+1. The app indicates the fetch is complete and presents the fetched content of the feed.
 
 #### Result
 P1 is able to view the feed content in the context of the active event.  The content could be presented on the map and/or as a list of elements with various attributes and text, depending on the nature of the feed content.
+
+### 2. Modify feed parameters
+
+#### Summary
+A partcipant user can modify fetch parameters of a feed to customize the content as desired.
+
+#### Actors
+1. Participant (P1)
 
 ### 2. Configure new feed
 
@@ -50,6 +58,8 @@ P1 is able to view the feed content in the context of the active event.  The con
 1. The app presents a list of registered feed types.
 1. A1 selects the desired feed type.
 1. The app presents the configuration options for the new feed.
+   * This could include options such as the URL of a service endpoint, a
+   fetch interval, maximum number of items to fetch, etc.
 1. A1 changes the options as desired.
 1. A1 requests a preivew of the feed data with the configured options.
 1. The app begins fetching preview data from the feed service with the configured options.
@@ -61,6 +71,11 @@ P1 is able to view the feed content in the context of the active event.  The con
 
 #### Result
 The new feed configuration is saved and the feed is available to add to events.
+
+#### Variations
+
+##### Multi-Feed Services
+As described above, multiple feeds could be availabe from a single service endpoint, for example, an OGC service that provides mutiple feature layers or collections, or a weather service that provides multiple alert streams.  Administrators' user experience might be better if the app allows to configure multiple feeds at once from a single service.  The steps might then change to allow the administrator to first enter the URL for a service endpoint, then fetch the list of feeds available for that service.  Further, the administrator might wish to make the enire service available as an aggregate, allowing the list of available feeds to change dynamically as the source service changes.  A service might configure itself such that it adds a new feed every month or every week.  Having to enable those new feeds through manual administration would be onerous.
 
 ### 3. Assign feed to event
 
