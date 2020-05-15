@@ -61,9 +61,9 @@ A partcipant user can modify fetch parameters of a feed to customize the content
    * This could include options such as the URL of a service endpoint, a
    fetch interval, maximum number of items to fetch, etc.
 1. A1 changes the options as desired.
-1. A1 requests a preivew of the feed data with the configured options.
-1. The app begins fetching preview data from the feed service with the configured options.
-1. The fetch completes and and the app presents the preview data.
+1. A1 requests a preivew of the feed content with the configured options.
+1. The app begins fetching preview content from the feed service with the configured options.
+1. The fetch completes and and the app presents the preview content.
 1. A1 examines the preview and confirms the configuration options for the new feed.
 1. The app stores the configuration for the new feed and prompts whether to add the feed to an event.
 1. A1 requests to add the new feed to an event.
