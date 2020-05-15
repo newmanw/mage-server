@@ -1,6 +1,6 @@
 import mongoose from 'mongoose'
-import { Repository, EntityReference } from '../../application/app.global.support.db'
 
+type EntityReference = { id: string | number }
 
 type DocumentMapping<D extends mongoose.Document, E extends object> = (doc: D) => E
 
@@ -8,7 +8,7 @@ function createDefaultDocMapping<D extends mongoose.Document, E extends object>(
   return (d): any => d.toJSON()
 }
 
-export class BaseMongooseRepository<D extends mongoose.Document, M extends mongoose.Model<D>, E extends object> implements Repository<E> {
+export class BaseMongooseRepository<D extends mongoose.Document, M extends mongoose.Model<D>, E extends object> {
 
   readonly model: M
   /**

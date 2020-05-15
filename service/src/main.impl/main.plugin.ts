@@ -1,6 +1,6 @@
 import { FeedType, FeedTypeId } from '../entities/feeds/entities.feeds';
 import { FeedsPluginHooks } from '../main.api/plugin_hooks/main.api.plugin_hooks.feeds'
-import { FeedTypeRepository } from '../application/manifold/app.manifold.use_cases';
+import { FeedTypeRepository } from '../app.impl/feeds/app.impl.feeds';
 import { BaseMongooseRepository } from '../adapters/base/adapters.base.db.mongoose';
 import { Model, Document } from 'mongoose';
 

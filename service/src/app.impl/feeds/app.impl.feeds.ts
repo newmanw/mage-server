@@ -1,6 +1,6 @@
 import { FeedType, Feed, FeedId, FeedContent } from '../../entities/feeds/entities.feeds';
 import * as api from '../../app.api/feeds/app.api.feeds'
-import { MageError, MageErrorCode } from '../../application/app.global.errors';
+import { MageError, MageErrorCode } from '../../app.api/app.api.global.errors';
 import { UserId } from '../../entities/authn/entities.authn';
 import { AuthenticatedRequest } from '../../app.api/app.api.global';
 
@@ -47,7 +47,7 @@ export interface FeedTypeRepository {
 export interface FeedRepository {
   create(feedAttrs: Partial<Feed>): Promise<Feed>
   readAll(): Promise<Feed[]>
-  findById(feedId: FeedId): Promise<FeedId | null>
+  findById(feedId: FeedId): Promise<Feed | null>
 }
 
 export interface FeedsPermissionService {

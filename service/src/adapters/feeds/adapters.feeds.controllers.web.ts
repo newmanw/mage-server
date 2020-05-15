@@ -4,15 +4,15 @@ declare global {
   namespace Express {
     interface Request {
       manifold: {
-        contextSource?: SourceDescriptor
-        adapter?: ManifoldAdapter
-        readonly requiredAdapter: ManifoldAdapter
+        contextFeed?: Feed
+        feedType?: FeedType
+        readonly requiredFeedType: FeedType
       }
     }
   }
 }
 
-import { FeedTypeRepository, FeedRepository } from '../../application/manifold/app.manifold.use_cases'
+import { FeedTypeRepository, FeedRepository } from '../../app.impl/feeds/app.impl.feeds'
 import { FeedType, Feed } from '../../entities/feeds/entities.feeds'
 import { Request, Response, NextFunction, RequestHandler, Router, Application } from 'express'
 
@@ -32,22 +32,22 @@ const sourceRouter = Router()
 sourceRouter.route('/conformance')
 sourceRouter.route('/collections')
 sourceRouter.route('/collections/:collectionId')
-  .get(async (req, res, next) => {
-    const adapter = req.manifold.requiredAdapter
-    const collectionId = req.params.collectionId as string
-    const conn = await adapter.connectTo(req.manifold.contextSource!)
-    const collections = await conn.getCollections()
-    const collectionDesc = collections.get(collectionId)
-    return res.json(collectionDesc)
-  })
+  // .get(async (req, res, next) => {
+  //   const adapter = req.manifold.requiredFeedType
+  //   const collectionId = req.params.collectionId as string
+  //   const conn = await adapter.connectTo(req.manifold.contextFeed!)
+  //   const collections = await conn.getCollections()
+  //   const collectionDesc = collections.get(collectionId)
+  //   return res.json(collectionDesc)
+  // })
 sourceRouter.route('/collections/:collectionId/items')
-  .get(async (req, res, next) => {
-    const adapter = req.manifold.requiredAdapter
-    const collectionId = req.params.collectionId as string
-    const conn = await adapter.connectTo(req.manifold.contextSource!)
-    const page = await conn.getItemsInCollection(collectionId)
-    return res.type('application/geo+json').json(page.items)
-  })
+  // .get(async (req, res, next) => {
+  //   const adapter = req.manifold.requiredFeedType
+  //   const collectionId = req.params.collectionId as string
+  //   const conn = await adapter.connectTo(req.manifold.contextFeed!)
+  //   const page = await conn.getItemsInCollection(collectionId)
+  //   return res.type('application/geo+json').json(page.items)
+  // })
 sourceRouter.route('/collections/:collectionId/items/:featureId')
 
 function manifoldController(injection: Injection): ManifoldController {

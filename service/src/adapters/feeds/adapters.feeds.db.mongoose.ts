@@ -1,8 +1,8 @@
 
 import mongoose, { Model, SchemaOptions } from 'mongoose'
 import { BaseMongooseRepository } from '../base/adapters.base.db.mongoose'
-import { AdapterDescriptor, SourceDescriptor } from '../../entities/feeds/entities.feeds'
-import { RegisteredFeedTypeRepository, SourceRepository } from '../../application/manifold/app.manifold.use_cases'
+import { FeedType, Feed } from '../../entities/feeds/entities.feeds'
+import { FeedTypeRepository, FeedRepository } from '../../app.impl/feeds/app.impl.feeds'
 
 
 
@@ -15,14 +15,12 @@ export const AdapterDescriptorSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
     description: { type: String, required: false },
-    isReadable: { type: Boolean, required: false, default: true },
-    isWritable: { type: Boolean, required: false, default: false },
     modulePath: { type: String, required: true }
   },
   {
     toJSON: {
       getters: true,
-      transform: (entity: AdapterDescriptorDocument, json: any & AdapterDescriptor, options: SchemaOptions): void => {
+      transform: (entity: AdapterDescriptorDocument, json: any & FeedType, options: SchemaOptions): void => {
         delete json._id
         delete json.modulePath
       }
@@ -41,21 +39,21 @@ export const SourceDescriptorSchema = new mongoose.Schema(
   {
     toJSON: {
       getters: true,
-      transform: (entity: SourceDescriptorDocument, json: any & SourceDescriptor, options: SchemaOptions): void => {
+      transform: (doc: SourceDescriptorDocument, json: any & Feed, options: SchemaOptions): void => {
         delete json._id
-        if (!entity.populated('adapter') && entity.adapter instanceof mongoose.Types.ObjectId) {
-          json.adapter = json.adapter.toHexString()
+        if (!doc.populated('adapter') && doc.feedType as any instanceof mongoose.Types.ObjectId) {
+          json.feedType = json.feedType.toHexString()
         }
       }
     }
   })
 
-export type AdapterDescriptorDocument = AdapterDescriptor & mongoose.Document
-export type SourceDescriptorDocument = SourceDescriptor & mongoose.Document
+export type AdapterDescriptorDocument = FeedType & mongoose.Document
+export type SourceDescriptorDocument = Feed & mongoose.Document
 export type AdapterDescriptorModel = Model<AdapterDescriptorDocument>
 export type SourceDescriptorModel = Model<SourceDescriptorDocument>
 
-export class MongooseAdapterRepository extends BaseMongooseRepository<AdapterDescriptorDocument, AdapterDescriptorModel, AdapterDescriptor> implements RegisteredFeedTypeRepository{
+export class MongooseAdapterRepository extends BaseMongooseRepository<AdapterDescriptorDocument, AdapterDescriptorModel, FeedType> implements FeedTypeRepository{
 
   constructor(model: AdapterDescriptorModel) {
     super(model)
@@ -63,7 +61,7 @@ export class MongooseAdapterRepository extends BaseMongooseRepository<AdapterDes
 }
 
 
-export class MongooseSourceRepository extends BaseMongooseRepository<SourceDescriptorDocument, SourceDescriptorModel, SourceDescriptor> implements SourceRepository {
+export class MongooseSourceRepository extends BaseMongooseRepository<SourceDescriptorDocument, SourceDescriptorModel, Feed> implements FeedRepository {
 
   constructor(model: SourceDescriptorModel) {
     super(model)
