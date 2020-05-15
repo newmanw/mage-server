@@ -5,6 +5,6 @@ interface LoadFeedTypes {
   (): Promise<FeedType[]>
 }
 
-export interface PluginHooks {
-  loadFeedTypes: LoadFeedTypes | undefined
+export interface FeedsPluginHooks {
+  readonly loadFeedTypes?:  LoadFeedTypes
 }

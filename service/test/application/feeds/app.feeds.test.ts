@@ -1,29 +1,46 @@
 import { describe, it, beforeEach } from 'mocha'
 import { expect } from 'chai'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
-import { AdapterDescriptor, SourceDescriptor, ManifoldAdapter, SourceConnection } from '../../../lib/entities/manifold/entities.manifold'
-import { ListAdaptersFn, CreateSourceFn, GetSourcePreviewParameters, AdapterRepository, SourceRepository, ManifoldAuthorizationService, ManifoldAdapterRegistry } from '../../../lib/application/manifold/app.manifold.use_cases'
+import { FeedType, Feed, FeedParams, FeedContent } from '../../../lib/entities/feeds/entities.feeds'
+import { ListFeedTypes, CreateFeed, FeedsPermissionService, PreviewFeedContent } from '../../../lib/application/manifold/app.manifold.use_cases'
 import { MageErrorCode, MageError, EntityNotFoundError } from '../../../lib/application/app.global.errors'
-import deepEqual from 'deep-equal'
+import { UserId } from '../../../lib/entities/authn/entities.authn'
+import { FeedTypeDescriptor, FeedDescriptor, FeedTypeId } from '../../../lib/app.api/feeds/app.api.feeds'
 
-const someAdapters: AdapterDescriptor[] = [
-  Object.freeze({
-    id: 'adapter1',
-    title: 'Adapter 1',
+const someTypes: FeedType[] = [
+  {
+    id: 'type1',
+    title: 'Feed Type 1',
     summary: null,
-    isReadable: true,
-    isWritable: false,
-  }),
-  Object.freeze({
-    id: 'adapter2',
-    title: 'Adapter 2',
+    constantParamsSchema: {},
+    variableParamsSchema: {},
+    async previewContent(params: FeedParams): Promise<FeedContent> {
+      throw new Error('todo')
+    },
+    async fetchContentFromFeed(params: FeedParams): Promise<FeedContent> {
+      throw new Error('todo')
+    }
+  },
+  {
+    id: 'type2',
+    title: 'Feed Type 2',
     summary: null,
-    isReadable: true,
-    isWritable: false,
-  })
+    constantParamsSchema: {},
+    variableParamsSchema: {},
+    async previewContent(params: FeedParams): Promise<FeedContent> {
+      throw new Error('todo')
+    },
+    async fetchContentFromFeed(params: FeedParams): Promise<FeedContent> {
+      throw new Error('todo')
+    }
+  }
 ]
 
-describe.only('manifold administration', function() {
+const adminPrincipal = {
+  user: 'admin'
+}
+
+describe.only('feeds administration', function() {
 
   let app: TestApp
 
@@ -31,19 +48,19 @@ describe.only('manifold administration', function() {
     app = new TestApp()
   })
 
-  describe('listing available adapters', async function() {
+  describe('listing available feed types', async function() {
 
-    it('returns all the adapter descriptors', async function() {
+    it('returns all the feed types', async function() {
 
-      app.registerAdapters(...someAdapters)
-      const read = await app.listAdapters()
-      expect(read).to.have.deep.members(someAdapters)
+      app.registerTypes(...someTypes)
+      const read = await app.listFeedTypes(adminPrincipal)
+      expect(read).to.have.deep.members(someTypes)
     })
 
-    it('checks permission for listing adapters', async function() {
+    it('checks permission for listing feed types', async function() {
 
       app.denyAllPrivileges()
-      await expect(app.listAdapters()).to.eventually.rejectWith(MageErrorCode.PermissionDenied)
+      await expect(app.listFeedTypes(adminPrincipal)).to.eventually.rejectWith(MageErrorCode.PermissionDenied)
     })
   })
 
@@ -57,15 +74,15 @@ describe.only('manifold administration', function() {
     it('saves a source descriptor', async function() {
 
       const sourceAttrs: Partial<SourceDescriptor> = {
-        adapter: someAdapters[0].id,
+        adapter: someTypes[0].id,
         title: 'Slurm',
         summary: 'Bur wen',
         url: 'https://slurm.io/api'
       }
-      app.registerAdapters(...someAdapters)
+      app.registerTypes(...someTypes)
 
       const created = await app.createSource(sourceAttrs)
-      const inDb = app.sourceRepo.db.get(created.id)
+      const inDb = app.feedRepo.db.get(created.id)
 
       expect(created).to.deep.include({
         ...sourceAttrs
@@ -77,7 +94,7 @@ describe.only('manifold administration', function() {
     it('checks permission for creating a source', async function() {
 
       const sourceAttrs: Partial<SourceDescriptor> = {
-        adapter: someAdapters[0].id,
+        adapter: someTypes[0].id,
         title: 'Boor Lum',
         summary: 'Lem do sot',
         url: 'socket://boor-lum.ner'
@@ -98,7 +115,7 @@ describe.only('manifold administration', function() {
       await expect(app.createSource(sourceAttrs), 'without adapter id')
         .to.eventually.rejectWith(MageErrorCode.InvalidInput)
 
-      sourceAttrs.adapter = someAdapters[0].id + '.invalid'
+      sourceAttrs.adapter = someTypes[0].id + '.invalid'
 
       await expect(app.createSource(sourceAttrs), 'with invalid adapter id')
         .to.eventually.rejectWith(MageErrorCode.InvalidInput)
@@ -109,27 +126,24 @@ describe.only('manifold administration', function() {
 
     const source1Desc: SourceDescriptor = {
       id: 'source1',
-      adapter: someAdapters[0].id,
+      adapter: someTypes[0].id,
       title: 'Preview 1',
       summary: 'Only for 1 previews',
       isReadable: true,
       isWritable: false,
-      url: `${someAdapters[0].id}://source1`
+      url: `${someTypes[0].id}://source1`
     }
-    const source2Desc: SourceDescriptor = {
+    const source2Desc: Feed = {
       id: 'source2',
-      adapter: someAdapters[0].id,
+      feedType: someTypes[0].id,
       title: 'Preview 2',
       summary: 'Only for 2 previews',
-      isReadable: true,
-      isWritable: false,
-      url: `${someAdapters[0].id}://source2`
     }
-    let adapter: SubstituteOf<ManifoldAdapter>
+    let feedType: SubstituteOf<FeedType>
 
     beforeEach(async function() {
-      adapter = Sub.for<ManifoldAdapter>()
-      app.registerAdapters([ someAdapters[0], adapter ], someAdapters[1])
+      feedType = Sub.for<FeedType>()
+      app.registerTypes(someTypes[0])
       app.registerSources(source1Desc, source2Desc)
     })
 
@@ -143,11 +157,11 @@ describe.only('manifold administration', function() {
           norb: 10,
           newerThan: Date.now() - 7 * 24 * 60 * 60 * 1000
         }
-        adapter.getPreviewParametersForSource(Arg.deepEquals(source1Desc)).resolves(params)
+        feedType.getPreviewParametersForSource(Arg.deepEquals(source1Desc)).resolves(params)
         const fetchedParams = await app.getPreviewParametersForSource(source1Desc.id)
 
         expect(fetchedParams).to.deep.equal(params)
-        adapter.received(1).getPreviewParametersForSource(Arg.deepEquals(source1Desc))
+        feedType.received(1).getPreviewParametersForSource(Arg.deepEquals(source1Desc))
       })
 
       it('rejects when the source is not found', async function() {
@@ -184,53 +198,47 @@ describe.only('manifold administration', function() {
 
 class TestApp {
 
-  readonly adapterRepo = new TestAdapterRepo()
-  readonly sourceRepo = new TestSourceRepo()
-  readonly authzService = new TestAuthzService()
-  readonly adapterRegistry = new TestAdapterRegistry()
-  readonly listAdapters = ListAdaptersFn(this.adapterRepo, this.authzService)
-  readonly createSource = CreateSourceFn(this.adapterRepo, this.sourceRepo, this.authzService)
-  readonly getPreviewParametersForSource = GetSourcePreviewParameters(this.adapterRepo, this.sourceRepo, this.authzService, this.adapterRegistry)
+  readonly feedTypeRepo = new TestFeedTypeRepository()
+  readonly feedRepo = new TestFeedRepository()
+  readonly permissionService = new TestPermissionService()
+  readonly listFeedTypes = ListFeedTypes(this.feedTypeRepo, this.permissionService)
+  readonly createSource = CreateFeed(this.feedTypeRepo, this.feedRepo, this.permissionService)
+  readonly previewFeedContent = PreviewFeedContent(this.feedTypeRepo, this.permissionService)
 
-  registerAdapters(... adapters: (AdapterDescriptor | [AdapterDescriptor, ManifoldAdapter])[]): void {
-    for (let desc of adapters) {
-      if (Array.isArray(desc)) {
-        const adapter = desc[1]
-        desc = desc[0]
-        this.adapterRegistry.set(desc.id, adapter)
-      }
-      this.adapterRepo.db.set(desc.id, desc)
+  registerTypes(... types: FeedType[]): void {
+    for (let type of types) {
+      this.feedTypeRepo.db.set(type.id, type)
     }
   }
 
-  registerSources(...sources: SourceDescriptor[]): void {
-    for (const source of sources) {
-      this.sourceRepo.db.set(source.id, source)
+  registerSources(...feeds: Feed[]): void {
+    for (const feed of feeds) {
+      this.feedRepo.db.set(feed.id, feed)
     }
   }
 
   allowAllPrivileges() {
-    this.authzService.allowAll()
+    this.permissionService.allowAll()
   }
 
   denyAllPrivileges() {
-    this.authzService.denyAll()
+    this.permissionService.denyAll()
   }
 }
 
-class TestAdapterRepo implements AdapterRepository {
+class TestFeedTypeRepository implements feedsImpl.FeedTypeRepository {
 
-  readonly db = new Map<string, AdapterDescriptor>()
+  readonly db = new Map<string, FeedType>()
 
-  async readAll(): Promise<AdapterDescriptor[]> {
+  async readAll(): Promise<FeedType[]> {
     return Array.from(this.db.values())
   }
 
-  async findById(adapterId: string): Promise<AdapterDescriptor | null> {
+  async findById(adapterId: string): Promise<FeedType | null> {
     return this.db.get(adapterId) ?? null
   }
 
-  update(attrs: Partial<AdapterDescriptor> & { id: string }): Promise<AdapterDescriptor> {
+  update(attrs: Partial<FeedType> & { id: string }): Promise<FeedType> {
     throw new Error('Method not implemented.')
   }
 
@@ -239,41 +247,42 @@ class TestAdapterRepo implements AdapterRepository {
   }
 }
 
-class TestSourceRepo implements SourceRepository {
+class TestFeedRepository implements SourceRepository {
 
-  readonly db = new Map<string, SourceDescriptor>()
+  readonly db = new Map<string, Feed>()
 
-  async create(attrs: Partial<SourceDescriptor>): Promise<SourceDescriptor> {
-    const saved: SourceDescriptor = {
-      ...<SourceDescriptor>attrs,
-      id: `${attrs.adapter!}:${this.db.size + 1}`
+  async create(attrs: Required<{ feedType: FeedTypeId }> & Partial<FeedDescriptor>): Promise<Feed> {
+    const saved: Feed = {
+      feedType: attrs.feedType,
+      ...(attrs as FeedDescriptor),
+      id: `${attrs.feedType}:${this.db.size + 1}`
     }
     this.db.set(saved.id, saved)
     return saved
   }
 
-  async readAll(): Promise<SourceDescriptor[]> {
+  async readAll(): Promise<Feed[]> {
     return Array.from(this.db.values())
   }
 
-  async findById(sourceId: string): Promise<SourceDescriptor | null> {
+  async findById(sourceId: string): Promise<Feed | null> {
     return this.db.get(sourceId) || null
   }
 }
 
-class TestAuthzService implements ManifoldAuthorizationService {
+class TestPermissionService implements FeedsPermissionService {
 
   readonly privleges = {
-    [ListAdaptersFn.name]: true,
-    [CreateSourceFn.name]: true,
+    [ListFeedTypes.name]: true,
+    [CreateFeed.name]: true,
   }
 
-  async checkCurrentUserListAdapters(): Promise<void> {
-    this.checkPrivilege(ListAdaptersFn.name)
+  async ensureListTypesPermissionFor(user: UserId): Promise<void> {
+    this.checkPrivilege(ListFeedTypes.name)
   }
 
-  async checkCurrentUserCreateSource(): Promise<void> {
-    this.checkPrivilege(CreateSourceFn.name)
+  async ensureCreateFeedPermissionFor(user: UserId): Promise<void> {
+    this.checkPrivilege(CreateFeed.name)
   }
 
   checkPrivilege(privilege: string) {
@@ -292,12 +301,5 @@ class TestAuthzService implements ManifoldAuthorizationService {
     Object.keys(this.privleges).forEach(priv => {
       this.privleges[priv] = false
     })
-  }
-}
-
-class TestAdapterRegistry extends Map<string, ManifoldAdapter> implements ManifoldAdapterRegistry {
-
-  async getAdapterForId(adapterId: string): Promise<ManifoldAdapter | null> {
-    return this.get(adapterId) || null
   }
 }

@@ -1,8 +1,8 @@
 
 import mongoose, { Model, SchemaOptions } from 'mongoose'
 import { BaseMongooseRepository } from '../base/adapters.base.db.mongoose'
-import { AdapterDescriptor, SourceDescriptor } from '../../entities/manifold/entities.manifold'
-import { AdapterRepository, SourceRepository } from '../../application/manifold/app.manifold.use_cases'
+import { AdapterDescriptor, SourceDescriptor } from '../../entities/feeds/entities.feeds'
+import { RegisteredFeedTypeRepository, SourceRepository } from '../../application/manifold/app.manifold.use_cases'
 
 
 
@@ -55,7 +55,7 @@ export type SourceDescriptorDocument = SourceDescriptor & mongoose.Document
 export type AdapterDescriptorModel = Model<AdapterDescriptorDocument>
 export type SourceDescriptorModel = Model<SourceDescriptorDocument>
 
-export class MongooseAdapterRepository extends BaseMongooseRepository<AdapterDescriptorDocument, AdapterDescriptorModel, AdapterDescriptor> implements AdapterRepository{
+export class MongooseAdapterRepository extends BaseMongooseRepository<AdapterDescriptorDocument, AdapterDescriptorModel, AdapterDescriptor> implements RegisteredFeedTypeRepository{
 
   constructor(model: AdapterDescriptorModel) {
     super(model)

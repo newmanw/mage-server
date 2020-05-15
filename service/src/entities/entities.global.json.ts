@@ -1,8 +1,10 @@
 
 export type Json =
   | JsonPrimitive
+  | JsonObject
   | Json[]
-  | { [prop: string]: Json }
+
+export type JsonObject = { [prop: string]: Json }
 
 export type JsonPrimitive =
   | null

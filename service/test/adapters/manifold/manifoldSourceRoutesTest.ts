@@ -2,7 +2,7 @@ import { expect, assert } from 'chai'
 import { mock, reset, instance, when } from 'ts-mockito'
 import request from 'supertest'
 import express, { Request, Response, NextFunction } from 'express'
-import { SourceRepository, AdapterRepository, ManifoldAdapterRegistry } from '../../../lib/application/manifold/app.manifold.use_cases'
+import { SourceRepository, RegisteredFeedTypeRepository, ManifoldAdapterRegistry } from '../../../lib/application/manifold/app.manifold.use_cases'
 import { SourceDescriptorModel, ManifoldModels, SourceDescriptorSchema, SourceDescriptorDocument } from '../../../lib/adapters/manifold/adapters.manifold.db.mongoose'
 import mongoose from 'mongoose'
 import { createRouter, Injection as ManifoldInjection } from '../../../lib/adapters/manifold/adapters.manifold.controllers.web'
@@ -13,7 +13,7 @@ import log = require('../../../lib/logger')
 describe('manifold source routes', function() {
 
   const SourceDescriptorModel: SourceDescriptorModel = mongoose.model(ManifoldModels.SourceDescriptor, SourceDescriptorSchema)
-  const adapterRepoMock = mock<AdapterRepository>()
+  const adapterRepoMock = mock<RegisteredFeedTypeRepository>()
   const adapterRepo = instance(adapterRepoMock)
   const sourceRepoMock = mock<SourceRepository>()
   const sourceRepo = instance(sourceRepoMock)

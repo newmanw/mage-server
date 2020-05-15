@@ -12,8 +12,8 @@ declare global {
   }
 }
 
-import { AdapterRepository, SourceRepository } from '../../application/manifold/app.manifold.use_cases'
-import { ManifoldAdapter, SourceDescriptor } from '../../entities/manifold/entities.manifold'
+import { FeedTypeRepository, FeedRepository } from '../../application/manifold/app.manifold.use_cases'
+import { FeedType, Feed } from '../../entities/feeds/entities.feeds'
 import { Request, Response, NextFunction, RequestHandler, Router, Application } from 'express'
 
 export type ManifoldController = {
@@ -24,8 +24,8 @@ export type ManifoldController = {
 }
 
 export type Injection = {
-  adapterRepo: AdapterRepository
-  sourceRepo: SourceRepository
+  adapterRepo: FeedTypeRepository
+  sourceRepo: FeedRepository
 }
 
 const sourceRouter = Router()
