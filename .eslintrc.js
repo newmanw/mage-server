@@ -47,6 +47,7 @@ module.exports =  {
         "rules": {
           "@typescript-eslint/explicit-function-return-type": ["error"],
           "@typescript-eslint/no-explicit-any": "off",
+          "@typescript-eslint/no-use-before-define": [ "error", { "functions": false }]
         }
       },
       {
