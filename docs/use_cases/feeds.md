@@ -1,12 +1,9 @@
 # Feeds Use Cases
 
-Feeds are supplemental data sets that MAGE users can add to their active event context.  The user can select feeds to add from a list of feeds that an administrator has made available to participants of the event.  Feed content could have any combination of spatial, temporal, or informational dimensions.
+See the [Feeds section](../domain.md#feeds) in the domain document for a summary of the feeds concept.
 
-## Background
-Many MAGE customers have enterprise data sources available to them that are relevant to their particular mission domain and can aid users in the field.  For example, a disaster response team responding to an earthquake may desire to receive continuous updates about seismic activity in their operating area, including alerts and locations of detected tremors.  That data would originate from a service external to MAGE, but would be highly useful to incorporate directly in the responders' MAGE user experience.  The responder could then view the data without switching to another app, as well as see that data in the same context as their team's MAGE observations and team member locations.
-
-## Notes
-Some feeds may contain sensitive content and require some kind of authentication and authorization.  Sometimes this could even require clients to authenticate and fetch data directly from a feed endpoint,excluding the MAGE server, to support customer security requirements.
+#### Notes
+Some feeds may contain sensitive content and require some kind of authentication and authorization.  Sometimes this could even require clients to authenticate and fetch data directly from a feed endpoint, excluding the MAGE server, to support customer security requirements.
 
 Feeds could be made available globally to all users of a particular MAGE instance, or restricted based on event membership, or perhaps even restricted to specific users.
 
@@ -35,17 +32,42 @@ A feed implementation should be a plugin that can be deployed alongside core MAG
 1. The app indicates the fetch is complete and presents the fetched content of the feed.
 
 #### Result
-P1 is able to view the feed content in the context of the active event.  The content could be presented on the map and/or as a list of elements with various attributes and text, depending on the nature of the feed content.
+P1 is able to view the feed content in the context of the active event.  The app presents content with a geospatial dimension on the map, as well as in  a list of elements with various attributes and text, depending on the nature of the feed content.
 
-### 2. Modify feed parameters
+### Modify feed parameters
 
 #### Summary
-A partcipant user can modify fetch parameters of a feed to customize the content as desired.
+A participant user can modify fetch parameters of a feed to customize the content as desired.
 
 #### Actors
 1. Participant (P1)
 
-### 2. Configure new feed
+### Configure new feed source
+
+#### Actors
+1. Administrator (A1)
+
+#### Assumptions
+1. A1 is an authenticated user with administrative privileges
+
+#### Main Flow
+1. A1 requests to configure a new feed service.
+1. The app presents a list of registered feed service types.
+1. A1 selects the desired source type.
+1. The app presents the configuration options for the new feed service.
+   * Options for a feed service would generally include a URL the app will use to fetch feeds data from the feed service.
+1. A1 changes the options as desired.
+1. A1 requests to test the provided options by fetching data from the feed source.
+1. The app presents the list of feed types the feed service provides.
+1. A1 confirms the new feed service.
+1. The app presents a prompt asking A1 to configure new feeds from the service.
+1. A1 requests to configure new feeds from the service.
+1. The app begins the [`Configure new feed`](#configure-new-feed) flow assuming the selection of the newly configured feed service.
+
+#### Result
+The new feed service is saved and available to configure new feeds.
+
+### Configure new feed
 
 #### Actors
 1. Administrator (A1)
@@ -55,30 +77,31 @@ A partcipant user can modify fetch parameters of a feed to customize the content
 
 #### Main Flow
 1. A1 requests to configure a new feed.
-1. The app presents a list of registered feed types.
+1. The app presents a list of registered feed services.
+1. A1 selects the desired feed service.
+1. The app presents the list of feed types the feed service provides.
 1. A1 selects the desired feed type.
-1. The app presents the configuration options for the new feed.
-   * This could include options such as the URL of a service endpoint, a
-   fetch interval, maximum number of items to fetch, etc.
+1. The app presents the options for the new feed grouped according to options that users cannot change and fetch parameters that users will be able to change when fetching data from the feed.
+   * Potential options could be fetch interval, maximum number of items to fetch, maximum age of content, caching options, etc.
 1. A1 changes the options as desired.
-1. A1 requests a preivew of the feed content with the configured options.
+1. A1 requests a preview of the feed content with the configured options.
 1. The app begins fetching preview content from the feed service with the configured options.
-1. The fetch completes and and the app presents the preview content.
+1. The fetch completes and the app presents the preview content.
 1. A1 examines the preview and confirms the configuration options for the new feed.
 1. The app stores the configuration for the new feed and prompts whether to add the feed to an event.
 1. A1 requests to add the new feed to an event.
-1. The app begins the `Assign feed to event` use case.
+1. The app begins the `Assign feed to event` flow assuming the selection of the newly configured feed.
 
 #### Result
 The new feed configuration is saved and the feed is available to add to events.
 
 #### Variations
 
-##### Multi-Feed Services
-As described above, multiple feeds could be availabe from a single service endpoint, for example, an OGC service that provides mutiple feature layers or collections, or a weather service that provides multiple alert streams.  Administrators' user experience might be better if the app allows to configure multiple feeds at once from a single service.  The steps might then change to allow the administrator to first enter the URL for a service endpoint, then fetch the list of feeds available for that service.  Further, the administrator might wish to make the enire service available as an aggregate, allowing the list of available feeds to change dynamically as the source service changes.  A service might configure itself such that it adds a new feed every month or every week.  Having to enable those new feeds through manual administration would be onerous.
 
-### 3. Assign feed to event
 
-### 4. Remove feed from event
 
-### 5. Configure existing feed
+### Assign feed to event
+
+### Remove feed from event
+
+### Configure existing feed
