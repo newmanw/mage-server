@@ -30,8 +30,11 @@ Of course, because MAGE collects and stores data structured for specific custome
 
 ### Layers
 
+### Offline Maps
+The MAGE mobile app allows users to load and view offline geospatial data.  The MAGE mobile app downloads and saves observations and locations from other participants of the same event when the device has connectivity.  When a field user's device loses connectivity, the app will still have the local cache of downloaded observations and locations to reference on the map.  Additionally, field users can download relevant data from other sources to their mobile devices and use MAGE to load the data to view on the MAGE map.  MAGE primarily leverages the standard [GeoPackage](http://www.geopackage.org/) format to manage offline map data.  These capabilities enhance and support MAGE users' ability to perform disconnected data collection.
+
 ### Feeds
-Feeds are supplemental data sets that participants can add to their active event context. An event participant can select feeds to add from a list of feeds that an administrator has made available to the event.  Feed content could have any combination of spatial, temporal, or informational dimensions.  A participant can view the content of a feed in a list view and on the map as appropriate.  Feeds enhance situational awareness by adding information relevant to a customer's domain and/or particular event.
+Feeds are supplemental data sets that participants can add to their active event context. An event participant can select feeds to add from a list of feeds that an administrator has made available to the event.  Feed content could have any combination of spatial, temporal, or informational dimensions.  A participant can view the content of a feed in a list view and on the map as appropriate.  Feeds enhance situational awareness by adding timely information relevant to a customer's domain and/or particular event.
 
 #### Background
 Many MAGE customers have enterprise data sources available to them that are relevant to their particular mission domain and can aid  field users.  For example, a disaster response team responding to an earthquake may desire to receive continuous updates about seismic activity in their operating area, including alerts and locations of detected tremors.  That data would originate from a service external to MAGE, but would be highly useful to incorporate directly in the responders' MAGE user experience.  The responder could then view the data without switching to another app, as well as see that data in the same context as their team's MAGE observations and team member locations.
@@ -108,7 +111,7 @@ A location is the reported geospatial position of a field participant.  Location
 ### Mobile Device
 
 ### Connectivity
-The ability of a mobile device to send and receive data over the internet
+Connectivity refers to the ability of a mobile device to send and receive data over the internet.
 
 ## Feeds Terms
 
