@@ -76,19 +76,22 @@ A subject of an observation is a physical entity or occurrence of interest about
 The field refers to the place where mobile device users can observe and collect data on objects and occurrences of interest.
 
 ### Field User
-A human user collecting data in the field with a mobile device
-
-### Location
-The reported geospatial position of a field user
+A field user is a human user collecting data in the field with a mobile device.
 
 ### Event
 An event is a scope to manage users, the data they collect, and the data they can see.  A customer can assign its MAGE users to an event.  The observations those users create while participating in the event will only be available to other users participating in the event.  All observations exist within the scope of an event.  Similarly, the reported locations of users participating in an event are only visible to other users participating in the same event.  A customer also assigns forms to an event, so the types of observations the participants can create are based on the forms assigned to the event.
 
 ### Participant
-A user that has interest in and access to the data associated with a specific event
+A participant is a user that has access to the data associated with a specific event, as well as to submit observations for the event.
+
+### Field Participant
+A field participant is a participant of an event that is actively collecting observations for the event.
 
 ### Monitor
-A user interested in viewing observations and locations of an event, but is not actively collecting data for the event
+A monitor is a participant of an event that is not actively collecting data for the event in the field.
+
+### Location
+A location is the reported geospatial position of a field participant.  Locations, therefore, only exist within the scope of an event.
 
 ### Team
 
