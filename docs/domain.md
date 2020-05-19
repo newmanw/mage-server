@@ -34,22 +34,25 @@ Of course, because MAGE collects and stores data structured for specific custome
 Feeds are supplemental data sets that participants can add to their active event context. An event participant can select feeds to add from a list of feeds that an administrator has made available to the event.  Feed content could have any combination of spatial, temporal, or informational dimensions.  A participant can view the content of a feed in a list view and on the map as appropriate.  Feeds enhance situational awareness by adding information relevant to a customer's domain and/or particular event.
 
 #### Background
-Many MAGE customers have enterprise data sources available to them that are relevant to their particular mission domain and can aid users in the field.  For example, a disaster response team responding to an earthquake may desire to receive continuous updates about seismic activity in their operating area, including alerts and locations of detected tremors.  That data would originate from a service external to MAGE, but would be highly useful to incorporate directly in the responders' MAGE user experience.  The responder could then view the data without switching to another app, as well as see that data in the same context as their team's MAGE observations and team member locations.
+Many MAGE customers have enterprise data sources available to them that are relevant to their particular mission domain and can aid  field users.  For example, a disaster response team responding to an earthquake may desire to receive continuous updates about seismic activity in their operating area, including alerts and locations of detected tremors.  That data would originate from a service external to MAGE, but would be highly useful to incorporate directly in the responders' MAGE user experience.  The responder could then view the data without switching to another app, as well as see that data in the same context as their team's MAGE observations and team member locations.
 
 ### Tracking
 
 ## Core Terms
 
 ### Observation
-An observation is a discrete data record a user creates to describe the state of a physical entity of interest, including a structured form data and attached media such as photos, videos, and audio.
+An observation is a discrete data record a user creates to describe a subject, including structured form data and attached media such as photos, videos, and audio.
+
+### Subject
+A subject of an observation is a physical object or occurrence of interest about which human users collect data to create an observation; the reason a human user submits an observation.
+
+### Form
+A form is a collection of data entry fields that define the structure of the data values a user must capture for an observation.  See **Observation** above for examples.
 
 #### Examples
 An observation created as part of an animal study could include a data entry form with values for the species, the behavior, the habitat, and notes.  Such an observation would likely include photos, videos, and/or audio recording of the animal subject.
 
-Observations created by a disaster response team could include  forms for physical property damage, humanitarian issues, and emergency medical circumstances.
-
-### Form
-A form is a collection of data entry fields that define the structure of the data values a user must capture for an observation.  See **Observation** above for examples.
+Observations created by a disaster response team could include forms for physical property damage, humanitarian issues, and emergency medical circumstances.
 
 ### Form Field
 A form field is a named data entry element that accepts a single value from a user.  A form field defines the domain-specific, semantic name of the captured value, as well as the type of data value the user must provide.  A form field may also define input rules for the captured data, such as a numeric field that does not allow values less than zero.
@@ -68,9 +71,6 @@ A form field type refers to the type of data a form field captures along with th
 
 #### Examples
 An `email` form field type would accept a text string representing an email address.  The input method would be a simple text input box in which the user manually types an email address.  The `email` type would define validation constraints on the input, namely requiring the `name@domain` standard email format.  Given this form field type, a single form could define several `email` type form fields that have different meanings in a customer's domain.  For example, a customer could define a form that has `email` type form fields called `Point of contact email` and `Witness email`.
-
-### Subject
-A subject of an observation is a physical entity or occurrence of interest about which human users collect data to create an observation; the reason a human user submits an observation.
 
 ### Field
 The field refers to the place where mobile device users can observe and collect data on objects and occurrences of interest.
@@ -113,8 +113,35 @@ The ability of a mobile device to send and receive data over the internet
 ## Feeds Terms
 
 ### Feed
-### Feed Service
-### Feed Service Type
+A feed is a stream of some type of content that users can fetch to supplement and enhance their situational awareness while using MAGE.  An administrator makes feeds available to participants.
+
+#### Examples
+A feed could produce a stream of weather alerts from the National Weather Service.
+
+Some of the more well-known instances of feeds come from social networks like Twitter and Facebook, which publish content as continuously updating feeds of distinct messages, articles, and media.
+
+An Open Geospatial Consortium (OGC) [API - Features](http://www.opengis.net/doc/IS/ogcapi-features-1/1.0) service (OAF) can provide feed content in the form of collections geospatial features with attributes and geometries that MAGE can present on a map and in a list.
+
 ### Topic
+A topic establishes the general subject and type of content that appears in feeds derived from the topic.  An administrator defines a feed from a topic by configuring appropriate parameters to fetch content from the topic.
+
+#### Examples
+Drawing from the examples in `Feed` above, a weather feed service could provide topic such as _Alerts_.  An administrator could then define feeds such as _Tornado Warnings_, _Lightning Warnings_, _Flash Flood Warnings_ that further refine the topic.  Alternatively, if the weather service provides all those topics separately, the administrator could choose to make the topic content directly available as a feed per each topic.
+
+Social network services, like Twitter, provide a topic for each individual user of the service.  Users publish content to their topic, and other users can fetch the published content from those users' topics.
+
+In the case of an OAF provider, the feature collections the service provides are topics from which consumers can fetch geospatial feature content.
+
+### Feed Service
+A feed service provides one or more topics and publishes content to the topics.  A feed service provides the means to connect remotely and fetch new content from topics.  Most often in practice, a feed service is a web service accessible by HTTP over the internet.
+
+### Feed Service Type
+A feed service type defines the interface for fetching content from a feed service.  The feed service type is a plugin component that the MAGE application uses to fetch and transform content from feed services conforming to the interface the feed service type represents.
+
+#### Examples
+Twitter defines its own web-based service application programming interface (API) that consumers can use to fetch Twitter data.
+
+An OAF service conforms to the OAF standard interface with well defined operations and parameters for fetching data.  An OAF service type plugin could then integrate any feed service that conforms to the OAF standard with no additional changes to the MAGE application code.
+
 ### Content
 ### Content Type
