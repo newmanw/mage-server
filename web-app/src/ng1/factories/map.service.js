@@ -80,6 +80,7 @@ function MapService(EventService, LocationService, FeatureService, $compile, $ro
       options: {
         selected: true,
         cluster: true,
+        showAccuracy: true,
         style: function() {
           return {};
         },
@@ -173,6 +174,7 @@ function MapService(EventService, LocationService, FeatureService, $compile, $ro
       } else if (layer.type === 'Feature') {
         FeatureService.getFeatureCollection(event, layer).then(function(featureCollection) {
           service.createVectorLayer({
+            id: layer.id,
             name: layer.name, // TODO need to track by id as well not just names
             group: 'feature',
             type: 'geojson',

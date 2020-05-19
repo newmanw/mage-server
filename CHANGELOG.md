@@ -6,9 +6,14 @@ MAGE adheres to [Semantic Versioning](http://semver.org/).
 ## Pending on [`develop`](https://github.com/ngageoint/mage-server/tree/develop)
 
 ##### Features
+* Added observation location accuracy.
 * Added support in configuration/environment for MongoDB replica sets.
 
 ##### Bug Fixes
+* Layer panel now properly removes layers when switching events.
+* Hide admin icon in navbar for non admin users.
+* New users created by admin should default to 'active'.
+* Docker build now works with Angular CLI
 
 ## [5.3.5](https://github.com/ngageoint/mage-server/releases/tag/5.3.5)
 
