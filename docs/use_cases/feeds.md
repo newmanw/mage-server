@@ -58,7 +58,7 @@ A participant user can modify fetch parameters of a feed to customize the conten
    * Options for a feed service would generally include a URL the app will use to fetch feeds data from the feed service.
 1. A1 changes the options as desired.
 1. A1 requests to test the provided options by fetching data from the feed source.
-1. The app presents the list of feed types the feed service provides.
+1. The app presents the list of topics the feed service provides.
 1. A1 confirms the new feed service.
 1. The app presents a prompt asking A1 to configure new feeds from the service.
 1. A1 requests to configure new feeds from the service.
@@ -79,8 +79,8 @@ The new feed service is saved and available to configure new feeds.
 1. A1 requests to configure a new feed.
 1. The app presents a list of registered feed services.
 1. A1 selects the desired feed service.
-1. The app presents the list of feed types the feed service provides.
-1. A1 selects the desired feed type.
+1. The app presents the list of topics the feed service provides.
+1. A1 selects the desired topic.
 1. The app presents the options for the new feed grouped according to options that users cannot change and fetch parameters that users will be able to change when fetching data from the feed.
    * Potential options could be fetch interval, maximum number of items to fetch, maximum age of content, caching options, etc.
 1. A1 changes the options as desired.

@@ -112,8 +112,9 @@ The ability of a mobile device to send and receive data over the internet
 
 ## Feeds Terms
 
-### Feature
+### Feed
 ### Feed Service
 ### Feed Service Type
-### Feed Type
-### Feed
+### Topic
+### Content
+### Content Type
