@@ -2,7 +2,7 @@ import { describe, it, beforeEach } from 'mocha'
 import { expect } from 'chai'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
 import { FeedType, Feed, FeedParams, FeedContent } from '../../../lib/entities/feeds/entities.feeds'
-import { ListFeedTypes, CreateFeed, FeedsPermissionService, PreviewFeedContent } from '../../../lib/application/manifold/app.manifold.use_cases'
+import { ListFeedTypes, CreateFeed, FeedsPermissionService, PreviewFeedContent } from '../../../lib/app.impl/feeds/app.impl.feeds'
 import { MageErrorCode, MageError, EntityNotFoundError } from '../../../lib/application/app.global.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
 import { FeedTypeDescriptor, FeedDescriptor, FeedTypeId } from '../../../lib/app.api/feeds/app.api.feeds'
@@ -73,19 +73,25 @@ describe.only('feeds administration', function() {
 
     it('saves a source descriptor', async function() {
 
-      const sourceAttrs: Partial<SourceDescriptor> = {
-        adapter: someTypes[0].id,
-        title: 'Slurm',
-        summary: 'Bur wen',
-        url: 'https://slurm.io/api'
+      const feedAttrs: Partial<Feed> = {
+        feedType: someTypes[0].id,
+        title: 'Slurm Alerts',
+        summary: 'The latest on when and where slurm happens',
+        constantParams: {
+          url: 'https://slurm.io/api'
+        },
+        variableParams: {
+          maxItems: 25,
+          maxItemAgeInDays: 7
+        }
       }
       app.registerTypes(...someTypes)
 
-      const created = await app.createSource(sourceAttrs)
+      const created = await app.createSource(feedAttrs)
       const inDb = app.feedRepo.db.get(created.id)
 
       expect(created).to.deep.include({
-        ...sourceAttrs
+        ...feedAttrs
       })
       expect(created.id).to.exist
       expect(created).to.deep.equal(inDb)
