@@ -7,7 +7,7 @@ export interface ListPluginsFn {
 }
 export function ListPluginsFn(repo: PluginRepository): ListPluginsFn {
   return async function listPlugins(): ReturnType<ListPluginsFn> {
-    return await repo.readAll()
+    return await repo.findAll()
   }
 }
 

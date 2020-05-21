@@ -1,15 +1,27 @@
 import { AuthenticatedRequest } from '../app.api.global'
-import { Feed, FeedType, FeedParams, FeedContent, FeedId } from '../../entities/feeds/entities.feeds'
+import { Feed, FeedType, FeedParams, FeedContent, FeedId, FeedServiceType, FeedServiceTypeGuid, FeedServiceGuid, FeedService } from '../../entities/feeds/entities.feeds'
 import { Json } from '../../entities/entities.global.json'
 
-export type FeedTypeId = string
+export type FeedTypeGuid = string
 
-export interface FeedTypeDescriptor {
-  id: FeedTypeId
-  title: string
-  summary: string
-  staticParams: object
-  dynamicParams: object
+export interface FeedServiceTypeDescriptor {
+  id: string,
+  title: string,
+  description: string
+  configSchema: Json
+}
+
+export interface ListFeedServiceTypes {
+  (req: AuthenticatedRequest): Promise<FeedServiceType[]>
+}
+
+export interface CreateFeedServiceRequest extends AuthenticatedRequest {
+  serviceType: FeedServiceTypeGuid
+  config: Json
+}
+
+export interface CreateFeedService {
+  (req: CreateFeedServiceRequest): Promise<FeedService>
 }
 
 export interface ListFeedTypes {
@@ -25,7 +37,7 @@ export interface PreviewFeedContent {
 }
 
 export interface CreateFeedRequest extends AuthenticatedRequest {
-  feedType: FeedTypeId,
+  feedType: FeedTypeGuid,
   title: string,
   summary: string,
   constantParams: Json

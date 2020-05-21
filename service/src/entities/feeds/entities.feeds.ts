@@ -2,6 +2,37 @@
 import { Json } from '../entities.global.json'
 import { FeatureCollection } from 'geojson'
 
+export type FeedServiceTypeGuid = string
+
+export interface FeedServiceType {
+  id: FeedServiceTypeGuid,
+  title: string,
+  description: string | null,
+  configSchema: Json,
+}
+
+export type FeedServiceGuid = string
+
+export interface FeedService {
+  id: FeedServiceGuid
+}
+
+export interface FeedServiceTypeRepository {
+  findAll(): Promise<FeedServiceType[]>
+  // /**
+  //  * Resolve null if no adapter descriptor with the given ID exists.
+  //  * @param adapterId
+  //  */
+  // findById(adapterId: string): Promise<FeedType | null>
+  // removeById(adapterId: string): Promise<void>
+}
+
+export interface FeedRepository {
+  create(feedAttrs: Partial<Feed>): Promise<Feed>
+  findAll(): Promise<Feed[]>
+  findById(feedId: FeedId): Promise<Feed | null>
+}
+
 export interface FeedContent {
   readonly feed: Feed
   readonly variableParams: FeedParams

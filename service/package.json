@@ -94,6 +94,7 @@
     "@types/passport": "^1.0.3",
     "@types/superagent": "^4.1.7",
     "@types/supertest": "^2.0.8",
+    "@types/uniqid": "^5.2.0",
     "@typescript-eslint/eslint-plugin": "2.21.0",
     "@typescript-eslint/parser": "2.21.0",
     "ajv": "^6.11.0",
@@ -124,7 +125,8 @@
     "supertest": "4.0.2",
     "ts-mockito": "^2.5.0",
     "ts-node": "^8.6.2",
-    "typescript": "~3.8.0"
+    "typescript": "~3.8.0",
+    "uniqid": "^5.2.0"
   },
   "nyc": {
     "temp-dir": "./.test_run",
@@ -153,7 +155,8 @@
     "start": "node dist/app.js",
     "start-ts": "ts-node app.ts",
     "debug": "node --inspect-brk=9229 -r ts-node/register app.ts",
-    "prepare": "npm run build"
+    "prepare": "npm run build",
+    "clean": "rm -rf lib test-lib"
   },
   "config": {
     "mongodbMemoryServer": {

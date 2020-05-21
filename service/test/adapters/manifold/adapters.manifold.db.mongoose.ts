@@ -4,9 +4,10 @@ import { describe, it, before, beforeEach, after, afterEach } from 'mocha'
 import { expect } from 'chai'
 import { MongoMemoryServer } from 'mongodb-memory-server'
 import { BaseMongooseRepository } from '../../../lib/adapters/base/adapters.base.db.mongoose'
-import { SourceRepository } from '../../../lib/application/manifold/app.manifold.use_cases'
-import { AdapterDescriptorModel, ManifoldModels, AdapterDescriptorSchema, SourceDescriptorModel, SourceDescriptorSchema, MongooseAdapterRepository, MongooseSourceRepository } from '../../../lib/adapters/manifold/adapters.manifold.db.mongoose'
-import { AdapterDescriptor } from '../../../lib/entities/manifold/entities.manifold'
+import { FeedRepository } from '../../../lib/entities/feeds/entities.feeds'
+import { AdapterDescriptorModel, ManifoldModels, AdapterDescriptorSchema, SourceDescriptorModel, SourceDescriptorSchema, MongooseAdapterRepository, MongooseSourceRepository } from '../../../lib/adapters/feeds/adapters.feeds.db.mongoose'
+import { FeedServiceType } from '../../../lib/entities/feeds/entities.feeds'
+import { FeedDescriptor } from '../../../src/app.api/feeds/app.api.feeds'
 
 describe('manifold repositories', function() {
 
@@ -57,11 +58,9 @@ describe('manifold repositories', function() {
 
     it('creates an adatper descriptor record', async function() {
 
-      const seed: Partial<AdapterDescriptor> = {
+      const seed: Partial<FeedDescriptor> = {
         title: 'Xyz Adapter',
         summary: 'Adapting Xyz services',
-        isReadable: true,
-        isWritable: true,
       }
       const created = await repo.create({
         id: 'ignore',
@@ -78,22 +77,18 @@ describe('manifold repositories', function() {
 
     it('reads all adapter descriptor records', async function() {
 
-      const seed1: Partial<AdapterDescriptor> = {
+      const seed1: Partial<FeedServiceType> = {
         title: 'Abc Adapter',
-        summary: 'Adapting Abc services',
-        isReadable: true,
-        isWritable: false,
+        description: 'Adapting Abc services',
       }
-      const seed2: Partial<AdapterDescriptor> = {
+      const seed2: Partial<FeedServiceType> = {
         title: 'Xyz Adapter',
-        summary: 'Adapting Xyz services',
-        isReadable: true,
-        isWritable: false,
+        description: 'Adapting Xyz services',
       }
       await Promise.all([
         repo.create(seed1),
         repo.create(seed2)])
-      const read = await repo.readAll()
+      const read = await repo.findAll()
 
       expect(read.length).to.equal(2)
       expect(read[0]).to.deep.include(seed1)
@@ -102,11 +97,9 @@ describe('manifold repositories', function() {
 
     it('updates an adapter descriptor record', async function() {
 
-      const seed: Partial<AdapterDescriptor> = {
+      const seed: Partial<FeedServiceType> = {
         title: 'Adapter 123',
-        summary: 'Needs an update',
-        isReadable: true,
-        isWritable: true,
+        description: 'Needs an update',
       }
       const existing = await repo.create(seed)
       const update = {
@@ -115,9 +108,9 @@ describe('manifold repositories', function() {
         description: 'Not writable now',
         isWritable: false
       }
-      const beforeUpdate = await repo.readAll()
+      const beforeUpdate = await repo.findAll()
       const updated = await repo.update(update)
-      const afterUpdate = await repo.readAll()
+      const afterUpdate = await repo.findAll()
 
       expect(updated).to.deep.include(update)
       expect(beforeUpdate.length).to.equal(1)
@@ -130,16 +123,14 @@ describe('manifold repositories', function() {
 
     it('deletes an adapter descriptor record', async function() {
 
-      const seed: Partial<AdapterDescriptor> = {
+      const seed: Partial<FeedServiceType> = {
         title: 'Doomed',
-        summary: 'Marked for delete',
-        isReadable: true,
-        isWritable: false,
+        description: 'Marked for delete',
       }
       const created = await repo.create(seed)
-      const beforeDelete = await repo.readAll()
+      const beforeDelete = await repo.findAll()
       await repo.removeById(created.id)
-      const afterDelete = await repo.readAll()
+      const afterDelete = await repo.findAll()
 
       expect(beforeDelete.length).to.equal(1)
       expect(beforeDelete[0]).to.deep.include(seed)
@@ -151,7 +142,7 @@ describe('manifold repositories', function() {
 
     const collection = 'test_source_descriptors'
     let model: SourceDescriptorModel
-    let repo: SourceRepository
+    let repo: FeedRepository
 
     beforeEach(function() {
       model = conn.model(ManifoldModels.SourceDescriptor, SourceDescriptorSchema, collection)

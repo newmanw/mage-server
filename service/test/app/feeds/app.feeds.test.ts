@@ -1,13 +1,51 @@
 import { describe, it, beforeEach } from 'mocha'
 import { expect } from 'chai'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
-import { FeedType, Feed, FeedParams, FeedContent } from '../../../lib/entities/feeds/entities.feeds'
-import { ListFeedTypes, CreateFeed, FeedsPermissionService, PreviewFeedContent } from '../../../lib/app.impl/feeds/app.impl.feeds'
-import { MageErrorCode, MageError, EntityNotFoundError } from '../../../lib/application/app.global.errors'
+import { FeedServiceType, FeedType, Feed, FeedParams, FeedContent, FeedServiceTypeRepository, FeedRepository } from '../../../lib/entities/feeds/entities.feeds'
+import { CreateFeed, FeedsPermissionService, ListFeedServiceTypes, CreateFeedService } from '../../../lib/app.impl/feeds/app.impl.feeds'
+import { MageErrorCode, MageError, EntityNotFoundError } from '../../../lib/app.api/app.api.global.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
-import { FeedTypeDescriptor, FeedDescriptor, FeedTypeId } from '../../../lib/app.api/feeds/app.api.feeds'
+import { FeedDescriptor, FeedTypeGuid, FeedServiceTypeDescriptor } from '../../../lib/app.api/feeds/app.api.feeds'
+import uniqid from 'uniqid'
 
-const someTypes: FeedType[] = [
+const someServiceTypes: FeedServiceType[] = [
+  {
+    id: `ogc.wfs-${uniqid()}`,
+    title: 'OGC Web Feature Service',
+    description: 'An OGC Web Feature Service is a standard interface to query geospatial features.',
+    configSchema: {
+      type: 'object',
+      properties: {
+        url: {
+          title: 'Service URL',
+          description: 'The base URL of the WFS server',
+          type: 'string',
+          format: 'uri',
+          required: true,
+        }
+      }
+    }
+  },
+  {
+    id: `ogc.oaf-${uniqid()}`,
+    title: 'OGC API - Features Service',
+    description: 'An OGC API - Features service is a standard interface to query geospatial features.  OAF is the modern evolution of WFS.',
+    configSchema: {
+      type: 'object',
+      properties: {
+        url: {
+          title: 'Service URL',
+          description: 'The base URL of the OAF server',
+          type: 'string',
+          format: 'uri',
+          required: true,
+        }
+      }
+    }
+  }
+]
+
+const someFeedTypes: FeedType[] = [
   {
     id: 'type1',
     title: 'Feed Type 1',
@@ -40,6 +78,10 @@ const adminPrincipal = {
   user: 'admin'
 }
 
+const bannedPrincipal = {
+  user: 'schmo'
+}
+
 describe.only('feeds administration', function() {
 
   let app: TestApp
@@ -48,19 +90,70 @@ describe.only('feeds administration', function() {
     app = new TestApp()
   })
 
+  describe('listing available feed service types', async function() {
+
+    beforeEach(function() {
+      app.registerServiceTypes(...someServiceTypes)
+    })
+
+    it('returns all the feed service types', async function() {
+
+      const serviceTypes = await app.listServiceTypes(adminPrincipal)
+
+      expect(serviceTypes).to.deep.equal(someServiceTypes)
+    })
+
+    it('checks permission for listing service types', async function() {
+
+      await expect(app.listServiceTypes(bannedPrincipal)).to.eventually.rejectWith(MageErrorCode.PermissionDenied)
+    })
+  })
+
+  describe('creating a feed service', async function() {
+
+    beforeEach(function() {
+      app.registerServiceTypes(...someServiceTypes)
+    })
+
+    it('validates the configuration options', async function() {
+      expect.fail('todo')
+    })
+
+    it('saves the service', async function() {
+
+      const serviceType = someServiceTypes[0].id
+      const config = { url: 'https://some.service/somewhere' }
+      const created = await app.createService({ ...adminPrincipal, serviceType, config })
+      const inDb = app.feedServiceRepo.db.get(created.id)
+
+      expect(created.id).to.exist
+      expect(created).to.deep.include({
+        config: config
+      })
+      expect(inDb).to.deep.equal(created)
+    })
+
+    it('checks permission for creating a feed service', async function() {
+
+      expect.fail('todo')
+    })
+  })
+
   describe('listing available feed types', async function() {
 
     it('returns all the feed types', async function() {
 
-      app.registerTypes(...someTypes)
-      const read = await app.listFeedTypes(adminPrincipal)
-      expect(read).to.have.deep.members(someTypes)
+      expect.fail('todo')
+      // app.registerTypes(...someFeedTypes)
+      // const read = await app.listFeedTypes(adminPrincipal)
+      // expect(read).to.have.deep.members(someFeedTypes)
     })
 
     it('checks permission for listing feed types', async function() {
 
-      app.denyAllPrivileges()
-      await expect(app.listFeedTypes(adminPrincipal)).to.eventually.rejectWith(MageErrorCode.PermissionDenied)
+      expect.fail('todo')
+      // app.denyAllPrivileges()
+      // await expect(app.listFeedTypes(adminPrincipal)).to.eventually.rejectWith(MageErrorCode.PermissionDenied)
     })
   })
 
@@ -73,125 +166,131 @@ describe.only('feeds administration', function() {
 
     it('saves a source descriptor', async function() {
 
-      const feedAttrs: Partial<Feed> = {
-        feedType: someTypes[0].id,
-        title: 'Slurm Alerts',
-        summary: 'The latest on when and where slurm happens',
-        constantParams: {
-          url: 'https://slurm.io/api'
-        },
-        variableParams: {
-          maxItems: 25,
-          maxItemAgeInDays: 7
-        }
-      }
-      app.registerTypes(...someTypes)
+      expect.fail('todo')
+      // const feedAttrs: Partial<Feed> = {
+      //   feedType: someFeedTypes[0].id,
+      //   title: 'Slurm Alerts',
+      //   summary: 'The latest on when and where slurm happens',
+      //   constantParams: {
+      //     url: 'https://slurm.io/api'
+      //   },
+      //   variableParams: {
+      //     maxItems: 25,
+      //     maxItemAgeInDays: 7
+      //   }
+      // }
+      // app.registerTypes(...someFeedTypes)
 
-      const created = await app.createSource(feedAttrs)
-      const inDb = app.feedRepo.db.get(created.id)
+      // const created = await app.createSource(feedAttrs)
+      // const inDb = app.feedRepo.db.get(created.id)
 
-      expect(created).to.deep.include({
-        ...feedAttrs
-      })
-      expect(created.id).to.exist
-      expect(created).to.deep.equal(inDb)
+      // expect(created).to.deep.include({
+      //   ...feedAttrs
+      // })
+      // expect(created.id).to.exist
+      // expect(created).to.deep.equal(inDb)
     })
 
     it('checks permission for creating a source', async function() {
 
-      const sourceAttrs: Partial<SourceDescriptor> = {
-        adapter: someTypes[0].id,
-        title: 'Boor Lum',
-        summary: 'Lem do sot',
-        url: 'socket://boor-lum.ner'
-      }
-      app.denyAllPrivileges()
+      expect.fail('todo')
+      // const sourceAttrs: Partial<SourceDescriptor> = {
+      //   adapter: someFeedTypes[0].id,
+      //   title: 'Boor Lum',
+      //   summary: 'Lem do sot',
+      //   url: 'socket://boor-lum.ner'
+      // }
+      // app.denyAllPrivileges()
 
-      await expect(app.createSource(sourceAttrs)).to.eventually.rejectWith(MageErrorCode.PermissionDenied)
+      // await expect(app.createSource(sourceAttrs)).to.eventually.rejectWith(MageErrorCode.PermissionDenied)
     })
 
     it('validates the source has a valid adapter', async function() {
 
-      const sourceAttrs: Partial<SourceDescriptor> = {
-        title: 'Boor Lum',
-        summary: 'Lem do sot',
-        url: 'socket://boor-lum.ner'
-      }
+      expect.fail('todo')
+      // const sourceAttrs: Partial<SourceDescriptor> = {
+      //   title: 'Boor Lum',
+      //   summary: 'Lem do sot',
+      //   url: 'socket://boor-lum.ner'
+      // }
 
-      await expect(app.createSource(sourceAttrs), 'without adapter id')
-        .to.eventually.rejectWith(MageErrorCode.InvalidInput)
+      // await expect(app.createSource(sourceAttrs), 'without adapter id')
+      //   .to.eventually.rejectWith(MageErrorCode.InvalidInput)
 
-      sourceAttrs.adapter = someTypes[0].id + '.invalid'
+      // sourceAttrs.adapter = someFeedTypes[0].id + '.invalid'
 
-      await expect(app.createSource(sourceAttrs), 'with invalid adapter id')
-        .to.eventually.rejectWith(MageErrorCode.InvalidInput)
+      // await expect(app.createSource(sourceAttrs), 'with invalid adapter id')
+      //   .to.eventually.rejectWith(MageErrorCode.InvalidInput)
     })
   })
 
   describe('previewing source data', function() {
 
-    const source1Desc: SourceDescriptor = {
-      id: 'source1',
-      adapter: someTypes[0].id,
-      title: 'Preview 1',
-      summary: 'Only for 1 previews',
-      isReadable: true,
-      isWritable: false,
-      url: `${someTypes[0].id}://source1`
-    }
-    const source2Desc: Feed = {
-      id: 'source2',
-      feedType: someTypes[0].id,
-      title: 'Preview 2',
-      summary: 'Only for 2 previews',
-    }
-    let feedType: SubstituteOf<FeedType>
+    // const source1Desc: SourceDescriptor = {
+    //   id: 'source1',
+    //   adapter: someFeedTypes[0].id,
+    //   title: 'Preview 1',
+    //   summary: 'Only for 1 previews',
+    //   isReadable: true,
+    //   isWritable: false,
+    //   url: `${someFeedTypes[0].id}://source1`
+    // }
+    // const source2Desc: Feed = {
+    //   id: 'source2',
+    //   feedType: someFeedTypes[0].id,
+    //   title: 'Preview 2',
+    //   summary: 'Only for 2 previews',
+    // }
+    // let feedType: SubstituteOf<FeedType>
 
-    beforeEach(async function() {
-      feedType = Sub.for<FeedType>()
-      app.registerTypes(someTypes[0])
-      app.registerSources(source1Desc, source2Desc)
-    })
+    // beforeEach(async function() {
+    //   feedType = Sub.for<FeedType>()
+    //   app.registerTypes(someFeedTypes[0])
+    //   app.registerSources(source1Desc, source2Desc)
+    // })
 
     describe('presenting the preview parameters', async function() {
 
       it('presents preview parameters from the source adapter', async function() {
 
-        const params = {
-          tag: source1Desc.id,
-          slur: true,
-          norb: 10,
-          newerThan: Date.now() - 7 * 24 * 60 * 60 * 1000
-        }
-        feedType.getPreviewParametersForSource(Arg.deepEquals(source1Desc)).resolves(params)
-        const fetchedParams = await app.getPreviewParametersForSource(source1Desc.id)
+        expect.fail('todo')
+        // const params = {
+        //   tag: source1Desc.id,
+        //   slur: true,
+        //   norb: 10,
+        //   newerThan: Date.now() - 7 * 24 * 60 * 60 * 1000
+        // }
+        // feedType.getPreviewParametersForSource(Arg.deepEquals(source1Desc)).resolves(params)
+        // const fetchedParams = await app.getPreviewParametersForSource(source1Desc.id)
 
-        expect(fetchedParams).to.deep.equal(params)
-        feedType.received(1).getPreviewParametersForSource(Arg.deepEquals(source1Desc))
+        // expect(fetchedParams).to.deep.equal(params)
+        // feedType.received(1).getPreviewParametersForSource(Arg.deepEquals(source1Desc))
       })
 
       it('rejects when the source is not found', async function() {
 
-        await expect(app.getPreviewParametersForSource(source1Desc.id + '... not'))
-          .to.eventually.rejectWith(EntityNotFoundError)
+        expect.fail('todo')
+        // await expect(app.getPreviewParametersForSource(source1Desc.id + '... not'))
+        //   .to.eventually.rejectWith(EntityNotFoundError)
       })
 
       it('rejects when the adapter is not registered', async function() {
 
-        const orphan: SourceDescriptor = {
-          id: 'orphan',
-          adapter: 'wut',
-          title: 'Orphan',
-          summary: 'Missing adapter',
-          isReadable: false,
-          isWritable: false,
-          url: 'missing://gone'
-        }
-        app.registerSources(orphan)
+        expect.fail('todo')
+        // const orphan: SourceDescriptor = {
+        //   id: 'orphan',
+        //   adapter: 'wut',
+        //   title: 'Orphan',
+        //   summary: 'Missing adapter',
+        //   isReadable: false,
+        //   isWritable: false,
+        //   url: 'missing://gone'
+        // }
+        // app.registerSources(orphan)
 
-        await expect(app.getPreviewParametersForSource(orphan.id))
-          .to.eventually.rejectWith(MageError)
-          .with.property('code', MageErrorCode.InternalError)
+        // await expect(app.getPreviewParametersForSource(orphan.id))
+        //   .to.eventually.rejectWith(MageError)
+        //   .with.property('code', MageErrorCode.InternalError)
       })
     })
 
@@ -204,22 +303,23 @@ describe.only('feeds administration', function() {
 
 class TestApp {
 
-  readonly feedTypeRepo = new TestFeedTypeRepository()
-  readonly feedRepo = new TestFeedRepository()
+  readonly serviceTypeRepo = new TestFeedServiceTypeRepository()
+  readonly feedServiceRepo = new TestFeedRepository()
   readonly permissionService = new TestPermissionService()
-  readonly listFeedTypes = ListFeedTypes(this.feedTypeRepo, this.permissionService)
-  readonly createSource = CreateFeed(this.feedTypeRepo, this.feedRepo, this.permissionService)
-  readonly previewFeedContent = PreviewFeedContent(this.feedTypeRepo, this.permissionService)
+  readonly listServiceTypes = ListFeedServiceTypes(this.serviceTypeRepo, this.permissionService)
+  readonly createService = CreateFeedService()
+  // readonly createSource = CreateFeed(this.serviceTypeRepo, this.feedRepo, this.permissionService)
+  // readonly previewFeedContent = PreviewFeedContent(this.serviceTypeRepo, this.permissionService)
 
-  registerTypes(... types: FeedType[]): void {
-    for (let type of types) {
-      this.feedTypeRepo.db.set(type.id, type)
+  registerServiceTypes(... types: FeedServiceType[]): void {
+    for (const type of types) {
+      this.serviceTypeRepo.db.set(type.id, type)
     }
   }
 
   registerSources(...feeds: Feed[]): void {
     for (const feed of feeds) {
-      this.feedRepo.db.set(feed.id, feed)
+      this.feedServiceRepo.db.set(feed.id, feed)
     }
   }
 
@@ -232,32 +332,24 @@ class TestApp {
   }
 }
 
-class TestFeedTypeRepository implements feedsImpl.FeedTypeRepository {
+class TestFeedServiceTypeRepository implements FeedServiceTypeRepository {
 
-  readonly db = new Map<string, FeedType>()
+  readonly db = new Map<string, FeedServiceType>()
 
-  async readAll(): Promise<FeedType[]> {
+  async findAll(): Promise<FeedServiceType[]> {
     return Array.from(this.db.values())
   }
 
-  async findById(adapterId: string): Promise<FeedType | null> {
-    return this.db.get(adapterId) ?? null
-  }
-
-  update(attrs: Partial<FeedType> & { id: string }): Promise<FeedType> {
-    throw new Error('Method not implemented.')
-  }
-
-  removeById(adapterId: string): Promise<void> {
-    throw new Error('Method not implemented.')
+  async findById(serviceTypeId: string): Promise<FeedServiceType | null> {
+    return this.db.get(serviceTypeId) ?? null
   }
 }
 
-class TestFeedRepository implements SourceRepository {
+class TestFeedRepository implements FeedRepository {
 
   readonly db = new Map<string, Feed>()
 
-  async create(attrs: Required<{ feedType: FeedTypeId }> & Partial<FeedDescriptor>): Promise<Feed> {
+  async create(attrs: Required<{ feedType: FeedTypeGuid }> & Partial<FeedDescriptor>): Promise<Feed> {
     const saved: Feed = {
       feedType: attrs.feedType,
       ...(attrs as FeedDescriptor),
@@ -267,7 +359,7 @@ class TestFeedRepository implements SourceRepository {
     return saved
   }
 
-  async readAll(): Promise<Feed[]> {
+  async findAll(): Promise<Feed[]> {
     return Array.from(this.db.values())
   }
 
@@ -279,12 +371,12 @@ class TestFeedRepository implements SourceRepository {
 class TestPermissionService implements FeedsPermissionService {
 
   readonly privleges = {
-    [ListFeedTypes.name]: true,
+    [ListFeedServiceTypes.name]: true,
     [CreateFeed.name]: true,
   }
 
-  async ensureListTypesPermissionFor(user: UserId): Promise<void> {
-    this.checkPrivilege(ListFeedTypes.name)
+  async ensureListServiceTypesPermissionFor(user: UserId): Promise<void> {
+    this.checkPrivilege(ListFeedServiceTypes.name)
   }
 
   async ensureCreateFeedPermissionFor(user: UserId): Promise<void> {

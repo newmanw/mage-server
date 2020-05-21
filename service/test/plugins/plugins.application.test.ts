@@ -126,7 +126,7 @@ class TestPluginRepository implements PluginRepository {
 
   readonly db = new Map<string, PluginDescriptor>()
 
-  async readAll(): Promise<PluginDescriptor[]> {
+  async findAll(): Promise<PluginDescriptor[]> {
     return Array.from(this.db.values())
   }
 

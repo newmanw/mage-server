@@ -2,11 +2,6 @@ import geojson from "geojson"
 
 
 export interface ServiceAdapter {
-
-  readonly id: string
-  readonly title: string
-  readonly description: string
-
   getCollections(): Promise<Map<string, CollectionDescriptorJson>>
   getItemsInCollection(collectionId: string, params?: CollectionParams): Promise<CollectionPage>
 }
@@ -44,7 +39,7 @@ export type SpatialExtentJson = {
 }
 
 export type TemporalExtentJson = {
-  interval: TemporalIntervalCoords[],
+  interval: [ TemporalIntervalCoordinate, TemporalIntervalCoordinate ],
   trs: TrsUri
 }
 
@@ -71,7 +66,8 @@ export class BoundingBox {
     if (coords.length !== 4 && coords.length !== 6) {
       throw new Error(`invalid bbox string: ${x}`)
     }
-    let xMin = coords[0], yMin = coords[1], xMax = coords[2], yMax = coords[3], zMin = null, zMax = null
+    const xMin = coords[0], yMin = coords[1]
+    let xMax = coords[2], yMax = coords[3], zMin = null, zMax = null
     const hasZ = coords.length === 6
     if (hasZ) {
       zMin = coords[2]
@@ -89,7 +85,7 @@ export class BoundingBox {
  * start/end mean the interval is open-ended.  When the elements of the tuple
  * are strings, they should be in ISO-8601 date format.
  */
-export type TemporalIntervalCoords = [ Date | string | null, Date | string | null]
+export type TemporalIntervalCoordinate = Date | null
 
 export type TrsUri = string
 export const TrsGregorian: TrsUri & 'http://www.opengis.net/def/uom/ISO-8601/0/Gregorian' = 'http://www.opengis.net/def/uom/ISO-8601/0/Gregorian'
@@ -113,8 +109,11 @@ export interface FeatureCollection extends geojson.FeatureCollection {
   links?: LinkJson[]
 }
 
+export type EpochTime = number
+
 export interface CollectionParams {
   bbox?: BoundingBox | null
+  newerThan?: EpochTime
   limit?: number | null
   page?: number | null
 }

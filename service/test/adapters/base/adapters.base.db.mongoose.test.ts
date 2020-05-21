@@ -3,7 +3,6 @@ import { describe, it, before, beforeEach, after, afterEach } from 'mocha'
 import { expect } from 'chai'
 import { mongoTestAfterAllHook, mongoTestBeforeAllHook, MongoTestContext } from '../../mongo.test'
 import { BaseMongooseRepository } from '../../../lib/adapters/base/adapters.base.db.mongoose'
-import { EntityReference } from '../../../lib/application/app.global.support.db'
 
 
 describe('base mongoose repository', async function() {
@@ -86,7 +85,7 @@ describe('base mongoose repository', async function() {
       repo.create(seed1),
       repo.create(seed2)
     ])
-    const all = await repo.readAll()
+    const all = await repo.findAll()
 
     expect(all.length).to.equal(2)
     expect(all[0]).to.deep.include(seed1)
@@ -128,15 +127,15 @@ describe('base mongoose repository', async function() {
       noo: 39
     }
     const existing = await repo.create(seed)
-    const update: Partial<BaseEntity> & EntityReference = {
+    const update = {
       id: existing.id,
       derp: 'sped',
       lerp: 'jebler',
       noo: 42
     }
-    const beforeUpdate = await repo.readAll()
+    const beforeUpdate = await repo.findAll()
     const updated = await repo.update(update)
-    const afterUpdate = await repo.readAll()
+    const afterUpdate = await repo.findAll()
 
     expect(updated).to.deep.include(update)
     expect(beforeUpdate.length).to.equal(1)
@@ -156,9 +155,9 @@ describe('base mongoose repository', async function() {
       noo: 39
     }
     const created = await repo.create(seed)
-    const beforeDelete = await repo.readAll()
+    const beforeDelete = await repo.findAll()
     await repo.removeById(created.id)
-    const afterDelete = await repo.readAll()
+    const afterDelete = await repo.findAll()
 
     expect(beforeDelete.length).to.equal(1)
     expect(beforeDelete[0]).to.deep.include(seed)

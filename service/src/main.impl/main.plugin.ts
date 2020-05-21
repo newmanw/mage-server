@@ -1,6 +1,5 @@
-import { FeedType, FeedTypeId } from '../entities/feeds/entities.feeds';
+import { FeedTypeId, FeedServiceTypeRepository, FeedServiceType, FeedServiceTypeGuid } from '../entities/feeds/entities.feeds';
 import { FeedsPluginHooks } from '../main.api/plugin_hooks/main.api.plugin_hooks.feeds'
-import { FeedTypeRepository } from '../app.impl/feeds/app.impl.feeds';
 import { BaseMongooseRepository } from '../adapters/base/adapters.base.db.mongoose';
 import { Model, Document } from 'mongoose';
 
@@ -22,57 +21,57 @@ async function bootPlugins(pluginModules: string[]): Promise<void> {
 
 type FeedTypeGuid = string
 
-interface GuidFeedType extends FeedType {
+interface GuidFeedServiceType extends FeedServiceType {
   readonly guid: FeedTypeId,
   readonly moduleName: string
 }
 
-interface GuidFeedTypeRepository extends FeedTypeRepository {
-  findOrCreate(moduleName: string, feedType: FeedType): Promise<GuidFeedType>
+interface GuidFeedTypeRepository extends FeedServiceTypeRepository {
+  findOrCreate(moduleName: string, feedType: FeedServiceType): Promise<GuidFeedServiceType>
 }
 
-class FeedTypeRegistry implements FeedTypeRepository {
+class FeedTypeRegistry implements FeedServiceTypeRepository {
 
-  private readonly feedTypes = new Map<FeedTypeId, FeedType>()
+  private readonly feedTypes = new Map<FeedServiceTypeGuid, FeedServiceType>()
 
   constructor(private readonly repo: GuidFeedTypeRepository) {}
 
-  async register(moduleName: string, feedType: FeedType): Promise<void> {
-    const registered = await this.repo.findOrCreate(moduleName, feedType)
-    this.feedTypes.set(registered.guid, feedType)
+  async register(moduleName: string, serviceType: FeedServiceType): Promise<void> {
+    const registered = await this.repo.findOrCreate(moduleName, serviceType)
+    this.feedTypes.set(registered.guid, serviceType)
   }
 
-  lookupFeedType(id: FeedTypeGuid): FeedType | null {
+  lookupFeedType(id: FeedTypeGuid): FeedServiceType | null {
     return this.feedTypes.get(id) || null
   }
 
-  async readAll(): Promise<FeedType[]> {
+  async findAll(): Promise<FeedServiceType[]> {
     throw new Error('todo')
   }
 
-  async findById(): Promise<FeedType | null> {
+  async findById(id: FeedServiceTypeGuid): Promise<FeedServiceType | null> {
     throw new Error('todo')
   }
 
-  async removeById(id: FeedTypeId): Promise<void> {
+  async removeById(id: FeedServiceTypeGuid): Promise<void> {
     throw new Error('todo')
   }
 }
 
-const feedTypeRepo: GuidFeedTypeRepository = new class GFTRImpl extends BaseMongooseRepository<Document, Model<Document>, GuidFeedType> {
+const serviceTypeRepo: GuidFeedTypeRepository = new class GFTRImpl extends BaseMongooseRepository<Document, Model<Document>, GuidFeedServiceType> {
 
-  static qualifiedNameOf(feedType: FeedType, inModuleName: string): string {
+  static qualifiedNameOf(feedType: FeedServiceType, inModuleName: string): string {
     return `${inModuleName}/${feedType.id}`
   }
 
-  readonly db = new Map<FeedTypeId, GuidFeedType>()
-  readonly qualifiedNameIndex = new Map<string, GuidFeedType>()
+  readonly db = new Map<FeedTypeId, GuidFeedServiceType>()
+  readonly qualifiedNameIndex = new Map<string, GuidFeedServiceType>()
 
   constructor() {
     super(Model)
   }
 
-  async findOrCreate(moduleName: string, feedType: FeedType): Promise<GuidFeedType> {
+  async findOrCreate(moduleName: string, feedType: FeedServiceType): Promise<GuidFeedServiceType> {
     const qualifiedName = GFTRImpl.qualifiedNameOf(feedType, moduleName)
     let guidFeedType = this.qualifiedNameIndex.get(qualifiedName)
     if (!guidFeedType) {
@@ -80,18 +79,18 @@ const feedTypeRepo: GuidFeedTypeRepository = new class GFTRImpl extends BaseMong
       guidFeedType = Object.create(feedType, {
         guid: { value: guid },
         moduleName: { value: moduleName }
-      }) as GuidFeedType
+      }) as GuidFeedServiceType
       this.db.set(guid, guidFeedType)
       this.qualifiedNameIndex.set(qualifiedName, guidFeedType)
     }
     return guidFeedType
   }
 
-  async readAll(): Promise<GuidFeedType[]> {
+  async findAll(): Promise<GuidFeedServiceType[]> {
     throw new Error('todo')
   }
 
-  async findById(id: FeedTypeId): Promise<GuidFeedType | null> {
+  async findById(id: FeedTypeId): Promise<GuidFeedServiceType | null> {
     throw new Error('todo')
   }
 
@@ -100,14 +99,14 @@ const feedTypeRepo: GuidFeedTypeRepository = new class GFTRImpl extends BaseMong
   }
 }
 
-const feedTypeRegistry = new FeedTypeRegistry(feedTypeRepo)
+const serviceTypeRegistry = new FeedTypeRegistry(serviceTypeRepo)
 
 async function loadFeedTypesOf({ moduleName, plugin }: PluginModule): Promise<void> {
-  if (!plugin.loadFeedTypes) {
+  if (!plugin.loadServiceTypes) {
     return
   }
-  const feedTypes = await plugin.loadFeedTypes()
-  for (const feedType of feedTypes) {
-    feedTypeRegistry.register(moduleName, feedType)
+  const serviceTypes = await plugin.loadServiceTypes()
+  for (const serviceType of serviceTypes) {
+    serviceTypeRegistry.register(moduleName, serviceType)
   }
 }

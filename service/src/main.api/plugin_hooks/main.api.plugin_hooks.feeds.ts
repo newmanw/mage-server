@@ -1,10 +1,10 @@
-import { FeedType } from '../../entities/feeds/entities.feeds';
+import { FeedServiceType } from '../../entities/feeds/entities.feeds';
 
 
-interface LoadFeedTypes {
-  (): Promise<FeedType[]>
+interface LoadFeedServiceTypes {
+  (): Promise<FeedServiceType[]>
 }
 
 export interface FeedsPluginHooks {
-  readonly loadFeedTypes?:  LoadFeedTypes
+  readonly loadServiceTypes?:  LoadFeedServiceTypes
 }

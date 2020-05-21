@@ -12,7 +12,7 @@ declare global {
   }
 }
 
-import { FeedTypeRepository, FeedRepository } from '../../app.impl/feeds/app.impl.feeds'
+import { FeedServiceTypeRepository, FeedRepository } from '../../entities/feeds/entities.feeds'
 import { FeedType, Feed } from '../../entities/feeds/entities.feeds'
 import { Request, Response, NextFunction, RequestHandler, Router, Application } from 'express'
 
@@ -24,7 +24,7 @@ export type ManifoldController = {
 }
 
 export type Injection = {
-  adapterRepo: FeedTypeRepository
+  adapterRepo: FeedServiceTypeRepository
   sourceRepo: FeedRepository
 }
 

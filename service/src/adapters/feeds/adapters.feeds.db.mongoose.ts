@@ -1,8 +1,8 @@
 
 import mongoose, { Model, SchemaOptions } from 'mongoose'
 import { BaseMongooseRepository } from '../base/adapters.base.db.mongoose'
-import { FeedType, Feed } from '../../entities/feeds/entities.feeds'
-import { FeedTypeRepository, FeedRepository } from '../../app.impl/feeds/app.impl.feeds'
+import { FeedType, Feed, FeedServiceType } from '../../entities/feeds/entities.feeds'
+import { FeedServiceTypeRepository, FeedRepository } from '../../entities/feeds/entities.feeds'
 
 
 
@@ -48,12 +48,12 @@ export const SourceDescriptorSchema = new mongoose.Schema(
     }
   })
 
-export type AdapterDescriptorDocument = FeedType & mongoose.Document
+export type AdapterDescriptorDocument = FeedServiceType & mongoose.Document
 export type SourceDescriptorDocument = Feed & mongoose.Document
 export type AdapterDescriptorModel = Model<AdapterDescriptorDocument>
 export type SourceDescriptorModel = Model<SourceDescriptorDocument>
 
-export class MongooseAdapterRepository extends BaseMongooseRepository<AdapterDescriptorDocument, AdapterDescriptorModel, FeedType> implements FeedTypeRepository{
+export class MongooseAdapterRepository extends BaseMongooseRepository<AdapterDescriptorDocument, AdapterDescriptorModel, FeedServiceType> implements FeedServiceTypeRepository {
 
   constructor(model: AdapterDescriptorModel) {
     super(model)

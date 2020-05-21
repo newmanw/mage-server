@@ -11,3 +11,6 @@ export type JsonPrimitive =
   | boolean
   | number
   | string
+
+export type JsonPropertyNamesOf<T> = { [K in keyof T]: T[K] extends Json ? K : never }[keyof T]
+export type JsonPropertiesOf<T> = Pick<T, JsonPropertyNamesOf<T>>

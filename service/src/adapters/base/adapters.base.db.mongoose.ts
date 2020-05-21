@@ -26,7 +26,7 @@ export class BaseMongooseRepository<D extends mongoose.Document, M extends mongo
     return this.docToEntity(created)
   }
 
-  async readAll(): Promise<E[]> {
+  async findAll(): Promise<E[]> {
     const docs = await this.model.find()
     return docs.map(this.docToEntity)
   }
