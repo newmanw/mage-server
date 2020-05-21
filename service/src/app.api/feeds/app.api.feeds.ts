@@ -1,6 +1,8 @@
-import { AuthenticatedRequest } from '../app.api.global'
+import { JSONSchema } from 'json-schema-typed'
+import { AuthenticatedRequest, AppResponse } from '../app.api.global'
 import { Feed, FeedType, FeedParams, FeedContent, FeedId, FeedServiceType, FeedServiceTypeGuid, FeedServiceGuid, FeedService } from '../../entities/feeds/entities.feeds'
 import { Json } from '../../entities/entities.global.json'
+import { MageError, PermissionDeniedError, EntityNotFoundError, InvalidInputError } from '../app.api.global.errors'
 
 export type FeedTypeGuid = string
 
@@ -8,11 +10,11 @@ export interface FeedServiceTypeDescriptor {
   id: string,
   title: string,
   description: string
-  configSchema: Json
+  configSchema: JSONSchema
 }
 
 export interface ListFeedServiceTypes {
-  (req: AuthenticatedRequest): Promise<FeedServiceType[]>
+  (req: AuthenticatedRequest): Promise<AppResponse<FeedServiceType[], PermissionDeniedError>>
 }
 
 export interface CreateFeedServiceRequest extends AuthenticatedRequest {
@@ -21,7 +23,7 @@ export interface CreateFeedServiceRequest extends AuthenticatedRequest {
 }
 
 export interface CreateFeedService {
-  (req: CreateFeedServiceRequest): Promise<FeedService>
+  (req: CreateFeedServiceRequest): Promise<AppResponse<FeedService, PermissionDeniedError | EntityNotFoundError | InvalidInputError>>
 }
 
 export interface ListFeedTypes {

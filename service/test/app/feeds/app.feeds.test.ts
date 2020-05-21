@@ -2,8 +2,8 @@ import { describe, it, beforeEach } from 'mocha'
 import { expect } from 'chai'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
 import { FeedServiceType, FeedType, Feed, FeedParams, FeedContent, FeedServiceTypeRepository, FeedRepository } from '../../../lib/entities/feeds/entities.feeds'
-import { CreateFeed, FeedsPermissionService, ListFeedServiceTypes, CreateFeedService } from '../../../lib/app.impl/feeds/app.impl.feeds'
-import { MageErrorCode, MageError, EntityNotFoundError } from '../../../lib/app.api/app.api.global.errors'
+import { CreateFeed, FeedsPermissionService, ListFeedServiceTypes, CreateFeedService, ListFeedServiceTypesPermission } from '../../../lib/app.impl/feeds/app.impl.feeds'
+import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied } from '../../../lib/app.api/app.api.global.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
 import { FeedDescriptor, FeedTypeGuid, FeedServiceTypeDescriptor } from '../../../lib/app.api/feeds/app.api.feeds'
 import uniqid from 'uniqid'
@@ -21,9 +21,9 @@ const someServiceTypes: FeedServiceType[] = [
           description: 'The base URL of the WFS server',
           type: 'string',
           format: 'uri',
-          required: true,
         }
-      }
+      },
+      required: [ 'url' ]
     }
   },
   {
@@ -38,9 +38,9 @@ const someServiceTypes: FeedServiceType[] = [
           description: 'The base URL of the OAF server',
           type: 'string',
           format: 'uri',
-          required: true,
         }
-      }
+      },
+      required: [ 'url' ]
     }
   }
 ]
@@ -98,14 +98,17 @@ describe.only('feeds administration', function() {
 
     it('returns all the feed service types', async function() {
 
-      const serviceTypes = await app.listServiceTypes(adminPrincipal)
+      const serviceTypes = await app.listServiceTypes(adminPrincipal).then(res => res.success)
 
       expect(serviceTypes).to.deep.equal(someServiceTypes)
     })
 
     it('checks permission for listing service types', async function() {
 
-      await expect(app.listServiceTypes(bannedPrincipal)).to.eventually.rejectWith(MageErrorCode.PermissionDenied)
+      const error = await app.listServiceTypes(bannedPrincipal).then(res => res.error)
+
+      expect(error).to.be.instanceOf(MageError)
+      expect(error?.code).to.equal(ErrPermissionDenied)
     })
   })
 
@@ -123,7 +126,7 @@ describe.only('feeds administration', function() {
 
       const serviceType = someServiceTypes[0].id
       const config = { url: 'https://some.service/somewhere' }
-      const created = await app.createService({ ...adminPrincipal, serviceType, config })
+      const created = await app.createService({ ...adminPrincipal, serviceType, config }).then(res => res.success!)
       const inDb = app.feedServiceRepo.db.get(created.id)
 
       expect(created.id).to.exist
@@ -322,14 +325,6 @@ class TestApp {
       this.feedServiceRepo.db.set(feed.id, feed)
     }
   }
-
-  allowAllPrivileges() {
-    this.permissionService.allowAll()
-  }
-
-  denyAllPrivileges() {
-    this.permissionService.denyAll()
-  }
 }
 
 class TestFeedServiceTypeRepository implements FeedServiceTypeRepository {
@@ -371,33 +366,23 @@ class TestFeedRepository implements FeedRepository {
 class TestPermissionService implements FeedsPermissionService {
 
   readonly privleges = {
-    [ListFeedServiceTypes.name]: true,
-    [CreateFeed.name]: true,
-  }
-
-  async ensureListServiceTypesPermissionFor(user: UserId): Promise<void> {
-    this.checkPrivilege(ListFeedServiceTypes.name)
-  }
-
-  async ensureCreateFeedPermissionFor(user: UserId): Promise<void> {
-    this.checkPrivilege(CreateFeed.name)
-  }
-
-  checkPrivilege(privilege: string) {
-    if (!this.privleges[privilege]) {
-      throw new MageError(MageErrorCode.PermissionDenied)
+    [adminPrincipal.user]: {
+      [ListFeedServiceTypesPermission]: true,
     }
+  } as { [user: string]: { [privilege: string]: boolean }}
+
+  async ensureListServiceTypesPermissionFor(user: UserId): Promise<null | PermissionDeniedError> {
+    return this.checkPrivilege(user, ListFeedServiceTypesPermission)
   }
 
-  allowAll() {
-    Object.keys(this.privleges).forEach(priv => {
-      this.privleges[priv] = true
-    })
+  async ensureCreateFeedPermissionFor(user: UserId): Promise<null | PermissionDeniedError> {
+    throw new Error('todo')
   }
 
-  denyAll() {
-    Object.keys(this.privleges).forEach(priv => {
-      this.privleges[priv] = false
-    })
+  checkPrivilege(user: UserId, privilege: string): null | PermissionDeniedError {
+    if (!this.privleges[user]?.[privilege]) {
+      return permissionDenied(user, privilege)
+    }
+    return null
   }
 }

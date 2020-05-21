@@ -45,6 +45,7 @@
     "gm": "1.23.1",
     "google-auth-library": "0.11.0",
     "jose": "0.3.2",
+    "json-schema-typed": "^7.0.3",
     "json2csv": "4.5.1",
     "mgrs": "^1.0.0",
     "moment": "2.22.2",

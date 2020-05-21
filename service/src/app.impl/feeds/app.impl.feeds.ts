@@ -1,19 +1,22 @@
-import { FeedType, Feed, FeedId, FeedContent, FeedServiceTypeRepository, FeedService, FeedRepository } from '../../entities/feeds/entities.feeds';
+import { FeedServiceTypeRepository, FeedService, FeedRepository } from '../../entities/feeds/entities.feeds';
 import * as api from '../../app.api/feeds/app.api.feeds'
-import { MageError, MageErrorCode } from '../../app.api/app.api.global.errors';
 import { UserId } from '../../entities/authn/entities.authn';
-import { AuthenticatedRequest } from '../../app.api/app.api.global';
+import { AuthenticatedRequest, AppResponse, withPermission } from '../../app.api/app.api.global';
+import { PermissionDeniedError, EntityNotFoundError, InvalidInputError } from '../../app.api/app.api.global.errors';
 
+
+export const ListFeedServiceTypesPermission = 'feeds.listServiceTypes'
 
 export function ListFeedServiceTypes(repo: FeedServiceTypeRepository, permissionService: FeedsPermissionService): api.ListFeedServiceTypes {
-  return async function listFeedServiceTypes(req: AuthenticatedRequest): ReturnType<api.ListFeedServiceTypes> {
-    await permissionService.ensureListServiceTypesPermissionFor(req.user)
-    return await repo.findAll()
+  return function listFeedServiceTypes(req: AuthenticatedRequest): ReturnType<api.ListFeedServiceTypes> {
+    return withPermission(permissionService.ensureListServiceTypesPermissionFor(req.user))
+      .perform(() => repo.findAll())
   }
 }
 
 export function CreateFeedService(): api.CreateFeedService {
-  return async function createFeedService(req: api.CreateFeedServiceRequest): Promise<FeedService> {
+  return async function createFeedService(req: api.CreateFeedServiceRequest): Promise<AppResponse<FeedService,
+      PermissionDeniedError | EntityNotFoundError | InvalidInputError>> {
     throw new Error('todo')
   }
 }
@@ -36,6 +39,6 @@ export function CreateFeed(feedTypeRepo: FeedServiceTypeRepository, feedRepo: Fe
 }
 
 export interface FeedsPermissionService {
-  ensureListServiceTypesPermissionFor(user: UserId): Promise<void>
-  ensureCreateFeedPermissionFor(user: UserId): Promise<void>
+  ensureListServiceTypesPermissionFor(user: UserId): Promise<PermissionDeniedError | null>
+  ensureCreateFeedPermissionFor(user: UserId): Promise<PermissionDeniedError | null>
 }

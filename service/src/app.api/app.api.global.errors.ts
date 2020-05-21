@@ -1,24 +1,32 @@
 
-export enum MageErrorCode {
-  PermissionDenied = 'permission_denied',
-  InvalidInput = 'invalid_input',
-  EntityNotFound = 'entity_not_found',
-  /**
-   * There is some error in the state of the app, like a configuration problem.
-   */
-  InternalError = 'internal_error',
-}
+export const ErrPermissionDenied = Symbol.for('err.permission_denied')
+export const ErrInvalidInput = Symbol.for('err.invalid_input')
+export const ErrEntityNotFound = Symbol.for('err.entity_not_found')
 
-export class MageError extends Error {
+export type PermissionDeniedError = MageError<typeof ErrPermissionDenied, PermissionDeniedErrorData>
+export type InvalidInputError = MageError<typeof ErrInvalidInput, any>
+export type EntityNotFoundError = MageError<typeof ErrEntityNotFound, EntityNotFoundErrorData>
 
-  constructor(public readonly code: MageErrorCode, message?: string) {
-    super(code + (message ? `: ${message}` : ''))
+export class MageError<Codes extends symbol, Data = null> extends Error {
+  constructor(public readonly code: Codes, readonly data?: Data, message?: string) {
+    super(Symbol.keyFor(code) + (message ? `: ${message}` : ''))
   }
 }
 
-export class EntityNotFoundError extends MageError {
+export interface PermissionDeniedErrorData {
+  permission: string
+  subject: string
+}
 
-  constructor(readonly entityType: string, readonly entityId: any) {
-    super(MageErrorCode.EntityNotFound, `${entityType} entity not found: ${entityId}`)
-  }
+export interface EntityNotFoundErrorData {
+  readonly entityType: string
+  readonly entityId: any
+}
+
+export function permissionDenied(permission: string, subject: string): PermissionDeniedError {
+  return new MageError(ErrPermissionDenied, { permission, subject }, `${subject} does not have permission ${permission}`)
+}
+
+export function entityNotFound(entityId: any, entityType: string): EntityNotFoundError {
+  return new MageError(ErrEntityNotFound, { entityId, entityType }, `${entityType} not found; id: ${entityId}`)
 }

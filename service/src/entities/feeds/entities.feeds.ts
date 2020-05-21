@@ -1,6 +1,7 @@
 
 import { Json } from '../entities.global.json'
 import { FeatureCollection } from 'geojson'
+import { JSONSchema } from 'json-schema-typed'
 
 export type FeedServiceTypeGuid = string
 
@@ -8,7 +9,7 @@ export interface FeedServiceType {
   id: FeedServiceTypeGuid,
   title: string,
   description: string | null,
-  configSchema: Json,
+  configSchema: JSONSchema,
 }
 
 export type FeedServiceGuid = string
