@@ -6,6 +6,7 @@ import { PermissionDeniedError, EntityNotFoundError, InvalidInputError } from '.
 
 
 export const ListFeedServiceTypesPermission = 'feeds.listServiceTypes'
+export const CreateFeedServicePermission = 'feeds.createService'
 
 export function ListFeedServiceTypes(repo: FeedServiceTypeRepository, permissionService: FeedsPermissionService): api.ListFeedServiceTypes {
   return function listFeedServiceTypes(req: AuthenticatedRequest): ReturnType<api.ListFeedServiceTypes> {
@@ -14,10 +15,13 @@ export function ListFeedServiceTypes(repo: FeedServiceTypeRepository, permission
   }
 }
 
-export function CreateFeedService(): api.CreateFeedService {
-  return async function createFeedService(req: api.CreateFeedServiceRequest): Promise<AppResponse<FeedService,
-      PermissionDeniedError | EntityNotFoundError | InvalidInputError>> {
-    throw new Error('todo')
+export function CreateFeedService(permissionService: FeedsPermissionService): api.CreateFeedService {
+  return function createFeedService(req: api.CreateFeedServiceRequest): Promise<AppResponse<FeedService,
+    PermissionDeniedError | EntityNotFoundError | InvalidInputError>> {
+    return withPermission(permissionService.ensureCreateServicePermissionFor(req.user))
+      .perform(async (): Promise<FeedService> => {
+        throw new Error('todo')
+      })
   }
 }
 
@@ -40,5 +44,6 @@ export function CreateFeed(feedTypeRepo: FeedServiceTypeRepository, feedRepo: Fe
 
 export interface FeedsPermissionService {
   ensureListServiceTypesPermissionFor(user: UserId): Promise<PermissionDeniedError | null>
+  ensureCreateServicePermissionFor(user: UserId): Promise<PermissionDeniedError | null>
   ensureCreateFeedPermissionFor(user: UserId): Promise<PermissionDeniedError | null>
 }

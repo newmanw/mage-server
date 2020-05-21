@@ -2,8 +2,8 @@ import { describe, it, beforeEach } from 'mocha'
 import { expect } from 'chai'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
 import { FeedServiceType, FeedType, Feed, FeedParams, FeedContent, FeedServiceTypeRepository, FeedRepository } from '../../../lib/entities/feeds/entities.feeds'
-import { CreateFeed, FeedsPermissionService, ListFeedServiceTypes, CreateFeedService, ListFeedServiceTypesPermission } from '../../../lib/app.impl/feeds/app.impl.feeds'
-import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied } from '../../../lib/app.api/app.api.global.errors'
+import { CreateFeed, FeedsPermissionService, ListFeedServiceTypes, CreateFeedService, ListFeedServiceTypesPermission, CreateFeedServicePermission } from '../../../lib/app.impl/feeds/app.impl.feeds'
+import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput } from '../../../lib/app.api/app.api.global.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
 import { FeedDescriptor, FeedTypeGuid, FeedServiceTypeDescriptor } from '../../../lib/app.api/feeds/app.api.feeds'
 import uniqid from 'uniqid'
@@ -90,7 +90,7 @@ describe.only('feeds administration', function() {
     app = new TestApp()
   })
 
-  describe('listing available feed service types', async function() {
+  describe.only('listing available feed service types', async function() {
 
     beforeEach(function() {
       app.registerServiceTypes(...someServiceTypes)
@@ -112,24 +112,33 @@ describe.only('feeds administration', function() {
     })
   })
 
-  describe('creating a feed service', async function() {
+  describe.only('creating a feed service', async function() {
 
     beforeEach(function() {
       app.registerServiceTypes(...someServiceTypes)
     })
 
     it('validates the configuration options', async function() {
-      expect.fail('todo')
+
+      const serviceType = someServiceTypes[0]
+      const invalidConfig = {
+        url: null
+      }
+      const err = await app.createService({ ...adminPrincipal, serviceType: serviceType.id, config: invalidConfig }).then(res => res.error)
+
+      expect(err).to.be.instanceOf(MageError)
+      expect(err?.code).to.equal(ErrInvalidInput)
+      expect(app.serviceRepo.db).to.be.empty
     })
 
     it('saves the service', async function() {
 
       const serviceType = someServiceTypes[0].id
       const config = { url: 'https://some.service/somewhere' }
-      const created = await app.createService({ ...adminPrincipal, serviceType, config }).then(res => res.success!)
-      const inDb = app.feedServiceRepo.db.get(created.id)
+      const created = await app.createService({ ...adminPrincipal, serviceType, config }).then(res => res.success)
+      const inDb = created && app.serviceRepo.db.get(created.id)
 
-      expect(created.id).to.exist
+      expect(created?.id).to.exist
       expect(created).to.deep.include({
         config: config
       })
@@ -138,7 +147,12 @@ describe.only('feeds administration', function() {
 
     it('checks permission for creating a feed service', async function() {
 
-      expect.fail('todo')
+      const serviceType = someServiceTypes[1].id
+      const config = { url: 'https://does.not/matter' }
+      const err = await app.createService({ ...bannedPrincipal, serviceType, config }).then(res => res.error)
+
+      expect(err?.code).to.equal(ErrPermissionDenied)
+      expect(app.serviceRepo.db).to.be.empty
     })
   })
 
@@ -307,10 +321,10 @@ describe.only('feeds administration', function() {
 class TestApp {
 
   readonly serviceTypeRepo = new TestFeedServiceTypeRepository()
-  readonly feedServiceRepo = new TestFeedRepository()
+  readonly serviceRepo = new TestFeedRepository()
   readonly permissionService = new TestPermissionService()
   readonly listServiceTypes = ListFeedServiceTypes(this.serviceTypeRepo, this.permissionService)
-  readonly createService = CreateFeedService()
+  readonly createService = CreateFeedService(this.permissionService)
   // readonly createSource = CreateFeed(this.serviceTypeRepo, this.feedRepo, this.permissionService)
   // readonly previewFeedContent = PreviewFeedContent(this.serviceTypeRepo, this.permissionService)
 
@@ -322,7 +336,7 @@ class TestApp {
 
   registerSources(...feeds: Feed[]): void {
     for (const feed of feeds) {
-      this.feedServiceRepo.db.set(feed.id, feed)
+      this.serviceRepo.db.set(feed.id, feed)
     }
   }
 }
@@ -368,11 +382,16 @@ class TestPermissionService implements FeedsPermissionService {
   readonly privleges = {
     [adminPrincipal.user]: {
       [ListFeedServiceTypesPermission]: true,
+      [CreateFeedServicePermission]: true,
     }
   } as { [user: string]: { [privilege: string]: boolean }}
 
   async ensureListServiceTypesPermissionFor(user: UserId): Promise<null | PermissionDeniedError> {
     return this.checkPrivilege(user, ListFeedServiceTypesPermission)
+  }
+
+  async ensureCreateServicePermissionFor(user: UserId): Promise<null | PermissionDeniedError> {
+    return this.checkPrivilege(user, CreateFeedServicePermission)
   }
 
   async ensureCreateFeedPermissionFor(user: UserId): Promise<null | PermissionDeniedError> {
