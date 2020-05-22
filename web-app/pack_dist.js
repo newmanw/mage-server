@@ -1,5 +1,13 @@
 #!/usr/bin/env node
 
+/**
+ * This small script simply creates an NPM package with no dependencies.  While
+ * Angular CLI needs the dependencies to properly build the app, the compiled
+ * product is completely self-contained.  When MAGE pulls the web app package
+ * via npm install, there is no need to install all the web app dependencies,
+ * only the compiled bundle that MAGE serves to the web browser.
+ */
+
 const fs = require('fs-extra');
 const path = require('path');
 const util = require('util');
