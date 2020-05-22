@@ -4,7 +4,7 @@ import { describe, it, before, beforeEach, after, afterEach } from 'mocha'
 import { expect } from 'chai'
 import { MongoMemoryServer } from 'mongodb-memory-server'
 import { BaseMongooseRepository } from '../../../lib/adapters/base/adapters.base.db.mongoose'
-import { FeedRepository } from '../../../lib/entities/feeds/entities.feeds'
+import { FeedServiceRepository } from '../../../lib/entities/feeds/entities.feeds'
 import { AdapterDescriptorModel, ManifoldModels, AdapterDescriptorSchema, SourceDescriptorModel, SourceDescriptorSchema, MongooseAdapterRepository, MongooseSourceRepository } from '../../../lib/adapters/feeds/adapters.feeds.db.mongoose'
 import { FeedServiceType } from '../../../lib/entities/feeds/entities.feeds'
 import { FeedDescriptor } from '../../../src/app.api/feeds/app.api.feeds'
@@ -142,7 +142,7 @@ describe('manifold repositories', function() {
 
     const collection = 'test_source_descriptors'
     let model: SourceDescriptorModel
-    let repo: FeedRepository
+    let repo: FeedServiceRepository
 
     beforeEach(function() {
       model = conn.model(ManifoldModels.SourceDescriptor, SourceDescriptorSchema, collection)

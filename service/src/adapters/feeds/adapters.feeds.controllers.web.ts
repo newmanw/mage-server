@@ -4,16 +4,16 @@ declare global {
   namespace Express {
     interface Request {
       manifold: {
-        contextFeed?: Feed
-        feedType?: FeedType
-        readonly requiredFeedType: FeedType
+        contextFeed?: FeedService
+        feedType?: FeedTopic
+        readonly requiredFeedType: FeedTopic
       }
     }
   }
 }
 
-import { FeedServiceTypeRepository, FeedRepository } from '../../entities/feeds/entities.feeds'
-import { FeedType, Feed } from '../../entities/feeds/entities.feeds'
+import { FeedServiceTypeRepository, FeedServiceRepository } from '../../entities/feeds/entities.feeds'
+import { FeedTopic, FeedService } from '../../entities/feeds/entities.feeds'
 import { Request, Response, NextFunction, RequestHandler, Router, Application } from 'express'
 
 export type ManifoldController = {
@@ -25,7 +25,7 @@ export type ManifoldController = {
 
 export type Injection = {
   adapterRepo: FeedServiceTypeRepository
-  sourceRepo: FeedRepository
+  sourceRepo: FeedServiceRepository
 }
 
 const sourceRouter = Router()

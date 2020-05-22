@@ -1,4 +1,4 @@
-import { FeedServiceTypeRepository, FeedService, FeedRepository } from '../../entities/feeds/entities.feeds';
+import { FeedServiceTypeRepository, FeedService, FeedServiceRepository } from '../../entities/feeds/entities.feeds';
 import * as api from '../../app.api/feeds/app.api.feeds'
 import { UserId } from '../../entities/authn/entities.authn';
 import { AuthenticatedRequest, AppResponse, withPermission } from '../../app.api/app.api.global';
@@ -11,7 +11,10 @@ export const CreateFeedServicePermission = 'feeds.createService'
 export function ListFeedServiceTypes(repo: FeedServiceTypeRepository, permissionService: FeedsPermissionService): api.ListFeedServiceTypes {
   return function listFeedServiceTypes(req: AuthenticatedRequest): ReturnType<api.ListFeedServiceTypes> {
     return withPermission(permissionService.ensureListServiceTypesPermissionFor(req.user))
-      .perform(() => repo.findAll())
+      .perform(async () => {
+        const all = await repo.findAll()
+        return all.map(x => api.FeedServiceTypeDescriptor(x))
+      })
   }
 }
 
@@ -25,7 +28,7 @@ export function CreateFeedService(permissionService: FeedsPermissionService): ap
   }
 }
 
-export function CreateFeed(feedTypeRepo: FeedServiceTypeRepository, feedRepo: FeedRepository, permissionService: FeedsPermissionService): api.CreateFeed {
+export function CreateFeed(feedTypeRepo: FeedServiceTypeRepository, feedRepo: FeedServiceRepository, permissionService: FeedsPermissionService): api.CreateFeed {
   return async function createSource(req: api.CreateFeedRequest): ReturnType<api.CreateFeed> {
     throw new Error('todo')
     // await permissionService.ensureCreateFeedPermissionFor(req.user)

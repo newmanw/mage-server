@@ -1,21 +1,41 @@
 
 import { Json } from '../entities.global.json'
 import { FeatureCollection } from 'geojson'
-import { JSONSchema } from 'json-schema-typed'
+import { JSONSchema6 } from 'json-schema'
 
-export type FeedServiceTypeGuid = string
+export const ErrInvalidServiceConfig = Symbol.for('err.feeds.invalid_service_config')
 
-export interface FeedServiceType {
-  id: FeedServiceTypeGuid,
-  title: string,
-  description: string | null,
-  configSchema: JSONSchema,
+export class FeedsError<Code extends symbol, Data> extends Error {
+  constructor(readonly code: Code, readonly data?: Data) {
+    super(Symbol.keyFor(code))
+  }
 }
 
-export type FeedServiceGuid = string
+export class InvalidServiceConfigData {
+  constructor(readonly invalidKeys: string[]) {}
+}
+
+export type InvalidServiceConfigError = FeedsError<typeof ErrInvalidServiceConfig, InvalidServiceConfigData>
+
+export type FeedServiceTypeId = string
+
+export interface FeedServiceType {
+  id: FeedServiceTypeId
+  title: string
+  description: string | null
+  configSchema: JSONSchema6
+
+  validateConfig(config: Json): Promise<null | InvalidServiceConfigError>
+}
+
+export type FeedServiceId = string
 
 export interface FeedService {
-  id: FeedServiceGuid
+  id: FeedServiceId
+  serviceType: FeedServiceTypeId
+  title: string
+  description: string | null
+  config: Json
 }
 
 export interface FeedServiceTypeRepository {
@@ -28,14 +48,21 @@ export interface FeedServiceTypeRepository {
   // removeById(adapterId: string): Promise<void>
 }
 
-export interface FeedRepository {
-  create(feedAttrs: Partial<Feed>): Promise<Feed>
-  findAll(): Promise<Feed[]>
-  findById(feedId: FeedId): Promise<Feed | null>
+export type FeedServiceCreateAttrs = Pick<FeedService,
+  | 'serviceType'
+  | 'title'
+  | 'description'
+  | 'config'
+  >
+
+export interface FeedServiceRepository {
+  create(feedAttrs: FeedServiceCreateAttrs): Promise<FeedService>
+  findAll(): Promise<FeedService[]>
+  findById(feedId: FeedServiceId): Promise<FeedService | null>
 }
 
 export interface FeedContent {
-  readonly feed: Feed
+  readonly feed: FeedService
   readonly variableParams: FeedParams
   readonly items: FeatureCollection
 }
@@ -44,7 +71,7 @@ export type FeedId = string
 
 export interface Feed {
   id: FeedId
-  feedType: FeedTypeId
+  topic: FeedTopicId
   title: string
   summary: string
   constantParams: Json
@@ -56,15 +83,12 @@ export type FeedParams = {
   variableParams: Json
 }
 
-export type FeedTypeId = string
+export type FeedTopicId = string
 
-export interface FeedType {
-  readonly id: FeedTypeId
+export interface FeedTopic {
+  readonly id: FeedTopicId
   readonly title: string
   readonly summary: string | null
-  readonly constantParamsSchema: Json
-  readonly variableParamsSchema: Json
-
-  previewContent(params: FeedParams): Promise<FeedContent>
-  fetchContentFromFeed(feed: Feed, variableParams: Json): Promise<FeedContent>
+  readonly constantParamsSchema: JSONSchema6
+  readonly variableParamsSchema: JSONSchema6
 }

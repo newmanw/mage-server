@@ -1,4 +1,4 @@
-import { FeedTypeId, FeedServiceTypeRepository, FeedServiceType, FeedServiceTypeGuid } from '../entities/feeds/entities.feeds';
+import { FeedTopicId, FeedServiceTypeRepository, FeedServiceType, FeedServiceTypeId } from '../entities/feeds/entities.feeds';
 import { FeedsPluginHooks } from '../main.api/plugin_hooks/main.api.plugin_hooks.feeds'
 import { BaseMongooseRepository } from '../adapters/base/adapters.base.db.mongoose';
 import { Model, Document } from 'mongoose';
@@ -19,10 +19,8 @@ async function bootPlugins(pluginModules: string[]): Promise<void> {
   }
 }
 
-type FeedTypeGuid = string
-
 interface GuidFeedServiceType extends FeedServiceType {
-  readonly guid: FeedTypeId,
+  readonly guid: FeedTopicId,
   readonly moduleName: string
 }
 
@@ -32,7 +30,7 @@ interface GuidFeedTypeRepository extends FeedServiceTypeRepository {
 
 class FeedTypeRegistry implements FeedServiceTypeRepository {
 
-  private readonly feedTypes = new Map<FeedServiceTypeGuid, FeedServiceType>()
+  private readonly feedTypes = new Map<FeedServiceTypeId, FeedServiceType>()
 
   constructor(private readonly repo: GuidFeedTypeRepository) {}
 
@@ -41,7 +39,7 @@ class FeedTypeRegistry implements FeedServiceTypeRepository {
     this.feedTypes.set(registered.guid, serviceType)
   }
 
-  lookupFeedType(id: FeedTypeGuid): FeedServiceType | null {
+  lookupFeedType(id: FeedTopicId): FeedServiceType | null {
     return this.feedTypes.get(id) || null
   }
 
@@ -49,11 +47,11 @@ class FeedTypeRegistry implements FeedServiceTypeRepository {
     throw new Error('todo')
   }
 
-  async findById(id: FeedServiceTypeGuid): Promise<FeedServiceType | null> {
+  async findById(id: FeedServiceTypeId): Promise<FeedServiceType | null> {
     throw new Error('todo')
   }
 
-  async removeById(id: FeedServiceTypeGuid): Promise<void> {
+  async removeById(id: FeedServiceTypeId): Promise<void> {
     throw new Error('todo')
   }
 }
@@ -64,7 +62,7 @@ const serviceTypeRepo: GuidFeedTypeRepository = new class GFTRImpl extends BaseM
     return `${inModuleName}/${feedType.id}`
   }
 
-  readonly db = new Map<FeedTypeId, GuidFeedServiceType>()
+  readonly db = new Map<FeedTopicId, GuidFeedServiceType>()
   readonly qualifiedNameIndex = new Map<string, GuidFeedServiceType>()
 
   constructor() {
@@ -90,11 +88,11 @@ const serviceTypeRepo: GuidFeedTypeRepository = new class GFTRImpl extends BaseM
     throw new Error('todo')
   }
 
-  async findById(id: FeedTypeId): Promise<GuidFeedServiceType | null> {
+  async findById(id: FeedTopicId): Promise<GuidFeedServiceType | null> {
     throw new Error('todo')
   }
 
-  async removeById(id: FeedTypeId): Promise<void> {
+  async removeById(id: FeedTopicId): Promise<void> {
     throw new Error('todo')
   }
 }

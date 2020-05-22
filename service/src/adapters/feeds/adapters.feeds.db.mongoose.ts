@@ -1,8 +1,8 @@
 
 import mongoose, { Model, SchemaOptions } from 'mongoose'
 import { BaseMongooseRepository } from '../base/adapters.base.db.mongoose'
-import { FeedType, Feed, FeedServiceType } from '../../entities/feeds/entities.feeds'
-import { FeedServiceTypeRepository, FeedRepository } from '../../entities/feeds/entities.feeds'
+import { FeedTopic, FeedService, FeedServiceType } from '../../entities/feeds/entities.feeds'
+import { FeedServiceTypeRepository, FeedServiceRepository } from '../../entities/feeds/entities.feeds'
 
 
 
@@ -20,7 +20,7 @@ export const AdapterDescriptorSchema = new mongoose.Schema(
   {
     toJSON: {
       getters: true,
-      transform: (entity: AdapterDescriptorDocument, json: any & FeedType, options: SchemaOptions): void => {
+      transform: (entity: AdapterDescriptorDocument, json: any & FeedTopic, options: SchemaOptions): void => {
         delete json._id
         delete json.modulePath
       }
@@ -39,9 +39,9 @@ export const SourceDescriptorSchema = new mongoose.Schema(
   {
     toJSON: {
       getters: true,
-      transform: (doc: SourceDescriptorDocument, json: any & Feed, options: SchemaOptions): void => {
+      transform: (doc: SourceDescriptorDocument, json: any & FeedService, options: SchemaOptions): void => {
         delete json._id
-        if (!doc.populated('adapter') && doc.feedType as any instanceof mongoose.Types.ObjectId) {
+        if (!doc.populated('adapter') && doc.serviceType as any instanceof mongoose.Types.ObjectId) {
           json.feedType = json.feedType.toHexString()
         }
       }
@@ -49,7 +49,7 @@ export const SourceDescriptorSchema = new mongoose.Schema(
   })
 
 export type AdapterDescriptorDocument = FeedServiceType & mongoose.Document
-export type SourceDescriptorDocument = Feed & mongoose.Document
+export type SourceDescriptorDocument = FeedService & mongoose.Document
 export type AdapterDescriptorModel = Model<AdapterDescriptorDocument>
 export type SourceDescriptorModel = Model<SourceDescriptorDocument>
 
@@ -61,7 +61,7 @@ export class MongooseAdapterRepository extends BaseMongooseRepository<AdapterDes
 }
 
 
-export class MongooseSourceRepository extends BaseMongooseRepository<SourceDescriptorDocument, SourceDescriptorModel, Feed> implements FeedRepository {
+export class MongooseSourceRepository extends BaseMongooseRepository<SourceDescriptorDocument, SourceDescriptorModel, FeedService> implements FeedServiceRepository {
 
   constructor(model: SourceDescriptorModel) {
     super(model)

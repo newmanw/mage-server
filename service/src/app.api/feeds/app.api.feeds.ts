@@ -1,24 +1,30 @@
-import { JSONSchema } from 'json-schema-typed'
-import { AuthenticatedRequest, AppResponse } from '../app.api.global'
-import { Feed, FeedType, FeedParams, FeedContent, FeedId, FeedServiceType, FeedServiceTypeGuid, FeedServiceGuid, FeedService } from '../../entities/feeds/entities.feeds'
+import { AuthenticatedRequest, AppResponse, Descriptor } from '../app.api.global'
+import { FeedService, FeedTopic, FeedParams, FeedContent, FeedId, FeedServiceType, FeedServiceTypeId, FeedServiceId } from '../../entities/feeds/entities.feeds'
 import { Json } from '../../entities/entities.global.json'
-import { MageError, PermissionDeniedError, EntityNotFoundError, InvalidInputError } from '../app.api.global.errors'
+import { PermissionDeniedError, EntityNotFoundError, InvalidInputError } from '../app.api.global.errors'
 
 export type FeedTypeGuid = string
 
-export interface FeedServiceTypeDescriptor {
-  id: string,
-  title: string,
-  description: string
-  configSchema: JSONSchema
+export interface FeedServiceTypeDescriptor extends Descriptor, Pick<FeedServiceType, 'id' | 'title' | 'description' | 'configSchema'> {
+  descriptorOf: 'FeedServiceType'
+}
+
+export function FeedServiceTypeDescriptor(from: FeedServiceType): FeedServiceTypeDescriptor {
+  return {
+    descriptorOf: 'FeedServiceType',
+    id: from.id,
+    title: from.title,
+    description: from.description,
+    configSchema: from.configSchema
+  }
 }
 
 export interface ListFeedServiceTypes {
-  (req: AuthenticatedRequest): Promise<AppResponse<FeedServiceType[], PermissionDeniedError>>
+  (req: AuthenticatedRequest): Promise<AppResponse<FeedServiceTypeDescriptor[], PermissionDeniedError>>
 }
 
 export interface CreateFeedServiceRequest extends AuthenticatedRequest {
-  serviceType: FeedServiceTypeGuid
+  serviceType: FeedServiceTypeId
   config: Json
 }
 
@@ -27,7 +33,7 @@ export interface CreateFeedService {
 }
 
 export interface ListFeedTypes {
-  (req: AuthenticatedRequest): Promise<FeedType[]>
+  (req: AuthenticatedRequest): Promise<FeedTopic[]>
 }
 
 export interface PreviewFeedContentRequest extends AuthenticatedRequest {
@@ -47,7 +53,7 @@ export interface CreateFeedRequest extends AuthenticatedRequest {
 }
 
 export interface CreateFeed {
-  (req: CreateFeedRequest): Promise<Feed>
+  (req: CreateFeedRequest): Promise<FeedService>
 }
 
 export interface FetchEventFeedsRequest extends AuthenticatedRequest {

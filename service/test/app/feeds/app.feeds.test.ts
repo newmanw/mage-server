@@ -1,15 +1,26 @@
 import { describe, it, beforeEach } from 'mocha'
 import { expect } from 'chai'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
-import { FeedServiceType, FeedType, Feed, FeedParams, FeedContent, FeedServiceTypeRepository, FeedRepository } from '../../../lib/entities/feeds/entities.feeds'
+import { FeedServiceType, FeedTopic, FeedService, FeedParams, FeedContent, FeedServiceTypeRepository, InvalidServiceConfigError, InvalidServiceConfigData, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs } from '../../../lib/entities/feeds/entities.feeds'
 import { CreateFeed, FeedsPermissionService, ListFeedServiceTypes, CreateFeedService, ListFeedServiceTypesPermission, CreateFeedServicePermission } from '../../../lib/app.impl/feeds/app.impl.feeds'
-import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput } from '../../../lib/app.api/app.api.global.errors'
+import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound } from '../../../lib/app.api/app.api.global.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
 import { FeedDescriptor, FeedTypeGuid, FeedServiceTypeDescriptor } from '../../../lib/app.api/feeds/app.api.feeds'
 import uniqid from 'uniqid'
 
-const someServiceTypes: FeedServiceType[] = [
+
+function mockServiceType(descriptor: FeedServiceTypeDescriptor): SubstituteOf<FeedServiceType> {
+  const mock = Sub.for<FeedServiceType>()
+  mock.id.returns!(descriptor.id)
+  mock.title.returns!(descriptor.title)
+  mock.description.returns!(descriptor.description)
+  mock.configSchema.returns!(descriptor.configSchema)
+  return mock
+}
+
+const someServiceTypeDescs: FeedServiceTypeDescriptor[] = [
   {
+    descriptorOf: 'FeedServiceType',
     id: `ogc.wfs-${uniqid()}`,
     title: 'OGC Web Feature Service',
     description: 'An OGC Web Feature Service is a standard interface to query geospatial features.',
@@ -24,9 +35,10 @@ const someServiceTypes: FeedServiceType[] = [
         }
       },
       required: [ 'url' ]
-    }
+    },
   },
   {
+    descriptorOf: 'FeedServiceType',
     id: `ogc.oaf-${uniqid()}`,
     title: 'OGC API - Features Service',
     description: 'An OGC API - Features service is a standard interface to query geospatial features.  OAF is the modern evolution of WFS.',
@@ -41,23 +53,18 @@ const someServiceTypes: FeedServiceType[] = [
         }
       },
       required: [ 'url' ]
-    }
+    },
   }
 ]
+const someServiceTypes: SubstituteOf<FeedServiceType>[] = someServiceTypeDescs.map(mockServiceType)
 
-const someFeedTypes: FeedType[] = [
+const someTopics: FeedTopic[] = [
   {
     id: 'type1',
     title: 'Feed Type 1',
     summary: null,
     constantParamsSchema: {},
     variableParamsSchema: {},
-    async previewContent(params: FeedParams): Promise<FeedContent> {
-      throw new Error('todo')
-    },
-    async fetchContentFromFeed(params: FeedParams): Promise<FeedContent> {
-      throw new Error('todo')
-    }
   },
   {
     id: 'type2',
@@ -65,12 +72,6 @@ const someFeedTypes: FeedType[] = [
     summary: null,
     constantParamsSchema: {},
     variableParamsSchema: {},
-    async previewContent(params: FeedParams): Promise<FeedContent> {
-      throw new Error('todo')
-    },
-    async fetchContentFromFeed(params: FeedParams): Promise<FeedContent> {
-      throw new Error('todo')
-    }
   }
 ]
 
@@ -100,7 +101,7 @@ describe.only('feeds administration', function() {
 
       const serviceTypes = await app.listServiceTypes(adminPrincipal).then(res => res.success)
 
-      expect(serviceTypes).to.deep.equal(someServiceTypes)
+      expect(serviceTypes).to.deep.equal(someServiceTypeDescs)
     })
 
     it('checks permission for listing service types', async function() {
@@ -124,10 +125,26 @@ describe.only('feeds administration', function() {
       const invalidConfig = {
         url: null
       }
+      serviceType.validateConfig(Arg.any()).throws(new InvalidServiceConfigData(['url']))
       const err = await app.createService({ ...adminPrincipal, serviceType: serviceType.id, config: invalidConfig }).then(res => res.error)
 
       expect(err).to.be.instanceOf(MageError)
       expect(err?.code).to.equal(ErrInvalidInput)
+      expect(app.serviceRepo.db).to.be.empty
+      serviceType.received(1).validateConfig(Arg.any())
+    })
+
+    it('fails if the service type does not exist', async function() {
+
+      const invalidServiceType = `${someServiceTypes[0].id}.${uniqid()}`
+      const invalidConfig = {
+        url: null
+      }
+      const err = await app.createService({ ...adminPrincipal, serviceType: invalidServiceType, config: invalidConfig }).then(res => res.error as EntityNotFoundError)
+
+      expect(err.code).to.equal(ErrEntityNotFound)
+      expect(err.data?.entityId).to.equal(invalidServiceType)
+      expect(err.data?.entityType).to.equal('FeedServiceType')
       expect(app.serviceRepo.db).to.be.empty
     })
 
@@ -321,12 +338,10 @@ describe.only('feeds administration', function() {
 class TestApp {
 
   readonly serviceTypeRepo = new TestFeedServiceTypeRepository()
-  readonly serviceRepo = new TestFeedRepository()
+  readonly serviceRepo = new TestFeedServiceRepository()
   readonly permissionService = new TestPermissionService()
   readonly listServiceTypes = ListFeedServiceTypes(this.serviceTypeRepo, this.permissionService)
   readonly createService = CreateFeedService(this.permissionService)
-  // readonly createSource = CreateFeed(this.serviceTypeRepo, this.feedRepo, this.permissionService)
-  // readonly previewFeedContent = PreviewFeedContent(this.serviceTypeRepo, this.permissionService)
 
   registerServiceTypes(... types: FeedServiceType[]): void {
     for (const type of types) {
@@ -334,9 +349,9 @@ class TestApp {
     }
   }
 
-  registerSources(...feeds: Feed[]): void {
-    for (const feed of feeds) {
-      this.serviceRepo.db.set(feed.id, feed)
+  registerServices(...services: FeedService[]): void {
+    for (const service of services) {
+      this.serviceRepo.db.set(service.id, service)
     }
   }
 }
@@ -354,25 +369,24 @@ class TestFeedServiceTypeRepository implements FeedServiceTypeRepository {
   }
 }
 
-class TestFeedRepository implements FeedRepository {
+class TestFeedServiceRepository implements FeedServiceRepository {
 
-  readonly db = new Map<string, Feed>()
+  readonly db = new Map<string, FeedService>()
 
-  async create(attrs: Required<{ feedType: FeedTypeGuid }> & Partial<FeedDescriptor>): Promise<Feed> {
-    const saved: Feed = {
-      feedType: attrs.feedType,
-      ...(attrs as FeedDescriptor),
-      id: `${attrs.feedType}:${this.db.size + 1}`
+  async create(attrs: FeedServiceCreateAttrs): Promise<FeedService> {
+    const saved: FeedService = {
+      id: `${attrs.serviceType}:${this.db.size + 1}`,
+      ...attrs
     }
     this.db.set(saved.id, saved)
     return saved
   }
 
-  async findAll(): Promise<Feed[]> {
+  async findAll(): Promise<FeedService[]> {
     return Array.from(this.db.values())
   }
 
-  async findById(sourceId: string): Promise<Feed | null> {
+  async findById(sourceId: string): Promise<FeedService | null> {
     return this.db.get(sourceId) || null
   }
 }
