@@ -40,11 +40,7 @@ export interface FeedService {
 
 export interface FeedServiceTypeRepository {
   findAll(): Promise<FeedServiceType[]>
-  // /**
-  //  * Resolve null if no adapter descriptor with the given ID exists.
-  //  * @param adapterId
-  //  */
-  // findById(adapterId: string): Promise<FeedType | null>
+  findById(serviceTypeId: FeedServiceTypeId): Promise<FeedServiceType | null>
   // removeById(adapterId: string): Promise<void>
 }
 

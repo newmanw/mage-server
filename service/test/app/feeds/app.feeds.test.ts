@@ -341,7 +341,7 @@ class TestApp {
   readonly serviceRepo = new TestFeedServiceRepository()
   readonly permissionService = new TestPermissionService()
   readonly listServiceTypes = ListFeedServiceTypes(this.serviceTypeRepo, this.permissionService)
-  readonly createService = CreateFeedService(this.permissionService)
+  readonly createService = CreateFeedService(this.serviceTypeRepo, this.permissionService)
 
   registerServiceTypes(... types: FeedServiceType[]): void {
     for (const type of types) {
