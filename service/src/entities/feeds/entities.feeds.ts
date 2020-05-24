@@ -11,11 +11,11 @@ export class FeedsError<Code extends symbol, Data> extends Error {
   }
 }
 
-export class InvalidServiceConfigData {
+export class InvalidServiceConfigErrorData {
   constructor(readonly invalidKeys: string[]) {}
 }
 
-export type InvalidServiceConfigError = FeedsError<typeof ErrInvalidServiceConfig, InvalidServiceConfigData>
+export type InvalidServiceConfigError = FeedsError<typeof ErrInvalidServiceConfig, InvalidServiceConfigErrorData>
 
 export type FeedServiceTypeId = string
 
@@ -25,7 +25,7 @@ export interface FeedServiceType {
   description: string | null
   configSchema: JSONSchema6
 
-  validateConfig(config: Json): Promise<null | InvalidServiceConfigError>
+  instantiateService(config: Json): Promise<null | InvalidServiceConfigError>
 }
 
 export type FeedServiceId = string

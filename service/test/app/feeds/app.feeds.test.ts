@@ -1,9 +1,9 @@
 import { describe, it, beforeEach } from 'mocha'
 import { expect } from 'chai'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
-import { FeedServiceType, FeedTopic, FeedService, FeedParams, FeedContent, FeedServiceTypeRepository, InvalidServiceConfigError, InvalidServiceConfigData, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs } from '../../../lib/entities/feeds/entities.feeds'
+import { FeedServiceType, FeedTopic, FeedService, FeedParams, FeedContent, FeedServiceTypeRepository, InvalidServiceConfigError, InvalidServiceConfigErrorData, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig } from '../../../lib/entities/feeds/entities.feeds'
 import { CreateFeed, FeedsPermissionService, ListFeedServiceTypes, CreateFeedService, ListFeedServiceTypesPermission, CreateFeedServicePermission } from '../../../lib/app.impl/feeds/app.impl.feeds'
-import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound } from '../../../lib/app.api/app.api.global.errors'
+import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError } from '../../../lib/app.api/app.api.global.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
 import { FeedDescriptor, FeedTypeGuid, FeedServiceTypeDescriptor } from '../../../lib/app.api/feeds/app.api.feeds'
 import uniqid from 'uniqid'
@@ -19,7 +19,7 @@ function mockServiceType(descriptor: FeedServiceTypeDescriptor): SubstituteOf<Fe
 }
 
 const someServiceTypeDescs: FeedServiceTypeDescriptor[] = [
-  {
+  Object.freeze({
     descriptorOf: 'FeedServiceType',
     id: `ogc.wfs-${uniqid()}`,
     title: 'OGC Web Feature Service',
@@ -36,8 +36,8 @@ const someServiceTypeDescs: FeedServiceTypeDescriptor[] = [
       },
       required: [ 'url' ]
     },
-  },
-  {
+  }),
+  Object.freeze({
     descriptorOf: 'FeedServiceType',
     id: `ogc.oaf-${uniqid()}`,
     title: 'OGC API - Features Service',
@@ -54,9 +54,8 @@ const someServiceTypeDescs: FeedServiceTypeDescriptor[] = [
       },
       required: [ 'url' ]
     },
-  }
+  })
 ]
-const someServiceTypes: SubstituteOf<FeedServiceType>[] = someServiceTypeDescs.map(mockServiceType)
 
 const someTopics: FeedTopic[] = [
   {
@@ -86,9 +85,11 @@ const bannedPrincipal = {
 describe.only('feeds administration', function() {
 
   let app: TestApp
+  let someServiceTypes: SubstituteOf<FeedServiceType>[]
 
   beforeEach(function() {
     app = new TestApp()
+    someServiceTypes = someServiceTypeDescs.map(mockServiceType)
   })
 
   describe.only('listing available feed service types', async function() {
@@ -119,19 +120,20 @@ describe.only('feeds administration', function() {
       app.registerServiceTypes(...someServiceTypes)
     })
 
-    it('validates the configuration options', async function() {
+    it('fails if the service config is invalid', async function() {
 
       const serviceType = someServiceTypes[0]
       const invalidConfig = {
         url: null
       }
-      serviceType.validateConfig(Arg.any()).throws(new InvalidServiceConfigData(['url']))
-      const err = await app.createService({ ...adminPrincipal, serviceType: serviceType.id, config: invalidConfig }).then(res => res.error)
+      serviceType.instantiateService(Arg.any()).resolves(new FeedsError(ErrInvalidServiceConfig, new InvalidServiceConfigErrorData(['url'])))
+      const err = await app.createService({ ...adminPrincipal, serviceType: serviceType.id, config: invalidConfig }).then(res => res.error as InvalidInputError)
 
       expect(err).to.be.instanceOf(MageError)
-      expect(err?.code).to.equal(ErrInvalidInput)
+      expect(err.code).to.equal(ErrInvalidInput)
+      expect(err.data).to.deep.equal(['url'])
       expect(app.serviceRepo.db).to.be.empty
-      serviceType.received(1).validateConfig(Arg.any())
+      serviceType.received(1).instantiateService(Arg.deepEquals(invalidConfig))
     })
 
     it('fails if the service type does not exist', async function() {
@@ -146,6 +148,9 @@ describe.only('feeds administration', function() {
       expect(err.data?.entityId).to.equal(invalidServiceType)
       expect(err.data?.entityType).to.equal('FeedServiceType')
       expect(app.serviceRepo.db).to.be.empty
+      for (const serviceType of someServiceTypes) {
+        serviceType.didNotReceive().instantiateService(Arg.any())
+      }
     })
 
     it('saves the service', async function() {
