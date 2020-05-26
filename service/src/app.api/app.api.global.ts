@@ -19,7 +19,7 @@ import { MageError, PermissionDeniedError, permissionDenied, InvalidInputError }
  * ```
  */
 export interface Descriptor<T extends string> {
-  descriptorOf: string
+  descriptorOf: T
 }
 
 export interface AuthenticatedRequest  {
