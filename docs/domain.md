@@ -16,9 +16,10 @@ Of course, because MAGE collects and stores data structured for specific custome
 ### Flexibility
 
 ## Customer Domain Applications
-### Agriculture
 ### Disaster Response
 ### Law Enforcement/Tactical Operations
+### Security Detail
+### Agriculture
 ### Forestry
 ### Animal Study
 ### Maintenance Reporting
@@ -43,11 +44,17 @@ Many MAGE customers have enterprise data sources available to them that are rele
 
 ## Core Terms
 
+### Feature
+A feature represents a physical object or occurrence that has spatial and/or temporal attributes.  A spatial attribute is the geographic location and shape of a feature and includes single points, (e.g. latitude and longitude), and geographic geometry structures such as lines and polygon shapes.  A temporal attribute could be a single instantaneous timestamp (e.g., 1 January 2020 at 10:35:40.555 AM) or a temporal duration (e.g., 2020-01-01 through 2020-01-31).  See **feature** from https://www.ogc.org/ogc/glossary/f.
+
+#### GeoJSON Note
+[GeoJSON](https://geojson.org) overloads the term [`feature`](https://tools.ietf.org/html/rfc7946#section-3.2) to mean any JSON data record that complies with the GeoJSON specification's `Feature` definition.  While the MAGE `feature` term refers to a physical object or occurrence in the real world, a GeoJSON `Feature` object is a data record, and several GeoJSON `Feature` objects could be describing a single real-world `feature`.  For example, one GeoJSON `Feature` object could describe a building using a single point geometry, and another GeoJSON object could describe the same building using a polygon geometry to describe the shape of the building's footprint.
+
 ### Observation
-An observation is a discrete data record a user creates to describe a subject, including structured form data and attached media such as photos, videos, and audio.
+An observation is a discrete data record a user creates to describe a subject, including structured form data and attached media such as photos, videos, and audio.  An observation is itself a `feature` because it has intrinsic attributes of the location and time the user created the observation.
 
 ### Subject
-A subject of an observation is a physical object or occurrence of interest about which human users collect data to create an observation; the reason a human user submits an observation.
+A subject of an observation is a physical object or occurrence of interest about which human users collect data to create an observation; the reason a human user submits an observation.  The subject of an observation is a `feature`.
 
 ### Form
 A form is a collection of data entry fields that define the structure of the data values a user must capture for an observation.  See **Observation** above for examples.
@@ -88,7 +95,7 @@ An event is a scope to manage users, the data they collect, and the data they ca
 A participant is a user that has access to the data associated with a specific event, as well as to submit observations for the event.
 
 ### Field Participant
-A field participant is a participant of an event that is actively collecting observations for the event.
+A field participant is a participant of an event that is actively collecting observations for the event using a mobile device.
 
 ### Monitor
 A monitor is a participant of an event that is not actively collecting data for the event in the field.
@@ -148,3 +155,10 @@ An OAF service conforms to the OAF standard interface with well defined operatio
 
 ### Content
 ### Content Type
+
+## Tracking Terms
+
+### Objective
+An objective is a physical object that a `field participant` is tracking.
+
+### Geofence

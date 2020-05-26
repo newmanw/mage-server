@@ -2,7 +2,7 @@
 
 See the [Feeds section](../domain.md#feeds) in the domain document for a summary of the feeds concept.
 
-#### Notes
+## Notes
 Some feeds may contain sensitive content and require some kind of authentication and authorization.  Sometimes this could even require clients to authenticate and fetch data directly from a feed endpoint, excluding the MAGE server, to support customer security requirements.
 
 Feeds could be made available globally to all users of a particular MAGE instance, or restricted based on event membership, or perhaps even restricted to specific users.
