@@ -1,6 +1,7 @@
 import { describe, it, beforeEach } from 'mocha'
 import { expect } from 'chai'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
+import '../../utils'
 import { FeedServiceType, FeedTopic, FeedService, FeedParams, FeedContent, FeedServiceTypeRepository, InvalidServiceConfigError, InvalidServiceConfigErrorData, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedServiceDescriptor } from '../../../lib/entities/feeds/entities.feeds'
 import { CreateFeed, FeedsPermissionService, ListFeedServiceTypes, CreateFeedService, ListFeedServiceTypesPermission, CreateFeedServicePermission } from '../../../lib/app.impl/feeds/app.impl.feeds'
 import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError } from '../../../lib/app.api/app.api.global.errors'
@@ -57,23 +58,6 @@ const someServiceTypeDescs: FeedServiceTypeDescriptor[] = [
   })
 ]
 
-const someTopics: FeedTopic[] = [
-  {
-    id: 'type1',
-    title: 'Feed Type 1',
-    summary: null,
-    constantParamsSchema: {},
-    variableParamsSchema: {},
-  },
-  {
-    id: 'type2',
-    title: 'Feed Type 2',
-    summary: null,
-    constantParamsSchema: {},
-    variableParamsSchema: {},
-  }
-]
-
 const adminPrincipal = {
   user: 'admin'
 }
@@ -120,20 +104,31 @@ describe.only('feeds administration', function() {
       app.registerServiceTypes(...someServiceTypes)
     })
 
+    it('checks permission for creating a feed service', async function() {
+
+      const serviceType = someServiceTypes[1]
+      const config = { url: 'https://does.not/matter' }
+      const err = await app.createService({ ...bannedPrincipal, serviceType: serviceType.id, title: 'Test Service', config }).then(res => res.error)
+
+      expect(err?.code).to.equal(ErrPermissionDenied)
+      expect(app.serviceRepo.db).to.be.empty
+      serviceType.didNotReceive().validateServiceConfig(Arg.any())
+    })
+
     it('fails if the feed service config is invalid', async function() {
 
       const serviceType = someServiceTypes[0]
       const invalidConfig = {
         url: null
       }
-      serviceType.instantiateService(Arg.any()).resolves(new FeedsError(ErrInvalidServiceConfig, new InvalidServiceConfigErrorData(['url'])))
-      const err = await app.createService({ ...adminPrincipal, serviceType: serviceType.id, config: invalidConfig }).then(res => res.error as InvalidInputError)
+      serviceType.validateServiceConfig(Arg.any()).resolves(new FeedsError(ErrInvalidServiceConfig, new InvalidServiceConfigErrorData(['url'])))
+      const err = await app.createService({ ...adminPrincipal, serviceType: serviceType.id, title: 'Test Service', config: invalidConfig }).then(res => res.error as InvalidInputError)
 
       expect(err).to.be.instanceOf(MageError)
       expect(err.code).to.equal(ErrInvalidInput)
       expect(err.data).to.deep.equal(['url'])
       expect(app.serviceRepo.db).to.be.empty
-      serviceType.received(1).instantiateService(Arg.deepEquals(invalidConfig))
+      serviceType.received(1).validateServiceConfig(Arg.deepEquals(invalidConfig))
     })
 
     it('fails if the feed service type does not exist', async function() {
@@ -142,39 +137,34 @@ describe.only('feeds administration', function() {
       const invalidConfig = {
         url: null
       }
-      const err = await app.createService({ ...adminPrincipal, serviceType: invalidServiceType, config: invalidConfig }).then(res => res.error as EntityNotFoundError)
+      const err = await app.createService({ ...adminPrincipal, serviceType: invalidServiceType, title: 'Test Serivce', config: invalidConfig }).then(res => res.error as EntityNotFoundError)
 
       expect(err.code).to.equal(ErrEntityNotFound)
       expect(err.data?.entityId).to.equal(invalidServiceType)
       expect(err.data?.entityType).to.equal('FeedServiceType')
       expect(app.serviceRepo.db).to.be.empty
       for (const serviceType of someServiceTypes) {
-        serviceType.didNotReceive().instantiateService(Arg.any())
+        serviceType.didNotReceive().validateServiceConfig(Arg.any())
       }
     })
 
     it('saves the feed service config', async function() {
 
-      const serviceType = someServiceTypes[0].id
+      const serviceType = someServiceTypes[0]
       const config = { url: 'https://some.service/somewhere' }
-      const created = await app.createService({ ...adminPrincipal, serviceType, config }).then(res => res.success)
+      serviceType.validateServiceConfig(Arg.deepEquals(config)).resolves(null)
+
+      const created = await app.createService({ ...adminPrincipal, serviceType: serviceType.id, title: 'Test Service', config }).then(res => res.success)
       const inDb = created && app.serviceRepo.db.get(created.id)
 
       expect(created?.id).to.exist
       expect(created).to.deep.include({
+        serviceType: serviceType.id,
+        title: 'Test Service',
+        description: null,
         config: config
       })
       expect(inDb).to.deep.equal(created)
-    })
-
-    it('checks permission for creating a feed service', async function() {
-
-      const serviceType = someServiceTypes[1].id
-      const config = { url: 'https://does.not/matter' }
-      const err = await app.createService({ ...bannedPrincipal, serviceType, config }).then(res => res.error)
-
-      expect(err?.code).to.equal(ErrPermissionDenied)
-      expect(app.serviceRepo.db).to.be.empty
     })
   })
 
@@ -346,7 +336,7 @@ class TestApp {
   readonly serviceRepo = new TestFeedServiceRepository()
   readonly permissionService = new TestPermissionService()
   readonly listServiceTypes = ListFeedServiceTypes(this.serviceTypeRepo, this.permissionService)
-  readonly createService = CreateFeedService(this.serviceTypeRepo, this.permissionService)
+  readonly createService = CreateFeedService(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
 
   registerServiceTypes(... types: FeedServiceType[]): void {
     for (const type of types) {
@@ -381,6 +371,7 @@ class TestFeedServiceRepository implements FeedServiceRepository {
   async create(attrs: FeedServiceCreateAttrs): Promise<FeedServiceDescriptor> {
     const saved: FeedServiceDescriptor = {
       id: `${attrs.serviceType}:${this.db.size + 1}`,
+      descriptorOf: 'FeedService',
       ...attrs
     }
     this.db.set(saved.id, saved)

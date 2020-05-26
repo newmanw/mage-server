@@ -20,7 +20,7 @@ export function ListFeedServiceTypes(repo: FeedServiceTypeRepository, permission
   }
 }
 
-export function CreateFeedService(serviceTypeRepo: FeedServiceTypeRepository, permissionService: FeedsPermissionService): api.CreateFeedService {
+export function CreateFeedService(permissionService: FeedsPermissionService, serviceTypeRepo: FeedServiceTypeRepository, serviceRepo: FeedServiceRepository): api.CreateFeedService {
   return function createFeedService(req: api.CreateFeedServiceRequest): ReturnType<api.CreateFeedService> {
     return withPermission<FeedServiceDescriptor, KnownErrorsOf<api.CreateFeedService>>(
       permissionService.ensureCreateServicePermissionFor(req.user),
@@ -29,11 +29,16 @@ export function CreateFeedService(serviceTypeRepo: FeedServiceTypeRepository, pe
         if (!serviceType) {
           return entityNotFound(req.serviceType, 'FeedServiceType')
         }
-        const service = await serviceType.instantiateService(req.config)
-        if (service instanceof FeedsError && service.code === ErrInvalidServiceConfig) {
-          return invalidInput(...(service.data?.invalidKeys || []))
+        const invalid = await serviceType.validateServiceConfig(req.config)
+        if (invalid) {
+          return invalidInput(...(invalid.data?.invalidKeys || []))
         }
-        throw new Error()
+        return await serviceRepo.create({
+          serviceType: req.serviceType,
+          title: req.title,
+          description: req.description || null,
+          config: req.config
+        })
       }
     )
   }

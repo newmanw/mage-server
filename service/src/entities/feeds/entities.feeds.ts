@@ -26,7 +26,7 @@ export interface FeedServiceType {
   readonly description: string | null
   readonly configSchema: JSONSchema6
 
-  instantiateService(config: Json): Promise<FeedService | InvalidServiceConfigError>
+  validateServiceConfig(config: Json): Promise<null | InvalidServiceConfigError>
 }
 
 export type FeedServiceId = string
@@ -45,6 +45,8 @@ export interface FeedServiceDescriptor extends Descriptor<'FeedService'> {
 }
 
 export interface FeedService {
+  title?: string
+  description?: string
   fetchServiceInfo(): Promise<FeedServiceInfo | null>
   fetchAvailableTopics(): Promise<FeedTopic>
 }

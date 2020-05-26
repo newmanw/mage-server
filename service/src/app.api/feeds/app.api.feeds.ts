@@ -25,7 +25,7 @@ export interface ListFeedServiceTypes {
 export interface CreateFeedServiceRequest extends AuthenticatedRequest {
   serviceType: FeedServiceTypeId
   title: string
-  description: string | null
+  description?: string | null
   config: Json
 }
 
