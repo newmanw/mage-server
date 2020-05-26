@@ -1,12 +1,11 @@
 import { AuthenticatedRequest, AppResponse, Descriptor } from '../app.api.global'
-import { FeedService, FeedTopic, FeedParams, FeedContent, FeedId, FeedServiceType, FeedServiceTypeId, FeedServiceId } from '../../entities/feeds/entities.feeds'
+import { FeedService, FeedTopic, FeedParams, FeedContent, FeedId, FeedServiceType, FeedServiceTypeId, FeedServiceDescriptor } from '../../entities/feeds/entities.feeds'
 import { Json } from '../../entities/entities.global.json'
 import { PermissionDeniedError, EntityNotFoundError, InvalidInputError } from '../app.api.global.errors'
 
 export type FeedTypeGuid = string
 
-export interface FeedServiceTypeDescriptor extends Descriptor, Pick<FeedServiceType, 'id' | 'title' | 'description' | 'configSchema'> {
-  descriptorOf: 'FeedServiceType'
+export interface FeedServiceTypeDescriptor extends Descriptor<'FeedServiceType'>, Pick<FeedServiceType, 'id' | 'title' | 'description' | 'configSchema'> {
 }
 
 export function FeedServiceTypeDescriptor(from: FeedServiceType): FeedServiceTypeDescriptor {
@@ -25,11 +24,13 @@ export interface ListFeedServiceTypes {
 
 export interface CreateFeedServiceRequest extends AuthenticatedRequest {
   serviceType: FeedServiceTypeId
+  title: string
+  description: string | null
   config: Json
 }
 
 export interface CreateFeedService {
-  (req: CreateFeedServiceRequest): Promise<AppResponse<FeedService, PermissionDeniedError | EntityNotFoundError | InvalidInputError>>
+  (req: CreateFeedServiceRequest): Promise<AppResponse<FeedServiceDescriptor, PermissionDeniedError | EntityNotFoundError | InvalidInputError>>
 }
 
 export interface ListFeedTypes {

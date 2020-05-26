@@ -7,8 +7,8 @@ export type PermissionDeniedError = MageError<typeof ErrPermissionDenied, Permis
 export type InvalidInputError = MageError<typeof ErrInvalidInput, InvalidInputErrorData>
 export type EntityNotFoundError = MageError<typeof ErrEntityNotFound, EntityNotFoundErrorData>
 
-export class MageError<Codes extends symbol, Data = null> extends Error {
-  constructor(public readonly code: Codes, readonly data?: Data, message?: string) {
+export class MageError<Code extends symbol, Data = null> extends Error {
+  constructor(public readonly code: Code, readonly data?: Data, message?: string) {
     super(Symbol.keyFor(code) + (message ? `: ${message}` : ''))
   }
 }

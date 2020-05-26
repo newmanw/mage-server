@@ -1,8 +1,8 @@
-import { FeedServiceTypeRepository, FeedService, FeedServiceRepository, FeedsError, ErrInvalidServiceConfig } from '../../entities/feeds/entities.feeds';
+import { FeedServiceTypeRepository, FeedService, FeedServiceRepository, FeedsError, ErrInvalidServiceConfig, FeedServiceDescriptor } from '../../entities/feeds/entities.feeds';
 import * as api from '../../app.api/feeds/app.api.feeds'
 import { UserId } from '../../entities/authn/entities.authn';
-import { AuthenticatedRequest, AppResponse, withPermission } from '../../app.api/app.api.global';
-import { PermissionDeniedError, EntityNotFoundError, InvalidInputError, entityNotFound, invalidInput } from '../../app.api/app.api.global.errors';
+import { AuthenticatedRequest, KnownErrorsOf, withPermission } from '../../app.api/app.api.global';
+import { PermissionDeniedError, EntityNotFoundError, InvalidInputError, entityNotFound, invalidInput, InvalidInputErrorData, MageError } from '../../app.api/app.api.global.errors';
 
 
 export const ListFeedServiceTypesPermission = 'feeds.listServiceTypes'
@@ -10,19 +10,21 @@ export const CreateFeedServicePermission = 'feeds.createService'
 
 export function ListFeedServiceTypes(repo: FeedServiceTypeRepository, permissionService: FeedsPermissionService): api.ListFeedServiceTypes {
   return function listFeedServiceTypes(req: AuthenticatedRequest): ReturnType<api.ListFeedServiceTypes> {
-    return withPermission(permissionService.ensureListServiceTypesPermissionFor(req.user))
-      .perform(async () => {
+    return withPermission(
+      permissionService.ensureListServiceTypesPermissionFor(req.user),
+      async () => {
         const all = await repo.findAll()
         return all.map(x => api.FeedServiceTypeDescriptor(x))
-      })
+      }
+    )
   }
 }
 
 export function CreateFeedService(serviceTypeRepo: FeedServiceTypeRepository, permissionService: FeedsPermissionService): api.CreateFeedService {
-  return function createFeedService(req: api.CreateFeedServiceRequest): Promise<AppResponse<FeedService,
-    PermissionDeniedError | EntityNotFoundError | InvalidInputError>> {
-    return withPermission(permissionService.ensureCreateServicePermissionFor(req.user))
-      .perform<FeedService, EntityNotFoundError | InvalidInputError>(async (): Promise<FeedService | EntityNotFoundError | InvalidInputError> => {
+  return function createFeedService(req: api.CreateFeedServiceRequest): ReturnType<api.CreateFeedService> {
+    return withPermission<FeedServiceDescriptor, KnownErrorsOf<api.CreateFeedService>>(
+      permissionService.ensureCreateServicePermissionFor(req.user),
+      async (): Promise<FeedServiceDescriptor | EntityNotFoundError | InvalidInputError> => {
         const serviceType = await serviceTypeRepo.findById(req.serviceType)
         if (!serviceType) {
           return entityNotFound(req.serviceType, 'FeedServiceType')
@@ -31,8 +33,9 @@ export function CreateFeedService(serviceTypeRepo: FeedServiceTypeRepository, pe
         if (service instanceof FeedsError && service.code === ErrInvalidServiceConfig) {
           return invalidInput(...(service.data?.invalidKeys || []))
         }
-        throw new Error('todo')
-      })
+        throw new Error()
+      }
+    )
   }
 }
 

@@ -1,7 +1,7 @@
 import { describe, it, beforeEach } from 'mocha'
 import { expect } from 'chai'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
-import { FeedServiceType, FeedTopic, FeedService, FeedParams, FeedContent, FeedServiceTypeRepository, InvalidServiceConfigError, InvalidServiceConfigErrorData, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig } from '../../../lib/entities/feeds/entities.feeds'
+import { FeedServiceType, FeedTopic, FeedService, FeedParams, FeedContent, FeedServiceTypeRepository, InvalidServiceConfigError, InvalidServiceConfigErrorData, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedServiceDescriptor } from '../../../lib/entities/feeds/entities.feeds'
 import { CreateFeed, FeedsPermissionService, ListFeedServiceTypes, CreateFeedService, ListFeedServiceTypesPermission, CreateFeedServicePermission } from '../../../lib/app.impl/feeds/app.impl.feeds'
 import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError } from '../../../lib/app.api/app.api.global.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
@@ -120,7 +120,7 @@ describe.only('feeds administration', function() {
       app.registerServiceTypes(...someServiceTypes)
     })
 
-    it('fails if the service config is invalid', async function() {
+    it('fails if the feed service config is invalid', async function() {
 
       const serviceType = someServiceTypes[0]
       const invalidConfig = {
@@ -136,7 +136,7 @@ describe.only('feeds administration', function() {
       serviceType.received(1).instantiateService(Arg.deepEquals(invalidConfig))
     })
 
-    it('fails if the service type does not exist', async function() {
+    it('fails if the feed service type does not exist', async function() {
 
       const invalidServiceType = `${someServiceTypes[0].id}.${uniqid()}`
       const invalidConfig = {
@@ -153,7 +153,7 @@ describe.only('feeds administration', function() {
       }
     })
 
-    it('saves the service', async function() {
+    it('saves the feed service config', async function() {
 
       const serviceType = someServiceTypes[0].id
       const config = { url: 'https://some.service/somewhere' }
@@ -354,7 +354,7 @@ class TestApp {
     }
   }
 
-  registerServices(...services: FeedService[]): void {
+  registerServices(...services: FeedServiceDescriptor[]): void {
     for (const service of services) {
       this.serviceRepo.db.set(service.id, service)
     }
@@ -376,10 +376,10 @@ class TestFeedServiceTypeRepository implements FeedServiceTypeRepository {
 
 class TestFeedServiceRepository implements FeedServiceRepository {
 
-  readonly db = new Map<string, FeedService>()
+  readonly db = new Map<string, FeedServiceDescriptor>()
 
-  async create(attrs: FeedServiceCreateAttrs): Promise<FeedService> {
-    const saved: FeedService = {
+  async create(attrs: FeedServiceCreateAttrs): Promise<FeedServiceDescriptor> {
+    const saved: FeedServiceDescriptor = {
       id: `${attrs.serviceType}:${this.db.size + 1}`,
       ...attrs
     }
@@ -387,11 +387,11 @@ class TestFeedServiceRepository implements FeedServiceRepository {
     return saved
   }
 
-  async findAll(): Promise<FeedService[]> {
+  async findAll(): Promise<FeedServiceDescriptor[]> {
     return Array.from(this.db.values())
   }
 
-  async findById(sourceId: string): Promise<FeedService | null> {
+  async findById(sourceId: string): Promise<FeedServiceDescriptor | null> {
     return this.db.get(sourceId) || null
   }
 }

@@ -2,6 +2,7 @@
 import { Json } from '../entities.global.json'
 import { FeatureCollection } from 'geojson'
 import { JSONSchema6 } from 'json-schema'
+import { Descriptor } from '../../app.api/app.api.global'
 
 export const ErrInvalidServiceConfig = Symbol.for('err.feeds.invalid_service_config')
 
@@ -20,22 +21,32 @@ export type InvalidServiceConfigError = FeedsError<typeof ErrInvalidServiceConfi
 export type FeedServiceTypeId = string
 
 export interface FeedServiceType {
-  id: FeedServiceTypeId
-  title: string
-  description: string | null
-  configSchema: JSONSchema6
+  readonly id: FeedServiceTypeId
+  readonly title: string
+  readonly description: string | null
+  readonly configSchema: JSONSchema6
 
-  instantiateService(config: Json): Promise<null | InvalidServiceConfigError>
+  instantiateService(config: Json): Promise<FeedService | InvalidServiceConfigError>
 }
 
 export type FeedServiceId = string
 
-export interface FeedService {
+export interface FeedServiceInfo {
+  readonly title: string
+  readonly description: string
+}
+
+export interface FeedServiceDescriptor extends Descriptor<'FeedService'> {
   id: FeedServiceId
   serviceType: FeedServiceTypeId
   title: string
   description: string | null
   config: Json
+}
+
+export interface FeedService {
+  fetchServiceInfo(): Promise<FeedServiceInfo | null>
+  fetchAvailableTopics(): Promise<FeedTopic>
 }
 
 export interface FeedServiceTypeRepository {
@@ -44,7 +55,7 @@ export interface FeedServiceTypeRepository {
   // removeById(adapterId: string): Promise<void>
 }
 
-export type FeedServiceCreateAttrs = Pick<FeedService,
+export type FeedServiceCreateAttrs = Pick<FeedServiceDescriptor,
   | 'serviceType'
   | 'title'
   | 'description'
@@ -52,9 +63,9 @@ export type FeedServiceCreateAttrs = Pick<FeedService,
   >
 
 export interface FeedServiceRepository {
-  create(feedAttrs: FeedServiceCreateAttrs): Promise<FeedService>
-  findAll(): Promise<FeedService[]>
-  findById(feedId: FeedServiceId): Promise<FeedService | null>
+  create(feedAttrs: FeedServiceCreateAttrs): Promise<FeedServiceDescriptor>
+  findAll(): Promise<FeedServiceDescriptor[]>
+  findById(feedId: FeedServiceId): Promise<FeedServiceDescriptor | null>
 }
 
 export interface FeedContent {
