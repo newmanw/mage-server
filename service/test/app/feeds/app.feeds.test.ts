@@ -189,17 +189,31 @@ describe.only('feeds administration', function() {
 
     it('checks permission for listing topics', async function() {
 
+      const serviceDesc = someServiceDescs[0]
       const req: ListTopicsRequest = {
         ...bannedPrincipal,
-        service: someServiceDescs[0].id
+        service: serviceDesc.id
       }
-      const err = await app.listTopics(req).then(res => res.error as PermissionDeniedError)
+      let err = await app.listTopics(req).then(res => res.error as PermissionDeniedError)
 
       expect(err).to.be.instanceOf(MageError)
       expect(err.code).to.equal(ErrPermissionDenied)
       for (const serviceType of someServiceTypes) {
         serviceType.didNotReceive().instantiateService(Arg.any())
       }
+
+      const res = await app.listTopics(req).then(res => res.success as FeedTopic[])
+
+      expect(res).to.have.length(1)
+      const serviceType = someServiceTypes.filter(x => x.id === serviceDesc.serviceType)[0]
+      serviceType.received(1).instantiateService(Arg.any())
+
+      app.permissionService.revokeListTopics(adminPrincipal.user, someServiceDescs[0].id)
+      err = await app.listTopics(req).then(res => res.error as PermissionDeniedError)
+
+      expect(err).to.be.instanceOf(MageError)
+      expect(err.code).to.equal(ErrPermissionDenied)
+      serviceType.received(1).instantiateService(Arg.any())
     })
 
     it('returns all the topics for a service', async function() {
