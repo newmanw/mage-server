@@ -27,6 +27,7 @@ export interface FeedServiceType {
   readonly configSchema: JSONSchema6
 
   validateServiceConfig(config: Json): Promise<null | InvalidServiceConfigError>
+  instantiateService(config: Json): FeedService
 }
 
 export type FeedServiceId = string
@@ -67,7 +68,7 @@ export type FeedServiceCreateAttrs = Pick<FeedServiceDescriptor,
 export interface FeedServiceRepository {
   create(feedAttrs: FeedServiceCreateAttrs): Promise<FeedServiceDescriptor>
   findAll(): Promise<FeedServiceDescriptor[]>
-  findById(feedId: FeedServiceId): Promise<FeedServiceDescriptor | null>
+  findById(serviceId: FeedServiceId): Promise<FeedServiceDescriptor | null>
 }
 
 export interface FeedContent {

@@ -1,14 +1,11 @@
-import { FeedServiceTypeRepository, FeedService, FeedServiceRepository, FeedsError, ErrInvalidServiceConfig, FeedServiceDescriptor } from '../../entities/feeds/entities.feeds';
+import { FeedServiceTypeRepository, FeedServiceRepository, FeedServiceDescriptor, FeedTopic } from '../../entities/feeds/entities.feeds';
 import * as api from '../../app.api/feeds/app.api.feeds'
 import { UserId } from '../../entities/authn/entities.authn';
-import { AuthenticatedRequest, KnownErrorsOf, withPermission } from '../../app.api/app.api.global';
-import { PermissionDeniedError, EntityNotFoundError, InvalidInputError, entityNotFound, invalidInput, InvalidInputErrorData, MageError } from '../../app.api/app.api.global.errors';
+import { AuthenticatedRequest, KnownErrorsOf, withPermission, AppResponse } from '../../app.api/app.api.global';
+import { PermissionDeniedError, EntityNotFoundError, InvalidInputError, entityNotFound, invalidInput } from '../../app.api/app.api.global.errors';
 
 
-export const ListFeedServiceTypesPermission = 'feeds.listServiceTypes'
-export const CreateFeedServicePermission = 'feeds.createService'
-
-export function ListFeedServiceTypes(repo: FeedServiceTypeRepository, permissionService: FeedsPermissionService): api.ListFeedServiceTypes {
+export function ListFeedServiceTypes(permissionService: FeedsPermissionService, repo: FeedServiceTypeRepository): api.ListFeedServiceTypes {
   return function listFeedServiceTypes(req: AuthenticatedRequest): ReturnType<api.ListFeedServiceTypes> {
     return withPermission(
       permissionService.ensureListServiceTypesPermissionFor(req.user),
@@ -44,6 +41,22 @@ export function CreateFeedService(permissionService: FeedsPermissionService, ser
   }
 }
 
+export function ListTopics(permissionService: FeedsPermissionService, serviceRepo: FeedServiceRepository): api.ListTopics {
+  return async function listTopics(req: api.ListTopicsRequest): ReturnType<api.ListTopics> {
+    const service = await serviceRepo.findById(req.service)
+    if (service == null) {
+      return AppResponse.error<FeedTopic[], EntityNotFoundError>(entityNotFound(req.service, 'FeedServiceDescriptor'))
+    }
+    withPermission(
+      permissionService.ensureListTopicsPermissionFor(req.user, service),
+      async (): Promise<FeedTopic[]> => {
+        throw new Error('todo')
+      }
+    )
+    throw new Error('todo')
+  }
+}
+
 export function CreateFeed(feedTypeRepo: FeedServiceTypeRepository, feedRepo: FeedServiceRepository, permissionService: FeedsPermissionService): api.CreateFeed {
   return async function createSource(req: api.CreateFeedRequest): ReturnType<api.CreateFeed> {
     throw new Error('todo')
@@ -64,5 +77,6 @@ export function CreateFeed(feedTypeRepo: FeedServiceTypeRepository, feedRepo: Fe
 export interface FeedsPermissionService {
   ensureListServiceTypesPermissionFor(user: UserId): Promise<PermissionDeniedError | null>
   ensureCreateServicePermissionFor(user: UserId): Promise<PermissionDeniedError | null>
+  ensureListTopicsPermissionFor(user: UserId, service: FeedServiceDescriptor): Promise<PermissionDeniedError | null>
   ensureCreateFeedPermissionFor(user: UserId): Promise<PermissionDeniedError | null>
 }

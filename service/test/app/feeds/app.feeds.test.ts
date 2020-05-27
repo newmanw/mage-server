@@ -3,10 +3,10 @@ import { expect } from 'chai'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
 import '../../utils'
 import { FeedServiceType, FeedTopic, FeedService, FeedParams, FeedContent, FeedServiceTypeRepository, InvalidServiceConfigError, InvalidServiceConfigErrorData, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedServiceDescriptor } from '../../../lib/entities/feeds/entities.feeds'
-import { CreateFeed, FeedsPermissionService, ListFeedServiceTypes, CreateFeedService, ListFeedServiceTypesPermission, CreateFeedServicePermission } from '../../../lib/app.impl/feeds/app.impl.feeds'
+import { CreateFeed, FeedsPermissionService, ListFeedServiceTypes, CreateFeedService, ListTopics } from '../../../lib/app.impl/feeds/app.impl.feeds'
 import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError } from '../../../lib/app.api/app.api.global.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
-import { FeedDescriptor, FeedTypeGuid, FeedServiceTypeDescriptor } from '../../../lib/app.api/feeds/app.api.feeds'
+import { FeedDescriptor, FeedTypeGuid, FeedServiceTypeDescriptor, ListTopicsRequest } from '../../../lib/app.api/feeds/app.api.feeds'
 import uniqid from 'uniqid'
 
 
@@ -76,7 +76,7 @@ describe.only('feeds administration', function() {
     someServiceTypes = someServiceTypeDescs.map(mockServiceType)
   })
 
-  describe.only('listing available feed service types', async function() {
+  describe('listing available feed service types', async function() {
 
     beforeEach(function() {
       app.registerServiceTypes(...someServiceTypes)
@@ -98,7 +98,7 @@ describe.only('feeds administration', function() {
     })
   })
 
-  describe.only('creating a feed service', async function() {
+  describe('creating a feed service', async function() {
 
     beforeEach(function() {
       app.registerServiceTypes(...someServiceTypes)
@@ -168,25 +168,50 @@ describe.only('feeds administration', function() {
     })
   })
 
-  describe('listing available feed types', async function() {
+  describe('listing topics', async function() {
 
-    it('returns all the feed types', async function() {
+    const someServiceDescs: FeedServiceDescriptor[] = [
+      {
+        descriptorOf: 'FeedService',
+        id: `${someServiceTypeDescs[0].id}:${uniqid()}`,
+        serviceType: someServiceTypeDescs[0].id,
+        title: 'WFS 1',
+        description: null,
+        config: {
+          url: 'https://test.mage/wfs'
+        }
+      }
+    ]
+
+    beforeEach(function() {
+      app.registerServices(...someServiceDescs)
+    })
+
+    it('checks permission for listing topics', async function() {
+
+      const req: ListTopicsRequest = {
+        ...bannedPrincipal,
+        service: someServiceDescs[0].id
+      }
+      const err = await app.listTopics(req).then(res => res.error as PermissionDeniedError)
+
+      expect(err).to.be.instanceOf(MageError)
+      expect(err.code).to.equal(ErrPermissionDenied)
+      for (const serviceType of someServiceTypes) {
+        serviceType.didNotReceive().instantiateService(Arg.any())
+      }
+    })
+
+    it('returns all the topics for a service', async function() {
 
       expect.fail('todo')
       // app.registerTypes(...someFeedTypes)
       // const read = await app.listFeedTypes(adminPrincipal)
       // expect(read).to.have.deep.members(someFeedTypes)
     })
-
-    it('checks permission for listing feed types', async function() {
-
-      expect.fail('todo')
-      // app.denyAllPrivileges()
-      // await expect(app.listFeedTypes(adminPrincipal)).to.eventually.rejectWith(MageErrorCode.PermissionDenied)
-    })
   })
 
-  describe('creating a source', function() {
+  xdescribe('creating a feed', function() {
 
     it('provides the source stub from the adapter', async function() {
 
@@ -196,64 +221,20 @@ describe.only('feeds administration', function() {
     it('saves a source descriptor', async function() {
 
       expect.fail('todo')
-      // const feedAttrs: Partial<Feed> = {
-      //   feedType: someFeedTypes[0].id,
-      //   title: 'Slurm Alerts',
-      //   summary: 'The latest on when and where slurm happens',
-      //   constantParams: {
-      //     url: 'https://slurm.io/api'
-      //   },
-      //   variableParams: {
-      //     maxItems: 25,
-      //     maxItemAgeInDays: 7
-      //   }
-      // }
-      // app.registerTypes(...someFeedTypes)
-
-      // const created = await app.createSource(feedAttrs)
-      // const inDb = app.feedRepo.db.get(created.id)
-
-      // expect(created).to.deep.include({
-      //   ...feedAttrs
-      // })
-      // expect(created.id).to.exist
-      // expect(created).to.deep.equal(inDb)
     })
 
     it('checks permission for creating a source', async function() {
 
       expect.fail('todo')
-      // const sourceAttrs: Partial<SourceDescriptor> = {
-      //   adapter: someFeedTypes[0].id,
-      //   title: 'Boor Lum',
-      //   summary: 'Lem do sot',
-      //   url: 'socket://boor-lum.ner'
-      // }
-      // app.denyAllPrivileges()
-
-      // await expect(app.createSource(sourceAttrs)).to.eventually.rejectWith(MageErrorCode.PermissionDenied)
     })
 
     it('validates the source has a valid adapter', async function() {
 
       expect.fail('todo')
-      // const sourceAttrs: Partial<SourceDescriptor> = {
-      //   title: 'Boor Lum',
-      //   summary: 'Lem do sot',
-      //   url: 'socket://boor-lum.ner'
-      // }
-
-      // await expect(app.createSource(sourceAttrs), 'without adapter id')
-      //   .to.eventually.rejectWith(MageErrorCode.InvalidInput)
-
-      // sourceAttrs.adapter = someFeedTypes[0].id + '.invalid'
-
-      // await expect(app.createSource(sourceAttrs), 'with invalid adapter id')
-      //   .to.eventually.rejectWith(MageErrorCode.InvalidInput)
     })
   })
 
-  describe('previewing source data', function() {
+  xdescribe('previewing feed data', function() {
 
     // const source1Desc: SourceDescriptor = {
     //   id: 'source1',
@@ -335,8 +316,9 @@ class TestApp {
   readonly serviceTypeRepo = new TestFeedServiceTypeRepository()
   readonly serviceRepo = new TestFeedServiceRepository()
   readonly permissionService = new TestPermissionService()
-  readonly listServiceTypes = ListFeedServiceTypes(this.serviceTypeRepo, this.permissionService)
+  readonly listServiceTypes = ListFeedServiceTypes(this.permissionService, this.serviceTypeRepo)
   readonly createService = CreateFeedService(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
+  readonly listTopics = ListTopics(this.permissionService, this.serviceRepo)
 
   registerServiceTypes(... types: FeedServiceType[]): void {
     for (const type of types) {
@@ -389,19 +371,56 @@ class TestFeedServiceRepository implements FeedServiceRepository {
 
 class TestPermissionService implements FeedsPermissionService {
 
+  // TODO: add acl for specific services and listing topics
   readonly privleges = {
     [adminPrincipal.user]: {
-      [ListFeedServiceTypesPermission]: true,
-      [CreateFeedServicePermission]: true,
+      [ListFeedServiceTypes.name]: true,
+      [CreateFeedService.name]: true,
+      [ListTopics.name]: true,
     }
   } as { [user: string]: { [privilege: string]: boolean }}
+  readonly serviceAcls = new Map<FeedServiceId, Map<UserId, Set<string>>>()
 
   async ensureListServiceTypesPermissionFor(user: UserId): Promise<null | PermissionDeniedError> {
-    return this.checkPrivilege(user, ListFeedServiceTypesPermission)
+    return this.checkPrivilege(user, ListFeedServiceTypes.name)
   }
 
   async ensureCreateServicePermissionFor(user: UserId): Promise<null | PermissionDeniedError> {
-    return this.checkPrivilege(user, CreateFeedServicePermission)
+    return this.checkPrivilege(user, CreateFeedService.name)
+  }
+
+  async ensureListTopicsPermissionFor(user: UserId, service: FeedServiceDescriptor): Promise<null | PermissionDeniedError> {
+    const acl = this.serviceAcls.get(service.id)
+    if (acl?.get(user)?.has(ListTopics.name)) {
+      return null
+    }
+    return permissionDenied(ListTopics.name, user)
+  }
+
+  grantListTopics(user: UserId, service: FeedServiceId) {
+    let acl = this.serviceAcls.get(service)
+    if (!acl) {
+      acl = new Map<UserId, Set<string>>()
+      this.serviceAcls.set(service, acl)
+    }
+    let servicePermissions = acl.get(user)
+    if (!servicePermissions) {
+      servicePermissions = new Set<string>()
+      acl.set(user, servicePermissions)
+    }
+    servicePermissions.add(ListTopics.name)
+  }
+
+  revokeListTopics(user: UserId, service: FeedServiceId) {
+    let acl = this.serviceAcls.get(service)
+    if (!acl) {
+      return
+    }
+    let servicePermissions = acl.get(user)
+    if (!servicePermissions) {
+      return
+    }
+    servicePermissions.delete(ListTopics.name)
   }
 
   async ensureCreateFeedPermissionFor(user: UserId): Promise<null | PermissionDeniedError> {

@@ -1,5 +1,5 @@
 import { AuthenticatedRequest, AppResponse, Descriptor } from '../app.api.global'
-import { FeedService, FeedTopic, FeedParams, FeedContent, FeedId, FeedServiceType, FeedServiceTypeId, FeedServiceDescriptor } from '../../entities/feeds/entities.feeds'
+import { FeedService, FeedTopic, FeedParams, FeedContent, FeedId, FeedServiceType, FeedServiceTypeId, FeedServiceDescriptor, FeedServiceId } from '../../entities/feeds/entities.feeds'
 import { Json } from '../../entities/entities.global.json'
 import { PermissionDeniedError, EntityNotFoundError, InvalidInputError } from '../app.api.global.errors'
 
@@ -31,6 +31,14 @@ export interface CreateFeedServiceRequest extends AuthenticatedRequest {
 
 export interface CreateFeedService {
   (req: CreateFeedServiceRequest): Promise<AppResponse<FeedServiceDescriptor, PermissionDeniedError | EntityNotFoundError | InvalidInputError>>
+}
+
+export interface ListTopicsRequest extends AuthenticatedRequest {
+  service: FeedServiceId
+}
+
+export interface ListTopics {
+  (req: ListTopicsRequest): Promise<AppResponse<FeedTopic[], PermissionDeniedError | EntityNotFoundError>>
 }
 
 export interface ListFeedTypes {
