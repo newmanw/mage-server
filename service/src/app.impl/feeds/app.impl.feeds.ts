@@ -47,13 +47,12 @@ export function ListTopics(permissionService: FeedsPermissionService, serviceRep
     if (service == null) {
       return AppResponse.error<FeedTopic[], EntityNotFoundError>(entityNotFound(req.service, 'FeedServiceDescriptor'))
     }
-    withPermission(
+    return await withPermission(
       permissionService.ensureListTopicsPermissionFor(req.user, service),
       async (): Promise<FeedTopic[]> => {
         throw new Error('todo')
       }
     )
-    throw new Error('todo')
   }
 }
 
