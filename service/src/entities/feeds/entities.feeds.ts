@@ -23,7 +23,7 @@ export type FeedServiceTypeId = string
 export interface FeedServiceType {
   readonly id: FeedServiceTypeId
   readonly title: string
-  readonly description: string | null
+  readonly summary: string | null
   readonly configSchema: JSONSchema6
 
   validateServiceConfig(config: Json): Promise<null | InvalidServiceConfigError>
@@ -34,22 +34,22 @@ export type FeedServiceId = string
 
 export interface FeedServiceInfo {
   readonly title: string
-  readonly description: string
+  readonly summary: string
 }
 
 export interface FeedServiceDescriptor extends Descriptor<'FeedService'> {
   id: FeedServiceId
   serviceType: FeedServiceTypeId
   title: string
-  description: string | null
+  summary: string | null
   config: Json
 }
 
 export interface FeedService {
   title?: string
-  description?: string
+  summary?: string
   fetchServiceInfo(): Promise<FeedServiceInfo | null>
-  fetchAvailableTopics(): Promise<FeedTopic>
+  fetchAvailableTopics(): Promise<FeedTopic[]>
 }
 
 export interface FeedServiceTypeRepository {
@@ -61,7 +61,7 @@ export interface FeedServiceTypeRepository {
 export type FeedServiceCreateAttrs = Pick<FeedServiceDescriptor,
   | 'serviceType'
   | 'title'
-  | 'description'
+  | 'summary'
   | 'config'
   >
 

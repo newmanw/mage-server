@@ -4,10 +4,9 @@ import { describe, it, before, beforeEach, after, afterEach } from 'mocha'
 import { expect } from 'chai'
 import { MongoMemoryServer } from 'mongodb-memory-server'
 import { BaseMongooseRepository } from '../../../lib/adapters/base/adapters.base.db.mongoose'
-import { FeedServiceRepository } from '../../../lib/entities/feeds/entities.feeds'
+import { FeedServiceRepository, Feed } from '../../../lib/entities/feeds/entities.feeds'
 import { AdapterDescriptorModel, ManifoldModels, AdapterDescriptorSchema, SourceDescriptorModel, SourceDescriptorSchema, MongooseAdapterRepository, MongooseSourceRepository } from '../../../lib/adapters/feeds/adapters.feeds.db.mongoose'
 import { FeedServiceType } from '../../../lib/entities/feeds/entities.feeds'
-import { FeedDescriptor } from '../../../src/app.api/feeds/app.api.feeds'
 
 describe('manifold repositories', function() {
 
@@ -58,7 +57,7 @@ describe('manifold repositories', function() {
 
     it('creates an adatper descriptor record', async function() {
 
-      const seed: Partial<FeedDescriptor> = {
+      const seed: Partial<Feed> = {
         title: 'Xyz Adapter',
         summary: 'Adapting Xyz services',
       }
@@ -79,11 +78,11 @@ describe('manifold repositories', function() {
 
       const seed1: Partial<FeedServiceType> = {
         title: 'Abc Adapter',
-        description: 'Adapting Abc services',
+        summary: 'Adapting Abc services',
       }
       const seed2: Partial<FeedServiceType> = {
         title: 'Xyz Adapter',
-        description: 'Adapting Xyz services',
+        summary: 'Adapting Xyz services',
       }
       await Promise.all([
         repo.create(seed1),
@@ -99,13 +98,13 @@ describe('manifold repositories', function() {
 
       const seed: Partial<FeedServiceType> = {
         title: 'Adapter 123',
-        description: 'Needs an update',
+        summary: 'Needs an update',
       }
       const existing = await repo.create(seed)
       const update = {
         id: existing.id,
         title: 'Updated Adapter 123',
-        description: 'Not writable now',
+        summary: 'Not writable now',
         isWritable: false
       }
       const beforeUpdate = await repo.findAll()
@@ -125,7 +124,7 @@ describe('manifold repositories', function() {
 
       const seed: Partial<FeedServiceType> = {
         title: 'Doomed',
-        description: 'Marked for delete',
+        summary: 'Marked for delete',
       }
       const created = await repo.create(seed)
       const beforeDelete = await repo.findAll()

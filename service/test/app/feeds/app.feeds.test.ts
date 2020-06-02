@@ -2,11 +2,11 @@ import { describe, it, beforeEach } from 'mocha'
 import { expect } from 'chai'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
 import '../../utils'
-import { FeedServiceType, FeedTopic, FeedService, FeedParams, FeedContent, FeedServiceTypeRepository, InvalidServiceConfigError, InvalidServiceConfigErrorData, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedServiceDescriptor } from '../../../lib/entities/feeds/entities.feeds'
+import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, InvalidServiceConfigErrorData, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedServiceDescriptor, FeedService } from '../../../lib/entities/feeds/entities.feeds'
 import { CreateFeed, FeedsPermissionService, ListFeedServiceTypes, CreateFeedService, ListTopics } from '../../../lib/app.impl/feeds/app.impl.feeds'
 import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError } from '../../../lib/app.api/app.api.global.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
-import { FeedDescriptor, FeedTypeGuid, FeedServiceTypeDescriptor, ListTopicsRequest } from '../../../lib/app.api/feeds/app.api.feeds'
+import { FeedServiceTypeDescriptor, ListTopicsRequest } from '../../../lib/app.api/feeds/app.api.feeds'
 import uniqid from 'uniqid'
 
 
@@ -14,7 +14,7 @@ function mockServiceType(descriptor: FeedServiceTypeDescriptor): SubstituteOf<Fe
   const mock = Sub.for<FeedServiceType>()
   mock.id.returns!(descriptor.id)
   mock.title.returns!(descriptor.title)
-  mock.description.returns!(descriptor.description)
+  mock.summary.returns!(descriptor.summary)
   mock.configSchema.returns!(descriptor.configSchema)
   return mock
 }
@@ -24,7 +24,7 @@ const someServiceTypeDescs: FeedServiceTypeDescriptor[] = [
     descriptorOf: 'FeedServiceType',
     id: `ogc.wfs-${uniqid()}`,
     title: 'OGC Web Feature Service',
-    description: 'An OGC Web Feature Service is a standard interface to query geospatial features.',
+    summary: 'An OGC Web Feature Service is a standard interface to query geospatial features.',
     configSchema: {
       type: 'object',
       properties: {
@@ -42,7 +42,7 @@ const someServiceTypeDescs: FeedServiceTypeDescriptor[] = [
     descriptorOf: 'FeedServiceType',
     id: `ogc.oaf-${uniqid()}`,
     title: 'OGC API - Features Service',
-    description: 'An OGC API - Features service is a standard interface to query geospatial features.  OAF is the modern evolution of WFS.',
+    summary: 'An OGC API - Features service is a standard interface to query geospatial features.  OAF is the modern evolution of WFS.',
     configSchema: {
       type: 'object',
       properties: {
@@ -176,15 +176,29 @@ describe.only('feeds administration', function() {
         id: `${someServiceTypeDescs[0].id}:${uniqid()}`,
         serviceType: someServiceTypeDescs[0].id,
         title: 'WFS 1',
-        description: null,
+        summary: null,
         config: {
-          url: 'https://test.mage/wfs'
+          url: 'https://test.mage/wfs1'
+        }
+      },
+      {
+        descriptorOf: 'FeedService',
+        id: `${someServiceTypeDescs[0].id}:${uniqid()}`,
+        serviceType: someServiceTypeDescs[0].id,
+        title: 'WFS 2',
+        summary: null,
+        config: {
+          url: 'https://test.mage/wfs2'
         }
       }
     ]
 
     beforeEach(function() {
+      app.registerServiceTypes(...someServiceTypes)
       app.registerServices(...someServiceDescs)
+      for (const service of someServiceDescs) {
+        app.permissionService.grantListTopics(adminPrincipal.user, service.id)
+      }
     })
 
     it('checks permission for listing topics', async function() {
@@ -194,7 +208,7 @@ describe.only('feeds administration', function() {
         ...bannedPrincipal,
         service: serviceDesc.id
       }
-      let err = await app.listTopics(req).then(res => res.error as PermissionDeniedError)
+      const err = await app.listTopics(req).then(res => res.error as PermissionDeniedError)
 
       expect(err).to.be.instanceOf(MageError)
       expect(err.code).to.equal(ErrPermissionDenied)
@@ -202,17 +216,17 @@ describe.only('feeds administration', function() {
         serviceType.didNotReceive().instantiateService(Arg.any())
       }
 
-      const res = await app.listTopics(req).then(res => res.success as FeedTopic[])
-
-      expect(res).to.have.length(1)
+      const service = Sub.for<FeedService>()
+      service.fetchAvailableTopics().resolves([])
       const serviceType = someServiceTypes.filter(x => x.id === serviceDesc.serviceType)[0]
-      serviceType.received(1).instantiateService(Arg.any())
+      serviceType.instantiateService(Arg.deepEquals(serviceDesc.config)).returns(service)
+      app.permissionService.grantListTopics(req.user, serviceDesc.id)
 
-      app.permissionService.revokeListTopics(adminPrincipal.user, someServiceDescs[0].id)
-      err = await app.listTopics(req).then(res => res.error as PermissionDeniedError)
+      const res = await app.listTopics(req)
 
-      expect(err).to.be.instanceOf(MageError)
-      expect(err.code).to.equal(ErrPermissionDenied)
+      expect(res.success).to.be.instanceOf(Array)
+      expect(res.success).to.have.lengthOf(0)
+      expect(res.error).to.be.null
       serviceType.received(1).instantiateService(Arg.any())
     })
 
@@ -332,7 +346,7 @@ class TestApp {
   readonly permissionService = new TestPermissionService()
   readonly listServiceTypes = ListFeedServiceTypes(this.permissionService, this.serviceTypeRepo)
   readonly createService = CreateFeedService(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
-  readonly listTopics = ListTopics(this.permissionService, this.serviceRepo)
+  readonly listTopics = ListTopics(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
 
   registerServiceTypes(... types: FeedServiceType[]): void {
     for (const type of types) {
@@ -356,7 +370,7 @@ class TestFeedServiceTypeRepository implements FeedServiceTypeRepository {
   }
 
   async findById(serviceTypeId: string): Promise<FeedServiceType | null> {
-    return this.db.get(serviceTypeId) ?? null
+    return this.db.get(serviceTypeId) || null
   }
 }
 
@@ -426,15 +440,9 @@ class TestPermissionService implements FeedsPermissionService {
   }
 
   revokeListTopics(user: UserId, service: FeedServiceId) {
-    let acl = this.serviceAcls.get(service)
-    if (!acl) {
-      return
-    }
-    let servicePermissions = acl.get(user)
-    if (!servicePermissions) {
-      return
-    }
-    servicePermissions.delete(ListTopics.name)
+    const acl = this.serviceAcls.get(service)
+    const servicePermissions = acl?.get(user)
+    servicePermissions?.delete(ListTopics.name)
   }
 
   async ensureCreateFeedPermissionFor(user: UserId): Promise<null | PermissionDeniedError> {

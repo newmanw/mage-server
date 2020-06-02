@@ -33,7 +33,7 @@ export function CreateFeedService(permissionService: FeedsPermissionService, ser
         return await serviceRepo.create({
           serviceType: req.serviceType,
           title: req.title,
-          description: req.description || null,
+          summary: req.summary || null,
           config: req.config
         })
       }
@@ -41,16 +41,21 @@ export function CreateFeedService(permissionService: FeedsPermissionService, ser
   }
 }
 
-export function ListTopics(permissionService: FeedsPermissionService, serviceRepo: FeedServiceRepository): api.ListTopics {
+export function ListTopics(permissionService: FeedsPermissionService, serviceTypeRepo: FeedServiceTypeRepository, serviceRepo: FeedServiceRepository): api.ListTopics {
   return async function listTopics(req: api.ListTopicsRequest): ReturnType<api.ListTopics> {
-    const service = await serviceRepo.findById(req.service)
-    if (service == null) {
+    const serviceDesc = await serviceRepo.findById(req.service)
+    if (serviceDesc == null) {
       return AppResponse.error<FeedTopic[], EntityNotFoundError>(entityNotFound(req.service, 'FeedServiceDescriptor'))
     }
-    return await withPermission(
-      permissionService.ensureListTopicsPermissionFor(req.user, service),
-      async (): Promise<FeedTopic[]> => {
-        throw new Error('todo')
+    return await withPermission<FeedTopic[], KnownErrorsOf<api.ListTopics>>(
+      permissionService.ensureListTopicsPermissionFor(req.user, serviceDesc),
+      async (): Promise<FeedTopic[] | EntityNotFoundError> => {
+        const serviceType = await serviceTypeRepo.findById(serviceDesc.serviceType)
+        if (!serviceType) {
+          return entityNotFound(serviceDesc.serviceType, 'FeedServiceType')
+        }
+        const service = serviceType.instantiateService(serviceDesc.config)
+        return await service.fetchAvailableTopics()
       }
     )
   }

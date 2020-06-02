@@ -1,11 +1,11 @@
 import { AuthenticatedRequest, AppResponse, Descriptor } from '../app.api.global'
-import { FeedService, FeedTopic, FeedParams, FeedContent, FeedId, FeedServiceType, FeedServiceTypeId, FeedServiceDescriptor, FeedServiceId } from '../../entities/feeds/entities.feeds'
+import { FeedService, FeedTopic, FeedParams, FeedContent, FeedId, FeedServiceType, FeedServiceTypeId, FeedServiceDescriptor, FeedServiceId, Feed } from '../../entities/feeds/entities.feeds'
 import { Json } from '../../entities/entities.global.json'
 import { PermissionDeniedError, EntityNotFoundError, InvalidInputError } from '../app.api.global.errors'
 
 export type FeedTypeGuid = string
 
-export interface FeedServiceTypeDescriptor extends Descriptor<'FeedServiceType'>, Pick<FeedServiceType, 'id' | 'title' | 'description' | 'configSchema'> {
+export interface FeedServiceTypeDescriptor extends Descriptor<'FeedServiceType'>, Pick<FeedServiceType, 'id' | 'title' | 'summary' | 'configSchema'> {
 }
 
 export function FeedServiceTypeDescriptor(from: FeedServiceType): FeedServiceTypeDescriptor {
@@ -13,7 +13,7 @@ export function FeedServiceTypeDescriptor(from: FeedServiceType): FeedServiceTyp
     descriptorOf: 'FeedServiceType',
     id: from.id,
     title: from.title,
-    description: from.description,
+    summary: from.summary,
     configSchema: from.configSchema
   }
 }
@@ -25,7 +25,7 @@ export interface ListFeedServiceTypes {
 export interface CreateFeedServiceRequest extends AuthenticatedRequest {
   serviceType: FeedServiceTypeId
   title: string
-  description?: string | null
+  summary?: string | null
   config: Json
 }
 
@@ -69,17 +69,8 @@ export interface FetchEventFeedsRequest extends AuthenticatedRequest {
   eventId: string
 }
 
-export interface FeedDescriptor {
-  id: FeedId
-  title: string
-  summary: string
-  constantParams: Json
-  variableParams: Json
-  variableParamsSchema: Json
-}
-
 export interface FetchEventFeeds {
-  (req: FetchEventFeedsRequest): Promise<FeedDescriptor[]>
+  (req: FetchEventFeedsRequest): Promise<Feed[]>
 }
 
 export interface FetchFeedContentRequest extends AuthenticatedRequest {
