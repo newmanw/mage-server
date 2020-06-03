@@ -30,7 +30,7 @@ const someServiceTypeDescs: FeedServiceTypeDescriptor[] = [
       properties: {
         url: {
           title: 'Service URL',
-          description: 'The base URL of the WFS server',
+          summary: 'The base URL of the WFS server',
           type: 'string',
           format: 'uri',
         }
@@ -48,7 +48,7 @@ const someServiceTypeDescs: FeedServiceTypeDescriptor[] = [
       properties: {
         url: {
           title: 'Service URL',
-          description: 'The base URL of the OAF server',
+          summary: 'The base URL of the OAF server',
           type: 'string',
           format: 'uri',
         }
@@ -161,7 +161,7 @@ describe.only('feeds administration', function() {
       expect(created).to.deep.include({
         serviceType: serviceType.id,
         title: 'Test Service',
-        description: null,
+        summary: null,
         config: config
       })
       expect(inDb).to.deep.equal(created)
