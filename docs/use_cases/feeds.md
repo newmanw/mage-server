@@ -42,7 +42,7 @@ A participant user can modify fetch parameters of a feed to customize the conten
 #### Actors
 1. Participant (P1)
 
-### Configure new feed source
+### Configure new feed service
 
 #### Actors
 1. Administrator (A1)
@@ -53,11 +53,11 @@ A participant user can modify fetch parameters of a feed to customize the conten
 #### Main Flow
 1. A1 requests to configure a new feed service.
 1. The app presents a list of registered feed service types.
-1. A1 selects the desired source type.
+1. A1 selects the desired service type.
 1. The app presents the configuration options for the new feed service.
    * Options for a feed service would generally include a URL the app will use to fetch feeds data from the feed service.
 1. A1 changes the options as desired.
-1. A1 requests to test the provided options by fetching data from the feed source.
+1. A1 requests to test the provided options by fetching data from the feed service.
 1. The app presents the list of topics the feed service provides.
 1. A1 confirms the new feed service.
 1. The app presents a prompt asking A1 to configure new feeds from the service.
