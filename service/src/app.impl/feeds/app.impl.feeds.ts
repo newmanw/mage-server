@@ -1,4 +1,4 @@
-import { FeedServiceTypeRepository, FeedServiceRepository, FeedServiceDescriptor, FeedTopic } from '../../entities/feeds/entities.feeds';
+import { FeedServiceTypeRepository, FeedServiceRepository, FeedServiceDescriptor, FeedTopic, FeedServiceTypeDescriptor } from '../../entities/feeds/entities.feeds';
 import * as api from '../../app.api/feeds/app.api.feeds'
 import { UserId } from '../../entities/authn/entities.authn';
 import { AuthenticatedRequest, KnownErrorsOf, withPermission, AppResponse } from '../../app.api/app.api.global';
@@ -11,7 +11,7 @@ export function ListFeedServiceTypes(permissionService: FeedsPermissionService, 
       permissionService.ensureListServiceTypesPermissionFor(req.user),
       async () => {
         const all = await repo.findAll()
-        return all.map(x => api.FeedServiceTypeDescriptor(x))
+        return all.map(x => FeedServiceTypeDescriptor(x))
       }
     )
   }

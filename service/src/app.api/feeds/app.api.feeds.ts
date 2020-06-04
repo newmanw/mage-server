@@ -1,22 +1,8 @@
-import { AuthenticatedRequest, AppResponse, Descriptor } from '../app.api.global'
-import { FeedService, FeedTopic, FeedParams, FeedContent, FeedId, FeedServiceType, FeedServiceTypeId, FeedServiceDescriptor, FeedServiceId, Feed } from '../../entities/feeds/entities.feeds'
+import { AuthenticatedRequest, AppResponse } from '../app.api.global'
+import { FeedService, FeedTopic, FeedParams, FeedContent, FeedId, FeedServiceTypeId, FeedServiceDescriptor, FeedServiceId, Feed, FeedTopicId, FeedServiceTypeDescriptor } from '../../entities/feeds/entities.feeds'
 import { Json } from '../../entities/entities.global.json'
 import { PermissionDeniedError, EntityNotFoundError, InvalidInputError } from '../app.api.global.errors'
 
-export type FeedTypeGuid = string
-
-export interface FeedServiceTypeDescriptor extends Descriptor<'FeedServiceType'>, Pick<FeedServiceType, 'id' | 'title' | 'summary' | 'configSchema'> {
-}
-
-export function FeedServiceTypeDescriptor(from: FeedServiceType): FeedServiceTypeDescriptor {
-  return {
-    descriptorOf: 'FeedServiceType',
-    id: from.id,
-    title: from.title,
-    summary: from.summary,
-    configSchema: from.configSchema
-  }
-}
 
 export interface ListFeedServiceTypes {
   (req: AuthenticatedRequest): Promise<AppResponse<FeedServiceTypeDescriptor[], PermissionDeniedError>>
@@ -54,7 +40,8 @@ export interface PreviewFeedContent {
 }
 
 export interface CreateFeedRequest extends AuthenticatedRequest {
-  feedType: FeedTypeGuid,
+  service: FeedServiceId,
+  topic: FeedTopicId
   title: string,
   summary: string,
   constantParams: Json

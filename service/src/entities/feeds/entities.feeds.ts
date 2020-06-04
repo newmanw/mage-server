@@ -2,7 +2,7 @@
 import { Json } from '../entities.global.json'
 import { FeatureCollection } from 'geojson'
 import { JSONSchema6 } from 'json-schema'
-import { Descriptor } from '../../app.api/app.api.global'
+import { Descriptor } from '../entities.global'
 
 export const ErrInvalidServiceConfig = Symbol.for('err.feeds.invalid_service_config')
 
@@ -24,10 +24,23 @@ export interface FeedServiceType {
   readonly id: FeedServiceTypeId
   readonly title: string
   readonly summary: string | null
-  readonly configSchema: JSONSchema6
+  readonly configSchema: JSONSchema6 | null
 
   validateServiceConfig(config: Json): Promise<null | InvalidServiceConfigError>
   instantiateService(config: Json): FeedService
+}
+
+export interface FeedServiceTypeDescriptor extends Descriptor<'FeedServiceType'>, Pick<FeedServiceType, 'id' | 'title' | 'summary' | 'configSchema'> {
+}
+
+export function FeedServiceTypeDescriptor(from: FeedServiceType): FeedServiceTypeDescriptor {
+  return {
+    descriptorOf: 'FeedServiceType',
+    id: from.id,
+    title: from.title,
+    summary: from.summary,
+    configSchema: from.configSchema
+  }
 }
 
 export type FeedServiceId = string

@@ -12,7 +12,6 @@ Arg.deepEquals = <T>(expected: T): Argument<T> & T => {
   return Arg.is(x => deepEqual(x, expected))
 }
 
-
 import mongoose, { Document } from 'mongoose'
 
 const DELETE_KEY = Symbol('DELETE_KEY')
