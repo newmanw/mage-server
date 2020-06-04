@@ -232,10 +232,75 @@ describe.only('feeds administration', function() {
 
     it('returns all the topics for a service', async function() {
 
-      expect.fail('todo')
-      // app.registerTypes(...someFeedTypes)
-      // const read = await app.listFeedTypes(adminPrincipal)
-      // expect(read).to.have.deep.members(someFeedTypes)
+      const topics: FeedTopic[] = [
+        Object.freeze({
+          id: 'weather_alerts',
+          title: 'Weather Alerts',
+          summary: 'Alerts about severe weather activity',
+          constantParamsSchema: {
+            type: 'number',
+            title: 'Max items',
+            default: 20,
+            minimum: 1,
+            maximum: 100
+          },
+          variableParamsSchema: {
+            type: 'object',
+            properties: {
+              '$mage:currentLocation': {
+                title: 'Current Location',
+                type: 'array',
+                minItems: 2,
+                maxItems: 2,
+                items: {
+                  type: 'number'
+                }
+              },
+              radius: {
+                title: 'Radius (Km)',
+                type: 'number',
+                default: 5,
+                minimum: 1,
+                maximum: 250
+              }
+            },
+            required: [ '$mage:currentLocation' ]
+          }
+        }),
+        Object.freeze({
+          id: 'quakes',
+          title: 'Earthquake Alerts',
+          summary: 'Alerts about seismic in a given area',
+          constantParamsSchema: null,
+          variableParamsSchema: {
+            type: 'object',
+            properties: {
+              '$mage:currentLocation': {
+                title: 'Current Location',
+                type: 'array',
+                minItems: 2,
+                maxItems: 2,
+                items: {
+                  type: 'number'
+                }
+              }
+            },
+            required: [ '$mage:currentLocation' ]
+          }
+        })
+      ]
+      const serviceDesc = someServiceDescs[1]
+      const serviceType = someServiceTypes.filter(x => x.id === serviceDesc.serviceType)[0]
+      const service = Sub.for<FeedService>()
+      serviceType.instantiateService(Arg.deepEquals(serviceDesc.config)).returns(service)
+      service.fetchAvailableTopics().resolves(topics)
+      const req: ListTopicsRequest = {
+        ...adminPrincipal,
+        service: serviceDesc.id
+      }
+      const fetched = await app.listTopics(req).then(res => res.success)
+
+      expect(fetched).to.deep.equal(topics)
     })
   })
 
