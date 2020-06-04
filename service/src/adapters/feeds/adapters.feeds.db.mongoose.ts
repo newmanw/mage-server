@@ -1,8 +1,9 @@
 
 import mongoose, { Model, SchemaOptions } from 'mongoose'
 import { BaseMongooseRepository } from '../base/adapters.base.db.mongoose'
-import { FeedTopic, FeedService, FeedServiceType, FeedServiceDescriptor } from '../../entities/feeds/entities.feeds'
+import { FeedTopic, FeedService, FeedServiceType } from '../../entities/feeds/entities.feeds'
 import { FeedServiceTypeRepository, FeedServiceRepository } from '../../entities/feeds/entities.feeds'
+import { FeedServiceDescriptor } from '../../app.api/feeds/app.api.feeds'
 
 
 
@@ -61,7 +62,7 @@ export class MongooseAdapterRepository extends BaseMongooseRepository<AdapterDes
 }
 
 
-export class MongooseSourceRepository extends BaseMongooseRepository<SourceDescriptorDocument, SourceDescriptorModel, FeedServiceDescriptor> implements FeedServiceRepository {
+export class MongooseSourceRepository extends BaseMongooseRepository<SourceDescriptorDocument, SourceDescriptorModel, FeedService> implements FeedServiceRepository {
 
   constructor(model: SourceDescriptorModel) {
     super(model)

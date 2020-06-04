@@ -3,10 +3,13 @@ import { beforeEach } from 'mocha'
 import express from 'express'
 import { expect } from 'chai'
 import supertest from 'supertest'
-import Substitute, { SubstituteOf } from '@fluffy-spoon/substitute'
-import { FeedServiceTypeDescriptor } from '../../../lib/entities/feeds/entities.feeds'
-import { FeedsRoutes, FeedsAppLayer, AuthenticatedWebRequest } from '../../../lib/adapters/feeds/adapters.feeds.controllers.web'
+import Substitute, { SubstituteOf, Arg } from '@fluffy-spoon/substitute'
+import uniqid from 'uniqid'
 import { AppResponse } from '../../../lib/app.api/app.api.global'
+import { FeedsRoutes, FeedsAppLayer, AuthenticatedWebRequest } from '../../../lib/adapters/feeds/adapters.feeds.controllers.web'
+import { CreateFeedServiceRequest, FeedServiceTypeDescriptor, FeedServiceDescriptor } from '../../../lib/app.api/feeds/app.api.feeds'
+
+const jsonMimeType = /^application\/json/
 
 describe.only('feeds web adapter', function() {
 
@@ -30,35 +33,71 @@ describe.only('feeds web adapter', function() {
     client = supertest(endpoint)
   })
 
-  it('lists service types', async function() {
+  describe('GET /service_types', function() {
 
-    const serviceTypes: FeedServiceTypeDescriptor[] = [
-      {
-        descriptorOf: 'FeedServiceType',
-        id: 'wfs',
-        title: 'Web Feature Service',
-        summary: null,
-        configSchema: {
-          title: 'URL',
-          description: 'The base URL of the WFS endpoint',
-          type: 'string',
-          format: 'uri'
+    it('lists service types', async function() {
+
+      const serviceTypes: FeedServiceTypeDescriptor[] = [
+        {
+          descriptorOf: 'FeedServiceType',
+          id: 'wfs',
+          title: 'Web Feature Service',
+          summary: null,
+          configSchema: {
+            title: 'URL',
+            description: 'The base URL of the WFS endpoint',
+            type: 'string',
+            format: 'uri'
+          }
+        },
+        {
+          descriptorOf: 'FeedServiceType',
+          id: 'nws',
+          title: 'National Weather Service',
+          summary: null,
+          configSchema: null
         }
-      },
-      {
-        descriptorOf: 'FeedServiceType',
-        id: 'nws',
-        title: 'National Weather Service',
-        summary: null,
-        configSchema: null
-      }
-    ]
-    appLayer.listServiceTypes(adminPrincipal).resolves(AppResponse.success(serviceTypes))
-    const res = await client.get('/service_types')
-      .set('user', adminPrincipal.user)
+      ]
+      appLayer.listServiceTypes(adminPrincipal).resolves(AppResponse.success(serviceTypes))
+      const res = await client.get('/service_types')
+        .set('user', adminPrincipal.user)
 
-    expect(res.type).to.match(/application\/json/)
-    expect(res.status).to.equal(200)
-    expect(res.body).to.deep.equal(serviceTypes)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.status).to.equal(200)
+      expect(res.body).to.deep.equal(serviceTypes)
+    })
+  })
+
+  describe('POST /services', function() {
+
+    it('creates a service', async function() {
+
+      const submitted = {
+        serviceType: 'wfs',
+        title: 'USGS Earthquake Data',
+        summary: 'Pull features from the USGS earthquake WFS endpoint',
+        config: {
+          url: 'https://usgs.gov/data/earthquakes/wfs?service=WFS'
+        }
+      }
+      const appReq: CreateFeedServiceRequest = {
+        ...submitted,
+        ...adminPrincipal
+      }
+      const created: FeedServiceDescriptor = {
+        descriptorOf: 'FeedService',
+        id: `wfs:${uniqid()}`,
+        ...submitted
+      }
+      appLayer.createService(Arg.deepEquals(appReq)).resolves(AppResponse.success(created))
+
+      const res = await client.post('/services')
+        .set('user', adminPrincipal.user)
+        .send(submitted)
+
+      expect(res.status).to.equal(201)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.deep.equal(created)
+    })
   })
 })

@@ -2,11 +2,11 @@ import { describe, it, beforeEach } from 'mocha'
 import { expect } from 'chai'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
 import '../../utils'
-import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, InvalidServiceConfigErrorData, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedServiceDescriptor, FeedService, FeedServiceTypeDescriptor } from '../../../lib/entities/feeds/entities.feeds'
+import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, InvalidServiceConfigErrorData, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedService, FeedServiceConnection } from '../../../lib/entities/feeds/entities.feeds'
 import { FeedsPermissionService, ListFeedServiceTypes, CreateFeedService, ListTopics } from '../../../lib/app.impl/feeds/app.impl.feeds'
 import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError } from '../../../lib/app.api/app.api.global.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
-import { ListTopicsRequest } from '../../../lib/app.api/feeds/app.api.feeds'
+import { ListTopicsRequest, FeedServiceTypeDescriptor, FeedServiceDescriptor } from '../../../lib/app.api/feeds/app.api.feeds'
 import uniqid from 'uniqid'
 
 
@@ -170,9 +170,8 @@ describe.only('feeds administration', function() {
 
   describe('listing topics', async function() {
 
-    const someServiceDescs: FeedServiceDescriptor[] = [
+    const someServiceDescs: FeedService[] = [
       {
-        descriptorOf: 'FeedService',
         id: `${someServiceTypeDescs[0].id}:${uniqid()}`,
         serviceType: someServiceTypeDescs[0].id,
         title: 'WFS 1',
@@ -182,7 +181,6 @@ describe.only('feeds administration', function() {
         }
       },
       {
-        descriptorOf: 'FeedService',
         id: `${someServiceTypeDescs[0].id}:${uniqid()}`,
         serviceType: someServiceTypeDescs[0].id,
         title: 'WFS 2',
@@ -213,13 +211,13 @@ describe.only('feeds administration', function() {
       expect(err).to.be.instanceOf(MageError)
       expect(err.code).to.equal(ErrPermissionDenied)
       for (const serviceType of someServiceTypes) {
-        serviceType.didNotReceive().instantiateService(Arg.any())
+        serviceType.didNotReceive().createConnection(Arg.any())
       }
 
-      const service = Sub.for<FeedService>()
+      const service = Sub.for<FeedServiceConnection>()
       service.fetchAvailableTopics().resolves([])
       const serviceType = someServiceTypes.filter(x => x.id === serviceDesc.serviceType)[0]
-      serviceType.instantiateService(Arg.deepEquals(serviceDesc.config)).returns(service)
+      serviceType.createConnection(Arg.deepEquals(serviceDesc.config)).returns(service)
       app.permissionService.grantListTopics(req.user, serviceDesc.id)
 
       const res = await app.listTopics(req)
@@ -227,7 +225,7 @@ describe.only('feeds administration', function() {
       expect(res.success).to.be.instanceOf(Array)
       expect(res.success).to.have.lengthOf(0)
       expect(res.error).to.be.null
-      serviceType.received(1).instantiateService(Arg.any())
+      serviceType.received(1).createConnection(Arg.any())
     })
 
     it('returns all the topics for a service', async function() {
@@ -291,8 +289,8 @@ describe.only('feeds administration', function() {
       ]
       const serviceDesc = someServiceDescs[1]
       const serviceType = someServiceTypes.filter(x => x.id === serviceDesc.serviceType)[0]
-      const service = Sub.for<FeedService>()
-      serviceType.instantiateService(Arg.deepEquals(serviceDesc.config)).returns(service)
+      const service = Sub.for<FeedServiceConnection>()
+      serviceType.createConnection(Arg.deepEquals(serviceDesc.config)).returns(service)
       service.fetchAvailableTopics().resolves(topics)
       const req: ListTopicsRequest = {
         ...adminPrincipal,
@@ -419,7 +417,7 @@ class TestApp {
     }
   }
 
-  registerServices(...services: FeedServiceDescriptor[]): void {
+  registerServices(...services: FeedService[]): void {
     for (const service of services) {
       this.serviceRepo.db.set(service.id, service)
     }
@@ -441,23 +439,22 @@ class TestFeedServiceTypeRepository implements FeedServiceTypeRepository {
 
 class TestFeedServiceRepository implements FeedServiceRepository {
 
-  readonly db = new Map<string, FeedServiceDescriptor>()
+  readonly db = new Map<string, FeedService>()
 
-  async create(attrs: FeedServiceCreateAttrs): Promise<FeedServiceDescriptor> {
-    const saved: FeedServiceDescriptor = {
+  async create(attrs: FeedServiceCreateAttrs): Promise<FeedService> {
+    const saved: FeedService = {
       id: `${attrs.serviceType}:${this.db.size + 1}`,
-      descriptorOf: 'FeedService',
       ...attrs
     }
     this.db.set(saved.id, saved)
     return saved
   }
 
-  async findAll(): Promise<FeedServiceDescriptor[]> {
+  async findAll(): Promise<FeedService[]> {
     return Array.from(this.db.values())
   }
 
-  async findById(sourceId: string): Promise<FeedServiceDescriptor | null> {
+  async findById(sourceId: string): Promise<FeedService | null> {
     return this.db.get(sourceId) || null
   }
 }
@@ -482,8 +479,8 @@ class TestPermissionService implements FeedsPermissionService {
     return this.checkPrivilege(user, CreateFeedService.name)
   }
 
-  async ensureListTopicsPermissionFor(user: UserId, service: FeedServiceDescriptor): Promise<null | PermissionDeniedError> {
-    const acl = this.serviceAcls.get(service.id)
+  async ensureListTopicsPermissionFor(user: UserId, service: FeedServiceId): Promise<null | PermissionDeniedError> {
+    const acl = this.serviceAcls.get(service)
     if (acl?.get(user)?.has(ListTopics.name)) {
       return null
     }

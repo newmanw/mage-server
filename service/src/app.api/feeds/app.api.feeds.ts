@@ -1,6 +1,6 @@
-import { AuthenticatedRequest, AppResponse } from '../app.api.global'
-import { FeedService, FeedTopic, FeedParams, FeedContent, FeedId, FeedServiceTypeId, FeedServiceDescriptor, FeedServiceId, Feed, FeedTopicId, FeedServiceTypeDescriptor } from '../../entities/feeds/entities.feeds'
-import { Json } from '../../entities/entities.global.json'
+import { AuthenticatedRequest, AppResponse, Descriptor } from '../app.api.global'
+import { FeedService, FeedTopic, FeedParams, FeedContent, FeedId, FeedServiceTypeId, FeedServiceId, Feed, FeedTopicId, FeedServiceType } from '../../entities/feeds/entities.feeds'
+import { Json, JsonObject } from '../../entities/entities.global.json'
 import { PermissionDeniedError, EntityNotFoundError, InvalidInputError } from '../app.api.global.errors'
 
 
@@ -16,7 +16,7 @@ export interface CreateFeedServiceRequest extends AuthenticatedRequest {
 }
 
 export interface CreateFeedService {
-  (req: CreateFeedServiceRequest): Promise<AppResponse<FeedServiceDescriptor, PermissionDeniedError | EntityNotFoundError | InvalidInputError>>
+  (req: CreateFeedServiceRequest): Promise<AppResponse<FeedService, PermissionDeniedError | EntityNotFoundError | InvalidInputError>>
 }
 
 export interface ListTopicsRequest extends AuthenticatedRequest {
@@ -67,4 +67,31 @@ export interface FetchFeedContentRequest extends AuthenticatedRequest {
 
 export interface FetchFeedContent {
   (req: FetchFeedContentRequest): Promise<FeedContent>
+}
+
+export interface FeedServiceTypeDescriptor extends Descriptor<'FeedServiceType'>, Pick<FeedServiceType, 'id' | 'title' | 'summary'> {
+  configSchema: JsonObject | null
+}
+
+export function FeedServiceTypeDescriptor(from: FeedServiceType): FeedServiceTypeDescriptor {
+  return {
+    descriptorOf: 'FeedServiceType',
+    id: from.id,
+    title: from.title,
+    summary: from.summary,
+    configSchema: from.configSchema as JsonObject | null
+  }
+}
+
+export interface FeedServiceDescriptor extends Descriptor<'FeedService'>, Pick<FeedService, 'id' | 'serviceType' | 'title' | 'summary' | 'config'> {}
+
+export function FeedServiceDescriptor(from: FeedService): FeedServiceDescriptor {
+  return {
+    descriptorOf: 'FeedService',
+    id: from.id,
+    serviceType: from.serviceType,
+    title: from.title,
+    summary: from.summary,
+    config: from.config
+  }
 }
