@@ -8,6 +8,7 @@ import uniqid from 'uniqid'
 import { AppResponse } from '../../../lib/app.api/app.api.global'
 import { FeedsRoutes, FeedsAppLayer, AuthenticatedWebRequest } from '../../../lib/adapters/feeds/adapters.feeds.controllers.web'
 import { CreateFeedServiceRequest, FeedServiceTypeDescriptor, FeedServiceDescriptor } from '../../../lib/app.api/feeds/app.api.feeds'
+import { FeedService } from '../../../src/entities/feeds/entities.feeds'
 
 const jsonMimeType = /^application\/json/
 
@@ -84,8 +85,7 @@ describe.only('feeds web adapter', function() {
         ...submitted,
         ...adminPrincipal
       }
-      const created: FeedServiceDescriptor = {
-        descriptorOf: 'FeedService',
+      const created: FeedService = {
         id: `wfs:${uniqid()}`,
         ...submitted
       }
