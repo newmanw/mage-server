@@ -99,6 +99,6 @@ export interface FeedTopic {
   readonly id: FeedTopicId
   readonly title: string
   readonly summary: string | null
-  readonly constantParamsSchema: JSONSchema6
-  readonly variableParamsSchema: JSONSchema6
+  readonly constantParamsSchema: JSONSchema6 | null
+  readonly variableParamsSchema: JSONSchema6 | null
 }
