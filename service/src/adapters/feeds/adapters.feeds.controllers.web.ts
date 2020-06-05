@@ -7,8 +7,7 @@ declare global {
   }
 }
 
-import { FeedTopic, FeedService } from '../../entities/feeds/entities.feeds'
-import express, { Request, Response, NextFunction, RequestHandler, Router, Application } from 'express'
+import express from 'express'
 import { ListFeedServiceTypes, ListTopics, CreateFeedService, CreateFeedServiceRequest } from '../../app.api/feeds/app.api.feeds'
 import { UserId } from '../../entities/authn/entities.authn'
 import bodyParser from 'body-parser'
@@ -24,8 +23,8 @@ export interface AuthenticatedWebRequest extends express.Request {
   userId: UserId
 }
 
-export function FeedsRoutes(appLayer: FeedsAppLayer): Router {
-  const routes = Router()
+export function FeedsRoutes(appLayer: FeedsAppLayer): express.Router {
+  const routes = express.Router()
   routes.use(bodyParser.json())
 
   function errorHandler(err: PermissionDeniedError | any, req: express.Request, res: express.Response, next: express.NextFunction): any {
