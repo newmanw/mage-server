@@ -122,5 +122,9 @@ describe.only('feeds web adapter', function() {
       expect(res.type).to.match(jsonMimeType)
       expect(res.body).to.equal('permission denied: create service')
     })
+
+    it('fails if the request is invalid', async function() {
+      expect.fail('todo')
+    })
   })
 })
