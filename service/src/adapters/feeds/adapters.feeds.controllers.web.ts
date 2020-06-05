@@ -12,6 +12,7 @@ import express, { Request, Response, NextFunction, RequestHandler, Router, Appli
 import { ListFeedServiceTypes, ListTopics, CreateFeedService, CreateFeedServiceRequest } from '../../app.api/feeds/app.api.feeds'
 import { UserId } from '../../entities/authn/entities.authn'
 import bodyParser from 'body-parser'
+import { ErrPermissionDenied, MageError, PermissionDeniedError } from '../../app.api/app.api.global.errors'
 
 export interface FeedsAppLayer {
   listServiceTypes: ListFeedServiceTypes
@@ -27,12 +28,26 @@ export function FeedsRoutes(appLayer: FeedsAppLayer): Router {
   const routes = Router()
   routes.use(bodyParser.json())
 
+  function errorHandler(err: PermissionDeniedError | any, req: express.Request, res: express.Response, next: express.NextFunction): any {
+    if (!(err instanceof MageError)) {
+      return next(err)
+    }
+    switch (err.code) {
+      case ErrPermissionDenied:
+        return res.status(403).json(`permission denied: ${(err as PermissionDeniedError).data.permission}`)
+    }
+    next(err)
+  }
+
   routes.route('/service_types')
     .get(async (req, res, next): Promise<any> => {
       const authReq = req as AuthenticatedWebRequest
       const appReq = { user: authReq.userId }
       const appRes = await appLayer.listServiceTypes(appReq)
-      return res.json(appRes.success)
+      if (appRes.success) {
+        return res.json(appRes.success)
+      }
+      next(appRes.error)
     })
 
   routes.route('/services')
@@ -47,9 +62,15 @@ export function FeedsRoutes(appLayer: FeedsAppLayer): Router {
         summary: body.summary
       }
       const appRes = await appLayer.createService(appReq)
-      return res.status(201).json(appRes.success)
+      if (appRes.success) {
+        return res.status(201).json(appRes.success)
+      }
+      next(appRes.error)
     })
 
   routes.route('/services/:serviceId/topics')
+
+  routes.use(errorHandler)
+
   return routes
 }

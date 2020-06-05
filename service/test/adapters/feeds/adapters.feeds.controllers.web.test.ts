@@ -7,8 +7,9 @@ import Substitute, { SubstituteOf, Arg } from '@fluffy-spoon/substitute'
 import uniqid from 'uniqid'
 import { AppResponse } from '../../../lib/app.api/app.api.global'
 import { FeedsRoutes, FeedsAppLayer, AuthenticatedWebRequest } from '../../../lib/adapters/feeds/adapters.feeds.controllers.web'
-import { CreateFeedServiceRequest, FeedServiceTypeDescriptor, FeedServiceDescriptor } from '../../../lib/app.api/feeds/app.api.feeds'
-import { FeedService } from '../../../src/entities/feeds/entities.feeds'
+import { CreateFeedServiceRequest, FeedServiceTypeDescriptor } from '../../../lib/app.api/feeds/app.api.feeds'
+import { FeedService } from '../../../lib/entities/feeds/entities.feeds'
+import { permissionDenied, PermissionDeniedError } from '../../../lib/app.api/app.api.global.errors'
 
 const jsonMimeType = /^application\/json/
 
@@ -59,13 +60,24 @@ describe.only('feeds web adapter', function() {
           configSchema: null
         }
       ]
-      appLayer.listServiceTypes(adminPrincipal).resolves(AppResponse.success(serviceTypes))
+      appLayer.listServiceTypes(Arg.deepEquals(adminPrincipal)).resolves(AppResponse.success(serviceTypes))
       const res = await client.get('/service_types')
         .set('user', adminPrincipal.user)
 
       expect(res.type).to.match(jsonMimeType)
       expect(res.status).to.equal(200)
       expect(res.body).to.deep.equal(serviceTypes)
+    })
+
+    it('fails without permission', async function() {
+
+      appLayer.listServiceTypes(Arg.any()).resolves(AppResponse.error<any, PermissionDeniedError>(permissionDenied('list service types', 'admin')))
+
+      const res = await client.get('/service_types')
+
+      expect(res.status).to.equal(403)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.equal('permission denied: list service types')
     })
   })
 
@@ -98,6 +110,17 @@ describe.only('feeds web adapter', function() {
       expect(res.status).to.equal(201)
       expect(res.type).to.match(jsonMimeType)
       expect(res.body).to.deep.equal(created)
+    })
+
+    it('fails without permission', async function() {
+
+      appLayer.createService(Arg.any()).resolves(AppResponse.error<any, PermissionDeniedError>(permissionDenied('create service', 'admin')))
+
+      const res = await client.post('/services')
+
+      expect(res.status).to.equal(403)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.equal('permission denied: create service')
     })
   })
 })

@@ -8,7 +8,7 @@ export type InvalidInputError = MageError<typeof ErrInvalidInput, InvalidInputEr
 export type EntityNotFoundError = MageError<typeof ErrEntityNotFound, EntityNotFoundErrorData>
 
 export class MageError<Code extends symbol, Data = null> extends Error {
-  constructor(public readonly code: Code, readonly data?: Data, message?: string) {
+  constructor(public readonly code: Code, readonly data: Data, message?: string) {
     super(Symbol.keyFor(code) + (message ? `: ${message}` : ''))
   }
 }
