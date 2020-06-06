@@ -8,7 +8,7 @@ declare global {
 }
 
 import express from 'express'
-import { ListFeedServiceTypes, ListTopics, CreateFeedService, CreateFeedServiceRequest } from '../../app.api/feeds/app.api.feeds'
+import { ListFeedServiceTypes, ListServiceTopics, CreateFeedService, CreateFeedServiceRequest } from '../../app.api/feeds/app.api.feeds'
 import { UserId } from '../../entities/authn/entities.authn'
 import bodyParser from 'body-parser'
 import { ErrPermissionDenied, MageError, PermissionDeniedError } from '../../app.api/app.api.global.errors'
@@ -16,7 +16,7 @@ import { ErrPermissionDenied, MageError, PermissionDeniedError } from '../../app
 export interface FeedsAppLayer {
   listServiceTypes: ListFeedServiceTypes
   createService: CreateFeedService
-  listTopics: ListTopics
+  listTopics: ListServiceTopics
 }
 
 export interface AuthenticatedWebRequest extends express.Request {

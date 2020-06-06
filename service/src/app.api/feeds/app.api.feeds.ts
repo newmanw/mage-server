@@ -8,6 +8,15 @@ export interface ListFeedServiceTypes {
   (req: AuthenticatedRequest): Promise<AppResponse<FeedServiceTypeDescriptor[], PermissionDeniedError>>
 }
 
+export interface PreviewTopicsRequest extends AuthenticatedRequest {
+  serviceType: FeedServiceTypeId
+  serviceConfig: Json
+}
+
+export interface PreviewTopics {
+  (req: PreviewTopicsRequest): Promise<AppResponse<FeedTopic[], PermissionDeniedError | EntityNotFoundError | InvalidInputError>>
+}
+
 export interface CreateFeedServiceRequest extends AuthenticatedRequest {
   serviceType: FeedServiceTypeId
   title: string
@@ -19,16 +28,12 @@ export interface CreateFeedService {
   (req: CreateFeedServiceRequest): Promise<AppResponse<FeedService, PermissionDeniedError | EntityNotFoundError | InvalidInputError>>
 }
 
-export interface ListTopicsRequest extends AuthenticatedRequest {
+export interface ListServiceTopicsRequest extends AuthenticatedRequest {
   service: FeedServiceId
 }
 
-export interface ListTopics {
-  (req: ListTopicsRequest): Promise<AppResponse<FeedTopic[], PermissionDeniedError | EntityNotFoundError>>
-}
-
-export interface ListFeedTypes {
-  (req: AuthenticatedRequest): Promise<FeedTopic[]>
+export interface ListServiceTopics {
+  (req: ListServiceTopicsRequest): Promise<AppResponse<FeedTopic[], PermissionDeniedError | EntityNotFoundError>>
 }
 
 export interface PreviewFeedContentRequest extends AuthenticatedRequest {
