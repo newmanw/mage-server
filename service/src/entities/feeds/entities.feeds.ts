@@ -11,8 +11,8 @@ export class FeedsError<Code extends symbol, Data> extends Error {
   }
 }
 
-export class InvalidServiceConfigErrorData {
-  constructor(readonly invalidKeys: string[]) {}
+export interface InvalidServiceConfigErrorData {
+  readonly invalidKeys: string[]
 }
 
 export type InvalidServiceConfigError = FeedsError<typeof ErrInvalidServiceConfig, InvalidServiceConfigErrorData>

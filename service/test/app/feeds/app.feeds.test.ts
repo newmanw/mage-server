@@ -4,9 +4,9 @@ import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
 import '../../utils'
 import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, InvalidServiceConfigErrorData, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedService, FeedServiceConnection } from '../../../lib/entities/feeds/entities.feeds'
 import { FeedsPermissionService, ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics } from '../../../lib/app.impl/feeds/app.impl.feeds'
-import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError } from '../../../lib/app.api/app.api.global.errors'
+import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError, EntityNotFoundErrorData, invalidInput } from '../../../lib/app.api/app.api.global.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
-import { ListServiceTopicsRequest, FeedServiceTypeDescriptor, FeedServiceDescriptor } from '../../../lib/app.api/feeds/app.api.feeds'
+import { ListServiceTopicsRequest, FeedServiceTypeDescriptor, FeedServiceDescriptor, PreviewTopicsRequest } from '../../../lib/app.api/feeds/app.api.feeds'
 import uniqid from 'uniqid'
 
 
@@ -121,7 +121,7 @@ describe.only('feeds administration', function() {
       const invalidConfig = {
         url: null
       }
-      serviceType.validateServiceConfig(Arg.any()).resolves(new FeedsError(ErrInvalidServiceConfig, new InvalidServiceConfigErrorData(['url'])))
+      serviceType.validateServiceConfig(Arg.any()).resolves(new FeedsError(ErrInvalidServiceConfig, { invalidKeys: ['url'] }))
       const err = await app.createService({ ...adminPrincipal, serviceType: serviceType.id, title: 'Test Service', config: invalidConfig }).then(res => res.error as InvalidInputError)
 
       expect(err).to.be.instanceOf(MageError)
@@ -177,7 +177,7 @@ describe.only('feeds administration', function() {
     it('checks permission for previewing topics', async function() {
 
       const serviceType = someServiceTypes[0]
-      const req = {
+      const req: PreviewTopicsRequest = {
         ...bannedPrincipal,
         serviceType: serviceType.id,
         serviceConfig: {}
@@ -201,15 +201,79 @@ describe.only('feeds administration', function() {
     })
 
     it('fails if the service type does not exist', async function() {
-      expect.fail('todo')
+
+      const req: PreviewTopicsRequest = {
+        ...adminPrincipal,
+        serviceType: uniqid(),
+        serviceConfig: {}
+      }
+      const res = await app.previewTopics(req)
+
+      expect(res.success).to.be.null
+      const err = res.error as EntityNotFoundError | undefined
+      expect(err).to.be.instanceOf(MageError)
+      expect(err?.code).to.equal(ErrEntityNotFound)
+      expect(err?.data?.entityType).to.equal('FeedServiceType')
+      expect(err?.data?.entityId).to.equal(req.serviceType)
     })
 
     it('fails if the service config is invalid', async function() {
-      expect.fail('todo')
+
+      const serviceType = someServiceTypes[1]
+      const req: PreviewTopicsRequest = {
+        ...adminPrincipal,
+        serviceType: serviceType.id,
+        serviceConfig: { invalid: true }
+      }
+      serviceType.validateServiceConfig(Arg.deepEquals(req.serviceConfig))
+        .resolves(new FeedsError(ErrInvalidServiceConfig, { invalidKeys: ['invalid'] }))
+
+      const res = await app.previewTopics(req)
+
+      expect(res.success).to.be.null
+      const err = res.error as InvalidInputError | undefined
+      expect(err).to.be.instanceOf(MageError)
+      expect(err?.code).to.equal(ErrInvalidInput)
+      expect(err?.data).to.deep.equal(['invalid'])
     })
 
     it('lists the topics for the service config', async function() {
-      expect.fail('todo')
+
+      const serviceType = someServiceTypes[1]
+      const req: PreviewTopicsRequest = {
+        ...adminPrincipal,
+        serviceType: serviceType.id,
+        serviceConfig: { url: 'https://city.gov/emergency_response' }
+      }
+      const topics: FeedTopic[] = [
+        {
+          id: 'crime_reports',
+          title: 'Criminal Activity',
+          summary: 'Reports of criminal activity with locations',
+          constantParamsSchema: {},
+          variableParamsSchema: {
+            $ref: 'urn:mage:current_user_location'
+          },
+        },
+        {
+          id: 'fire_reports',
+          title: 'Fires',
+          summary: 'Reports of fires',
+          constantParamsSchema: {},
+          variableParamsSchema: {
+            $ref: 'urn:mage:current_user_location'
+          },
+        }
+      ]
+      const conn = Sub.for<FeedServiceConnection>()
+      serviceType.validateServiceConfig(Arg.deepEquals(req.serviceConfig)).resolves(null)
+      serviceType.createConnection(Arg.deepEquals(req.serviceConfig)).returns(conn)
+      conn.fetchAvailableTopics().resolves(topics)
+
+      const res = await app.previewTopics(req)
+
+      expect(res.error).to.be.null
+      expect(res.success).to.deep.equal(topics)
     })
   })
 
