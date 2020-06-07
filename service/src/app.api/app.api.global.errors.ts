@@ -9,7 +9,7 @@ export type EntityNotFoundError = MageError<typeof ErrEntityNotFound, EntityNotF
 
 export class MageError<Code extends symbol, Data = null> extends Error {
   constructor(public readonly code: Code, readonly data: Data, message?: string) {
-    super(Symbol.keyFor(code) + (message ? `: ${message}` : ''))
+    super(message ? message : Symbol.keyFor(code))
   }
 }
 
@@ -34,5 +34,5 @@ export function entityNotFound(entityId: any, entityType: string): EntityNotFoun
 }
 
 export function invalidInput(...problems: string[]): InvalidInputError {
-  return new MageError(ErrInvalidInput, problems, 'invalid input:' + problems.join('\n  '))
+  return new MageError(ErrInvalidInput, problems, 'invalid input:\n  ' + problems.join('\n  '))
 }

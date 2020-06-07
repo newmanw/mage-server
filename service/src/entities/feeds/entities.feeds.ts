@@ -41,7 +41,7 @@ export interface FeedService {
   serviceType: FeedServiceTypeId
   title: string
   summary: string | null
-  config: Json | null
+  config: Json
 }
 
 export interface FeedServiceConnection {

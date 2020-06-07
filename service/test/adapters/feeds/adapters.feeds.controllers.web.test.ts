@@ -1,15 +1,16 @@
 
-import { beforeEach } from 'mocha'
+import { beforeEach, afterEach } from 'mocha'
 import express from 'express'
 import { expect } from 'chai'
 import supertest from 'supertest'
 import Substitute, { SubstituteOf, Arg } from '@fluffy-spoon/substitute'
 import uniqid from 'uniqid'
+import _ from 'lodash'
 import { AppResponse } from '../../../lib/app.api/app.api.global'
 import { FeedsRoutes, FeedsAppLayer, AuthenticatedWebRequest } from '../../../lib/adapters/feeds/adapters.feeds.controllers.web'
 import { CreateFeedServiceRequest, FeedServiceTypeDescriptor } from '../../../lib/app.api/feeds/app.api.feeds'
 import { FeedService } from '../../../lib/entities/feeds/entities.feeds'
-import { permissionDenied, PermissionDeniedError } from '../../../lib/app.api/app.api.global.errors'
+import { permissionDenied, PermissionDeniedError, InvalidInputError, invalidInput, EntityNotFoundError, entityNotFound } from '../../../lib/app.api/app.api.global.errors'
 
 const jsonMimeType = /^application\/json/
 
@@ -117,6 +118,11 @@ describe.only('feeds web adapter', function() {
       appLayer.createService(Arg.any()).resolves(AppResponse.error<any, PermissionDeniedError>(permissionDenied('create service', 'admin')))
 
       const res = await client.post('/services')
+        .send({
+          serviceType: 'nga-msi',
+          title: 'NGA Maritime Safety Information',
+          config: null
+        })
 
       expect(res.status).to.equal(403)
       expect(res.type).to.match(jsonMimeType)
@@ -124,7 +130,114 @@ describe.only('feeds web adapter', function() {
     })
 
     it('fails if the request is invalid', async function() {
-      expect.fail('todo')
+
+      const reqBody = {
+        serviceType: 'wfs',
+        title: 'Invalid Service',
+        config: {
+          url: 'https://invalid.service.url'
+        },
+      }
+      appLayer.createService(Arg.any()).resolves(AppResponse.error<any, InvalidInputError>(invalidInput('invalid service url')))
+
+      const res = await client.post('/services').send(reqBody)
+
+      expect(res.status).to.equal(400)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.equal(`
+invalid input:
+  invalid service url`
+        .trim())
+      appLayer.received(1).createService(Arg.any())
+    })
+
+    it('fails if the service type does not exist', async function() {
+
+      const reqBody = {
+        serviceType: 'not_found',
+        title: 'What Service Type?',
+        config: {}
+      }
+      appLayer.createService(Arg.any()).resolves(AppResponse.error<any, EntityNotFoundError>(entityNotFound(reqBody.serviceType, 'FeedServiceType')))
+
+      const res = await client.post('/services').send(reqBody)
+
+      expect(res.status).to.equal(400)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.equal('service type not found')
+      appLayer.received(1).createService(Arg.any())
+    })
+
+    describe('request body mapping', function() {
+
+      it('fails if the request body has no service type', async function() {
+
+        appLayer.createService(Arg.any()).rejects(new Error('unexpected'))
+        const res = await client.post('/services')
+          .send({
+            title: 'Forgot Service Type',
+            config: {
+              url: 'https://unknown.service.type'
+            }
+          })
+
+        expect(res.status).to.equal(400)
+        expect(res.type).to.match(jsonMimeType)
+        expect(res.body).to.equal(`
+invalid input:
+  missing service type
+          `.trim())
+        appLayer.didNotReceive().createService(Arg.any())
+      })
+
+      it('fails if the request body has no title', async function() {
+
+        appLayer.createService(Arg.any()).rejects(new Error('unexpected'))
+        const res = await client.post('/services')
+          .send({
+            serviceType: 'wfs',
+            config: {
+              url: 'https://usgs.gov/earthquakes'
+            }
+          })
+
+        expect(res.status).to.equal(400)
+        expect(res.type).to.match(jsonMimeType)
+        expect(res.body).to.equal(`
+invalid input:
+  missing title`
+          .trim())
+        appLayer.didNotReceive().createService(Arg.any())
+      })
+
+      it('maps absent config to null', async function() {
+
+        const appReq: CreateFeedServiceRequest = {
+          user: 'admin',
+          serviceType: 'configless',
+          title: 'No Config Necessary',
+          config: null,
+          summary: undefined,
+        }
+        const created = {
+          id: uniqid(),
+          serviceType: 'configless',
+          title: 'No Config Necessary',
+          summary: null,
+          config: null,
+        }
+        appLayer.createService(Arg.deepEquals(appReq))
+          .resolves(AppResponse.success<FeedService, unknown>(created))
+
+        const res = await client.post('/services')
+          .set('user', 'admin')
+          .send(_.omit(appReq, 'config'))
+
+        expect(res.status).to.equal(201)
+        expect(res.type).to.match(jsonMimeType)
+        expect(res.body).to.deep.equal(created)
+        appLayer.received(1).createService(Arg.deepEquals(appReq))
+      })
     })
   })
 })

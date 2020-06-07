@@ -8,10 +8,10 @@ declare global {
 }
 
 import express from 'express'
-import { ListFeedServiceTypes, ListServiceTopics, CreateFeedService, CreateFeedServiceRequest } from '../../app.api/feeds/app.api.feeds'
-import { UserId } from '../../entities/authn/entities.authn'
 import bodyParser from 'body-parser'
-import { ErrPermissionDenied, MageError, PermissionDeniedError } from '../../app.api/app.api.global.errors'
+import { UserId } from '../../entities/authn/entities.authn'
+import { ListFeedServiceTypes, ListServiceTopics, CreateFeedService, CreateFeedServiceRequest } from '../../app.api/feeds/app.api.feeds'
+import { ErrPermissionDenied, MageError, PermissionDeniedError, ErrInvalidInput, InvalidInputErrorData, invalidInput, ErrEntityNotFound } from '../../app.api/app.api.global.errors'
 
 export interface FeedsAppLayer {
   listServiceTypes: ListFeedServiceTypes
@@ -34,6 +34,8 @@ export function FeedsRoutes(appLayer: FeedsAppLayer): express.Router {
     switch (err.code) {
       case ErrPermissionDenied:
         return res.status(403).json(`permission denied: ${(err as PermissionDeniedError).data.permission}`)
+      case ErrInvalidInput:
+        return res.status(400).json(err.message)
     }
     next(err)
   }
@@ -56,13 +58,22 @@ export function FeedsRoutes(appLayer: FeedsAppLayer): express.Router {
       const appReq: CreateFeedServiceRequest = {
         user: authReq.userId,
         serviceType: body.serviceType,
-        config: body.config,
+        config: body.config || null,
         title: body.title,
         summary: body.summary
+      }
+      if (!appReq.serviceType) {
+        return next(invalidInput('missing service type'))
+      }
+      if (!appReq.title) {
+        return next(invalidInput('missing title'))
       }
       const appRes = await appLayer.createService(appReq)
       if (appRes.success) {
         return res.status(201).json(appRes.success)
+      }
+      if (appRes.error?.code === ErrEntityNotFound) {
+        return res.status(400).json('service type not found')
       }
       next(appRes.error)
     })
