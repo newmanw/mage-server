@@ -75,13 +75,21 @@ export interface FeedContent {
 
 export type FeedId = string
 
+export type FeedItemId = string | number
+
 export interface Feed {
   id: FeedId
   topic: FeedTopicId
   title: string
   summary: string
   constantParams: Json
-  variableParams: Json
+  /**
+   * The variable parameters schema of a feed is a schema that a user can define
+   * to advertise the parameters feed consumers can pass when fetching content
+   * from a feed.  This schema could be the same as that on the underlying
+   * [FeedTopic] or could be a more restrictive subset of the topic schema.
+   */
+  variableParamsSchema: JSONSchema6
   /**
    * A feed's update frequency is similar to the like-named property on its
    * underlying topic.  While a topic's update frequency would come from the
@@ -92,6 +100,12 @@ export interface Feed {
    * would be for particular service's topics.
    */
   updateFrequency: FeedUpdateFrequency | null
+  /**
+   * This flag is similar to the like-named property on its underlying
+   * [FeedTopic], but as with [.updateFrequency], allows configuration by a
+   * human user.
+   */
+  itemsHaveIdentity: boolean
 }
 
 export type FeedParams = {
@@ -116,4 +130,13 @@ export interface FeedTopic {
    * publish new data to a topic.
    */
   readonly updateFrequency: FeedUpdateFrequency | null
+  /**
+   * When feed items have identity, the `id` property of the GeoJSON feature
+   * items fetched from a feed will contain a persistent unique identifier for
+   * the items.  The same item across mulutiple fetches will have the same
+   * `id` property value.  Consumers of feed content can then present changes as
+   * updates to previously fetched items, for example updating the location of
+   * a moving vehicle.
+   */
+  readonly itemsHaveIdentity: boolean | null
 }
