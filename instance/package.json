@@ -2,9 +2,9 @@
   "name": "@ngageoint/mage.instance",
   "version": "5.3.4",
   "description": "Assemble a MAGE Server deployment from the core service, the web-app, and selected plugins.",
-  "main": "index.js",
+  "main": "lib/main.js",
   "scripts": {
-    "build:service": "cd service && npm run build"
+    "build": "tsc -b"
   },
   "repository": {
     "type": "git",

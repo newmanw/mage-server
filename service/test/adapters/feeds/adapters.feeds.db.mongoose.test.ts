@@ -5,7 +5,7 @@ import { expect } from 'chai'
 import { MongoMemoryServer } from 'mongodb-memory-server'
 import { BaseMongooseRepository } from '../../../lib/adapters/base/adapters.base.db.mongoose'
 import { FeedServiceRepository, Feed } from '../../../lib/entities/feeds/entities.feeds'
-import { AdapterDescriptorModel, ManifoldModels, AdapterDescriptorSchema, SourceDescriptorModel, SourceDescriptorSchema, MongooseAdapterRepository, MongooseSourceRepository } from '../../../lib/adapters/feeds/adapters.feeds.db.mongoose'
+import { AdapterDescriptorModel, ManifoldModels, FeedServiceTypeSchema, SourceDescriptorModel, SourceDescriptorSchema, MongooseAdapterRepository, MongooseSourceRepository } from '../../../lib/adapters/feeds/adapters.feeds.db.mongoose'
 import { FeedServiceType } from '../../../lib/entities/feeds/entities.feeds'
 
 describe('manifold repositories', function() {
@@ -43,7 +43,7 @@ describe('manifold repositories', function() {
     let repo: MongooseAdapterRepository
 
     beforeEach(async function() {
-      model = conn.model(ManifoldModels.AdapterDescriptor, AdapterDescriptorSchema, collection)
+      model = conn.model(ManifoldModels.FeedServiceType, FeedServiceTypeSchema, collection)
       repo = new MongooseAdapterRepository(model)
     })
 
@@ -144,7 +144,7 @@ describe('manifold repositories', function() {
     let repo: FeedServiceRepository
 
     beforeEach(function() {
-      model = conn.model(ManifoldModels.SourceDescriptor, SourceDescriptorSchema, collection)
+      model = conn.model(ManifoldModels.FeedService, SourceDescriptorSchema, collection)
       repo = new MongooseSourceRepository(model)
     })
 

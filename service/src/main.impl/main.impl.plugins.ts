@@ -1,22 +1,18 @@
-import { FeedTopicId, FeedServiceTypeRepository, FeedServiceType, FeedServiceTypeId } from '../entities/feeds/entities.feeds';
-import { FeedsPluginHooks } from '../main.api/plugin_hooks/main.api.plugin_hooks.feeds'
-import feedsHook from './plugin_hooks/m'
-import { BaseMongooseRepository } from '../adapters/base/adapters.base.db.mongoose';
-import { Model, Document } from 'mongoose';
+import { FeedsPluginHooks, FeedServiceTypeRepository } from '../entities/feeds/entities.feeds';
+import { loadFeedsHooks } from './plugin_hooks/main.impl.plugin_hooks.feeds'
 
 export type PluginHooks = FeedsPluginHooks
 
-type PluginModule = {
-  moduleName: string,
-  hooks: PluginHooks
+export interface PluginDependencies {
+  feeds: {
+    serviceTypeRepo: FeedServiceTypeRepository
+  }
 }
 
-
-
-async function loadPlugins(pluginModules: string[]): Promise<void> {
+export async function loadPlugins(pluginModules: string[], deps: PluginDependencies): Promise<void> {
   for (const moduleName of pluginModules) {
     const hooks = await import(moduleName) as PluginHooks
-    loadFeedTypesOf({ moduleName, hooks })
+    loadFeedsHooks(deps.feeds.serviceTypeRepo, moduleName, hooks)
   }
 }
 

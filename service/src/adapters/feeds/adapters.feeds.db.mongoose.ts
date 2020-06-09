@@ -8,11 +8,11 @@ import { FeedServiceDescriptor } from '../../app.api/feeds/app.api.feeds'
 
 
 export const ManifoldModels = {
-  AdapterDescriptor: 'AdapterDescriptor',
-  SourceDescriptor: 'SourceDescriptor'
+  FeedServiceType: 'FeedServiceType',
+  FeedService: 'FeedService'
 }
 
-export const AdapterDescriptorSchema = new mongoose.Schema(
+export const FeedServiceTypeSchema = new mongoose.Schema(
   {
     title: { type: String, required: true },
     description: { type: String, required: false },
@@ -30,7 +30,7 @@ export const AdapterDescriptorSchema = new mongoose.Schema(
 
 export const SourceDescriptorSchema = new mongoose.Schema(
   {
-    adapter: { type: mongoose.SchemaTypes.ObjectId, required: true, ref: ManifoldModels.AdapterDescriptor },
+    adapter: { type: mongoose.SchemaTypes.ObjectId, required: true, ref: ManifoldModels.FeedServiceType },
     title: { type: String, required: true },
     description: { type: String, required: false },
     url: { type: String, required: false },
