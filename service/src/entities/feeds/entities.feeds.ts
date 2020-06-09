@@ -3,6 +3,30 @@ import { Json } from '../entities.global.json'
 import { FeatureCollection } from 'geojson'
 import { JSONSchema6 } from 'json-schema'
 
+interface LoadFeedServiceTypes {
+  (): Promise<FeedServiceType[]>
+}
+
+/**
+ * A plugin package that wishes to provide one or more [FeedServiceType]
+ * implementations must implement include this interface in the top-level
+ * export of the package.  For example,
+ * ```
+ * export = {
+ *   // ... other plugin hooks
+ *   feeds: {
+ *     loadServiceTypes: () => Promise<FeedServiceType[]> {
+ *       // resolve the service types
+ *     }
+ *   }
+ * }
+ */
+export interface FeedsPluginHooks {
+  feeds: {
+    readonly loadServiceTypes:  LoadFeedServiceTypes
+  }
+}
+
 export const ErrInvalidServiceConfig = Symbol.for('err.feeds.invalid_service_config')
 
 export class FeedsError<Code extends symbol, Data> extends Error {
@@ -50,6 +74,7 @@ export interface FeedServiceConnection {
 }
 
 export interface FeedServiceTypeRepository {
+  register(moduleName: string, serviceType: FeedServiceType): Promise<FeedServiceType>
   findAll(): Promise<FeedServiceType[]>
   findById(serviceTypeId: FeedServiceTypeId): Promise<FeedServiceType | null>
 }

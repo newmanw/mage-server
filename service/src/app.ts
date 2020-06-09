@@ -1,5 +1,5 @@
-const environment = require('./environment/env');
-const log = require('./logger');
+import environment from './environment/env';
+import log from './logger';
 
 import http from 'http';
 import fs from 'fs-extra';
@@ -9,7 +9,7 @@ import express from 'express';
 
 let service: MageService | null = null;
 
-export type MageService = {
+export interface MageService {
   app: express.Application,
   server: http.Server | null,
   open(): MageService,
@@ -65,16 +65,18 @@ export const boot = async function(config: BootConfig): Promise<MageService> {
     process.exitCode = 1;
   }
 
+  // load routes the old way
   const app = require('./express.js') as express.Application;
+  const service = {
+    app,
+
+  }
 
   function open(): MageService {
     service!.server = app.listen(environment.port, environment.address,
       () => log.info(`MAGE Server listening at address ${environment.address} on port ${environment.port}`));
     return service!
   };
-  return service = {
-    app,
-    open,
-    server: null
-  };
+
+  return service as MageService
 };
