@@ -7,6 +7,9 @@ import mongoose from 'mongoose'
 import express from 'express'
 import { MongooseFeedServiceTypeRepository, FeedServiceTypeIdentityModel } from './adapters/feeds/adapters.feeds.db.mongoose'
 import waitForMongooseConnection from './utilities/waitForMongooseConnection'
+import { FeedServiceTypeRepository } from './entities/feeds/entities.feeds'
+import * as feedsApi from './app.api/feeds/app.api.feeds'
+import * as feedsImpl from './app.impl/feeds/app.impl.feeds'
 
 
 export interface MageService {
@@ -64,15 +67,12 @@ export const boot = async function(config: BootConfig): Promise<MageService> {
   }
 
   const models = await initializeDatabase()
-  // load routes the old way
-  const app = require('./express.js') as express.Application
-  const pluginDeps: PluginDependencies = {
-    feeds: {
-      serviceTypeRepo: new MongooseFeedServiceTypeRepository(models.feedServiceTypeIdentity)
-    }
-  }
+  const appLayer = intitializeAppLayer(models)
 
-  await loadPlugins(config.plugins, pluginDeps)
+  // load routes the old way
+  const app = intializeRestInterface()
+
+  await loadPlugins(config.plugins, appLayer)
 
   const server = http.createServer(app)
   service = {
@@ -88,15 +88,42 @@ export const boot = async function(config: BootConfig): Promise<MageService> {
   return service
 }
 
-type Models = {
+type DatabaseModels = {
+  conn: mongoose.Connection
   feedServiceTypeIdentity: FeedServiceTypeIdentityModel
 }
 
-async function initializeDatabase(): Promise<Models> {
+type AppLayer = {
+  feeds: {
+    serviceTypeRepo: FeedServiceTypeRepository
+    listServiceTypes: feedsApi.ListFeedServiceTypes
+  }
+}
+
+async function initializeDatabase(): Promise<DatabaseModels> {
   const conn = await waitForMongooseConnection().then(() => mongoose.connection)
   // TODO: transition legacy model initialization
+  // TODO: inject connection to migrations
+  // TODO: explore performing migrations without mongoose models because current models may not be compatible with past migrations
   require('./models').initializeModels()
+  await require('./migrate').runDatabaseMigrations()
   return {
+    conn,
     feedServiceTypeIdentity: FeedServiceTypeIdentityModel(conn)
   }
+}
+
+function intitializeAppLayer(dbModels: DatabaseModels): AppLayer {
+  const feeds = {
+    serviceTypeRepo: new MongooseFeedServiceTypeRepository(dbModels.feedServiceTypeIdentity)
+  }
+  feeds.listServiceType = feedsImpl.ListFeedServiceTypes()
+  return {
+    feeds
+  }
+}
+
+function intializeRestInterface(): express.Application {
+  const app = require('./express.js') as express.Application
+  return app
 }
