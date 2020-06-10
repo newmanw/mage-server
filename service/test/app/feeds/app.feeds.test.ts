@@ -1,17 +1,16 @@
 import { describe, it, beforeEach } from 'mocha'
 import { expect } from 'chai'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
-import '../../utils'
-import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, InvalidServiceConfigErrorData, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedService, FeedServiceConnection } from '../../../lib/entities/feeds/entities.feeds'
+import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedService, FeedServiceConnection, RegisteredFeedServiceType } from '../../../lib/entities/feeds/entities.feeds'
 import { FeedsPermissionService, ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics } from '../../../lib/app.impl/feeds/app.impl.feeds'
 import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError, EntityNotFoundErrorData, invalidInput } from '../../../lib/app.api/app.api.global.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
-import { ListServiceTopicsRequest, FeedServiceTypeDescriptor, FeedServiceDescriptor, PreviewTopicsRequest } from '../../../lib/app.api/feeds/app.api.feeds'
+import { ListServiceTopicsRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest } from '../../../lib/app.api/feeds/app.api.feeds'
 import uniqid from 'uniqid'
 
 
-function mockServiceType(descriptor: FeedServiceTypeDescriptor): SubstituteOf<FeedServiceType> {
-  const mock = Sub.for<FeedServiceType>()
+function mockServiceType(descriptor: FeedServiceTypeDescriptor): SubstituteOf<RegisteredFeedServiceType> {
+  const mock = Sub.for<RegisteredFeedServiceType>()
   mock.id.returns!(descriptor.id)
   mock.title.returns!(descriptor.title)
   mock.summary.returns!(descriptor.summary)
@@ -66,10 +65,10 @@ const bannedPrincipal = {
   user: 'schmo'
 }
 
-describe.only('feeds administration', function() {
+describe('feeds administration', function() {
 
   let app: TestApp
-  let someServiceTypes: SubstituteOf<FeedServiceType>[]
+  let someServiceTypes: SubstituteOf<RegisteredFeedServiceType>[]
 
   beforeEach(function() {
     app = new TestApp()
@@ -254,6 +253,8 @@ describe.only('feeds administration', function() {
           variableParamsSchema: {
             $ref: 'urn:mage:current_user_location'
           },
+          itemsHaveIdentity: true,
+          updateFrequency: { seconds: 3600 }
         },
         {
           id: 'fire_reports',
@@ -263,6 +264,8 @@ describe.only('feeds administration', function() {
           variableParamsSchema: {
             $ref: 'urn:mage:current_user_location'
           },
+          itemsHaveIdentity: true,
+          updateFrequency: { seconds: 3600 }
         }
       ]
       const conn = Sub.for<FeedServiceConnection>()
@@ -372,7 +375,9 @@ describe.only('feeds administration', function() {
               }
             },
             required: [ '$mage:currentLocation' ]
-          }
+          },
+          updateFrequency: null,
+          itemsHaveIdentity: true,
         }),
         Object.freeze({
           id: 'quakes',
@@ -393,7 +398,9 @@ describe.only('feeds administration', function() {
               }
             },
             required: [ '$mage:currentLocation' ]
-          }
+          },
+          updateFrequency: null,
+          itemsHaveIdentity: false
         })
       ]
       const serviceDesc = someServices[1]
@@ -521,7 +528,7 @@ class TestApp {
   readonly createService = CreateFeedService(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
   readonly listTopics = ListServiceTopics(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
 
-  registerServiceTypes(... types: FeedServiceType[]): void {
+  registerServiceTypes(... types: RegisteredFeedServiceType[]): void {
     for (const type of types) {
       this.serviceTypeRepo.db.set(type.id, type)
     }
@@ -538,6 +545,10 @@ class TestFeedServiceTypeRepository implements FeedServiceTypeRepository {
 
   readonly db = new Map<string, FeedServiceType>()
 
+  async register(moduleName: string, serviceType: FeedServiceType): Promise<RegisteredFeedServiceType> {
+    throw new Error('never')
+  }
+
   async findAll(): Promise<FeedServiceType[]> {
     return Array.from(this.db.values())
   }
@@ -553,7 +564,7 @@ class TestFeedServiceRepository implements FeedServiceRepository {
 
   async create(attrs: FeedServiceCreateAttrs): Promise<FeedService> {
     const saved: FeedService = {
-      id: `${attrs.serviceType}:${this.db.size + 1}`,
+      id: `${attrs.serviceType as string}:${this.db.size + 1}`,
       ...attrs
     }
     this.db.set(saved.id, saved)

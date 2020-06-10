@@ -55,6 +55,8 @@ export interface FeedServiceType {
   createConnection(config: Json): FeedServiceConnection
 }
 
+export type RegisteredFeedServiceType = FeedServiceType & { id: string }
+
 export type FeedServiceId = string
 
 export interface FeedServiceInfo {
@@ -76,7 +78,7 @@ export interface FeedServiceConnection {
 }
 
 export interface FeedServiceTypeRepository {
-  register(moduleName: string, serviceType: FeedServiceType): Promise<FeedServiceType>
+  register(moduleName: string, serviceType: FeedServiceType): Promise<RegisteredFeedServiceType>
   findAll(): Promise<FeedServiceType[]>
   findById(serviceTypeId: FeedServiceTypeId): Promise<FeedServiceType | null>
 }

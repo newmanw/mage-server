@@ -1,7 +1,7 @@
 
 import mongoose, { Model, SchemaOptions } from 'mongoose'
 import { BaseMongooseRepository } from '../base/adapters.base.db.mongoose'
-import { FeedServiceType, FeedService, FeedServiceTypeId } from '../../entities/feeds/entities.feeds'
+import { FeedServiceType, FeedService, FeedServiceTypeId, RegisteredFeedServiceType } from '../../entities/feeds/entities.feeds'
 import { FeedServiceTypeRepository, FeedServiceRepository } from '../../entities/feeds/entities.feeds'
 import { FeedServiceDescriptor } from '../../app.api/feeds/app.api.feeds'
 
@@ -50,7 +50,7 @@ export class MongooseFeedServiceTypeRepository implements FeedServiceTypeReposit
 
   constructor(readonly model: FeedServiceTypeIdentityModel) {}
 
-  async register(moduleName: string, serviceType: FeedServiceType): Promise<FeedServiceType> {
+  async register(moduleName: string, serviceType: FeedServiceType): Promise<RegisteredFeedServiceType> {
     let identity = await this.model.findOne({ moduleName, pluginServiceTypeId: serviceType.pluginServiceTypeId })
     if (!identity) {
       identity = await this.model.create({
@@ -63,7 +63,7 @@ export class MongooseFeedServiceTypeRepository implements FeedServiceTypeReposit
         value: identity.id,
         writable: false
       }
-    }) as FeedServiceType
+    }) as RegisteredFeedServiceType
     this.registeredServiceTypes.set(identity.id, identified)
     return identified
   }
