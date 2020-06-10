@@ -41,10 +41,12 @@ export interface InvalidServiceConfigErrorData {
 
 export type InvalidServiceConfigError = FeedsError<typeof ErrInvalidServiceConfig, InvalidServiceConfigErrorData>
 
-export type FeedServiceTypeId = string
+export const FeedServiceTypeUnregistered = Symbol.for('FeedServiceTypeUnregistered')
+export type FeedServiceTypeId = string | typeof FeedServiceTypeUnregistered
 
 export interface FeedServiceType {
   readonly id: FeedServiceTypeId
+  readonly pluginServiceTypeId: string
   readonly title: string
   readonly summary: string | null
   readonly configSchema: JSONSchema6 | null

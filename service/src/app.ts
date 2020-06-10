@@ -5,6 +5,8 @@ import http from 'http'
 import fs from 'fs-extra'
 import mongoose from 'mongoose'
 import express from 'express'
+import { MongooseFeedServiceTypeRepository, FeedServiceTypeIdentityModel } from './adapters/feeds/adapters.feeds.db.mongoose'
+import waitForMongooseConnection from './utilities/waitForMongooseConnection'
 
 
 export interface MageService {
@@ -61,21 +63,12 @@ export const boot = async function(config: BootConfig): Promise<MageService> {
     throw err
   }
 
-  require('./models').initializeModels()
-  try {
-    await require('./migrate').runDatabaseMigrations()
-  }
-  catch (err) {
-    log.error('error initializing database: ' + err)
-    process.exitCode = 1
-  }
-
+  const models = await initializeDatabase()
   // load routes the old way
   const app = require('./express.js') as express.Application
-
   const pluginDeps: PluginDependencies = {
     feeds: {
-      serviceTypeRepo: new MongooseFeedServiceTypeRepository()
+      serviceTypeRepo: new MongooseFeedServiceTypeRepository(models.feedServiceTypeIdentity)
     }
   }
 
@@ -93,4 +86,17 @@ export const boot = async function(config: BootConfig): Promise<MageService> {
     }
   }
   return service
+}
+
+type Models = {
+  feedServiceTypeIdentity: FeedServiceTypeIdentityModel
+}
+
+async function initializeDatabase(): Promise<Models> {
+  const conn = await waitForMongooseConnection().then(() => mongoose.connection)
+  // TODO: transition legacy model initialization
+  require('./models').initializeModels()
+  return {
+    feedServiceTypeIdentity: FeedServiceTypeIdentityModel(conn)
+  }
 }

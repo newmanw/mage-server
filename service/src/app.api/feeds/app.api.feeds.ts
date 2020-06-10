@@ -75,26 +75,29 @@ export interface FetchFeedContent {
 }
 
 export interface FeedServiceTypeDescriptor extends Descriptor<'FeedServiceType'>, Pick<FeedServiceType, 'id' | 'title' | 'summary'> {
+  id: string
   configSchema: JsonObject | null
 }
 
 export function FeedServiceTypeDescriptor(from: FeedServiceType): FeedServiceTypeDescriptor {
   return {
     descriptorOf: 'FeedServiceType',
-    id: from.id,
+    id: from.id as string,
     title: from.title,
     summary: from.summary,
     configSchema: from.configSchema as JsonObject | null
   }
 }
 
-export interface FeedServiceDescriptor extends Descriptor<'FeedService'>, Pick<FeedService, 'id' | 'serviceType' | 'title' | 'summary' | 'config'> {}
+export interface FeedServiceDescriptor extends Descriptor<'FeedService'>, Pick<FeedService, 'id' | 'serviceType' | 'title' | 'summary' | 'config'> {
+  serviceType: string
+}
 
 export function FeedServiceDescriptor(from: FeedService): FeedServiceDescriptor {
   return {
     descriptorOf: 'FeedService',
     id: from.id,
-    serviceType: from.serviceType,
+    serviceType: from.serviceType as string,
     title: from.title,
     summary: from.summary,
     config: from.config
