@@ -20,7 +20,7 @@ export const FeedServiceTypeIdentitySchema = new mongoose.Schema({
   pluginServiceTypeId: { type: String, required: true },
   moduleName: { type: String, required: true }
 })
-export type FeedServiceTypeIdentityDocument = FeedServiceType & mongoose.Document
+export type FeedServiceTypeIdentityDocument = FeedServiceTypeIdentity & mongoose.Document
 export type FeedServiceTypeIdentityModel = Model<FeedServiceTypeIdentityDocument>
 export function FeedServiceTypeIdentityModel(conn: mongoose.Connection): FeedServiceTypeIdentityModel {
   return conn.model(FeedsModels.FeedServiceTypeIdentity, FeedServiceTypeIdentitySchema, 'feed_service_types')
@@ -46,7 +46,7 @@ export type FeedServiceModel = Model<FeedServiceDocument>
 
 export class MongooseFeedServiceTypeRepository implements FeedServiceTypeRepository {
 
-  readonly registeredServiceTypes = new Map<string, FeedServiceType>()
+  readonly registeredServiceTypes = new Map<string, RegisteredFeedServiceType>()
 
   constructor(readonly model: FeedServiceTypeIdentityModel) {}
 
@@ -58,13 +58,16 @@ export class MongooseFeedServiceTypeRepository implements FeedServiceTypeReposit
         pluginServiceTypeId: serviceType.pluginServiceTypeId
       })
     }
-    const identified = Object.create(serviceType, {
-      id: {
-        value: identity.id,
-        writable: false
-      }
-    }) as RegisteredFeedServiceType
-    this.registeredServiceTypes.set(identity.id, identified)
+    let identified = this.registeredServiceTypes.get(identity.id)
+    if (!identified) {
+      identified = Object.create(serviceType, {
+        id: {
+          value: identity.id,
+          writable: false
+        }
+      }) as RegisteredFeedServiceType
+      this.registeredServiceTypes.set(identity.id, identified)
+    }
     return identified
   }
 

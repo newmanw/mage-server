@@ -59,8 +59,8 @@ describe.only('feeds repositories', function() {
     } =
     {
       id: FeedServiceTypeUnregistered,
-      pluginServiceTypeId: 'volcano',
-      title: 'Volcano Service Type',
+      pluginServiceTypeId: 'volcanoes',
+      title: 'Volcanoes Service Type',
       summary: null,
       configSchema: null,
       async validateServiceConfig(config: Json): Promise<null | InvalidServiceConfigError> {
@@ -78,7 +78,7 @@ describe.only('feeds repositories', function() {
           }
         }
       },
-      moduleName: '@ngageoint/mage.feeds/wfs',
+      moduleName: '@ngageoint/mage.feeds/volcanoes',
       serviceInfo: {
         title: 'Volcano Hot Spots',
         summary: 'Provide updates on volcano hot spot activity'
@@ -98,15 +98,16 @@ describe.only('feeds repositories', function() {
 
     it('assigns a persistent id to a plugin feed service type', async function() {
 
-      const registered = await repo.register('@ngageoint/mage.feeds/wfs', serviceType)
-      const read = await conn.db.collection(model.collection.name).find().toArray() as [FeedServiceTypeIdentityDocument]
+      const registered = await repo.register(serviceType.moduleName, serviceType)
+      const read = await model.find()
 
       expect(registered.id).to.be.a('string')
       expect(read.length).to.equal(1)
       expect(read[0]).to.deep.include({
+        _id: mongoose.Types.ObjectId(registered.id),
         id: registered.id,
         pluginServiceTypeId: serviceType.pluginServiceTypeId,
-        moduleName: serviceType
+        moduleName: serviceType.moduleName
       })
     })
 
@@ -128,27 +129,62 @@ describe.only('feeds repositories', function() {
       const registered = await repo.register(serviceType.moduleName, serviceType)
       const anotherRegistered = await repo.register('@org/another_service_type', anotherServiceType)
       const fromRepo = _.keyBy(await repo.findAll(), x => x.id)
-      const fromDb = _.keyBy(await conn.collection(model.collection.name).find().toArray(), x => x.id)
+      const fromDb = _.keyBy(await model.find(), x => x.id)
 
       expect(Object.entries(fromRepo).length).to.equal(2)
-      expect(fromRepo[serviceType.id as string]).to.deep.include(_.omit(serviceType, 'id'))
-      expect(fromRepo[anotherServiceType.id as string]).to.deep.include(_.omit(anotherServiceType, 'id'))
-      expect(fromDb).to.deep.include({
-        [registered.id]: {
-          _id: registered.id,
-          moduleName: serviceType.moduleName,
-          pluginServiceTypeId: serviceType.pluginServiceTypeId
-        },
-        [anotherRegistered.id]: {
-          _id: anotherRegistered.id,
-          moduleName: '@or/another_service_type',
-          pluginServiceTypeId: anotherServiceType.pluginServiceTypeId
-        }
+      expect(fromRepo[registered.id]).to.deep.include(_.omit(serviceType, 'id'))
+      expect(fromRepo[anotherRegistered.id]).to.deep.include(_.omit(anotherServiceType, 'id'))
+      expect(fromDb[registered.id]).to.deep.include({
+        id: registered.id,
+        moduleName: serviceType.moduleName,
+        pluginServiceTypeId: serviceType.pluginServiceTypeId
       })
-      expect(fromDb[registered.id].id).to.equal(registered.id)
-      expect(fromDb[anotherRegistered.id].id).to.equal(anotherRegistered.id)
+      expect(fromDb[anotherRegistered.id]).to.deep.include({
+        id: anotherRegistered.id,
+        moduleName: '@org/another_service_type',
+        pluginServiceTypeId: anotherServiceType.pluginServiceTypeId
+      })
+    })
+
+    it('retains rich behaviors of persisted service types', async function() {
+
+      const registered = await repo.register(serviceType.moduleName, serviceType)
+      const found = await repo.findById(registered.id)
+      const conn = found?.createConnection(null)
+      const info = await conn?.fetchServiceInfo()
+      const topics = await conn?.fetchAvailableTopics()
+
+      expect(info).to.deep.equal(serviceType.serviceInfo)
+      expect(topics).to.deep.equal(serviceType.topics)
+    })
+
+    it('registers service types idempotently', async function() {
+
+      const first = await repo.register(serviceType.moduleName, serviceType)
+      const second = await repo.register(serviceType.moduleName, serviceType)
+
+      expect(second).to.equal(first)
+    })
+
+    it('assigns persistent ids consistently across restarts', async function() {
+
+      const previouslyRegisteredIdentity = await model.create({
+        moduleName: serviceType.moduleName,
+        pluginServiceTypeId: serviceType.pluginServiceTypeId
+      })
+
+      const notYetRegistered = await repo.findById(previouslyRegisteredIdentity.id)
+
+      expect(notYetRegistered).to.be.null
+
+      const registered = await repo.register(serviceType.moduleName, serviceType)
+      const found = await repo.findById(previouslyRegisteredIdentity.id)
+
+      expect(registered.id).to.equal(previouslyRegisteredIdentity.id)
+      expect(found).to.equal(registered)
     })
   })
+
 
   describe('feed service repository', function() {
 
