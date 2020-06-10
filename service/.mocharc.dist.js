@@ -4,6 +4,6 @@ module.exports = {
   require: [
     require.resolve('iconv-lite/encodings'),
     require.resolve('mock-fs'),
-    './test_env.js',
+    require.resolve('./test/test_env'),
   ],
 };

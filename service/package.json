@@ -127,7 +127,7 @@
     "superagent": "5.0.6",
     "supertest": "4.0.2",
     "ts-mockito": "^2.5.0",
-    "ts-node": "^8.6.2",
+    "ts-node": "^8.0.0",
     "typescript": "~3.8.0",
     "uniqid": "^5.2.0"
   },

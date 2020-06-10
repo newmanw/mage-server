@@ -37,7 +37,7 @@ describe.only('feeds repositories', function() {
     await mongo.stop()
   })
 
-  describe('service type repository', function() {
+  describe.only('service type repository', function() {
 
     const collection = 'feed_service_types'
     let model: FeedServiceTypeIdentityModel
@@ -101,7 +101,7 @@ describe.only('feeds repositories', function() {
       const registered = await repo.register('@ngageoint/mage.feeds/wfs', serviceType)
       const read = await conn.db.collection(model.collection.name).find().toArray() as [FeedServiceTypeIdentityDocument]
 
-      expect(registered.id).to.be('string')
+      expect(registered.id).to.be.a('string')
       expect(read.length).to.equal(1)
       expect(read[0]).to.deep.include({
         id: registered.id,
@@ -135,16 +135,18 @@ describe.only('feeds repositories', function() {
       expect(fromRepo[anotherServiceType.id as string]).to.deep.include(_.omit(anotherServiceType, 'id'))
       expect(fromDb).to.deep.include({
         [registered.id]: {
-          id: registered.id,
+          _id: registered.id,
           moduleName: serviceType.moduleName,
           pluginServiceTypeId: serviceType.pluginServiceTypeId
         },
         [anotherRegistered.id]: {
-          id: anotherRegistered.id,
+          _id: anotherRegistered.id,
           moduleName: '@or/another_service_type',
           pluginServiceTypeId: anotherServiceType.pluginServiceTypeId
         }
       })
+      expect(fromDb[registered.id].id).to.equal(registered.id)
+      expect(fromDb[anotherRegistered.id].id).to.equal(anotherRegistered.id)
     })
   })
 

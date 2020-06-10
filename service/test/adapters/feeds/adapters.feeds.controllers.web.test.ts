@@ -1,5 +1,5 @@
 
-import { beforeEach, afterEach } from 'mocha'
+import { beforeEach } from 'mocha'
 import express from 'express'
 import { expect } from 'chai'
 import supertest from 'supertest'
@@ -14,7 +14,7 @@ import { permissionDenied, PermissionDeniedError, InvalidInputError, invalidInpu
 
 const jsonMimeType = /^application\/json/
 
-describe.only('feeds web adapter', function() {
+describe('feeds web adapter', function() {
 
   const adminPrincipal = {
     user: 'admin'
