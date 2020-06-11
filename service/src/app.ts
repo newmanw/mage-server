@@ -117,6 +117,7 @@ function intitializeAppLayer(dbModels: DatabaseModels): AppLayer {
   const feeds = {
     serviceTypeRepo: new MongooseFeedServiceTypeRepository(dbModels.feedServiceTypeIdentity)
   }
+  const permissionService = new FeedsPermissions()
   feeds.listServiceType = feedsImpl.ListFeedServiceTypes()
   return {
     feeds
