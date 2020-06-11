@@ -114,14 +114,15 @@ async function initializeDatabase(): Promise<DatabaseModels> {
 }
 
 function intitializeAppLayer(dbModels: DatabaseModels): AppLayer {
-  const feeds = {
-    serviceTypeRepo: new MongooseFeedServiceTypeRepository(dbModels.feedServiceTypeIdentity)
-  }
-  const permissionService = new FeedsPermissions()
-  feeds.listServiceType = feedsImpl.ListFeedServiceTypes()
-  return {
-    feeds
-  }
+  // const feeds = {
+  //   serviceTypeRepo: new MongooseFeedServiceTypeRepository(dbModels.feedServiceTypeIdentity)
+  // }
+  // const permissionService = new FeedsPermissions()
+  // feeds.listServiceType = feedsImpl.ListFeedServiceTypes()
+  // return {
+  //   feeds
+  // }
+  throw new Error('todo')
 }
 
 function intializeRestInterface(): express.Application {

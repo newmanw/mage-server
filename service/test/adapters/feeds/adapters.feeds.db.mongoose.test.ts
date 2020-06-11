@@ -10,7 +10,7 @@ import { FeedServiceTypeIdentityModel, FeedsModels, FeedServiceTypeIdentitySchem
 import { FeedServiceType } from '../../../lib/entities/feeds/entities.feeds'
 import { Json } from '../../../src/entities/entities.global.json'
 
-describe.only('feeds repositories', function() {
+describe('feeds repositories', function() {
 
   let mongo: MongoMemoryServer
   let uri: string
@@ -37,7 +37,7 @@ describe.only('feeds repositories', function() {
     await mongo.stop()
   })
 
-  describe.only('service type repository', function() {
+  describe('service type repository', function() {
 
     const collection = 'feed_service_types'
     let model: FeedServiceTypeIdentityModel
