@@ -3,7 +3,7 @@ import request from 'supertest'
 import { expect } from 'chai'
 import express from 'express'
 
-describe('plugins routes', function() {
+xdescribe('plugins routes', function() {
 
   let app: express.Application
 
