@@ -1,4 +1,4 @@
-var mongoose = require('mongoose')
+const mongoose = require('mongoose')
   , async = require("async")
   , hasher = require('../utilities/pbkdf2')()
   , moment = require('moment')
@@ -13,9 +13,9 @@ var mongoose = require('mongoose')
   , log = require('winston');
 
 // Creates a new Mongoose Schema object
-var Schema = mongoose.Schema;
+const Schema = mongoose.Schema;
 
-var PhoneSchema = new Schema({
+const PhoneSchema = new Schema({
   type: { type: String, required: true },
   number: { type: String, required: true }
 },{
@@ -24,7 +24,7 @@ var PhoneSchema = new Schema({
 });
 
 // Collection to hold users
-var UserSchema = new Schema({
+const UserSchema = new Schema({
   username: { type: String, required: true, unique: true },
   displayName: { type: String, required: true },
   email: {type: String, required: false },
@@ -66,7 +66,7 @@ var UserSchema = new Schema({
 });
 
 UserSchema.method('validPassword', function(password, callback) {
-  var user = this;
+  const user = this;
   if (user.authentication.type !== 'local') return callback(null, false);
 
   hasher.validPassword(password, user.authentication.password, callback);
@@ -75,13 +75,13 @@ UserSchema.method('validPassword', function(password, callback) {
 // Lowercase the username we store, this will allow for case insensitive usernames
 // Validate that username does not already exist
 UserSchema.pre('save', function(next) {
-  var user = this;
+  const user = this;
   user.username = user.username.toLowerCase();
   this.model('User').findOne({username: user.username}, function(err, possibleDuplicate) {
     if (err) return next(err);
 
     if (possibleDuplicate && !possibleDuplicate._id.equals(user._id)) {
-      var error = new Error('username already exists');
+      const error = new Error('username already exists');
       error.status = 400;
       return next(error);
     }
@@ -92,14 +92,14 @@ UserSchema.pre('save', function(next) {
 
 // Encrypt password before save
 UserSchema.pre('save', function(next) {
-  var user = this;
+  const user = this;
 
   // only hash the password if it has been modified (or is new)
   if (user.authentication.type !== 'local' || !user.isModified('authentication.password')) {
     return next();
   }
 
-  var self = this;
+  const self = this;
   async.waterfall([
     function(done) {
       self.constructor.findById(user._id, done);
@@ -137,7 +137,7 @@ UserSchema.pre('save', function(next) {
 });
 
 UserSchema.pre('save', function(next) {
-  var user = this;
+  const user = this;
   if (user.active === false || user.enabled === false) {
     Token.removeTokensForUser(user, function(err) {
       next(err);
@@ -158,7 +158,7 @@ UserSchema.post('save', function(err, user, next) {
 
 // Remove Token if password changed
 UserSchema.pre('save', function(next) {
-  var user = this;
+  const user = this;
 
   // only hash the password if it has been modified (or is new)
   if (!user.isModified('password')) {
@@ -173,7 +173,7 @@ UserSchema.pre('save', function(next) {
 });
 
 UserSchema.pre('remove', function(next) {
-  var user = this;
+  const user = this;
 
   async.parallel({
     location: function(done) {
@@ -206,7 +206,7 @@ UserSchema.pre('remove', function(next) {
 });
 
 // eslint-disable-next-line complexity
-var transform = function(user, ret, options) {
+const transform = function(user, ret, options) {
   if ('function' !== typeof user.ownerDocument) {
     ret.id = ret._id;
     delete ret._id;
@@ -248,7 +248,7 @@ UserSchema.set("toObject", {
 exports.transform = transform;
 
 // Creates the Model for the User Schema
-var User = mongoose.model('User', UserSchema);
+const User = mongoose.model('User', UserSchema);
 exports.Model = User;
 
 exports.getUserById = function(id, callback) {
@@ -289,9 +289,9 @@ exports.getUsers = function(options, callback) {
     options = {};
   }
 
-  var conditions = {};
+  const conditions = {};
   options = options || {};
-  var filter = options.filter || {};
+  const filter = options.filter || {};
 
   if (filter.active === true) {
     conditions.active = true;
@@ -301,12 +301,12 @@ exports.getUsers = function(options, callback) {
     conditions.active = false;
   }
 
-  var populate = [];
+  const populate = [];
   if (options.populate && (options.populate.indexOf('roleId') !== -1)) {
     populate.push({path: 'roleId'});
   }
 
-  var query = User.find(conditions);
+  let query = User.find(conditions);
   if (populate.length) {
     query = query.populate(populate);
   }
@@ -357,10 +357,10 @@ exports.deleteUser = function(user, callback) {
 exports.invalidLogin = function(user) {
   return Setting.getSetting('security')
     .then((securitySettings = {settings: {accountLock: {}}}) => {
-      let {enabled, max, interval, threshold} = securitySettings.settings.accountLock;
+      const {enabled, max, interval, threshold} = securitySettings.settings.accountLock;
       if (!enabled) return Promise.resolve(user);
 
-      let security = user.authentication.security;
+      const security = user.authentication.security;
       const invalidLoginAttempts = security.invalidLoginAttempts + 1;
       if (invalidLoginAttempts >= threshold) {
         const numberOfTimesLocked = security.numberOfTimesLocked + 1;
@@ -390,21 +390,21 @@ exports.validLogin = function(user) {
 };
 
 exports.setStatusForUser = function(user, status, callback) {
-  var update = { status: status };
+  const update = { status: status };
   User.findByIdAndUpdate(user._id, update, {new: true}, function(err, user) {
     callback(err, user);
   });
 };
 
 exports.setRoleForUser = function(user, role, callback) {
-  var update = { role: role };
+  const update = { role: role };
   User.findByIdAndUpdate(user._id, update, {new: true}, function (err, user) {
     callback(err, user);
   });
 };
 
 exports.removeRolesForUser = function(user, callback) {
-  var update = { roles: [] };
+  const update = { roles: [] };
   User.findByIdAndUpdate(user._id, update, {new: true}, function (err, user) {
     callback(err, user);
   });
@@ -438,7 +438,7 @@ exports.addRecentEventForUser = function(user, event, callback) {
 };
 
 exports.removeRecentEventForUsers = function(event, callback) {
-  var update = {
+  const update = {
     $pull: { recentEventIds: event._id }
   };
 

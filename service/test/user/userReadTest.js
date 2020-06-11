@@ -20,19 +20,22 @@ of leakage throughout the code that needs to be cleaned.  Further, pretty much
 the entire codebase lacks any dependency injection.
  */
 
-var request = require('supertest')
+const request = require('supertest')
   , sinon = require('sinon')
-  , should = require('chai').should()
+  , chai = require('chai')
   , MockToken = require('../mockToken')
   , app = require('../../lib/express')
   , mockfs = require('mock-fs')
   , mongoose = require('mongoose');
 
+const should = chai.should();
+const expect = chai.expect;
+
 require('../../lib/models/token');
-var TokenModel = mongoose.model('Token');
+const TokenModel = mongoose.model('Token');
 
 require('../../lib/models/user');
-var UserModel = mongoose.model('User');
+const UserModel = mongoose.model('User');
 
 require('sinon-mongoose');
 
@@ -150,7 +153,7 @@ describe("user read tests", function() {
       .end(done);
   });
 
-  it('should get all users and populate role', function(done) {
+  it('should get all users and populate role', async function() {
     mockTokenWithPermission('READ_USER');
 
     sinon.mock(UserModel)
@@ -164,14 +167,14 @@ describe("user read tests", function() {
         username: 'test2'
       }]);
 
-    request(app)
+    const res = await request(app)
       .get('/api/users')
       .query({populate: 'roleId'})
       .set('Accept', 'application/json')
-      .set('Authorization', 'Bearer 12345')
-      .expect(200)
-      .expect('Content-Type', /json/)
-      .end(done);
+      .set('Authorization', 'Bearer 12345');
+
+    expect(res.status).to.equal(200);
+    expect(res.type).to.match(/json/)
   });
 
 
