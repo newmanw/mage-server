@@ -11,7 +11,9 @@ import express from 'express'
 import bodyParser from 'body-parser'
 import { UserId } from '../../entities/authn/entities.authn'
 import { ListFeedServiceTypes, ListServiceTopics, CreateFeedService, CreateFeedServiceRequest } from '../../app.api/feeds/app.api.feeds'
-import { ErrPermissionDenied, MageError, PermissionDeniedError, ErrInvalidInput, InvalidInputErrorData, invalidInput, ErrEntityNotFound } from '../../app.api/app.api.global.errors'
+import { ErrPermissionDenied, MageError, PermissionDeniedError, ErrInvalidInput, invalidInput, ErrEntityNotFound } from '../../app.api/app.api.global.errors'
+import { AppRequest } from '../../app.api/app.api.global'
+import { AppRequestFactory } from '../adapters.controllers.global'
 
 export interface FeedsAppLayer {
   listServiceTypes: ListFeedServiceTypes
@@ -23,7 +25,7 @@ export interface AuthenticatedWebRequest extends express.Request {
   userId: UserId
 }
 
-export function FeedsRoutes(appLayer: FeedsAppLayer): express.Router {
+export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: AppRequestFactory): express.Router {
   const routes = express.Router()
   routes.use(bodyParser.json())
 
@@ -42,8 +44,7 @@ export function FeedsRoutes(appLayer: FeedsAppLayer): express.Router {
 
   routes.route('/service_types')
     .get(async (req, res, next): Promise<any> => {
-      const authReq = req as AuthenticatedWebRequest
-      const appReq = { user: authReq.userId }
+      const appReq = createAppRequest()
       const appRes = await appLayer.listServiceTypes(appReq)
       if (appRes.success) {
         return res.json(appRes.success)
@@ -55,13 +56,12 @@ export function FeedsRoutes(appLayer: FeedsAppLayer): express.Router {
     .post(async (req, res, next): Promise<any> => {
       const authReq = req as AuthenticatedWebRequest
       const body = authReq.body
-      const appReq: CreateFeedServiceRequest = {
-        user: authReq.userId,
+      const appReq = createAppRequest({
         serviceType: body.serviceType,
         config: body.config || null,
         title: body.title,
         summary: body.summary
-      }
+      })
       if (!appReq.serviceType) {
         return next(invalidInput('missing service type'))
       }

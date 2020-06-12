@@ -2,11 +2,12 @@ import { describe, it, beforeEach } from 'mocha'
 import { expect } from 'chai'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
 import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedService, FeedServiceConnection, RegisteredFeedServiceType } from '../../../lib/entities/feeds/entities.feeds'
-import { FeedsPermissionService, ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics } from '../../../lib/app.impl/feeds/app.impl.feeds'
+import { ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics } from '../../../lib/app.impl/feeds/app.impl.feeds'
 import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError, EntityNotFoundErrorData, invalidInput } from '../../../lib/app.api/app.api.global.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
-import { ListServiceTopicsRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest } from '../../../lib/app.api/feeds/app.api.feeds'
+import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest } from '../../../lib/app.api/feeds/app.api.feeds'
 import uniqid from 'uniqid'
+import { AppRequestContext, AppRequest } from '../../../lib/app.api/app.api.global'
 
 
 function mockServiceType(descriptor: FeedServiceTypeDescriptor): SubstituteOf<RegisteredFeedServiceType> {
@@ -57,12 +58,31 @@ const someServiceTypeDescs: FeedServiceTypeDescriptor[] = [
   })
 ]
 
-const adminPrincipal = {
+type TestPrincipal = {
+  user: string
+}
+
+const adminPrincipal: TestPrincipal = {
   user: 'admin'
 }
 
-const bannedPrincipal = {
-  user: 'schmo'
+const bannedPrincipal: TestPrincipal = {
+  user: 'banned'
+}
+
+function requestBy<RequestType>(principal: TestPrincipal, params?: RequestType): AppRequest<TestPrincipal> & RequestType {
+  return Object.create(params || {},
+    {
+      context: {
+        value: {
+          requestToken: uniqid(),
+          requestingPrincipal() {
+            return principal
+          }
+        }
+      }
+    }
+  )
 }
 
 describe('feeds administration', function() {
@@ -83,14 +103,14 @@ describe('feeds administration', function() {
 
     it('returns all the feed service types', async function() {
 
-      const serviceTypes = await app.listServiceTypes(adminPrincipal).then(res => res.success)
+      const serviceTypes = await app.listServiceTypes(requestBy(adminPrincipal)).then(res => res.success)
 
       expect(serviceTypes).to.deep.equal(someServiceTypeDescs)
     })
 
     it('checks permission for listing service types', async function() {
 
-      const error = await app.listServiceTypes(bannedPrincipal).then(res => res.error)
+      const error = await app.listServiceTypes(requestBy(bannedPrincipal)).then(res => res.error)
 
       expect(error).to.be.instanceOf(MageError)
       expect(error?.code).to.equal(ErrPermissionDenied)
@@ -107,7 +127,9 @@ describe('feeds administration', function() {
 
       const serviceType = someServiceTypes[1]
       const config = { url: 'https://does.not/matter' }
-      const err = await app.createService({ ...bannedPrincipal, serviceType: serviceType.id, title: 'Test Service', config }).then(res => res.error)
+      const err = await app
+        .createService(requestBy(bannedPrincipal, { serviceType: serviceType.id, title: 'Test Service', config }))
+        .then(res => res.error)
 
       expect(err?.code).to.equal(ErrPermissionDenied)
       expect(app.serviceRepo.db).to.be.empty
@@ -121,7 +143,9 @@ describe('feeds administration', function() {
         url: null
       }
       serviceType.validateServiceConfig(Arg.any()).resolves(new FeedsError(ErrInvalidServiceConfig, { invalidKeys: ['url'] }))
-      const err = await app.createService({ ...adminPrincipal, serviceType: serviceType.id, title: 'Test Service', config: invalidConfig }).then(res => res.error as InvalidInputError)
+      const err = await app
+        .createService(requestBy(adminPrincipal, { serviceType: serviceType.id, title: 'Test Service', config: invalidConfig }))
+        .then(res => res.error as InvalidInputError)
 
       expect(err).to.be.instanceOf(MageError)
       expect(err.code).to.equal(ErrInvalidInput)
@@ -136,7 +160,9 @@ describe('feeds administration', function() {
       const invalidConfig = {
         url: null
       }
-      const err = await app.createService({ ...adminPrincipal, serviceType: invalidServiceType, title: 'Test Serivce', config: invalidConfig }).then(res => res.error as EntityNotFoundError)
+      const err = await app
+        .createService(requestBy(adminPrincipal, { serviceType: invalidServiceType, title: 'Test Serivce', config: invalidConfig }))
+        .then(res => res.error as EntityNotFoundError)
 
       expect(err.code).to.equal(ErrEntityNotFound)
       expect(err.data?.entityId).to.equal(invalidServiceType)
@@ -153,7 +179,9 @@ describe('feeds administration', function() {
       const config = { url: 'https://some.service/somewhere' }
       serviceType.validateServiceConfig(Arg.deepEquals(config)).resolves(null)
 
-      const created = await app.createService({ ...adminPrincipal, serviceType: serviceType.id, title: 'Test Service', config }).then(res => res.success)
+      const created = await app
+        .createService(requestBy(adminPrincipal, { serviceType: serviceType.id, title: 'Test Service', config }))
+        .then(res => res.success)
       const inDb = created && app.serviceRepo.db.get(created.id)
 
       expect(created?.id).to.exist
@@ -176,11 +204,12 @@ describe('feeds administration', function() {
     it('checks permission for previewing topics', async function() {
 
       const serviceType = someServiceTypes[0]
-      const req: PreviewTopicsRequest = {
-        ...bannedPrincipal,
-        serviceType: serviceType.id,
-        serviceConfig: {}
-      }
+      const req: PreviewTopicsRequest = requestBy(
+        bannedPrincipal,
+        {
+          serviceType: serviceType.id,
+          serviceConfig: {}
+        })
       let res = await app.previewTopics(req)
 
       expect(res.error).to.be.instanceOf(MageError)
@@ -201,11 +230,12 @@ describe('feeds administration', function() {
 
     it('fails if the service type does not exist', async function() {
 
-      const req: PreviewTopicsRequest = {
-        ...adminPrincipal,
-        serviceType: uniqid(),
-        serviceConfig: {}
-      }
+      const req: PreviewTopicsRequest = requestBy(
+        adminPrincipal,
+        {
+          serviceType: uniqid(),
+          serviceConfig: {}
+        })
       const res = await app.previewTopics(req)
 
       expect(res.success).to.be.null
@@ -219,11 +249,12 @@ describe('feeds administration', function() {
     it('fails if the service config is invalid', async function() {
 
       const serviceType = someServiceTypes[1]
-      const req: PreviewTopicsRequest = {
-        ...adminPrincipal,
-        serviceType: serviceType.id,
-        serviceConfig: { invalid: true }
-      }
+      const req: PreviewTopicsRequest = requestBy(
+        adminPrincipal,
+        {
+          serviceType: serviceType.id,
+          serviceConfig: { invalid: true }
+        })
       serviceType.validateServiceConfig(Arg.deepEquals(req.serviceConfig))
         .resolves(new FeedsError(ErrInvalidServiceConfig, { invalidKeys: ['invalid'] }))
 
@@ -239,11 +270,12 @@ describe('feeds administration', function() {
     it('lists the topics for the service config', async function() {
 
       const serviceType = someServiceTypes[1]
-      const req: PreviewTopicsRequest = {
-        ...adminPrincipal,
-        serviceType: serviceType.id,
-        serviceConfig: { url: 'https://city.gov/emergency_response' }
-      }
+      const req: PreviewTopicsRequest = requestBy(
+        adminPrincipal,
+        {
+          serviceType: serviceType.id,
+          serviceConfig: { url: 'https://city.gov/emergency_response' }
+        })
       const topics: FeedTopic[] = [
         {
           id: 'crime_reports',
@@ -314,10 +346,11 @@ describe('feeds administration', function() {
     it('checks permission for listing topics', async function() {
 
       const serviceDesc = someServices[0]
-      const req: ListServiceTopicsRequest = {
-        ...bannedPrincipal,
-        service: serviceDesc.id
-      }
+      const req: ListServiceTopicsRequest = requestBy(
+        bannedPrincipal,
+        {
+          service: serviceDesc.id
+        })
       const err = await app.listTopics(req).then(res => res.error as PermissionDeniedError)
 
       expect(err).to.be.instanceOf(MageError)
@@ -330,7 +363,7 @@ describe('feeds administration', function() {
       service.fetchAvailableTopics().resolves([])
       const serviceType = someServiceTypes.filter(x => x.id === serviceDesc.serviceType)[0]
       serviceType.createConnection(Arg.deepEquals(serviceDesc.config)).returns(service)
-      app.permissionService.grantListTopics(req.user, serviceDesc.id)
+      app.permissionService.grantListTopics(bannedPrincipal.user, serviceDesc.id)
 
       const res = await app.listTopics(req)
 
@@ -408,10 +441,7 @@ describe('feeds administration', function() {
       const service = Sub.for<FeedServiceConnection>()
       serviceType.createConnection(Arg.deepEquals(serviceDesc.config)).returns(service)
       service.fetchAvailableTopics().resolves(topics)
-      const req: ListServiceTopicsRequest = {
-        ...adminPrincipal,
-        service: serviceDesc.id
-      }
+      const req: ListServiceTopicsRequest = requestBy(adminPrincipal, { service: serviceDesc.id })
       const fetched = await app.listTopics(req).then(res => res.success)
 
       expect(fetched).to.deep.equal(topics)
@@ -592,20 +622,21 @@ class TestPermissionService implements FeedsPermissionService {
   } as { [user: string]: { [privilege: string]: boolean }}
   readonly serviceAcls = new Map<FeedServiceId, Map<UserId, Set<string>>>()
 
-  async ensureListServiceTypesPermissionFor(user: UserId): Promise<null | PermissionDeniedError> {
-    return this.checkPrivilege(user, ListFeedServiceTypes.name)
+  async ensureListServiceTypesPermissionFor(context: AppRequestContext<TestPrincipal>): Promise<null | PermissionDeniedError> {
+    return this.checkPrivilege(context.requestingPrincipal().user, ListFeedServiceTypes.name)
   }
 
-  async ensureCreateServicePermissionFor(user: UserId): Promise<null | PermissionDeniedError> {
-    return this.checkPrivilege(user, CreateFeedService.name)
+  async ensureCreateServicePermissionFor(context: AppRequestContext<TestPrincipal>): Promise<null | PermissionDeniedError> {
+    return this.checkPrivilege(context.requestingPrincipal().user, CreateFeedService.name)
   }
 
-  async ensureListTopicsPermissionFor(user: UserId, service: FeedServiceId): Promise<null | PermissionDeniedError> {
+  async ensureListTopicsPermissionFor(context: AppRequestContext<TestPrincipal>, service: FeedServiceId): Promise<null | PermissionDeniedError> {
     const acl = this.serviceAcls.get(service)
-    if (acl?.get(user)?.has(ListServiceTopics.name)) {
+    const principal = context.requestingPrincipal()
+    if (acl?.get(principal.user)?.has(ListServiceTopics.name)) {
       return null
     }
-    return permissionDenied(ListServiceTopics.name, user)
+    return permissionDenied(ListServiceTopics.name, principal.user)
   }
 
   grantCreateService(user: UserId) {
@@ -632,7 +663,7 @@ class TestPermissionService implements FeedsPermissionService {
     servicePermissions?.delete(ListServiceTopics.name)
   }
 
-  async ensureCreateFeedPermissionFor(user: UserId): Promise<null | PermissionDeniedError> {
+  async ensureCreateFeedPermissionFor(context: AppRequestContext<TestPrincipal>): Promise<null | PermissionDeniedError> {
     throw new Error('todo')
   }
 

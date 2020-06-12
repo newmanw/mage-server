@@ -11,6 +11,7 @@ import { FeedsRoutes, FeedsAppLayer, AuthenticatedWebRequest } from '../../../li
 import { CreateFeedServiceRequest, FeedServiceTypeDescriptor } from '../../../lib/app.api/feeds/app.api.feeds'
 import { FeedService } from '../../../lib/entities/feeds/entities.feeds'
 import { permissionDenied, PermissionDeniedError, InvalidInputError, invalidInput, EntityNotFoundError, entityNotFound } from '../../../lib/app.api/app.api.global.errors'
+import { AppRequestFactory } from '../../../lib/adapters/adapters.controllers.global'
 
 const jsonMimeType = /^application\/json/
 
@@ -20,12 +21,24 @@ describe('feeds web adapter', function() {
     user: 'admin'
   }
 
+  const createAdminRequest: AppRequestFactory = <Params>(p: Params) => {
+    return {
+      ...p,
+      context: {
+        requestToken: Symbol(),
+        requestingPrincipal() {
+          return adminPrincipal
+        }
+      }
+    }
+  }
+
   let client: supertest.SuperTest<supertest.Test>
   let appLayer: SubstituteOf<FeedsAppLayer>
 
   beforeEach(function() {
     appLayer = Substitute.for<FeedsAppLayer>()
-    const feedsRoutes: express.Router = FeedsRoutes(appLayer)
+    const feedsRoutes: express.Router = FeedsRoutes(appLayer, createAdminRequest)
     const endpoint = express()
     endpoint.use(function lookupUser(req: express.Request, res: express.Response, next: express.NextFunction) {
       const authReq = req as AuthenticatedWebRequest
@@ -94,10 +107,7 @@ describe('feeds web adapter', function() {
           url: 'https://usgs.gov/data/earthquakes/wfs?service=WFS'
         }
       }
-      const appReq: CreateFeedServiceRequest = {
-        ...submitted,
-        ...adminPrincipal
-      }
+      const appReq: CreateFeedServiceRequest = createAdminRequest(submitted)
       const created: FeedService = {
         id: `wfs:${uniqid()}`,
         ...submitted
@@ -212,13 +222,12 @@ invalid input:
 
       it('maps absent config to null', async function() {
 
-        const appReq: CreateFeedServiceRequest = {
-          user: 'admin',
+        const appReq: CreateFeedServiceRequest = createAdminRequest({
           serviceType: 'configless',
           title: 'No Config Necessary',
           config: null,
           summary: undefined,
-        }
+        })
         const created = {
           id: uniqid(),
           serviceType: 'configless',

@@ -1,10 +1,21 @@
-import { UserId } from '../entities/authn/entities.authn'
 import { MageError, PermissionDeniedError } from './app.api.global.errors'
 import { JsonObject } from '../entities/entities.global.json'
 
+export interface AppRequestContext<Principal = unknown> {
+  /**
+   * The request token is a value the adapter layer injects to track the
+   * request.  This is necessary to achieve the same effect as a "thread-local"
+   * variable that a Java application would use.  Node does not use the model
+   * of one thread per request, so some unique value is necessary to track a
+   * request context across multiple asynchronous operations.
+   */
+  readonly requestToken: unknown
+  requestingPrincipal(): Principal
+}
 
-export interface AuthenticatedRequest  {
-  user: UserId
+
+export interface AppRequest<Principal = unknown, Context extends AppRequestContext<Principal> = AppRequestContext<Principal>>  {
+  context: Context
 }
 
 

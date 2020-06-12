@@ -1,14 +1,14 @@
-import { AuthenticatedRequest, AppResponse, Descriptor } from '../app.api.global'
+import { AppRequest, AppResponse, Descriptor, AppRequestContext } from '../app.api.global'
 import { FeedService, FeedTopic, FeedParams, FeedContent, FeedId, FeedServiceTypeId, FeedServiceId, Feed, FeedTopicId, FeedServiceType } from '../../entities/feeds/entities.feeds'
 import { Json, JsonObject } from '../../entities/entities.global.json'
 import { PermissionDeniedError, EntityNotFoundError, InvalidInputError } from '../app.api.global.errors'
 
 
 export interface ListFeedServiceTypes {
-  (req: AuthenticatedRequest): Promise<AppResponse<FeedServiceTypeDescriptor[], PermissionDeniedError>>
+  (req: AppRequest): Promise<AppResponse<FeedServiceTypeDescriptor[], PermissionDeniedError>>
 }
 
-export interface PreviewTopicsRequest extends AuthenticatedRequest {
+export interface PreviewTopicsRequest extends AppRequest {
   serviceType: FeedServiceTypeId
   serviceConfig: Json
 }
@@ -17,7 +17,7 @@ export interface PreviewTopics {
   (req: PreviewTopicsRequest): Promise<AppResponse<FeedTopic[], PermissionDeniedError | EntityNotFoundError | InvalidInputError>>
 }
 
-export interface CreateFeedServiceRequest extends AuthenticatedRequest {
+export interface CreateFeedServiceRequest extends AppRequest {
   serviceType: FeedServiceTypeId
   title: string
   summary?: string | null
@@ -28,7 +28,7 @@ export interface CreateFeedService {
   (req: CreateFeedServiceRequest): Promise<AppResponse<FeedService, PermissionDeniedError | EntityNotFoundError | InvalidInputError>>
 }
 
-export interface ListServiceTopicsRequest extends AuthenticatedRequest {
+export interface ListServiceTopicsRequest extends AppRequest {
   service: FeedServiceId
 }
 
@@ -36,7 +36,7 @@ export interface ListServiceTopics {
   (req: ListServiceTopicsRequest): Promise<AppResponse<FeedTopic[], PermissionDeniedError | EntityNotFoundError>>
 }
 
-export interface PreviewFeedContentRequest extends AuthenticatedRequest {
+export interface PreviewFeedContentRequest extends AppRequest {
   params: FeedParams
 }
 
@@ -44,7 +44,7 @@ export interface PreviewFeedContent {
   (req: PreviewFeedContentRequest): Promise<FeedContent>
 }
 
-export interface CreateFeedRequest extends AuthenticatedRequest {
+export interface CreateFeedRequest extends AppRequest {
   service: FeedServiceId,
   topic: FeedTopicId
   title: string,
@@ -57,7 +57,7 @@ export interface CreateFeed {
   (req: CreateFeedRequest): Promise<FeedService>
 }
 
-export interface FetchEventFeedsRequest extends AuthenticatedRequest {
+export interface FetchEventFeedsRequest extends AppRequest {
   eventId: string
 }
 
@@ -65,7 +65,7 @@ export interface FetchEventFeeds {
   (req: FetchEventFeedsRequest): Promise<Feed[]>
 }
 
-export interface FetchFeedContentRequest extends AuthenticatedRequest {
+export interface FetchFeedContentRequest extends AppRequest {
   feedId: FeedId,
   variableParams: Json
 }
@@ -102,4 +102,11 @@ export function FeedServiceDescriptor(from: FeedService): FeedServiceDescriptor 
     summary: from.summary,
     config: from.config
   }
+}
+
+export interface FeedsPermissionService {
+  ensureListServiceTypesPermissionFor(context: AppRequestContext): Promise<PermissionDeniedError | null>
+  ensureCreateServicePermissionFor(context: AppRequestContext): Promise<PermissionDeniedError | null>
+  ensureListTopicsPermissionFor(context: AppRequestContext, service: FeedServiceId): Promise<PermissionDeniedError | null>
+  ensureCreateFeedPermissionFor(context: AppRequestContext): Promise<PermissionDeniedError | null>
 }
