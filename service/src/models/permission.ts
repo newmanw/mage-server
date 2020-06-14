@@ -1,91 +1,103 @@
-var devicePermissions = [
-  'CREATE_DEVICE',
-  'READ_DEVICE',
-  'UPDATE_DEVICE',
-  'DELETE_DEVICE'
-];
+const devicePermissions = {
+  CREATE_DEVICE: 'CREATE_DEVICE',
+  READ_DEVICE: 'READ_DEVICE',
+  UPDATE_DEVICE: 'UPDATE_DEVICE',
+  DELETE_DEVICE: 'DELETE_DEVICE'
+}
 
-var userPermissions = [
-  'CREATE_USER',
-  'READ_USER',
-  'UPDATE_USER',
-  'DELETE_USER',
-  'UPDATE_USER_ROLE',
-  'UPDATE_USER_PASSWORD'
-];
+const userPermissions = {
+  CREATE_USER: 'CREATE_USER',
+  READ_USER: 'READ_USER',
+  UPDATE_USER: 'UPDATE_USER',
+  DELETE_USER: 'DELETE_USER',
+  UPDATE_USER_ROLE: 'UPDATE_USER_ROLE',
+  UPDATE_USER_PASSWORD: 'UPDATE_USER_PASSWORD'
+}
 
-var rolePermissions = [
-  'CREATE_ROLE',
-  'READ_ROLE',
-  'UPDATE_ROLE',
-  'DELETE_ROLE'
-];
+const rolePermissions = {
+  CREATE_ROLE: 'CREATE_ROLE',
+  READ_ROLE: 'READ_ROLE',
+  UPDATE_ROLE: 'UPDATE_ROLE',
+  DELETE_ROLE: 'DELETE_ROLE'
+}
 
-var eventPermissions = [
-  'READ_EVENT_ALL',
-  'READ_EVENT_USER',
-  'CREATE_EVENT',
-  'UPDATE_EVENT',
-  'DELETE_EVENT'
-];
+const eventPermissions = {
+  READ_EVENT_ALL: 'READ_EVENT_ALL',
+  READ_EVENT_USER: 'READ_EVENT_USER',
+  CREATE_EVENT: 'CREATE_EVENT',
+  UPDATE_EVENT: 'UPDATE_EVENT',
+  DELETE_EVENT: 'DELETE_EVENT'
+}
 
-var layerPermissions = [
-  'READ_LAYER_ALL',
-  'READ_LAYER_EVENT',
-  'UPDATE_LAYER',
-  'CREATE_LAYER',
-  'DELETE_LAYER'
-];
+const layerPermissions = {
+  READ_LAYER_ALL: 'READ_LAYER_ALL',
+  READ_LAYER_EVENT: 'READ_LAYER_EVENT',
+  UPDATE_LAYER: 'UPDATE_LAYER',
+  CREATE_LAYER: 'CREATE_LAYER',
+  DELETE_LAYER: 'DELETE_LAYER'
+}
 
-var observationPermissions = [
-  'READ_OBSERVATION_ALL',
-  'READ_OBSERVATION_EVENT',
-  'READ_OBSERVATION_TEAM',
-  'READ_OBSERVATION_USER',
-  'UPDATE_OBSERVATION_ALL',
-  'UPDATE_OBSERVATION_EVENT',
-  'UPDATE_OBSERVATION_TEAM',
-  'UPDATE_OBSERVATION_USER',
-  'CREATE_OBSERVATION',
-  'DELETE_OBSERVATION'
-];
+const observationPermissions = {
+  READ_OBSERVATION_ALL: 'READ_OBSERVATION_ALL',
+  READ_OBSERVATION_EVENT: 'READ_OBSERVATION_EVENT',
+  READ_OBSERVATION_TEAM: 'READ_OBSERVATION_TEAM',
+  READ_OBSERVATION_USER: 'READ_OBSERVATION_USER',
+  UPDATE_OBSERVATION_ALL: 'UPDATE_OBSERVATION_ALL',
+  UPDATE_OBSERVATION_EVENT: 'UPDATE_OBSERVATION_EVENT',
+  UPDATE_OBSERVATION_TEAM: 'UPDATE_OBSERVATION_TEAM',
+  UPDATE_OBSERVATION_USER: 'UPDATE_OBSERVATION_USER',
+  CREATE_OBSERVATION: 'CREATE_OBSERVATION',
+  DELETE_OBSERVATION: 'DELETE_OBSERVATION'
+}
 
-var locationPermissions = [
-  'READ_LOCATION_ALL',
-  'READ_LOCATION_EVENT',
-  'READ_LOCATION_TEAM',
-  'READ_LOCATION_USER',
-  'UPDATE_LOCATION_ALL',
-  'UPDATE_LOCATION_EVENT',
-  'UPDATE_LOCATION_TEAM',
-  'UPDATE_LOCATION_USER',
-  'CREATE_LOCATION',
-  'DELETE_LOCATION'
-];
+const locationPermissions = {
+  READ_LOCATION_ALL: 'READ_LOCATION_ALL',
+  READ_LOCATION_EVENT: 'READ_LOCATION_EVENT',
+  READ_LOCATION_TEAM: 'READ_LOCATION_TEAM',
+  READ_LOCATION_USER: 'READ_LOCATION_USER',
+  UPDATE_LOCATION_ALL: 'UPDATE_LOCATION_ALL',
+  UPDATE_LOCATION_EVENT: 'UPDATE_LOCATION_EVENT',
+  UPDATE_LOCATION_TEAM: 'UPDATE_LOCATION_TEAM',
+  UPDATE_LOCATION_USER: 'UPDATE_LOCATION_USER',
+  CREATE_LOCATION: 'CREATE_LOCATION',
+  DELETE_LOCATION: 'DELETE_LOCATION'
+}
 
-var teamPermissions = [
-  'CREATE_TEAM',
-  'READ_TEAM',
-  'UPDATE_TEAM',
-  'DELETE_TEAM'
-];
+const teamPermissions = {
+  CREATE_TEAM: 'CREATE_TEAM',
+  READ_TEAM: 'READ_TEAM',
+  UPDATE_TEAM: 'UPDATE_TEAM',
+  DELETE_TEAM: 'DELETE_TEAM'
+}
 
-var settingPermissions = [
-  'READ_SETTINGS',
-  'UPDATE_SETTINGS'
-];
+const settingPermissions = {
+  READ_SETTINGS: 'READ_SETTINGS',
+  UPDATE_SETTINGS: 'UPDATE_SETTINGS'
+}
 
-var allPermissions = []
-  .concat(devicePermissions)
-  .concat(userPermissions)
-  .concat(rolePermissions)
-  .concat(eventPermissions)
-  .concat(layerPermissions)
-  .concat(observationPermissions)
-  .concat(locationPermissions)
-  .concat(teamPermissions)
-  .concat(settingPermissions);
+const feedsPermissions = {
+  FEEDS_LIST_SERVICE_TYPES: 'FEEDS_LIST_SERVICE_TYPES',
+  FEEDS_CREATE_SERVICE: 'FEEDS_CREATE_SERVICE',
+  FEEDS_LIST_TOPICS: 'FEEDS_LIST_TOPICS',
+}
 
-exports.getPermissions = function() {
-  return allPermissions;
-};
+export const allPermissions = Object.freeze({
+  ...devicePermissions,
+  ...userPermissions,
+  ...rolePermissions,
+  ...eventPermissions,
+  ...layerPermissions,
+  ...observationPermissions,
+  ...locationPermissions,
+  ...teamPermissions,
+  ...settingPermissions,
+  ...feedsPermissions,
+})
+
+export type AnyPermission = keyof typeof allPermissions
+
+const allPermissionsList = Object.freeze(Object.values(allPermissions))
+
+export function getPermissions(): readonly string[] {
+  return allPermissionsList
+}
