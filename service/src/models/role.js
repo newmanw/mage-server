@@ -1,12 +1,12 @@
-var mongoose = require('mongoose')
+const mongoose = require('mongoose')
   , User = require('../models/user')
-  , Permission = require('../models/permission');
+  , { allPermissions: validPermissions } = require('../models/permission');
 
 // Creates a new Mongoose Schema object
-var Schema = mongoose.Schema;
+const Schema = mongoose.Schema;
 
 // Collection to hold roles
-var RoleSchema = new Schema({
+const RoleSchema = new Schema({
   name: { type: String, required: true, unique: true },
   description: { type: String, required: false },
   permissions: [Schema.Types.String]
@@ -15,7 +15,7 @@ var RoleSchema = new Schema({
 });
 
 RoleSchema.pre('remove', function(next) {
-  var role = this;
+  const role = this;
 
   User.removeRoleFromUsers(role, function(err) {
     next(err);
@@ -23,19 +23,18 @@ RoleSchema.pre('remove', function(next) {
 });
 
 RoleSchema.pre('save', function(next) {
-  var role = this;
+  const role = this;
 
   // only check for valid permission if the permissions have been modified (or is new)
   if (!role.isModified('permissions')) {
     return next();
   }
 
-  var validPermissions = Permission.getPermissions();
-  role.permissions.forEach(function(permission) {
-    if (validPermissions.indexOf(permission) === -1) {
+  for (const permission of role.permissions) {
+    if (!validPermissions[permission]) {
       return next(new Error("Permission '" + permission + "' is not a valid permission"));
     }
-  });
+  };
 
   next();
 });
@@ -52,7 +51,7 @@ RoleSchema.set("toJSON", {
 });
 
 // Creates the Model for the Role Schema
-var Role = mongoose.model('Role', RoleSchema);
+const Role = mongoose.model('Role', RoleSchema);
 
 exports.getRoleById = function(id, callback) {
   Role.findById(id, function(err, role) {
@@ -67,14 +66,14 @@ exports.getRole = function(name, callback) {
 };
 
 exports.getRoles = function(callback) {
-  var query = {};
+  const query = {};
   Role.find(query, function (err, roles) {
     callback(err, roles);
   });
 };
 
 exports.createRole = function(role, callback) {
-  var create = {
+  const create = {
     name: role.name,
     description: role.description,
     permissions: role.permissions
