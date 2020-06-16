@@ -8,6 +8,11 @@ function createDefaultDocMapping<D extends mongoose.Document, E extends object>(
   return (d): any => d.toJSON()
 }
 
+export async function waitForMongooseConnection(): Promise<mongoose.Connection> {
+
+  throw new Error('unimplemented')
+}
+
 export class BaseMongooseRepository<D extends mongoose.Document, M extends mongoose.Model<D>, E extends object> {
 
   readonly model: M

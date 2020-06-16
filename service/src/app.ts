@@ -3,13 +3,14 @@ import log from './logger'
 import { loadPlugins, PluginDependencies } from './main.impl/main.impl.plugins'
 import http from 'http'
 import fs from 'fs-extra'
-import mongoose from 'mongoose'
+import mongoose, { ConnectionOptions } from 'mongoose'
 import express from 'express'
 import { MongooseFeedServiceTypeRepository, FeedServiceTypeIdentityModel } from './adapters/feeds/adapters.feeds.db.mongoose'
-import waitForMongooseConnection from './utilities/waitForMongooseConnection'
+import { waitForDefaultMongooseConnection } from './adapters/adapters.db.mongoose'
 import { FeedServiceTypeRepository } from './entities/feeds/entities.feeds'
 import * as feedsApi from './app.api/feeds/app.api.feeds'
 import * as feedsImpl from './app.impl/feeds/app.impl.feeds'
+import { env } from 'process'
 
 
 export interface MageService {
@@ -101,7 +102,8 @@ type AppLayer = {
 }
 
 async function initializeDatabase(): Promise<DatabaseModels> {
-  const conn = await waitForMongooseConnection().then(() => mongoose.connection)
+  const { uri, connectRetryDelay, connectTimeout, options } = environment.mongo
+  const conn = await waitForDefaultMongooseConnection(uri, connectTimeout, connectRetryDelay, options).then(() => mongoose.connection)
   // TODO: transition legacy model initialization
   // TODO: inject connection to migrations
   // TODO: explore performing migrations without mongoose models because current models may not be compatible with past migrations

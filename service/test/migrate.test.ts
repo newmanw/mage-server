@@ -1,5 +1,5 @@
 import { runDatabaseMigrations } from '../lib/migrate'
-import waitForMongooseConnection from '../lib/utilities/waitForMongooseConnection'
+import { waitForDefaultMongooseConnection } from '../lib/adapters/adapters.db.mongoose'
 import { mongoTestBeforeAllHook, mongoTestAfterAllHook } from './mongo.test'
 
 /**
@@ -10,11 +10,12 @@ describe.only('migration runner', function() {
   before(mongoTestBeforeAllHook())
 
   beforeEach('wait for mongoose', async function() {
-    waitForMongooseConnection()
+    waitForDefaultMongooseConnection(this.mongo?.uri!, {
+      useMongoClient: true
+    })
   })
 
   after(mongoTestAfterAllHook())
-
 
   it('runs the migrations successfully', async function() {
 
