@@ -1,32 +1,44 @@
 import { FeedsPermissionService } from '../app.api/feeds/app.api.feeds'
-import { PermissionDeniedError } from '../app.api/app.api.global.errors';
-import { AppRequestContext } from '../app.api/app.api.global';
+import { PermissionDeniedError, permissionDenied } from '../app.api/app.api.global.errors'
+import { AppRequestContext } from '../app.api/app.api.global'
+import { UserDocument } from '../models/user'
+import { RoleDocument } from '../models/role'
+import { AnyPermission } from '../models/permission'
+import { FeedServiceId } from '../entities/feeds/entities.feeds'
 
-export interface Role {
-  name: string
-  permissions: string[]
+
+export type UserWithRole = UserDocument & {
+  roleId: RoleDocument
 }
 
-export interface PopulatedMageUser {
-  id: string
-  role: Role
+/**
+ * This permission service relies on the user and role that the I/O adapter
+ * layer has previously fetched from the database.
+ */
+export class PreFetchedUserRoleFeedsPerissionService implements FeedsPermissionService {
+
+  async ensureListServiceTypesPermissionFor(context: AppRequestContext<UserWithRole>): Promise<PermissionDeniedError | null> {
+    return ensureContextUserHasPermission(context, 'FEEDS_LIST_SERVICE_TYPES')
+  }
+
+  async ensureCreateServicePermissionFor(context: AppRequestContext<UserWithRole>): Promise<PermissionDeniedError | null> {
+    return ensureContextUserHasPermission(context, 'FEEDS_CREATE_SERVICE')
+  }
+
+  async ensureListTopicsPermissionFor(context: AppRequestContext<unknown>, service: FeedServiceId): Promise<PermissionDeniedError | null> {
+    throw new Error('unimplemented')
+  }
+
+  async ensureCreateFeedPermissionFor(context: AppRequestContext<UserWithRole>): Promise<PermissionDeniedError | null> {
+    throw new Error('unimplemented');
+  }
 }
 
-export class FeedsPermissionServiceImpl implements FeedsPermissionService {
-
-  ensureListServiceTypesPermissionFor(context: AppRequestContext<PopulatedMageUser>): Promise<PermissionDeniedError | null> {
-    throw new Error('Method not implemented.');
+function ensureContextUserHasPermission(context: AppRequestContext<UserWithRole>, permission: AnyPermission): null | PermissionDeniedError {
+  const user = context.requestingPrincipal()
+  const role = user.roleId
+  if (role.permissions.includes(permission)) {
+    return null
   }
-
-  ensureCreateServicePermissionFor(context: AppRequestContext<PopulatedMageUser>): Promise<PermissionDeniedError | null> {
-    throw new Error('Method not implemented.');
-  }
-
-  ensureListTopicsPermissionFor(context: AppRequestContext<PopulatedMageUser>): Promise<PermissionDeniedError | null> {
-    throw new Error('Method not implemented.');
-  }
-
-  ensureCreateFeedPermissionFor(context: AppRequestContext<PopulatedMageUser>): Promise<PermissionDeniedError | null> {
-    throw new Error('Method not implemented.');
-  }
+  return permissionDenied(permission, user.username)
 }
