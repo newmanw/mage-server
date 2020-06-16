@@ -1,6 +1,7 @@
 import mongoose from 'mongoose'
 import { describe, it, before, beforeEach, after, afterEach } from 'mocha'
 import { expect } from 'chai'
+import '../../mongo.test'
 import { mongoTestAfterAllHook, mongoTestBeforeAllHook, MongoTestContext } from '../../mongo.test'
 import { BaseMongooseRepository } from '../../../lib/adapters/base/adapters.base.db.mongoose'
 
@@ -35,7 +36,7 @@ describe('base mongoose repository', async function() {
   before(mongoTestBeforeAllHook())
 
   before('create model', function() {
-    mongo = this.mongo
+    mongo = this.mongo!
     model = mongo.conn.model('Base', schema, collection)
     repo = new BaseMongooseRepository(model)
   })

@@ -1,6 +1,6 @@
 const mongoose = require('mongoose')
   , User = require('../models/user')
-  , { allPermissions: validPermissions } = require('../models/permission');
+  , { allPermissions: validPermissions } = require('./permission');
 
 // Creates a new Mongoose Schema object
 const Schema = mongoose.Schema;

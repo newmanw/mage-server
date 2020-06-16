@@ -12,6 +12,7 @@
     "outDir": "../test-lib",
     "typeRoots": [
       "./@types.test",
+      "../lib/@types",
       "../node_modules/@types"
     ]
   }

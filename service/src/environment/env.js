@@ -12,12 +12,12 @@ if (!(process.env.MAGE_PORT || process.env.PORT || process.env.CF_INSTANCE_PORT 
   process.env.MAGE_PORT = '4242';
 }
 
-var x509Key = process.env.MAGE_MONGO_X509_KEY;
-var x509Cert = process.env.MAGE_MONGO_X509_CERT;
-var x509CaCert = process.env.MAGE_MONGO_X509_CA_CERT;
-var x509KeyPath = process.env.MAGE_MONGO_X509_KEY_FILE;
-var x509CertPath = process.env.MAGE_MONGO_X509_CERT_FILE;
-var x509CaCertPath = process.env.MAGE_MONGO_X509_CA_CERT_FILE;
+let x509Key = process.env.MAGE_MONGO_X509_KEY;
+let x509Cert = process.env.MAGE_MONGO_X509_CERT;
+let x509CaCert = process.env.MAGE_MONGO_X509_CA_CERT;
+const x509KeyPath = process.env.MAGE_MONGO_X509_KEY_FILE;
+const x509CertPath = process.env.MAGE_MONGO_X509_CERT_FILE;
+const x509CaCertPath = process.env.MAGE_MONGO_X509_CA_CERT_FILE;
 if (x509Key) {
   x509Key = Buffer.from(x509Key);
   x509Cert = Buffer.from(x509Cert);

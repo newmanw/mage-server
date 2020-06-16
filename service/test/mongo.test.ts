@@ -1,14 +1,12 @@
 
 import mongoose from 'mongoose'
-import Mocha from 'mocha'
+import Mocha, { Context } from 'mocha'
 import { MongoMemoryServer } from 'mongodb-memory-server'
 
 
 declare module 'mocha' {
-  namespace Mocha {
-    export class Context {
-      mongo: MongoTestContext | undefined
-    }
+  interface Context {
+    mongo: MongoTestContext | undefined
   }
 }
 
@@ -18,24 +16,52 @@ export interface MongoTestContext {
   readonly conn: mongoose.Connection
 }
 
+/**
+ * Return a function that the caller can pass to Mocha's `before()` function
+ * to setup an in-memory MongoDB database for a test suite.
+ * Example:
+ * ```
+ * describe('tests that interact with the database', function() {
+ *
+ *   before(mongoTestBeforeAllHook())
+ *
+ *   it('does something with the database', function() {
+ *     const dbContext = this.mongo as MongoTestContext
+ *     stuffCount = await dbContext.conn.collection('stuff').count()
+ *     expect(stuffCount).to.equal(12)
+ *   })
+ * })
+ * ```
+ */
 export function mongoTestBeforeAllHook(): () => Promise<void> {
-  const mongo = {
-    server: new MongoMemoryServer(),
-    uri: <string | null>null,
-    conn: <mongoose.Connection | null>null
-  }
   return async function setupMongoServer(this: Mocha.Context) {
-    mongo.uri = await mongo.server.getUri()
-    mongo.conn = await mongoose.createConnection(mongo.uri, {
+    const server = new MongoMemoryServer()
+    const uri = await server.getUri()
+    const conn = await mongoose.createConnection(uri, {
       useMongoClient: true,
       promiseLibrary: Promise
     })
-    this.mongo = mongo
+    this.mongo = { server, uri, conn }
   }
 }
 
+/**
+ * Return a function that the caller can pass to Mocha's `after()` function to
+ * tear down the in-memory MongoDB database for the current Mocha context.
+ * Example:
+ * ```
+ * describe('tests that interact with the database', function() {
+ *   before(mongoTestBeforeAllHook())
+ *   // ... tests ...
+ *   after(mongoTestAfterAllHook()) // stop the database
+ * })
+ * ```
+ */
 export function mongoTestAfterAllHook(): () => Promise<void> {
   return async function destroyMongoServer(this: Mocha.Context) {
+    if (!this.mongo) {
+      return
+    }
     await this.mongo.conn.close()
     await this.mongo.server.stop()
   }
