@@ -1,96 +1,82 @@
-"use strict";
+"use strict"
 
-const
-chai = require('chai'),
-sinon = require('sinon'),
-sinonChai = require('sinon-chai'),
-expect = chai.expect,
-env = require('../lib/environment/env'),
-mongoose = require('mongoose'),
-proxyquire = require('proxyquire').noPreserveCache();
+import chai, { expect } from 'chai'
+import sinon from 'sinon'
+import sinonChai from 'sinon-chai'
+import mongoose, { Mongoose, MongooseThenable } from 'mongoose'
+import { waitForDefaultMongooseConnection } from '../../lib/adapters/adapters.db.mongoose'
 
-chai.use(sinonChai);
+chai.use(sinonChai)
 
-const mocks = sinon.createSandbox();
+const mocks = sinon.createSandbox()
 
 describe('waitForMongooseConnection', function() {
 
-  const retryDelay = env.mongo.connectRetryDelay;
-  const connectTimeout = env.mongo.connectTimeout;
-  const waitForMongooseConnection = proxyquire('../lib/utilities/waitForMongooseConnection', {
-    'mongoose': mongoose
-  });
-  let connectStub;
+  const retryDelay = 2000
+  const connectTimeout = 2 * 60 * 1000
+  const waitForConnection = waitForDefaultMongooseConnection.bind({}, 'mongodb://test', connectTimeout, retryDelay, {})
+
+  type ConnectMethod = Mongoose['connect']
+  let connectStub: sinon.SinonStub<Parameters<ConnectMethod>, ReturnType<ConnectMethod>>
 
   beforeEach(function() {
-    connectStub = mocks.stub(mongoose, 'connect');
-  });
+    connectStub = mocks.stub(mongoose, 'connect')
+  })
 
   afterEach(function() {
-    mocks.restore();
-  });
+    mocks.restore()
+  })
 
   it('retries after delay when first connection fails', function() {
 
-    mocks.useFakeTimers();
+    mocks.useFakeTimers()
 
-    const firstConnect = new Promise(function(resolve, reject) {
-      reject('first connect rejection');
-    });
-    connectStub.onFirstCall().callsFake(function() {
+    const firstConnect = Promise.reject<Mongoose>('first connect rejection')
+    connectStub.onFirstCall().callsFake(function(): any {
       process.nextTick(function() {
         firstConnect.catch(function() {
-          mocks.clock.tick(retryDelay + 1);
-        });
+          mocks.clock.tick(retryDelay + 1)
+        })
       })
-      return firstConnect;
-    });
-    const connected = Promise.resolve();
-    connectStub.onSecondCall().returns(connected);
-    const connectTimeoutRejection = mocks.spy();
+      return firstConnect
+    })
+    connectStub.onSecondCall().resolves(mongoose)
+    const connectTimeoutRejection = mocks.spy()
 
-    return waitForMongooseConnection()
+    return waitForConnection()
       .catch(connectTimeoutRejection)
       .then(() => {
-        expect(connectStub).to.have.been.calledTwice;
-        expect(connectTimeoutRejection).not.to.have.been.called;
-      });
+        expect(connectStub).to.have.been.calledTwice
+        expect(connectTimeoutRejection).not.to.have.been.called
+      })
 
-  }).timeout(retryDelay + 1);
+  }).timeout(retryDelay + 1)
 
   it('resolves when the connection succeeds', function() {
 
-    const firstConnect = Promise.resolve();
-    connectStub.onFirstCall().callsFake(function() {
-      return firstConnect;
-    });
-    const connectTimeout = mocks.spy();
-    return waitForMongooseConnection();
-  });
+    connectStub.onFirstCall().resolves(mongoose)
+    return waitForConnection()
+  })
 
-  it('rejects when the connection timeout passes', function(done) {
+  it('rejects when the connection timeout passes', async function() {
 
-    mocks.useFakeTimers();
+    mocks.useFakeTimers()
 
-    const firstConnect = new Promise(function(resolve, reject) {
-      reject('first connect rejection');
-    });
+    const firstConnect = Promise.reject<Mongoose>('first connect rejection')
+
     connectStub.onFirstCall().callsFake(function() {
       process.nextTick(function() {
         firstConnect.catch(function() {
-          mocks.clock.tick(connectTimeout + 1);
-        });
+          mocks.clock.tick(connectTimeout + 1)
+        })
       })
-      return firstConnect;
-    });
-    const secondConnect = Promise.reject();
-    connectStub.onSecondCall().returns(secondConnect);
+      return firstConnect as unknown as MongooseThenable
+    })
+    const secondConnect = Promise.reject<MongooseThenable>()
+    connectStub.onSecondCall().rejects(secondConnect)
 
-    waitForMongooseConnection().catch(function(err) {
-      expect(err).to.match(/^timed out/);
-      done();
-    });
-
-  }).timeout(connectTimeout + 1);
-
-});
+    await waitForConnection().catch(function(err: Error) {
+      expect(err).to.match(/^timed out/)
+    })
+  }).timeout(connectTimeout + 1)
+})

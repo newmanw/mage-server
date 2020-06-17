@@ -18,13 +18,13 @@ class RetryConnection {
     totalRetryTime: number,
     readonly retryInterval: number,
     readonly options: mongoose.ConnectionOptions,
-    readonly resolve: (conn: mongoose.Mongoose) => any,
+    readonly resolve: () => any,
     readonly reject: (err: any) => any) {
     this.connectTimeout = Date.now() + totalRetryTime;
   }
 
   attemptConnection(): Promise<mongoose.Mongoose> {
-    return mongoose.connect(this.uri, this.options).then(() => this.resolve(mongoose), this.onConnectionError.bind(this));
+    return mongoose.connect(this.uri, this.options).then(this.resolve, this.onConnectionError.bind(this));
   }
 
   onConnectionError(err: any): void {
@@ -39,11 +39,11 @@ class RetryConnection {
   }
 }
 
-export const waitForDefaultMongooseConnection = (uri: string, retryTotalTime: number, retryInterval: number, options: mongoose.ConnectionOptions): Promise<mongoose.Mongoose> => {
+export const waitForDefaultMongooseConnection = (uri: string, retryTotalTime: number, retryInterval: number, options: mongoose.ConnectionOptions): Promise<void> => {
   if (mongoose.connection.readyState === mongoose.STATES.connected) {
-    return Promise.resolve(mongoose)
+    return Promise.resolve()
   }
-  return new Promise<mongoose.Mongoose>((resolve, reject) => {
+  return new Promise<void>((resolve, reject) => {
     const retries = new RetryConnection(uri, retryTotalTime, retryInterval, options, resolve, reject)
     retries.attemptConnection()
   })

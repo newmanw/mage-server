@@ -94,6 +94,8 @@
     "@types/node": "^13.7.6",
     "@types/node-fetch": "^2.5.4",
     "@types/passport": "^1.0.3",
+    "@types/sinon": "^9.0.4",
+    "@types/sinon-chai": "^3.2.4",
     "@types/superagent": "^4.1.7",
     "@types/supertest": "^2.0.8",
     "@types/uniqid": "^5.2.0",
@@ -129,7 +131,8 @@
     "ts-mockito": "^2.5.0",
     "ts-node": "^8.0.0",
     "typescript": "~3.8.0",
-    "uniqid": "^5.2.0"
+    "uniqid": "^5.2.0",
+    "wtfnode": "^0.8.1"
   },
   "nyc": {
     "temp-dir": "./.test_run",
