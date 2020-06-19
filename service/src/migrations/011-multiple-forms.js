@@ -1,4 +1,4 @@
-var async = require('async')
+const async = require('async')
   , fs = require('fs-extra')
   , mongoose = require('mongoose')
   , path = require('path')
@@ -6,16 +6,16 @@ var async = require('async')
   , Counter = require('../models/counter')
   , Observation = require('../models/observation');
 
-var iconBase = environment.iconBaseDirectory;
+const iconBase = environment.iconBaseDirectory;
 
 exports.id = 'multiple-forms';
 
 exports.up = function(done) {
-  console.log('\nMigrating single form per event to multiple forms');
+  this.log('migrating single form per event to multiple forms');
 
   async.waterfall([
-    getEvents,
-    migrateEvents
+    getEvents.bind(this),
+    migrateEvents.bind(this)
   ], function(err) {
     done(err);
   });
@@ -26,20 +26,18 @@ exports.down = function() {
 };
 
 function getEvents(callback) {
-  console.log('get events');
-
-  var EventModel = mongoose.model('Event');
+  const EventModel = mongoose.model('Event');
   EventModel.find({}).lean().exec(function(err, events) {
     callback(err, events);
   });
 }
 
 function migrateEvents(events, callback) {
-  console.log('migrate events');
+  this.log('migrating events to multiple forms...');
 
   async.eachSeries(events, function(event, done) {
     Counter.getNext('form').then(formId => {
-      migrateEvent(event, formId, done);
+      migrateEvent.bind(this)(event, formId, done);
     });
   }, function(err) {
     callback(err);
@@ -47,51 +45,53 @@ function migrateEvents(events, callback) {
 }
 
 function migrateEvent(event, formId, callback) {
-  console.log('migrate event ' + event.name);
+  this.log('migrating event ' + event.name);
 
   async.series([
     function(done) {
-      migrateIconFiles(event, formId, done);
-    },
+      migrateIconFiles.call(this, event, formId, done);
+    }.bind(this),
     function(done) {
-      migrateIconData(event, formId, done);
-    },
+      migrateIconData.call(this, event, formId, done);
+    }.bind(this),
     function(done) {
-      migrateEventData(event, formId, done);
-    },
+      migrateEventData.call(this, event, formId, done);
+    }.bind(this),
     function(done) {
-      migrateObservationData(event, formId, done);
-    }
+      migrateObservationData.call(this, event, formId, done);
+    }.bind(this)
   ], function(err) {
-    console.log('migrated event ' + event.name);
+    this.log('migrated event ' + event.name);
     callback(err);
-  });
+  }.bind(this));
 }
 
 function migrateIconFiles(event, formId, callback) {
-  console.log('migrate icon files for event ' + event.name);
+  this.log('migrate icon files for event ' + event.name);
 
-  var eventIconPath = path.join(iconBase, event._id.toString());
-  var formIconPath = path.join(eventIconPath, formId.toString());
+  const eventIconPath = path.join(iconBase, event._id.toString());
+  const formIconPath = path.join(eventIconPath, formId.toString());
 
-  async.eachSeries(fs.readdirSync(eventIconPath), function(child, done) {
-    if (child === formId.toString()) {
-      done();
-    } else if (child === 'icon.png') {
-      fs.copy(path.join(eventIconPath, child), path.join(formIconPath, child), done);
-    } else {
-      fs.move(path.join(eventIconPath, child), path.join(formIconPath, child), done);
-    }
-  }, function(err) {
-    console.log('migrated icon files with error', err);
-    callback(err);
-  });
+  async.eachSeries(fs.readdirSync(eventIconPath),
+    function(child, done) {
+      if (child === formId.toString()) {
+        done();
+      } else if (child === 'icon.png') {
+        fs.copy(path.join(eventIconPath, child), path.join(formIconPath, child), done);
+      } else {
+        fs.move(path.join(eventIconPath, child), path.join(formIconPath, child), done);
+      }
+    }.bind(this),
+    function(err) {
+      this.log('migrated icon files with error', err);
+      callback(err);
+    }.bind(this));
 }
 
 function migrateIconData(event, formId, callback) {
-  console.log('migrate icon data for event ' + event.name);
+  this.log('migrate icon data for event ' + event.name);
 
-  var IconModel = mongoose.model('Icon');
+  const IconModel = mongoose.model('Icon');
 
   async.series([
     function(done) {
@@ -117,9 +117,9 @@ function migrateIconData(event, formId, callback) {
 }
 
 function migrateEventData(event, formId, callback) {
-  console.log('migrate event data ' + event.name);
+  this.log('migrate event data ' + event.name);
 
-  var EventModel = mongoose.model('Event');
+  const EventModel = mongoose.model('Event');
 
   async.series([
     function(done) {
@@ -133,15 +133,11 @@ function migrateEventData(event, formId, callback) {
 
         // remove the timestamp and geometry fields, these are no
         // longer in the form.
-
-        console.log('number of form fields ' + event.forms[0].fields.length);
         event.forms[0].fields = event.forms[0].fields.filter(function(field) {
           return field.name !== 'timestamp' && field.name !== 'geometry';
         });
 
-        console.log('number of form fields after ' + event.forms[0].fields.length);
-
-        var typeFields = event.forms[0].fields.filter(function(field) {
+        const typeFields = event.forms[0].fields.filter(function(field) {
           return field.name === 'type';
         });
         typeFields[0].required = false;
@@ -164,23 +160,23 @@ function migrateEventData(event, formId, callback) {
 }
 
 function migrateObservationData(event, formId, callback) {
-  console.log('migrate observation data for event form ' + event.name);
+  this.log('migrate observation data for event form ' + event.name);
 
-  var ObservationModel = Observation.observationModel(event);
+  const ObservationModel = Observation.observationModel(event);
 
-  var fieldMap = {};
+  const fieldMap = {};
   event.form.fields.forEach(function(field) {
     fieldMap[field.name] = field;
   });
 
   ObservationModel.find({}).lean().exec(function(err, observations) {
     async.eachSeries(observations, function(observation, done) {
-      var form = {
+      const form = {
         formId: formId
       };
 
       // TODO don't move properties that are not in the form, ie accuracy
-      for (var property in observation.properties) {
+      for (const property in observation.properties) {
         if (property === 'timestamp' || !fieldMap[property]) continue;
 
         form[property] = observation.properties[property];

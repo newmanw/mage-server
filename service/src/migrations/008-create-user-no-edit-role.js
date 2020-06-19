@@ -1,11 +1,11 @@
-var Role = require('../models/role');
+const Role = require('../models/role');
 
 exports.id = 'create-user-no-edit-role';
 
 exports.up = function(done) {
-  console.log('\nCreating user no edit role...');
+  this.log('creating user no edit role...');
 
-  var userPermissions = [
+  const userPermissions = [
     "READ_DEVICE",
     "READ_EVENT_USER",
     "READ_TEAM",
@@ -20,9 +20,9 @@ exports.up = function(done) {
     "DELETE_LOCATION"
   ];
 
-  var userNoEditRole = {
+  const userNoEditRole = {
     name: "USER_NO_EDIT_ROLE",
-    description: "User no edit role, location and observation creation only acces to MAGE API.",
+    description: "This role grants permission to create locations and observations, but denies permission to edit them.",
     permissions: userPermissions
   };
 

@@ -1,10 +1,10 @@
-var mongoose = require('mongoose')
+const mongoose = require('mongoose')
   , RoleModel = mongoose.model('Role');
 
 exports.id = 'add-role-update-delete';
 
 exports.up = function(done) {
-  console.log('\nAdding update permission to ADMIN_ROLE ...');
+  this.log('adding update permission to ADMIN_ROLE ...');
 
   RoleModel.update({name: 'ADMIN_ROLE'}, {$push : {permissions: 'UPDATE_USER_ROLE'}}, function(err) {
     done(err);

@@ -1,7 +1,6 @@
 'use strict';
 
 const
-log = require('winston'),
 Event = require('../models/event').Model;
 
 module.exports.id = "ensure-event-indexes";
@@ -28,20 +27,20 @@ module.exports.up = function(done) {
   }, done)
   .then(({ eventCollection, formIdIndex }) => {
     if (!eventCollection) {
-      log.info("events collection does not yet exist so no index operations are necessary");
+      this.log("events collection does not yet exist so no index operations are necessary");
       return Promise.resolve();
     }
     if (formIdIndex) {
       if (formIdIndex.sparse && formIdIndex.unique) {
-        log.info(`events collection already has a unique, sparse index ${formIdIndex.name} on forms._id so no index operations are necessary`);
+        this.log(`events collection already has a unique, sparse index ${formIdIndex.name} on forms._id so no index operations are necessary`);
         return Promise.resolve();
       }
       else {
-        log.info(`dropping events collection forms._id index ${formIdIndex.name} and creating unique, sparse index ...`);
+        this.log(`dropping events collection forms._id index ${formIdIndex.name} and creating unique, sparse index ...`);
         return eventCollection.dropIndex(formIdIndex.name);
       }
     }
-    log.info("events collection has no index on forms._id so no index operations are necessary");
+    this.log("events collection has no index on forms._id so no index operations are necessary");
     return Promise.resolve();
   }, done)
   .then(() => {

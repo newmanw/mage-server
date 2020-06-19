@@ -1,11 +1,11 @@
-var Role = require('../models/role');
+const Role = require('../models/role');
 
 exports.id = 'create-initial-user-role';
 
 exports.up = function(done) {
-  console.log('\nCreating user role...');
+  this.log('creating user role...');
 
-  var userPermissions = [
+  const userPermissions = [
     'READ_DEVICE',
     'READ_EVENT_USER',
     'READ_TEAM',
@@ -15,9 +15,9 @@ exports.up = function(done) {
     'CREATE_OBSERVATION', 'READ_OBSERVATION_EVENT', 'UPDATE_OBSERVATION_EVENT', 'DELETE_OBSERVATION',
     'CREATE_LOCATION', 'READ_LOCATION_EVENT', 'UPDATE_LOCATION_EVENT', 'DELETE_LOCATION'];
 
-  var userRole = {
+  const userRole = {
     name: "USER_ROLE",
-    description: "User role, limited acces to MAGE API.",
+    description: "The user role permits access to the event-based, observation collection and query functions, but denies permission to administrative funtions.",
     permissions: userPermissions
   };
 

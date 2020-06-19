@@ -1,10 +1,10 @@
-var async = require('async')
+const async = require('async')
   , User = require('../models/user');
 
 exports.id = '007-user-icon';
 
 exports.up = function(done) {
-  console.log('\nUpdating user icons');
+  this.log('updating user icons');
 
   User.getUsers(function(err, users) {
     if (err) return done(err);

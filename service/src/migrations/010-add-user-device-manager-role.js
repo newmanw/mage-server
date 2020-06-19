@@ -1,8 +1,8 @@
-var async = require('async')
+const async = require('async')
   , mongoose = require('mongoose');
 
 require('../models/role');
-var RoleModel = mongoose.model('Role');
+const RoleModel = mongoose.model('Role');
 
 exports.id = 'add-user-device-manager-role';
 
@@ -15,7 +15,7 @@ exports.up = function(done) {
 };
 
 function createManagerRole(callback) {
-  var userPermissions = [
+  const userPermissions = [
     'CREATE_EVENT',
     'CREATE_TEAM',
     'READ_TEAM',
@@ -27,7 +27,7 @@ function createManagerRole(callback) {
     'CREATE_LOCATION', 'READ_LOCATION_EVENT', 'UPDATE_LOCATION_EVENT', 'DELETE_LOCATION'
   ];
 
-  var managerRole = {
+  const managerRole = {
     name: 'EVENT_MANAGER_ROLE',
     description: 'Role which allows user to manage teams and events.',
     permissions: userPermissions

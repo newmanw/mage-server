@@ -1,11 +1,11 @@
-var  Role = require('../models/role');
+const  Role = require('../models/role');
 
 exports.id = 'create-initial-admin-role';
 
 exports.up = function(done) {
-  console.log('\nCreating admin role...');
+  this.log('creating admin role...');
 
-  var adminPermissions = [
+  const adminPermissions = [
     'READ_SETTINGS', 'UPDATE_SETTINGS',
     'CREATE_DEVICE', 'READ_DEVICE', 'UPDATE_DEVICE', 'DELETE_DEVICE',
     'CREATE_USER', 'READ_USER', 'UPDATE_USER', 'DELETE_USER',
@@ -16,9 +16,9 @@ exports.up = function(done) {
     'CREATE_LOCATION', 'READ_LOCATION_ALL', 'UPDATE_LOCATION_ALL', 'DELETE_LOCATION',
     'CREATE_TEAM', 'READ_TEAM', 'UPDATE_TEAM', 'DELETE_TEAM'];
 
-  var adminRole = {
+  const adminRole = {
     name: "ADMIN_ROLE",
-    description: "Administrative role, full acces to entire MAGE API.",
+    description: "The administrative role grants permission to perform all MAGE functions.",
     permissions: adminPermissions
   };
 

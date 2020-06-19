@@ -1,4 +1,4 @@
-var async = require('async')
+const async = require('async')
   , mongoose = require('mongoose')
   , Team = require('../models/team')
   , Event = require('../models/event');
@@ -6,7 +6,7 @@ var async = require('async')
 exports.id = '006-event-teams';
 
 exports.up = function(done) {
-  console.log('\nCreating team for each event');
+  this.log('creating team for each event');
 
   mongoose.model('Team').collection.dropAllIndexes(function (err) {
     if (err) console.log('could not drop indexes', err);

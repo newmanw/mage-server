@@ -1,11 +1,11 @@
-var mongoose = require('mongoose')
+const mongoose = require('mongoose')
   , async = require('async')
   , RoleModel = mongoose.model('Role');
 
 exports.id = 'set-feed-primary-secondary';
 
 exports.up = function(done) {
-  console.log('\nUpdating forms to have a feed primary and secondary option...');
+  this.log('updating forms to have a feed primary and secondary option...');
 
   async.waterfall([
     getEvents,
@@ -20,19 +20,14 @@ exports.down = function(done) {
 };
 
 function getEvents(callback) {
-  console.log('get events');
-
-  var EventModel = mongoose.model('Event');
+  const EventModel = mongoose.model('Event');
   EventModel.find({}).lean().exec(function(err, events) {
     callback(err, events);
   });
 }
 
 function migrateEvents(events, callback) {
-  console.log('migrate events');
-
-  var EventModel = mongoose.model('Event');
-
+  const EventModel = mongoose.model('Event');
   async.eachSeries(events, function(event, done) {
     EventModel.findById(event._id).lean().exec(function(err, event) {
       for (const form of event.forms) {

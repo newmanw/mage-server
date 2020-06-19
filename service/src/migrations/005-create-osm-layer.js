@@ -1,9 +1,9 @@
-var Counter = require('../models/counter')
+const Counter = require('../models/counter')
 
 exports.id = 'create-initial-osm-layer';
 
 exports.up = async function(done) {
-  console.log('\nCreating open street map layer...');
+  this.log('creating open street map layer...');
 
   try {
     await createOSMLayer(this.db);
@@ -17,7 +17,7 @@ exports.up = async function(done) {
 async function createOSMLayer(db) {
   const id = await Counter.getNext('layer');
 
-  var osm = {
+  const osm = {
     _id: id,
     name: "Open Street Map",
     type: "Imagery",
@@ -25,7 +25,7 @@ async function createOSMLayer(db) {
     base: true,
     url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
   };
-  
+
   const collection = db.collection('layers');
   await collection.insert(osm);
 }

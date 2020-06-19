@@ -1,15 +1,14 @@
 const mongoose = require('mongoose'),
   path = require('path'),
   geopackage = require('../utilities/geopackage'),
-  environment = require('../environment/env'),
-  log = require('../logger');
+  environment = require('../environment/env');
 
 exports.id = 'make-layers-available';
 
 exports.up = async function(done) {
-  log.info('[migration][${exports.id}] updating all layers to the available state');
+  this.log('updating all layers to the available state');
   try {
-    await migrateLayers();
+    await migrateLayers.call(this);
     done();
   } catch(err) {
     done(err);
@@ -31,10 +30,9 @@ async function migrateLayers() {
         const gp = await geopackage.open(geopackagePath);
         layer.tables = geopackage.getTables(gp.geoPackage);
       } catch (err) {
-        console.log(`[migration][${exports.id}] error opening GeoPackage file ${geopackagePath}; skipping`, err);
+        this.log(`migration [${exports.id}] error opening geopackage file ${geopackagePath}; skipping - `, err);
       }
     }
-
     layer.state = 'available';
     await layer.save();
   }
