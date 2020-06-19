@@ -30,30 +30,21 @@ class MigrationContext {
       function (this: MigrationContext, resolve: () => any, reject: () => any): any {
         this.resolve = resolve
         this.reject = reject
-        this.migrator.runFromDir(dir, this.onFinished.bind(this), this.onProgress.bind(this))
+        this.migrator.runFromDir(dir, this.onFinished.bind(this))
       }.bind(this)
     )
   }
 
-  onProgress(id: string, result: migrations.MigrationResult): void {
-    if (result.status == 'error') {
-      log.error(`[migration] ${id} error: `, result.error)
-    }
-    else {
-      log.info(`[migration] ${id} finished`)
-    }
-  }
-
   onFinished(err: any, results: migrations.MigrationSetResults): void {
     if (err) {
-      log.error('[migration] database mirgrations failed: ', err)
-      log.error('[migration] migration results:\n' + JSON.stringify(results, null, 2))
+      log.error('database mirgrations failed: ', err)
+      log.error('migration results:\n' + JSON.stringify(results, null, 2))
       process.exit(1)
     }
-    log.info(`[migration] all migrations complete`, results)
+    log.info(`all migrations complete`, results)
     this.migrator.dispose(err => {
       if (err) {
-        console.log('[migration] error disposing migration resources: ', err)
+        log.error('error disposing migration resources: ', err)
         this.reject && this.reject(err)
       }
       this.resolve && this.resolve()
