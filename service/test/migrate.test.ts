@@ -25,5 +25,5 @@ describe.only('migration runner', function() {
 
     await runDatabaseMigrations(this.mongo?.uri!, {})
     console.log('finished')
-  })
+  }).timeout(10000)
 })
