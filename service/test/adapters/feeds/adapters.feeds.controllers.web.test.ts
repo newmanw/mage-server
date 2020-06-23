@@ -5,13 +5,13 @@ import { expect } from 'chai'
 import supertest from 'supertest'
 import Substitute, { SubstituteOf, Arg } from '@fluffy-spoon/substitute'
 import uniqid from 'uniqid'
-import _, { create } from 'lodash'
-import { AppResponse } from '../../../lib/app.api/app.api.global'
-import { FeedsRoutes, FeedsAppLayer, AuthenticatedWebRequest } from '../../../lib/adapters/feeds/adapters.feeds.controllers.web'
+import _ from 'lodash'
+import { AppResponse, AppRequestContext, AppRequest } from '../../../lib/app.api/app.api.global'
+import { FeedsRoutes, FeedsAppLayer } from '../../../lib/adapters/feeds/adapters.feeds.controllers.web'
 import { CreateFeedServiceRequest, FeedServiceTypeDescriptor } from '../../../lib/app.api/feeds/app.api.feeds'
 import { FeedService } from '../../../lib/entities/feeds/entities.feeds'
 import { permissionDenied, PermissionDeniedError, InvalidInputError, invalidInput, EntityNotFoundError, entityNotFound } from '../../../lib/app.api/app.api.global.errors'
-import { AppRequestFactory } from '../../../lib/adapters/adapters.controllers.global'
+import { WebAppRequestFactory } from '../../../lib/adapters/adapters.controllers.web'
 
 const jsonMimeType = /^application\/json/
 
@@ -21,9 +21,10 @@ describe('feeds web adapter', function() {
     user: 'admin'
   }
 
-  const createAdminRequest: AppRequestFactory = <Params>(p: Params) => {
+  const createAdminRequest = <Params>(p?: Params): Params & AppRequest<{ user: string }> => {
+    const safeParams = p || {} as any
     return {
-      ...p,
+      ...safeParams,
       context: {
         requestToken: Symbol(),
         requestingPrincipal() {
@@ -34,7 +35,7 @@ describe('feeds web adapter', function() {
   }
 
   type AppRequestFactoryHandle = {
-    createRequest: AppRequestFactory
+    createRequest: WebAppRequestFactory
   }
 
   let client: supertest.SuperTest<supertest.Test>
@@ -47,8 +48,7 @@ describe('feeds web adapter', function() {
     const feedsRoutes: express.Router = FeedsRoutes(appLayer, appRequestFactory.createRequest)
     const endpoint = express()
     endpoint.use(function lookupUser(req: express.Request, res: express.Response, next: express.NextFunction) {
-      const authReq = req as AuthenticatedWebRequest
-      authReq.userId = req.headers['user'] as string
+      req.user = req.headers['user'] as string
       next()
     })
     endpoint.use('/', feedsRoutes)
@@ -81,7 +81,7 @@ describe('feeds web adapter', function() {
         }
       ]
       const appReq = createAdminRequest()
-      appRequestFactory.createRequest(Arg.deepEquals(void 0)).returns(appReq)
+      appRequestFactory.createRequest(Arg.any(), Arg.deepEquals(void 0)).returns(appReq)
       appLayer.listServiceTypes(Arg.deepEquals(appReq)).resolves(AppResponse.success(serviceTypes))
       const res = await client.get('/service_types')
         .set('user', adminPrincipal.user)
@@ -120,7 +120,7 @@ describe('feeds web adapter', function() {
         id: `wfs:${uniqid()}`,
         ...submitted
       }
-      appRequestFactory.createRequest(Arg.deepEquals(submitted)).returns(appReq)
+      appRequestFactory.createRequest(Arg.any(), Arg.deepEquals(submitted)).returns(appReq)
       appLayer.createService(Arg.deepEquals(appReq)).resolves(AppResponse.success(created))
 
       const res = await client.post('/services')
@@ -245,7 +245,7 @@ invalid input:
           summary: null,
           config: null,
         }
-        appRequestFactory.createRequest(Arg.deepEquals(params)).returns(appReq)
+        appRequestFactory.createRequest(Arg.any(), Arg.deepEquals(params)).returns(appReq)
         appLayer.createService(Arg.deepEquals(appReq))
           .resolves(AppResponse.success<FeedService, unknown>(created))
 

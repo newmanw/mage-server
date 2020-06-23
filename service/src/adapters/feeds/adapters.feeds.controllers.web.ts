@@ -12,8 +12,7 @@ import bodyParser from 'body-parser'
 import { UserId } from '../../entities/authn/entities.authn'
 import { ListFeedServiceTypes, ListServiceTopics, CreateFeedService, CreateFeedServiceRequest } from '../../app.api/feeds/app.api.feeds'
 import { ErrPermissionDenied, MageError, PermissionDeniedError, ErrInvalidInput, invalidInput, ErrEntityNotFound } from '../../app.api/app.api.global.errors'
-import { AppRequest } from '../../app.api/app.api.global'
-import { AppRequestFactory } from '../adapters.controllers.global'
+import { WebAppRequestFactory } from '../adapters.controllers.web'
 
 export interface FeedsAppLayer {
   listServiceTypes: ListFeedServiceTypes
@@ -21,11 +20,7 @@ export interface FeedsAppLayer {
   listTopics: ListServiceTopics
 }
 
-export interface AuthenticatedWebRequest extends express.Request {
-  userId: UserId
-}
-
-export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: AppRequestFactory): express.Router {
+export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppRequestFactory): express.Router {
   const routes = express.Router()
   routes.use(bodyParser.json())
 
@@ -44,7 +39,7 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: AppReques
 
   routes.route('/service_types')
     .get(async (req, res, next): Promise<any> => {
-      const appReq = createAppRequest()
+      const appReq = createAppRequest(req)
       const appRes = await appLayer.listServiceTypes(appReq)
       if (appRes.success) {
         return res.json(appRes.success)
@@ -54,8 +49,7 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: AppReques
 
   routes.route('/services')
     .post(async (req, res, next): Promise<any> => {
-      const authReq = req as AuthenticatedWebRequest
-      const body = authReq.body
+      const body = req.body
       const params = {
         serviceType: body.serviceType,
         config: body.config || null,
@@ -68,7 +62,7 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: AppReques
       if (!params.title) {
         return next(invalidInput('missing title'))
       }
-      const appReq = createAppRequest(params)
+      const appReq = createAppRequest(req, params)
       const appRes = await appLayer.createService(appReq)
       if (appRes.success) {
         return res.status(201).json(appRes.success)

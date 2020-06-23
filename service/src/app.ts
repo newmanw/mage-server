@@ -5,12 +5,17 @@ import http from 'http'
 import fs from 'fs-extra'
 import mongoose, { ConnectionOptions } from 'mongoose'
 import express from 'express'
-import { MongooseFeedServiceTypeRepository, FeedServiceTypeIdentityModel } from './adapters/feeds/adapters.feeds.db.mongoose'
+import { MongooseFeedServiceTypeRepository, FeedServiceTypeIdentityModel, MongooseFeedServiceRepository, FeedServiceModel } from './adapters/feeds/adapters.feeds.db.mongoose'
 import { waitForDefaultMongooseConnection } from './adapters/adapters.db.mongoose'
 import { FeedServiceTypeRepository } from './entities/feeds/entities.feeds'
 import * as feedsApi from './app.api/feeds/app.api.feeds'
 import * as feedsImpl from './app.impl/feeds/app.impl.feeds'
 import { env } from 'process'
+import { PreFetchedUserRoleFeedsPerissionService } from './permissions/permissions.feeds'
+import { FeedsRoutes } from './adapters/feeds/adapters.feeds.controllers.web'
+import { WebAppRequestFactory } from './adapters/adapters.controllers.web'
+import { AppRequest } from './app.api/app.api.global'
+import { UserJson, UserDocument } from './models/user'
 
 
 export interface MageService {
@@ -71,7 +76,7 @@ export const boot = async function(config: BootConfig): Promise<MageService> {
   const appLayer = intitializeAppLayer(models)
 
   // load routes the old way
-  const app = intializeRestInterface()
+  const app = intializeRestInterface(appLayer)
 
   await loadPlugins(config.plugins, appLayer)
 
@@ -91,13 +96,19 @@ export const boot = async function(config: BootConfig): Promise<MageService> {
 
 type DatabaseModels = {
   conn: mongoose.Connection
-  feedServiceTypeIdentity: FeedServiceTypeIdentityModel
+  feeds: {
+    feedServiceTypeIdentity: FeedServiceTypeIdentityModel
+    feedService: FeedServiceModel
+  }
 }
 
 type AppLayer = {
   feeds: {
     serviceTypeRepo: FeedServiceTypeRepository
+    permissionService: feedsApi.FeedsPermissionService
     listServiceTypes: feedsApi.ListFeedServiceTypes
+    createService: feedsApi.CreateFeedService
+    listTopics: feedsApi.ListServiceTopics
   }
 }
 
@@ -111,23 +122,50 @@ async function initializeDatabase(): Promise<DatabaseModels> {
   await require('./migrate').runDatabaseMigrations()
   return {
     conn,
-    feedServiceTypeIdentity: FeedServiceTypeIdentityModel(conn)
+    feeds: {
+      feedServiceTypeIdentity: FeedServiceTypeIdentityModel(conn),
+      feedService: FeedServiceModel(conn)
+    }
   }
 }
 
 function intitializeAppLayer(dbModels: DatabaseModels): AppLayer {
-  // const feeds = {
-  //   serviceTypeRepo: new MongooseFeedServiceTypeRepository(dbModels.feedServiceTypeIdentity)
-  // }
-  // const permissionService = new FeedsPermissions()
-  // feeds.listServiceType = feedsImpl.ListFeedServiceTypes()
-  // return {
-  //   feeds
-  // }
-  throw new Error('todo')
+  const feeds = intializeFeedsAppLayer(dbModels)
+  return {
+    feeds
+  }
 }
 
-function intializeRestInterface(): express.Application {
-  const app = require('./express.js') as express.Application
-  return app
+function intializeFeedsAppLayer(dbModels: DatabaseModels): AppLayer['feeds'] {
+  const serviceTypeRepo = new MongooseFeedServiceTypeRepository(dbModels.feeds.feedServiceTypeIdentity)
+  const serviceRepo = new MongooseFeedServiceRepository(dbModels.feeds.feedService)
+  const permissionService = new PreFetchedUserRoleFeedsPerissionService()
+  const listServiceTypes = feedsImpl.ListFeedServiceTypes(permissionService, serviceTypeRepo)
+  const createService = feedsImpl.CreateFeedService(permissionService, serviceTypeRepo, serviceRepo)
+  const listTopics = feedsImpl.ListServiceTopics(permissionService, serviceTypeRepo, serviceRepo)
+  return {
+    serviceTypeRepo,
+    permissionService,
+    listServiceTypes,
+    createService,
+    listTopics
+  }
+}
+
+function intializeRestInterface(app: AppLayer): express.Application {
+  const webApp = require('./express.js') as express.Application
+  const appRequestFactory: WebAppRequestFactory = <Params = unknown>(req: express.Request, params: Params): AppRequest<UserDocument> & Params => {
+    return {
+      ...params as any,
+      context: {
+        requestToken: Symbol(),
+        requestingPrincipal() {
+          return req.user
+        }
+      }
+    }
+  }
+  const feedsRoutes = FeedsRoutes(app.feeds, appRequestFactory)
+  webApp.use('/api/feeds', feedsRoutes)
+  return webApp
 }

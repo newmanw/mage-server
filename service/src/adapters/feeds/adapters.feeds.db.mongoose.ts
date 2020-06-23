@@ -43,6 +43,9 @@ export const FeedServiceSchema = new mongoose.Schema(
   })
 export type FeedServiceDocument = FeedServiceDescriptor & mongoose.Document
 export type FeedServiceModel = Model<FeedServiceDocument>
+export function FeedServiceModel(conn: mongoose.Connection): FeedServiceModel {
+  return conn.model(FeedsModels.FeedService, FeedServiceSchema, 'feed_services')
+}
 
 export class MongooseFeedServiceTypeRepository implements FeedServiceTypeRepository {
 
