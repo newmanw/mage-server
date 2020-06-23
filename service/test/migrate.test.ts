@@ -6,7 +6,7 @@ import { mongoTestBeforeAllHook, mongoTestAfterAllHook } from './mongo.test'
 /**
  * TODO: this should probably be an integration test
  */
-describe.only('migration runner', function() {
+describe('migration runner', function() {
 
   before(mongoTestBeforeAllHook())
 

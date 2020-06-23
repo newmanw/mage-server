@@ -5,7 +5,7 @@ import { expect } from 'chai'
 import supertest from 'supertest'
 import Substitute, { SubstituteOf, Arg } from '@fluffy-spoon/substitute'
 import uniqid from 'uniqid'
-import _ from 'lodash'
+import _, { create } from 'lodash'
 import { AppResponse } from '../../../lib/app.api/app.api.global'
 import { FeedsRoutes, FeedsAppLayer, AuthenticatedWebRequest } from '../../../lib/adapters/feeds/adapters.feeds.controllers.web'
 import { CreateFeedServiceRequest, FeedServiceTypeDescriptor } from '../../../lib/app.api/feeds/app.api.feeds'
@@ -33,12 +33,18 @@ describe('feeds web adapter', function() {
     }
   }
 
+  type AppRequestFactoryHandle = {
+    createRequest: AppRequestFactory
+  }
+
   let client: supertest.SuperTest<supertest.Test>
   let appLayer: SubstituteOf<FeedsAppLayer>
+  let appRequestFactory: SubstituteOf<AppRequestFactoryHandle>
 
   beforeEach(function() {
     appLayer = Substitute.for<FeedsAppLayer>()
-    const feedsRoutes: express.Router = FeedsRoutes(appLayer, createAdminRequest)
+    appRequestFactory = Substitute.for<AppRequestFactoryHandle>()
+    const feedsRoutes: express.Router = FeedsRoutes(appLayer, appRequestFactory.createRequest)
     const endpoint = express()
     endpoint.use(function lookupUser(req: express.Request, res: express.Response, next: express.NextFunction) {
       const authReq = req as AuthenticatedWebRequest
@@ -74,7 +80,9 @@ describe('feeds web adapter', function() {
           configSchema: null
         }
       ]
-      appLayer.listServiceTypes(Arg.deepEquals(adminPrincipal)).resolves(AppResponse.success(serviceTypes))
+      const appReq = createAdminRequest()
+      appRequestFactory.createRequest(Arg.deepEquals(void 0)).returns(appReq)
+      appLayer.listServiceTypes(Arg.deepEquals(appReq)).resolves(AppResponse.success(serviceTypes))
       const res = await client.get('/service_types')
         .set('user', adminPrincipal.user)
 
@@ -112,6 +120,7 @@ describe('feeds web adapter', function() {
         id: `wfs:${uniqid()}`,
         ...submitted
       }
+      appRequestFactory.createRequest(Arg.deepEquals(submitted)).returns(appReq)
       appLayer.createService(Arg.deepEquals(appReq)).resolves(AppResponse.success(created))
 
       const res = await client.post('/services')
@@ -222,12 +231,13 @@ invalid input:
 
       it('maps absent config to null', async function() {
 
-        const appReq: CreateFeedServiceRequest = createAdminRequest({
+        const params = {
           serviceType: 'configless',
           title: 'No Config Necessary',
           config: null,
           summary: undefined,
-        })
+        }
+        const appReq: CreateFeedServiceRequest = createAdminRequest(params)
         const created = {
           id: uniqid(),
           serviceType: 'configless',
@@ -235,6 +245,7 @@ invalid input:
           summary: null,
           config: null,
         }
+        appRequestFactory.createRequest(Arg.deepEquals(params)).returns(appReq)
         appLayer.createService(Arg.deepEquals(appReq))
           .resolves(AppResponse.success<FeedService, unknown>(created))
 

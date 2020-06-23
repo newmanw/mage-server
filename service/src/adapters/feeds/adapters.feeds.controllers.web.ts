@@ -56,18 +56,19 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: AppReques
     .post(async (req, res, next): Promise<any> => {
       const authReq = req as AuthenticatedWebRequest
       const body = authReq.body
-      const appReq = createAppRequest({
+      const params = {
         serviceType: body.serviceType,
         config: body.config || null,
         title: body.title,
         summary: body.summary
-      })
-      if (!appReq.serviceType) {
+      }
+      if (!params.serviceType) {
         return next(invalidInput('missing service type'))
       }
-      if (!appReq.title) {
+      if (!params.title) {
         return next(invalidInput('missing title'))
       }
+      const appReq = createAppRequest(params)
       const appRes = await appLayer.createService(appReq)
       if (appRes.success) {
         return res.status(201).json(appRes.success)
