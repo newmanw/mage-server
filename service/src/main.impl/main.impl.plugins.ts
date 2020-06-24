@@ -11,11 +11,12 @@ export interface PluginDependencies {
 
 export async function loadPlugins(pluginModules: string[], deps: PluginDependencies): Promise<void> {
   for (const moduleName of pluginModules) {
-    const hooks = await import(moduleName) as PluginHooks
-    loadFeedsHooks(deps.feeds.serviceTypeRepo, moduleName, hooks)
+    try {
+      const hooks = await import(moduleName) as PluginHooks
+      loadFeedsHooks(deps.feeds.serviceTypeRepo, moduleName, hooks)
+    }
+    catch (err) {
+      console.log(`error loading plugin module: ${moduleName}`, err)
+    }
   }
 }
-
-
-
-

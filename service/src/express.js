@@ -95,4 +95,4 @@ app.use(function(err, req, res, next) { // Express requires a 4 parameter functi
   res.status(status).send(msg);
 });
 
-module.exports = app;
+module.exports = { app, auth: authentication };

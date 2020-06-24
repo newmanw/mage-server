@@ -119,7 +119,8 @@ async function initializeDatabase(): Promise<DatabaseModels> {
   // TODO: inject connection to migrations
   // TODO: explore performing migrations without mongoose models because current models may not be compatible with past migrations
   require('./models').initializeModels()
-  await require('./migrate').runDatabaseMigrations()
+  const migrate = await import('./migrate')
+  await migrate.runDatabaseMigrations(uri, options)
   return {
     conn,
     feeds: {
@@ -153,7 +154,9 @@ function intializeFeedsAppLayer(dbModels: DatabaseModels): AppLayer['feeds'] {
 }
 
 function intializeRestInterface(app: AppLayer): express.Application {
-  const webApp = require('./express.js') as express.Application
+  const webLayer = require('./express.js')
+  const webApp = webLayer.app as express.Application
+  const webAuth = webLayer.auth
   const appRequestFactory: WebAppRequestFactory = <Params = unknown>(req: express.Request, params: Params): AppRequest<UserDocument> & Params => {
     return {
       ...params as any,
@@ -166,6 +169,9 @@ function intializeRestInterface(app: AppLayer): express.Application {
     }
   }
   const feedsRoutes = FeedsRoutes(app.feeds, appRequestFactory)
-  webApp.use('/api/feeds', feedsRoutes)
+  webApp.use('/api/feeds', [
+    webAuth.passport.authenticate('bearer'),
+    feedsRoutes
+  ])
   return webApp
 }
