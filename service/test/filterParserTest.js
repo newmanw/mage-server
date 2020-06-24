@@ -1,6 +1,6 @@
 "use strict";
 
-var FilterParser = require('../utilities/filterParser.js')
+var FilterParser = require('../lib/utilities/filterParser.js')
     , expect = require("chai").expect
     , mongoose = require('mongoose');
 
@@ -14,10 +14,10 @@ describe("Filter Parser Tests", function () {
 
     it('Test IN filter parsing', function (done) {
         const objectId = mongoose.Types.ObjectId('578df3efb618f5141202a196');
-        let filter = { 
-            "in": { 
-                "testIds": objectId.toString() 
-            } 
+        let filter = {
+            "in": {
+                "testIds": objectId.toString()
+            }
         };
 
         const conditions = FilterParser.parse(filter);
@@ -33,10 +33,10 @@ describe("Filter Parser Tests", function () {
 
     it('Test NIN filter parsing', function (done) {
         const objectId = mongoose.Types.ObjectId('578df3efb618f5141202a196');
-        let filter = { 
-            "nin": { 
-                "testIds": objectId.toString() 
-            } 
+        let filter = {
+            "nin": {
+                "testIds": objectId.toString()
+            }
         };
 
         const conditions = FilterParser.parse(filter);
@@ -51,11 +51,11 @@ describe("Filter Parser Tests", function () {
     });
 
     it('Test Equals filter parsing', function (done) {
-        let filter = { 
-            "e": { 
+        let filter = {
+            "e": {
                 "equalToNull": null,
-                "equalTo4": 4 
-            } 
+                "equalTo4": 4
+            }
         };
 
         const conditions = FilterParser.parse(filter);
@@ -73,10 +73,10 @@ describe("Filter Parser Tests", function () {
 
     it('Test OR filter parsing', function (done) {
         const userSearch = 'caci';
-        let filter = { 
-            "or": { 
+        let filter = {
+            "or": {
                 email: '.*' + userSearch + '.*'
-            } 
+            }
         };
 
         const conditions = FilterParser.parse(filter);

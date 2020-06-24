@@ -1,7 +1,7 @@
 const request = require('supertest')
   , sinon = require('sinon')
   , mongoose = require('mongoose')
-  , app = require('../../lib/express')
+  , { app } = require('../../lib/express')
   , Setting = require('../../lib/models/setting');
 
 require('sinon-mongoose');
@@ -73,7 +73,7 @@ async function authenticate() {
       sinon.restore();
     });
 
-  return jwt; 
+  return jwt;
 }
 
 describe("device provision tests", function() {

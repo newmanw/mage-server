@@ -24,7 +24,7 @@ const request = require('supertest')
   , sinon = require('sinon')
   , chai = require('chai')
   , MockToken = require('../mockToken')
-  , app = require('../../lib/express')
+  , { app } = require('../../lib/express')
   , mockfs = require('mock-fs')
   , mongoose = require('mongoose');
 
@@ -199,7 +199,7 @@ describe("user read tests", function() {
       .end(done);
   });
 
-  it('should get all users and populate role', function(done) {
+  it('should get all users and populate role', async function() {
     mockTokenWithPermission('READ_USER');
 
     sinon.mock(UserModel)

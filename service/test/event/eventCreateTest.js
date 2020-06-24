@@ -4,7 +4,7 @@ var request = require('supertest')
   , mongoose = require('mongoose')
   , mockfs = require('mock-fs')
   , MockToken = require('../mockToken')
-  , app = require('../../lib/express')
+  , { app } = require('../../lib/express')
   , TokenModel = mongoose.model('Token');
 
 require('chai').should();

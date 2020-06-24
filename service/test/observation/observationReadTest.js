@@ -4,7 +4,7 @@ var request = require('supertest')
   , mongoose = require('mongoose')
   , moment = require('moment')
   , MockToken = require('../mockToken')
-  , app = require('../../lib/express')
+  , { app } = require('../../lib/express')
   , TokenModel = mongoose.model('Token');
 
 require('sinon-mongoose');

@@ -4,7 +4,7 @@ const mongoose = require('mongoose');
 const mockfs = require('mock-fs');
 const expect = require('chai').expect;
 const MockToken = require('../mockToken');
-const app = require('../../lib/express');
+const { app } = require('../../lib/express');
 const TokenModel = mongoose.model('Token');
 const env = require('../../lib/environment/env');
 

@@ -1,13 +1,13 @@
 "use strict";
 
-var Paging = require('../utilities/paging.js'),
+var Paging = require('../lib/utilities/paging.js'),
     chai = require('chai'),
     sinon = require('sinon'),
     sinonChai = require('sinon-chai'),
     expect = require("chai").expect,
     mongoose = require('mongoose'),
-    User = require('../models/user.js'),
-    Device = require('../models/device.js');
+    User = require('../lib/models/user.js'),
+    Device = require('../lib/models/device.js');
 
 require('sinon-mongoose');
 

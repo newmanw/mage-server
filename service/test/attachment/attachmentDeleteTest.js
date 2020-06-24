@@ -3,7 +3,7 @@ const sinon = require('sinon');
 const expect = require('chai').expect;
 const mongoose = require('mongoose');
 const MockToken = require('../mockToken');
-const app = require('../../lib/express');
+const { app } = require('../../lib/express');
 require('sinon-mongoose');
 require('../../lib/models/team');
 require('../../lib/models/event');

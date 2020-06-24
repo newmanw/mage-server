@@ -1,6 +1,6 @@
 var request = require('supertest')
   , sinon = require('sinon')
-  , app = require('../lib/express')
+  , { app } = require('../lib/express')
   , mongoose = require('mongoose');
 
 require('../lib/models/setting');

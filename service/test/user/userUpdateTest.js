@@ -3,7 +3,7 @@ var request = require('supertest')
   , should = require('chai').should()
   , expect = require('chai').expect
   , MockToken = require('../mockToken')
-  , app = require('../../lib/express')
+  , { app } = require('../../lib/express')
   , mongoose = require('mongoose');
 
 require('../../lib/models/token');

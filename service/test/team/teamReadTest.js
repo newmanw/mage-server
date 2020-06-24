@@ -2,7 +2,7 @@ var request = require('supertest')
   , sinon = require('sinon')
   , mongoose = require('mongoose')
   , MockToken = require('../mockToken')
-  , app = require('../../lib/express')
+  , { app } = require('../../lib/express')
   , TokenModel = mongoose.model('Token');
 
 require('chai').should();
