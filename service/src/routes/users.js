@@ -11,6 +11,7 @@ module.exports = function (app, security) {
     , { default: upload } = require('../upload')
     , passport = security.authentication.passport;
 
+  // TODO: smells
   const passwordLength = Object.keys(security.authentication.strategies).reduce((prev, authName) => {
     return security.authentication.strategies[authName].passwordMinLength || prev;
   }, null);

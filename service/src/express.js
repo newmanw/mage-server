@@ -73,6 +73,7 @@ app.use('/private',
 const authentication = require('./authentication')(app, passport, provision, config.api.authenticationStrategies);
 
 // Configure routes
+// TODO: don't pass authentication to other routes, but enforce authentication ahead of adding route modules
 require('./routes')(app, { authentication: authentication });
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

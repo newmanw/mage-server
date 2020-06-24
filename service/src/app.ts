@@ -76,7 +76,7 @@ export const boot = async function(config: BootConfig): Promise<MageService> {
   const appLayer = intitializeAppLayer(models)
 
   // load routes the old way
-  const app = intializeRestInterface(appLayer)
+  const app = await intializeRestInterface(appLayer)
 
   await loadPlugins(config.plugins, appLayer)
 
@@ -153,9 +153,9 @@ function intializeFeedsAppLayer(dbModels: DatabaseModels): AppLayer['feeds'] {
   }
 }
 
-function intializeRestInterface(app: AppLayer): express.Application {
-  const webLayer = require('./express.js')
-  const webApp = webLayer.app as express.Application
+async function intializeRestInterface(app: AppLayer): Promise<express.Application> {
+  const webLayer = await import('./express')
+  const webApp = webLayer.app
   const webAuth = webLayer.auth
   const appRequestFactory: WebAppRequestFactory = <Params = unknown>(req: express.Request, params: Params): AppRequest<UserDocument> & Params => {
     return {
