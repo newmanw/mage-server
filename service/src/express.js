@@ -24,12 +24,6 @@ app.use(function(req, res, next) {
   return next();
 });
 
-app.set('config', config);
-app.enable('trust proxy');
-
-app.set('views', path.join(__dirname, 'views'));
-app.set('view engine', 'pug');
-
 const secret = crypto.randomBytes(64).toString('hex');
 app.use(cookieSession({
   secret: secret,
@@ -39,20 +33,27 @@ app.use(cookieSession({
   sameSite: true
 }));
 
-passport.serializeUser(function(user, done) {
+passport.serializeUser(function (user, done) {
   done(null, user._id);
 });
 
-passport.deserializeUser(function(id, done) {
-  new api.User().getById(id, function(err, user) {
+passport.deserializeUser(function (id, done) {
+  new api.User().getById(id, function (err, user) {
     done(err, user);
   });
 });
+
+app.set('config', config);
+app.enable('trust proxy');
+
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'pug');
 
 const bodyLimit = { limit: '16mb' };
 app.use(
     express.json(bodyLimit),
     express.urlencoded( { ...bodyLimit, extended: true }));
+
 app.use(passport.initialize());
 app.use(passport.session());
 app.get('/api/docs/openapi.yaml', async function(req, res) {
