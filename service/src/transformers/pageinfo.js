@@ -1,5 +1,3 @@
-var util = require('util')
-  
 
 exports.transform = function(pageInfo, req) {
     pageInfo.links.base = req.getRoot();
