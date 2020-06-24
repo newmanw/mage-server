@@ -152,7 +152,7 @@
     "test:run": "mocha --config .mocharc.dev.js",
     "test": "npm-run-all build test:run",
     "dist-test:compile": "tsc -b test",
-    "dist-test:build": "npm-run-all dist-test:compile build:after_compile",
+    "dist-test:build": "npm-run-all build dist-test:compile",
     "dist-test:copy_resources": "cpy \"test/environment/*.pem\" test-lib/environment",
     "dist-test:test": "mocha --config .mocharc.dist.js",
     "dist-test": "npm-run-all dist-test:build dist-test:copy_resources dist-test:test",
