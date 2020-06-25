@@ -30,13 +30,14 @@ export interface FeedsPluginHooks {
 export const ErrInvalidServiceConfig = Symbol.for('err.feeds.invalid_service_config')
 
 export class FeedsError<Code extends symbol, Data> extends Error {
-  constructor(readonly code: Code, readonly data?: Data) {
-    super(Symbol.keyFor(code))
+  constructor(readonly code: Code, readonly data?: Data, message?: string) {
+    super(message ? message : Symbol.keyFor(code))
   }
 }
 
 export interface InvalidServiceConfigErrorData {
   readonly invalidKeys: string[]
+  readonly config: Json
 }
 
 export type InvalidServiceConfigError = FeedsError<typeof ErrInvalidServiceConfig, InvalidServiceConfigErrorData>

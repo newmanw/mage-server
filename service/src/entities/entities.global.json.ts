@@ -23,3 +23,4 @@ export type JsonCompatible<T> = {
     : JsonCompatible<T[P]>;
 };
 
+export { JSONSchema6 as JSONSchema6 } from 'json-schema'
