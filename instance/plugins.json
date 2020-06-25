@@ -1,5 +1,5 @@
 [
   "@ngageoint/mage.image.service",
   "@ngageoint/mage.image.webapp",
-  "@ngageoint/mage.feeds.msi"
+  "@ngageoint/mage.nga-msi"
 ]

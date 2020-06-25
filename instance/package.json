@@ -23,12 +23,12 @@
   },
   "homepage": "https://github.com/ngageoint/mage-server#readme",
   "dependencies": {
-    "@ngageoint/mage.service": "../service",
-    "@ngageoint/mage.web-app": "../web-app",
     "express": "^4.17.1"
   },
   "devDependencies": {
-    "@ngageoint/mage.image.service": "file:../plugins/image/service",
+    "@ngageoint/mage.service": "file:../service",
+    "@ngageoint/mage.web-app": "file:../web-app",
+    "@ngageoint/mage.nga-msi": "file:../plugins/nga-msi",
     "npm-run-all": "^4.1.5"
   }
 }
