@@ -5,7 +5,7 @@ import { Db } from 'mongodb'
 import { expect } from 'chai'
 import { result } from 'lodash'
 
-describe.only('feeds admin permissions migratino', function() {
+describe('feeds admin permissions migratino', function() {
 
   const feedsPermissions = [
     'FEEDS_LIST_SERVICE_TYPES',
