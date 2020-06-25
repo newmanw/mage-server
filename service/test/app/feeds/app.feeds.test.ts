@@ -142,7 +142,7 @@ describe('feeds administration', function() {
       const invalidConfig = {
         url: null
       }
-      serviceType.validateServiceConfig(Arg.any()).resolves(new FeedsError(ErrInvalidServiceConfig, { invalidKeys: ['url'] }))
+      serviceType.validateServiceConfig(Arg.any()).resolves(new FeedsError(ErrInvalidServiceConfig, { invalidKeys: ['url'], config: invalidConfig }))
       const err = await app
         .createService(requestBy(adminPrincipal, { serviceType: serviceType.id, title: 'Test Service', config: invalidConfig }))
         .then(res => res.error as InvalidInputError)
@@ -256,7 +256,7 @@ describe('feeds administration', function() {
           serviceConfig: { invalid: true }
         })
       serviceType.validateServiceConfig(Arg.deepEquals(req.serviceConfig))
-        .resolves(new FeedsError(ErrInvalidServiceConfig, { invalidKeys: ['invalid'] }))
+        .resolves(new FeedsError(ErrInvalidServiceConfig, { invalidKeys: ['invalid'], config: { invalid: true } }))
 
       const res = await app.previewTopics(req)
 
