@@ -58,6 +58,9 @@ export interface FeedServiceType {
 
 export type RegisteredFeedServiceType = FeedServiceType & { id: string }
 
+/**
+ * A feed service ID is globally unique.
+ */
 export type FeedServiceId = string
 
 export interface FeedServiceInfo {
@@ -108,6 +111,7 @@ export type FeedId = string
 
 export interface Feed {
   id: FeedId
+  service: FeedServiceId
   topic: FeedTopicId
   title: string
   summary: string
