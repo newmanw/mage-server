@@ -103,9 +103,8 @@ export interface FeedContent {
   readonly items: FeatureCollection
 }
 
+/** A feed ID is globally unique. */
 export type FeedId = string
-
-export type FeedItemId = string | number
 
 export interface Feed {
   id: FeedId
@@ -114,10 +113,11 @@ export interface Feed {
   summary: string
   constantParams: Json
   /**
-   * The variable parameters schema of a feed is a schema that a user can define
-   * to advertise the parameters feed consumers can pass when fetching content
-   * from a feed.  This schema could be the same as that on the underlying
-   * [FeedTopic] or could be a more restrictive subset of the topic schema.
+   * The variable parameters schema of a feed is a schema an administrative user
+   * can define to advertise the parameters feed consumers can pass when
+   * fetching content from a feed.  This schema could be the same as that of the
+   * source  {@linkcode FeedTopic} or could be a more restrictive subset of the
+   * topic schema.
    */
   variableParamsSchema: JSONSchema6
   /**
@@ -131,11 +131,15 @@ export interface Feed {
    */
   updateFrequency: FeedUpdateFrequency | null
   /**
-   * This flag is similar to the like-named property on its underlying
-   * [FeedTopic], but as with [.updateFrequency], allows configuration by a
-   * human user.
+   * This flag is similar to the like-named property on its source
+   * {@linkcode FeedTopic}, but as with {@linkcode Feed.updateFrequency}, allows
+   * configuration by a human user.
    */
   itemsHaveIdentity: boolean
+  itemsHaveSpatialDimension: boolean
+  itemsHaveTemporalDimension: boolean
+  itemPrimaryProperty: string
+  itemSecondaryProperty: string | null
 }
 
 export type FeedParams = {
@@ -143,6 +147,9 @@ export type FeedParams = {
   variableParams: Json
 }
 
+/**
+ * A topic ID is unique in the context the providing {@linkcode FeedService}.
+ */
 export type FeedTopicId = string
 
 export class FeedUpdateFrequency {
@@ -153,20 +160,65 @@ export interface FeedTopic {
   readonly id: FeedTopicId
   readonly title: string
   readonly summary: string | null
-  readonly constantParamsSchema: JSONSchema6 | null
-  readonly variableParamsSchema: JSONSchema6 | null
+  /**
+   * The constant paramters schema defines parameters that an administrative
+   * user must supply when defining a feed derived from this topic.  An example
+   * of a constant parameter this schema defines might be `apiKey`.
+   */
+  readonly constantParamsSchema?: JSONSchema6
+  /**
+   * The variable parameters schema defines parameters that a consuming client
+   * can supply when fetching items from a feed dervied from this topic.  A
+   * MAGE mobile app user could change the parameters this schema defines.  An
+   * example parameter this schema defines might be `lastUpdatedTime`.
+   */
+  readonly variableParamsSchema?: JSONSchema6
   /**
    * A topic's update frequency is a hint about how often a service might
-   * publish new data to a topic.
+   * publish new data to a topic.  A value of `undefined` indicates a topic's
+   * update frequency is unknown and requires configuration in a derived
+   * {@linkcode Feed}.
    */
-  readonly updateFrequency: FeedUpdateFrequency | null
+  readonly updateFrequency?: FeedUpdateFrequency
   /**
    * When feed items have identity, the `id` property of the GeoJSON feature
    * items fetched from a feed will contain a persistent unique identifier for
    * the items.  The same item across mulutiple fetches will have the same
    * `id` property value.  Consumers of feed content can then present changes as
    * updates to previously fetched items, for example updating the location of
-   * a moving vehicle.
+   * a moving vehicle.  A value of `undefined` indicates a topic's item identity
+   * is unknown and requires configuration in a derived {@linkcode Feed}.
    */
-  readonly itemsHaveIdentity: boolean | null
+  readonly itemsHaveIdentity?: boolean
+  /**
+   * Feed items with a spatial dimension will translate to GeoJSON features with
+   * non-null geometries.  A value of `undefined` indicates a topic's spatial
+   * dimension is unknown and requires configuration in a derived
+   * {@linkcode Feed}.
+   */
+  readonly itemsHaveSpatialDimension?: boolean
+  /**
+   * Feed items with a temporal dimension will translate to GeoJSON features
+   * that have a temporal extent property called `$mage$temporalExtent.  A
+   * value of `undefined` indicates a topic's temporal dimension is unknown and
+   * requires configuration in a derived {@linkcode Feed}.
+   */
+  readonly itemsHaveTemporalDimension?: boolean
+  /**
+   * The primary property of a GeoJSON feature feed item is the main value that
+   * should represent the item in a list view to the end user, as well as in
+   * a popup on a map view.  A value of `undefined` indicates a topic's primary
+   * property is unknown and requires configuration in a derived
+   * {@linkcode Feed}.
+   */
+  readonly itemPrimaryProperty?: string
+  /**
+   * Simimlar to {@linkcode FeedTopic.itemPrimaryProperty}, the intent of the
+   * secondary of a GeoJSON feature feed item is to indicate a value that
+   * represents the item in a list or map view to the end user.  The secondary
+   * property can add a bit of enhancing detail about the item to the primary
+   * property.  A value of `undefined` indicates a topic's secondary property is
+   * unknown and requires configuration in a derived {@linkcode Feed}.
+   */
+  readonly itemSecondaryProperty?: string
 }

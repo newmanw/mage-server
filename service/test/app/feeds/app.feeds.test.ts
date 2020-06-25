@@ -409,14 +409,18 @@ describe('feeds administration', function() {
             },
             required: [ '$mage:currentLocation' ]
           },
-          updateFrequency: null,
+          updateFrequency: { seconds: 60 },
           itemsHaveIdentity: true,
+          itemsHaveSpatialDimension: true,
+          itemsHaveTemporalDimension: true,
+          itemPrimaryProperty: 'title',
+          itemSecondaryProperty: 'description'
         }),
         Object.freeze({
           id: 'quakes',
           title: 'Earthquake Alerts',
           summary: 'Alerts about seismic in a given area',
-          constantParamsSchema: null,
+          constantParamsSchema: undefined,
           variableParamsSchema: {
             type: 'object',
             properties: {
@@ -432,8 +436,12 @@ describe('feeds administration', function() {
             },
             required: [ '$mage:currentLocation' ]
           },
-          updateFrequency: null,
-          itemsHaveIdentity: false
+          updateFrequency: undefined,
+          itemsHaveIdentity: false,
+          itemsHaveSpatialDimension: false,
+          itemsHaveTemporalDimension: true,
+          itemPrimaryProperty: 'severity',
+          itemSecondaryProperty: undefined
         })
       ]
       const serviceDesc = someServices[1]
