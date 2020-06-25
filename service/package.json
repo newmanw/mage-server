@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "@ngageoint/mage.service",
-  "version": "5.3.4",
+  "version": "5.4.0",
   "displayName": "MAGE Server",
   "description": "MAGE is a geospatial situational awareness and data collection application.",
   "keywords": [
