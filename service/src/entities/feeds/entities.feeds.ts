@@ -1,7 +1,7 @@
 
 import { Json } from '../entities.global.json'
 import { FeatureCollection } from 'geojson'
-import { JSONSchema6 } from 'json-schema'
+import { JSONSchema4 } from 'json-schema'
 
 interface LoadFeedServiceTypes {
   (): Promise<FeedServiceType[]>
@@ -50,7 +50,7 @@ export interface FeedServiceType {
   readonly pluginServiceTypeId: string
   readonly title: string
   readonly summary: string | null
-  readonly configSchema: JSONSchema6 | null
+  readonly configSchema: JSONSchema4 | null
 
   validateServiceConfig(config: Json): Promise<null | InvalidServiceConfigError>
   createConnection(config: Json): FeedServiceConnection
@@ -123,7 +123,7 @@ export interface Feed {
    * source  {@linkcode FeedTopic} or could be a more restrictive subset of the
    * topic schema.
    */
-  variableParamsSchema: JSONSchema6
+  variableParamsSchema: JSONSchema4
   /**
    * A feed's update frequency is similar to the like-named property on its
    * underlying topic.  While a topic's update frequency would come from the
@@ -175,14 +175,14 @@ export interface FeedTopic {
    * user must supply when defining a feed derived from this topic.  An example
    * of a constant parameter this schema defines might be `apiKey`.
    */
-  readonly constantParamsSchema?: JSONSchema6
+  readonly constantParamsSchema?: JSONSchema4
   /**
    * The variable parameters schema defines parameters that a consuming client
    * can supply when fetching items from a feed dervied from this topic.  A
    * MAGE mobile app user could change the parameters this schema defines.  An
    * example parameter this schema defines might be `lastUpdatedTime`.
    */
-  readonly variableParamsSchema?: JSONSchema6
+  readonly variableParamsSchema?: JSONSchema4
   /**
    * A topic's update frequency is a hint about how often a service might
    * publish new data to a topic.  A value of `undefined` indicates a topic's
