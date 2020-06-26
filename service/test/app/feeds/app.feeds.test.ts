@@ -2,7 +2,7 @@ import { describe, it, beforeEach } from 'mocha'
 import { expect } from 'chai'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
 import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedService, FeedServiceConnection, RegisteredFeedServiceType } from '../../../lib/entities/feeds/entities.feeds'
-import { ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics } from '../../../lib/app.impl/feeds/app.impl.feeds'
+import { ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics, ListFeedServices } from '../../../lib/app.impl/feeds/app.impl.feeds'
 import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError, EntityNotFoundErrorData, invalidInput } from '../../../lib/app.api/app.api.global.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
 import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest } from '../../../lib/app.api/feeds/app.api.feeds'
@@ -85,7 +85,7 @@ function requestBy<RequestType>(principal: TestPrincipal, params?: RequestType):
   )
 }
 
-describe('feeds administration', function() {
+describe.only('feeds administration', function() {
 
   let app: TestApp
   let someServiceTypes: SubstituteOf<RegisteredFeedServiceType>[]
@@ -192,6 +192,63 @@ describe('feeds administration', function() {
         config: config
       })
       expect(inDb).to.deep.equal(created)
+    })
+  })
+
+  describe('listing services', async function() {
+
+    const someServices: FeedService[] = [
+      {
+        id: `${someServiceTypeDescs[0].id}:${uniqid()}`,
+        serviceType: someServiceTypeDescs[0].id,
+        title: 'WFS 1',
+        summary: null,
+        config: {
+          url: 'https://test.mage/wfs1'
+        }
+      },
+      {
+        id: `${someServiceTypeDescs[0].id}:${uniqid()}`,
+        serviceType: someServiceTypeDescs[1].id,
+        title: 'OAF 1',
+        summary: null,
+        config: {
+          url: 'https://test.mage.oaf1/api',
+          apiKey: '1a2s3d4f'
+        }
+      }
+    ]
+
+    beforeEach(function() {
+      app.registerServices(...someServices)
+    })
+
+    it('checks permission for listing services', async function() {
+
+      const bannedReq = requestBy(bannedPrincipal)
+      let res = await app.listServices(bannedReq)
+
+      expect(res.success).to.be.null
+      expect(res.error).to.be.instanceOf(MageError)
+      expect(res?.error?.code).to.equal(ErrPermissionDenied)
+
+      app.permissionService.grantListServices(bannedPrincipal.user)
+      res = await app.listServices(bannedReq)
+
+      expect(res.error).to.be.null
+      expect(res.success).to.be.instanceOf(Array)
+    })
+
+    it('returns the saved services', async function() {
+
+      const adminReq = requestBy(adminPrincipal)
+      const res = await app.listServices(adminReq)
+
+      expect(res.error).to.be.null
+      expect(res.success).to.be.instanceOf(Array)
+      expect(res.success?.length).to.equal(someServices.length)
+      expect(res.success).to.deep.contain(someServices[0])
+      expect(res.success).to.deep.contain(someServices[1])
     })
   })
 
@@ -564,9 +621,10 @@ class TestApp {
   readonly listServiceTypes = ListFeedServiceTypes(this.permissionService, this.serviceTypeRepo)
   readonly previewTopics = PreviewTopics(this.permissionService, this.serviceTypeRepo)
   readonly createService = CreateFeedService(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
+  readonly listServices = ListFeedServices(this.permissionService, this.serviceRepo)
   readonly listTopics = ListServiceTopics(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
 
-  registerServiceTypes(... types: RegisteredFeedServiceType[]): void {
+  registerServiceTypes(...types: RegisteredFeedServiceType[]): void {
     for (const type of types) {
       this.serviceTypeRepo.db.set(type.id, type)
     }
@@ -625,6 +683,7 @@ class TestPermissionService implements FeedsPermissionService {
     [adminPrincipal.user]: {
       [ListFeedServiceTypes.name]: true,
       [CreateFeedService.name]: true,
+      [ListFeedServices.name]: true,
       [ListServiceTopics.name]: true,
     }
   } as { [user: string]: { [privilege: string]: boolean }}
@@ -638,6 +697,10 @@ class TestPermissionService implements FeedsPermissionService {
     return this.checkPrivilege(context.requestingPrincipal().user, CreateFeedService.name)
   }
 
+  async ensureListServicesPermissionFor(context: AppRequestContext<TestPrincipal>): Promise<null | PermissionDeniedError> {
+    return this.checkPrivilege(context.requestingPrincipal().user, ListFeedServices.name)
+  }
+
   async ensureListTopicsPermissionFor(context: AppRequestContext<TestPrincipal>, service: FeedServiceId): Promise<null | PermissionDeniedError> {
     const acl = this.serviceAcls.get(service)
     const principal = context.requestingPrincipal()
@@ -648,7 +711,11 @@ class TestPermissionService implements FeedsPermissionService {
   }
 
   grantCreateService(user: UserId) {
-    this.privleges[user] = { [CreateFeedService.name]: true }
+    this.grantPrivilege(user, CreateFeedService.name)
+  }
+
+  grantListServices(user: UserId) {
+    this.grantPrivilege(user, ListFeedServices.name)
   }
 
   grantListTopics(user: UserId, service: FeedServiceId) {
@@ -680,5 +747,17 @@ class TestPermissionService implements FeedsPermissionService {
       return permissionDenied(user, privilege)
     }
     return null
+  }
+
+  grantPrivilege(user: UserId, privilege: string): void {
+    const privs = this.privleges[user] || {}
+    privs[privilege] = true
+    this.privleges[user] = privs
+  }
+
+  revokePrivilege(user: UserId, privilege: string): void {
+    const privs = this.privleges[user] || {}
+    privs[privilege] = false
+    this.privleges[user] = privs
   }
 }

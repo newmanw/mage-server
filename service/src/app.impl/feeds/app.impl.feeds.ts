@@ -61,6 +61,17 @@ export function CreateFeedService(permissionService: api.FeedsPermissionService,
   }
 }
 
+export function ListFeedServices(permissionService: api.FeedsPermissionService, serviceRepo: FeedServiceRepository): api.ListFeedServices {
+  return function listFeedServices(req: AppRequest): ReturnType<api.ListFeedServices> {
+    return withPermission<FeedService[], KnownErrorsOf<api.ListFeedServices>>(
+      permissionService.ensureListServicesPermissionFor(req.context),
+      async (): Promise<FeedService[]> => {
+        return await serviceRepo.findAll()
+      }
+    )
+  }
+}
+
 export function ListServiceTopics(permissionService: api.FeedsPermissionService, serviceTypeRepo: FeedServiceTypeRepository, serviceRepo: FeedServiceRepository): api.ListServiceTopics {
   return async function listTopics(req: api.ListServiceTopicsRequest): ReturnType<api.ListServiceTopics> {
     const service = await serviceRepo.findById(req.service)
