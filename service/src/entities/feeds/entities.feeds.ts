@@ -142,8 +142,14 @@ export interface Feed {
   itemsHaveIdentity: boolean
   itemsHaveSpatialDimension: boolean
   itemsHaveTemporalDimension: boolean
-  itemPrimaryProperty: string
-  itemSecondaryProperty: string | null
+  /**
+   * A feed that does not have a primary property (implying there is no
+   * secondary as well) covers the case that a data set might provide only
+   * spatial geometries, and the feed/topic context provides the implicit
+   * meaning of the geometry data.
+   */
+  itemPrimaryProperty?: string
+  itemSecondaryProperty?: string
 }
 
 export type FeedParams = {
