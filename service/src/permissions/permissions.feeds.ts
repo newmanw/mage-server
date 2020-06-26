@@ -15,7 +15,7 @@ export type UserWithRole = UserDocument & {
  * This permission service relies on the user and role that the I/O adapter
  * layer has previously fetched from the database.
  */
-export class PreFetchedUserRoleFeedsPerissionService implements FeedsPermissionService {
+export class PreFetchedUserRoleFeedsPermissionService implements FeedsPermissionService {
 
   async ensureListServiceTypesPermissionFor(context: AppRequestContext<UserWithRole>): Promise<PermissionDeniedError | null> {
     return ensureContextUserHasPermission(context, 'FEEDS_LIST_SERVICE_TYPES')
@@ -23,6 +23,10 @@ export class PreFetchedUserRoleFeedsPerissionService implements FeedsPermissionS
 
   async ensureCreateServicePermissionFor(context: AppRequestContext<UserWithRole>): Promise<PermissionDeniedError | null> {
     return ensureContextUserHasPermission(context, 'FEEDS_CREATE_SERVICE')
+  }
+
+  async ensureListServicesPermissionFor(context: AppRequestContext<UserWithRole>): Promise<PermissionDeniedError | null> {
+    return ensureContextUserHasPermission(context, 'FEEDS_LIST_SERVICES')
   }
 
   async ensureListTopicsPermissionFor(context: AppRequestContext<unknown>, service: FeedServiceId): Promise<PermissionDeniedError | null> {

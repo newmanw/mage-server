@@ -5,6 +5,7 @@ module.exports.id = "feeds-admin-permissions";
 const feedsPermissions = [
   'FEEDS_LIST_SERVICE_TYPES',
   'FEEDS_CREATE_SERVICE',
+  'FEEDS_LIST_SERVICES',
   'FEEDS_LIST_TOPICS',
   'FEEDS_CREATE_FEED',
 ]

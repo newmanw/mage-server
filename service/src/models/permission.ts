@@ -75,11 +75,12 @@ const settingPermissions = {
   UPDATE_SETTINGS: 'UPDATE_SETTINGS'
 }
 
-const feedsPermissions = {
+export const feedsPermissions = Object.freeze({
   FEEDS_LIST_SERVICE_TYPES: 'FEEDS_LIST_SERVICE_TYPES',
   FEEDS_CREATE_SERVICE: 'FEEDS_CREATE_SERVICE',
+  FEEDS_LIST_SERVICES: 'FEEDS_LIST_SERVICES',
   FEEDS_LIST_TOPICS: 'FEEDS_LIST_TOPICS',
-}
+})
 
 export const allPermissions = Object.freeze({
   ...devicePermissions,

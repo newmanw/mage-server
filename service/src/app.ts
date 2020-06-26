@@ -11,7 +11,7 @@ import { FeedServiceTypeRepository } from './entities/feeds/entities.feeds'
 import * as feedsApi from './app.api/feeds/app.api.feeds'
 import * as feedsImpl from './app.impl/feeds/app.impl.feeds'
 import { env } from 'process'
-import { PreFetchedUserRoleFeedsPerissionService } from './permissions/permissions.feeds'
+import { PreFetchedUserRoleFeedsPermissionService } from './permissions/permissions.feeds'
 import { FeedsRoutes } from './adapters/feeds/adapters.feeds.controllers.web'
 import { WebAppRequestFactory } from './adapters/adapters.controllers.web'
 import { AppRequest } from './app.api/app.api.global'
@@ -140,7 +140,7 @@ function intitializeAppLayer(dbModels: DatabaseModels): AppLayer {
 function intializeFeedsAppLayer(dbModels: DatabaseModels): AppLayer['feeds'] {
   const serviceTypeRepo = new MongooseFeedServiceTypeRepository(dbModels.feeds.feedServiceTypeIdentity)
   const serviceRepo = new MongooseFeedServiceRepository(dbModels.feeds.feedService)
-  const permissionService = new PreFetchedUserRoleFeedsPerissionService()
+  const permissionService = new PreFetchedUserRoleFeedsPermissionService()
   const listServiceTypes = feedsImpl.ListFeedServiceTypes(permissionService, serviceTypeRepo)
   const createService = feedsImpl.CreateFeedService(permissionService, serviceTypeRepo, serviceRepo)
   const listTopics = feedsImpl.ListServiceTopics(permissionService, serviceTypeRepo, serviceRepo)

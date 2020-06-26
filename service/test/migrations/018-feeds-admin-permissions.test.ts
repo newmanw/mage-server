@@ -3,13 +3,13 @@ import * as mongoTest from '../mongo.test'
 import * as migration from '../../lib/migrations/018-feeds-admin-permissions'
 import { Db } from 'mongodb'
 import { expect } from 'chai'
-import { result } from 'lodash'
 
-describe('feeds admin permissions migratino', function() {
+describe.only('feeds admin permissions migration', function() {
 
   const feedsPermissions = [
     'FEEDS_LIST_SERVICE_TYPES',
     'FEEDS_CREATE_SERVICE',
+    'FEEDS_LIST_SERVICES',
     'FEEDS_LIST_TOPICS',
     'FEEDS_CREATE_FEED',
   ]
