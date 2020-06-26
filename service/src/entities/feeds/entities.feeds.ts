@@ -141,7 +141,7 @@ export interface Feed {
    */
   itemsHaveIdentity: boolean
   itemsHaveSpatialDimension: boolean
-  itemsHaveTemporalDimension: boolean
+  itemTemporalProperty?: string
   /**
    * A feed that does not have a primary property (implying there is no
    * secondary as well) covers the case that a data set might provide only
@@ -208,12 +208,12 @@ export interface FeedTopic {
    */
   readonly itemsHaveSpatialDimension?: boolean
   /**
-   * Feed items with a temporal dimension will translate to GeoJSON features
-   * that have a temporal extent property called `$mage$temporalExtent.  A
-   * value of `undefined` indicates a topic's temporal dimension is unknown and
+   * Feed items with a temporal property will translate to GeoJSON features
+   * that have a temporal property whose value is a numeric epoch timestamp.  A
+   * value of `undefined` indicates a topic's temporal property is unknown and
    * requires configuration in a derived {@linkcode Feed}.
    */
-  readonly itemsHaveTemporalDimension?: boolean
+  readonly itemTemporalProperty?: string
   /**
    * The primary property of a GeoJSON feature feed item is the main value that
    * should represent the item in a list view to the end user, as well as in
