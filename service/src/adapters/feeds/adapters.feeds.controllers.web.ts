@@ -9,14 +9,14 @@ declare global {
 
 import express from 'express'
 import bodyParser from 'body-parser'
-import { UserId } from '../../entities/authn/entities.authn'
-import { ListFeedServiceTypes, ListServiceTopics, CreateFeedService, CreateFeedServiceRequest } from '../../app.api/feeds/app.api.feeds'
+import { ListFeedServiceTypes, ListServiceTopics, CreateFeedService, ListFeedServices } from '../../app.api/feeds/app.api.feeds'
 import { ErrPermissionDenied, MageError, PermissionDeniedError, ErrInvalidInput, invalidInput, ErrEntityNotFound } from '../../app.api/app.api.global.errors'
 import { WebAppRequestFactory } from '../adapters.controllers.web'
 
 export interface FeedsAppLayer {
   listServiceTypes: ListFeedServiceTypes
   createService: CreateFeedService
+  listServices: ListFeedServices
   listTopics: ListServiceTopics
 }
 
@@ -69,6 +69,14 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
       }
       if (appRes.error?.code === ErrEntityNotFound) {
         return res.status(400).json('service type not found')
+      }
+      next(appRes.error)
+    })
+    .get(async (req, res, next): Promise<any> => {
+      const appReq = createAppRequest(req)
+      const appRes = await appLayer.listServices(appReq)
+      if (appRes.success) {
+        return res.json(appRes.success)
       }
       next(appRes.error)
     })

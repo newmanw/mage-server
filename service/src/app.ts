@@ -10,12 +10,11 @@ import { waitForDefaultMongooseConnection } from './adapters/adapters.db.mongoos
 import { FeedServiceTypeRepository } from './entities/feeds/entities.feeds'
 import * as feedsApi from './app.api/feeds/app.api.feeds'
 import * as feedsImpl from './app.impl/feeds/app.impl.feeds'
-import { env } from 'process'
 import { PreFetchedUserRoleFeedsPermissionService } from './permissions/permissions.feeds'
 import { FeedsRoutes } from './adapters/feeds/adapters.feeds.controllers.web'
 import { WebAppRequestFactory } from './adapters/adapters.controllers.web'
 import { AppRequest } from './app.api/app.api.global'
-import { UserJson, UserDocument } from './models/user'
+import { UserDocument } from './models/user'
 
 
 export interface MageService {
@@ -108,6 +107,7 @@ type AppLayer = {
     permissionService: feedsApi.FeedsPermissionService
     listServiceTypes: feedsApi.ListFeedServiceTypes
     createService: feedsApi.CreateFeedService
+    listServices: feedsApi.ListFeedServices
     listTopics: feedsApi.ListServiceTopics
   }
 }
@@ -143,12 +143,14 @@ function intializeFeedsAppLayer(dbModels: DatabaseModels): AppLayer['feeds'] {
   const permissionService = new PreFetchedUserRoleFeedsPermissionService()
   const listServiceTypes = feedsImpl.ListFeedServiceTypes(permissionService, serviceTypeRepo)
   const createService = feedsImpl.CreateFeedService(permissionService, serviceTypeRepo, serviceRepo)
+  const listServices = feedsImpl.ListFeedServices(permissionService, serviceRepo)
   const listTopics = feedsImpl.ListServiceTopics(permissionService, serviceTypeRepo, serviceRepo)
   return {
     serviceTypeRepo,
     permissionService,
     listServiceTypes,
     createService,
+    listServices,
     listTopics
   }
 }

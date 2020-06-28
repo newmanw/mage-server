@@ -5,17 +5,17 @@ import { expect } from 'chai'
 import supertest from 'supertest'
 import Substitute, { SubstituteOf, Arg } from '@fluffy-spoon/substitute'
 import uniqid from 'uniqid'
-import _ from 'lodash'
+import _, { functionsIn } from 'lodash'
 import { AppResponse, AppRequestContext, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeedsRoutes, FeedsAppLayer } from '../../../lib/adapters/feeds/adapters.feeds.controllers.web'
 import { CreateFeedServiceRequest, FeedServiceTypeDescriptor } from '../../../lib/app.api/feeds/app.api.feeds'
-import { FeedService } from '../../../lib/entities/feeds/entities.feeds'
+import { FeedService, Feed } from '../../../lib/entities/feeds/entities.feeds'
 import { permissionDenied, PermissionDeniedError, InvalidInputError, invalidInput, EntityNotFoundError, entityNotFound } from '../../../lib/app.api/app.api.global.errors'
 import { WebAppRequestFactory } from '../../../lib/adapters/adapters.controllers.web'
 
 const jsonMimeType = /^application\/json/
 
-describe('feeds web adapter', function() {
+describe.only('feeds web controller', function() {
 
   const adminPrincipal = {
     user: 'admin'
@@ -258,6 +258,49 @@ invalid input:
         expect(res.body).to.deep.equal(created)
         appLayer.received(1).createService(Arg.deepEquals(appReq))
       })
+    })
+  })
+
+  describe('GET /services', function() {
+
+    it('returns all the services', async function() {
+
+      const appReq = createAdminRequest()
+      appRequestFactory.createRequest(Arg.any()).returns(appReq)
+      const services: FeedService[] = [
+        {
+          id: 'wfs:' + uniqid(),
+          serviceType: 'wfs',
+          title: 'Agricultural Features',
+          config: 'https://usda.gov/wfs/ag',
+          summary: null
+        },
+        {
+          id: 'denver_weather:' + uniqid(),
+          serviceType: 'denver_weather',
+          title: 'Denver Area Weather Updates',
+          config: null,
+          summary: 'A propprietary service that provides updates about Denver area local weather events'
+        }
+      ]
+      appLayer.listServices(Arg.is((x: AppRequest) => x.context.requestToken === appReq.context.requestToken))
+        .resolves(AppResponse.success<FeedService[], unknown>(services))
+      const res = await client.get('/services')
+
+      expect(res.status).to.equal(200)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.deep.equal(services)
+    })
+
+    it('returns 403 without permission', async function() {
+
+      appLayer.listServices(Arg.any())
+        .resolves(AppResponse.error<FeedService[], PermissionDeniedError>(permissionDenied('list services', 'you')))
+      const res = await client.get('/services')
+
+      expect(res.status).to.equal(403)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.equal('permission denied: list services')
     })
   })
 })
