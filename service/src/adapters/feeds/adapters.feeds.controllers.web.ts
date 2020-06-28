@@ -47,6 +47,11 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
       next(appRes.error)
     })
 
+  routes.route('/service_types/:serviceTypeId/topic_preview')
+    .post(async (req, res, next): Promise<any> => {
+      throw new Error('todo')
+    })
+
   routes.route('/services')
     .post(async (req, res, next): Promise<any> => {
       const body = req.body

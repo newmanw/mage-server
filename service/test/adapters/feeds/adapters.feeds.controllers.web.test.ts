@@ -103,6 +103,21 @@ describe.only('feeds web controller', function() {
     })
   })
 
+  describe('POST /service_types/:serviceTypeId/topic_preview', function() {
+
+    it('fails with 403 without permission', async function() {
+      expect.fail('todo')
+    })
+
+    it('fails with 400 if the service config is invalid', async function() {
+      expect.fail('todo')
+    })
+
+    it('returns the list of topics for the service config', function() {
+      expect.fail('todo')
+    })
+  })
+
   describe('POST /services', function() {
 
     it('creates a service', async function() {
