@@ -85,7 +85,7 @@ function requestBy<RequestType>(principal: TestPrincipal, params?: RequestType):
   )
 }
 
-describe.only('feeds administration', function() {
+describe('feeds administration', function() {
 
   let app: TestApp
   let someServiceTypes: SubstituteOf<RegisteredFeedServiceType>[]

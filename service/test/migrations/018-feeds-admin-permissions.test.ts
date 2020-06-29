@@ -4,7 +4,7 @@ import * as migration from '../../lib/migrations/018-feeds-admin-permissions'
 import { Db } from 'mongodb'
 import { expect } from 'chai'
 
-describe.only('feeds admin permissions migration', function() {
+describe('feeds admin permissions migration', function() {
 
   const feedsPermissions = [
     'FEEDS_LIST_SERVICE_TYPES',

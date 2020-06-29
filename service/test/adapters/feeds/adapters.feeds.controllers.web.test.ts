@@ -8,14 +8,14 @@ import uniqid from 'uniqid'
 import _, { functionsIn } from 'lodash'
 import { AppResponse, AppRequestContext, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeedsRoutes, FeedsAppLayer } from '../../../lib/adapters/feeds/adapters.feeds.controllers.web'
-import { CreateFeedServiceRequest, FeedServiceTypeDescriptor } from '../../../lib/app.api/feeds/app.api.feeds'
-import { FeedService, Feed } from '../../../lib/entities/feeds/entities.feeds'
+import { CreateFeedServiceRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest } from '../../../lib/app.api/feeds/app.api.feeds'
+import { FeedService, Feed, FeedTopic } from '../../../lib/entities/feeds/entities.feeds'
 import { permissionDenied, PermissionDeniedError, InvalidInputError, invalidInput, EntityNotFoundError, entityNotFound } from '../../../lib/app.api/app.api.global.errors'
 import { WebAppRequestFactory } from '../../../lib/adapters/adapters.controllers.web'
 
 const jsonMimeType = /^application\/json/
 
-describe.only('feeds web controller', function() {
+describe('feeds web controller', function() {
 
   const adminPrincipal = {
     user: 'admin'
@@ -105,16 +105,84 @@ describe.only('feeds web controller', function() {
 
   describe('POST /service_types/:serviceTypeId/topic_preview', function() {
 
+    it('returns the list of topics for the service config', async function() {
+
+      const topics: FeedTopic[] = [
+        {
+          id: 'asam',
+          title: 'Anti-Shipping Activity Messages',
+          summary: null,
+          itemsHaveSpatialDimension: true,
+          itemTemporalProperty: 'date',
+          itemPrimaryProperty: 'description'
+        },
+        {
+          id: 'navwarn',
+          title: 'Navigational Warnings',
+          summary: null,
+          itemsHaveSpatialDimension: false,
+          itemTemporalProperty: 'issueDate'
+        }
+      ]
+      const postBody = {
+        serviceConfig: 'https://msi.gs.mil'
+      }
+      const reqParams = {
+        ...postBody,
+        serviceType: 'nga-msi'
+      }
+      const appReq: PreviewTopicsRequest = createAdminRequest(reqParams)
+      appRequestFactory.createRequest(Arg.any(), Arg.deepEquals(reqParams)).returns(appReq)
+      appLayer.previewTopics(Arg.deepEquals(appReq))
+        .resolves(AppResponse.success<FeedTopic[], unknown>(topics))
+
+      const res = await client.post('/service_types/nga-msi/topic_preview').send(postBody)
+
+      expect(res.status).to.equal(200)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.deep.equal(topics)
+    })
+
     it('fails with 403 without permission', async function() {
-      expect.fail('todo')
+
+      appLayer.previewTopics(Arg.any())
+        .resolves(AppResponse.error<FeedTopic[], PermissionDeniedError>(permissionDenied('preview topics', 'you')))
+
+      const res = await client.post('/service_types/nga-msi/topic_preview').send({
+        serviceConfig: 'https://msi.gs.mil'
+      })
+
+      expect(res.status).to.equal(403)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.equal('permission denied: preview topics')
+    })
+
+    it('fails with 404 if the service type does not exist', async function() {
+
+      appLayer.previewTopics(Arg.any())
+        .resolves(AppResponse.error<FeedTopic[], EntityNotFoundError>(entityNotFound('nga-msi', 'feed service type')))
+
+      const res = await client.post('/service_types/nga-msi/topic_preview').send({
+        serviceConfig: 'does not exist'
+      })
+
+      expect(res.status).to.equal(404)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.equal('feed service type not found: nga-msi')
     })
 
     it('fails with 400 if the service config is invalid', async function() {
-      expect.fail('todo')
-    })
 
-    it('returns the list of topics for the service config', function() {
-      expect.fail('todo')
+      appLayer.previewTopics(Arg.any())
+        .resolves(AppResponse.error<FeedTopic[], InvalidInputError>(invalidInput('bad config')))
+
+      const res = await client.post('/service_types/nga-msi/topic_preview').send({
+        serviceConfig: null
+      })
+
+      expect(res.status).to.equal(400)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.equal('invalid input:\n  bad config')
     })
   })
 

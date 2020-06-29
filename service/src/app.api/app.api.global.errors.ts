@@ -30,7 +30,7 @@ export function permissionDenied(permission: string, subject: string): Permissio
 }
 
 export function entityNotFound(entityId: any, entityType: string): EntityNotFoundError {
-  return new MageError(ErrEntityNotFound, { entityId, entityType }, `${entityType} not found; id: ${entityId}`)
+  return new MageError(ErrEntityNotFound, { entityId, entityType }, `${entityType} not found: ${entityId}`)
 }
 
 export function invalidInput(...problems: string[]): InvalidInputError {

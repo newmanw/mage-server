@@ -106,6 +106,7 @@ type AppLayer = {
     serviceTypeRepo: FeedServiceTypeRepository
     permissionService: feedsApi.FeedsPermissionService
     listServiceTypes: feedsApi.ListFeedServiceTypes
+    previewTopics: feedsApi.PreviewTopics
     createService: feedsApi.CreateFeedService
     listServices: feedsApi.ListFeedServices
     listTopics: feedsApi.ListServiceTopics
@@ -142,6 +143,7 @@ function intializeFeedsAppLayer(dbModels: DatabaseModels): AppLayer['feeds'] {
   const serviceRepo = new MongooseFeedServiceRepository(dbModels.feeds.feedService)
   const permissionService = new PreFetchedUserRoleFeedsPermissionService()
   const listServiceTypes = feedsImpl.ListFeedServiceTypes(permissionService, serviceTypeRepo)
+  const previewTopics = feedsImpl.PreviewTopics(permissionService, serviceTypeRepo)
   const createService = feedsImpl.CreateFeedService(permissionService, serviceTypeRepo, serviceRepo)
   const listServices = feedsImpl.ListFeedServices(permissionService, serviceRepo)
   const listTopics = feedsImpl.ListServiceTopics(permissionService, serviceTypeRepo, serviceRepo)
@@ -149,6 +151,7 @@ function intializeFeedsAppLayer(dbModels: DatabaseModels): AppLayer['feeds'] {
     serviceTypeRepo,
     permissionService,
     listServiceTypes,
+    previewTopics,
     createService,
     listServices,
     listTopics

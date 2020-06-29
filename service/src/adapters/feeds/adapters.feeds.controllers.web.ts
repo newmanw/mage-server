@@ -9,7 +9,7 @@ declare global {
 
 import express from 'express'
 import bodyParser from 'body-parser'
-import { ListFeedServiceTypes, ListServiceTopics, CreateFeedService, ListFeedServices } from '../../app.api/feeds/app.api.feeds'
+import { ListFeedServiceTypes, ListServiceTopics, CreateFeedService, ListFeedServices, PreviewTopics, PreviewTopicsRequest } from '../../app.api/feeds/app.api.feeds'
 import { ErrPermissionDenied, MageError, PermissionDeniedError, ErrInvalidInput, invalidInput, ErrEntityNotFound } from '../../app.api/app.api.global.errors'
 import { WebAppRequestFactory } from '../adapters.controllers.web'
 
@@ -17,6 +17,7 @@ export interface FeedsAppLayer {
   listServiceTypes: ListFeedServiceTypes
   createService: CreateFeedService
   listServices: ListFeedServices
+  previewTopics: PreviewTopics
   listTopics: ListServiceTopics
 }
 
@@ -31,6 +32,8 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
     switch (err.code) {
       case ErrPermissionDenied:
         return res.status(403).json(`permission denied: ${(err as PermissionDeniedError).data.permission}`)
+      case ErrEntityNotFound:
+        return res.status(404).json(err.message)
       case ErrInvalidInput:
         return res.status(400).json(err.message)
     }
@@ -49,7 +52,16 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
 
   routes.route('/service_types/:serviceTypeId/topic_preview')
     .post(async (req, res, next): Promise<any> => {
-      throw new Error('todo')
+      const body = req.body
+      const appReq: PreviewTopicsRequest = createAppRequest(req, {
+        serviceType: req.params.serviceTypeId,
+        serviceConfig: body.serviceConfig
+      })
+      const appRes = await appLayer.previewTopics(appReq)
+      if (appRes.success) {
+        return res.json(appRes.success)
+      }
+      return next(appRes.error)
     })
 
   routes.route('/services')
