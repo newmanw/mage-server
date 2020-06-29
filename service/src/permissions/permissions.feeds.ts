@@ -29,8 +29,8 @@ export class PreFetchedUserRoleFeedsPermissionService implements FeedsPermission
     return ensureContextUserHasPermission(context, 'FEEDS_LIST_SERVICES')
   }
 
-  async ensureListTopicsPermissionFor(context: AppRequestContext<unknown>, service: FeedServiceId): Promise<PermissionDeniedError | null> {
-    throw new Error('unimplemented')
+  async ensureListTopicsPermissionFor(context: AppRequestContext<UserWithRole>, service: FeedServiceId): Promise<PermissionDeniedError | null> {
+    return ensureContextUserHasPermission(context, 'FEEDS_LIST_TOPICS')
   }
 
   async ensureCreateFeedPermissionFor(context: AppRequestContext<UserWithRole>): Promise<PermissionDeniedError | null> {

@@ -75,8 +75,22 @@ describe('feeds permission service', function() {
     expect(denied?.data.subject).to.equal(context.requestingPrincipal().username)
   })
 
-  it('ensures list topics permission', async function() {
+  describe('ensuring list topics permission', function() {
 
-    expect.fail('todo: implement acl on services')
+    it('ensures permisison with a service id', async function() {
+
+      let context = contextWithPermissions('FEEDS_LIST_TOPICS')
+      const serviceId = uniqid()
+      let denied = await permissions.ensureListTopicsPermissionFor(context, serviceId)
+
+      expect(denied).to.be.null
+
+      context = contextWithPermissions('FEEDS_LIST_SERVICE_TYPES')
+      denied = await permissions.ensureListTopicsPermissionFor(context, serviceId)
+    })
+
+    it('ensures permission on a pre-fetched service', async function() {
+
+    })
   })
 })
