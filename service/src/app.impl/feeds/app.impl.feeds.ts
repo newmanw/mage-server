@@ -92,6 +92,12 @@ export function ListServiceTopics(permissionService: api.FeedsPermissionService,
   }
 }
 
+export function PreviewFeed(permissionService: api.FeedsPermissionService, serviceTypeRepo: FeedServiceTypeRepository, serviceRepo: FeedServiceRepository): api.PreviewFeed {
+  return async function previewFeed(req: api.PreviewFeedRequest): ReturnType<api.PreviewFeed> {
+    throw new Error('todo')
+  }
+}
+
 export function CreateFeed(permissionService: api.FeedsPermissionService, serviceTypeRepo: FeedServiceTypeRepository, serviceRepo: FeedServiceRepository): api.CreateFeed {
   return async function createFeed(req: api.CreateFeedRequest): ReturnType<api.CreateFeed> {
     throw new Error('todo')

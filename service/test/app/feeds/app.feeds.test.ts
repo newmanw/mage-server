@@ -1,9 +1,9 @@
 import { describe, it, beforeEach } from 'mocha'
 import { expect } from 'chai'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
-import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedService, FeedServiceConnection, RegisteredFeedServiceType } from '../../../lib/entities/feeds/entities.feeds'
-import { ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics, ListFeedServices } from '../../../lib/app.impl/feeds/app.impl.feeds'
-import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError, EntityNotFoundErrorData, invalidInput } from '../../../lib/app.api/app.api.global.errors'
+import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedService, FeedServiceConnection, RegisteredFeedServiceType, Feed, FeedCreateAttrs } from '../../../lib/entities/feeds/entities.feeds'
+import { ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics, ListFeedServices, PreviewFeed } from '../../../lib/app.impl/feeds/app.impl.feeds'
+import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError } from '../../../lib/app.api/app.api.global.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
 import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest } from '../../../lib/app.api/feeds/app.api.feeds'
 import uniqid from 'uniqid'
@@ -513,26 +513,64 @@ describe('feeds administration', function() {
     })
   })
 
-  xdescribe('creating a feed', function() {
+  describe.only('creating a feed', function() {
 
-    it('provides the source stub from the adapter', async function() {
+    const service: FeedService = {
+      id: uniqid(),
+      serviceType: someServiceTypeDescs[0].id,
+      title: 'Local Weather WFS',
+      summary: 'Data about various local weather events',
+      config: {
+        url: 'https://weather.local.gov/wfs'
+      }
+    }
+    const topics: FeedTopic[] = [
+      {
+        id: 'lightning',
+        title: 'Lightning Strikes',
+        summary: 'Locations of lightning strikes',
+        itemsHaveSpatialDimension: true,
+      },
+      {
+        id: 'tornadoes',
+        title: 'Tornado Touchdowns',
+        summary: 'Locations and severity of tornado touchdowns',
+        itemsHaveSpatialDimension: true,
+      }
+    ]
 
-      expect.fail('todo')
+    let serviceConn: SubstituteOf<FeedServiceConnection>
+
+    beforeEach(function() {
+      app.registerServices(service)
+      serviceConn = Sub.for<FeedServiceConnection>()
+      someServiceTypes[0].createConnection(Arg.deepEquals(service.config)).returns(serviceConn)
     })
 
-    it('saves a source descriptor', async function() {
+    describe('previewing the feed', function() {
 
-      expect.fail('todo')
+      it('fetches creates feed preview with items with minimal config', async function() {
+
+        const feed: FeedCreateAttrs = {
+          service: service.id,
+          topic: topics[0].id,
+        }
+        const req = requestBy(adminPrincipal, { feed })
+        const res = await app.previewFeed(req)
+
+      })
+
+      it('does not save the preview feed', async function() {
+        expect.fail('todo')
+      })
     })
 
-    it('checks permission for creating a source', async function() {
+    describe('saving the feed', function() {
 
-      expect.fail('todo')
-    })
+      it('saves the feed', async function() {
 
-    it('validates the source has a valid adapter', async function() {
-
-      expect.fail('todo')
+        expect.fail('todo')
+      })
     })
   })
 
@@ -623,6 +661,7 @@ class TestApp {
   readonly createService = CreateFeedService(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
   readonly listServices = ListFeedServices(this.permissionService, this.serviceRepo)
   readonly listTopics = ListServiceTopics(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
+  readonly previewFeed = PreviewFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
 
   registerServiceTypes(...types: RegisteredFeedServiceType[]): void {
     for (const type of types) {

@@ -97,8 +97,7 @@ The new feed configuration is saved and the feed is available to add to events.
 
 #### Variations
 
-
-
+### Fetch items from feed
 
 ### Assign feed to event
 

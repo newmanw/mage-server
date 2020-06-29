@@ -100,63 +100,6 @@ export interface FeedServiceRepository {
   findById(serviceId: FeedServiceId): Promise<FeedService | null>
 }
 
-export interface FeedContent {
-  readonly feed: FeedService
-  readonly variableParams: FeedParams
-  readonly items: FeatureCollection
-}
-
-/** A feed ID is globally unique. */
-export type FeedId = string
-
-export interface Feed {
-  id: FeedId
-  service: FeedServiceId
-  topic: FeedTopicId
-  title: string
-  summary: string
-  constantParams: Json
-  /**
-   * The variable parameters schema of a feed is a schema an administrative user
-   * can define to advertise the parameters feed consumers can pass when
-   * fetching content from a feed.  This schema could be the same as that of the
-   * source  {@linkcode FeedTopic} or could be a more restrictive subset of the
-   * topic schema.
-   */
-  variableParamsSchema: JSONSchema4
-  /**
-   * A feed's update frequency is similar to the like-named property on its
-   * underlying topic.  While a topic's update frequency would come from the
-   * implementing plugin, a feed's update frequency would likely come from user
-   * configuration based on the parameters of the feed as well as the update
-   * frequency of the underlying topic.  This allows for feed service type
-   * plugins that are too generic to know what an appropriate update interval
-   * would be for particular service's topics.
-   */
-  updateFrequency: FeedUpdateFrequency | null
-  /**
-   * This flag is similar to the like-named property on its source
-   * {@linkcode FeedTopic}, but as with {@linkcode Feed.updateFrequency}, allows
-   * configuration by a human user.
-   */
-  itemsHaveIdentity: boolean
-  itemsHaveSpatialDimension: boolean
-  itemTemporalProperty?: string
-  /**
-   * A feed that does not have a primary property (implying there is no
-   * secondary as well) covers the case that a data set might provide only
-   * spatial geometries, and the feed/topic context provides the implicit
-   * meaning of the geometry data.
-   */
-  itemPrimaryProperty?: string
-  itemSecondaryProperty?: string
-}
-
-export type FeedParams = {
-  constantParams: Json,
-  variableParams: Json
-}
-
 /**
  * A topic ID is unique in the context the providing {@linkcode FeedService}.
  */
@@ -231,4 +174,68 @@ export interface FeedTopic {
    * unknown and requires configuration in a derived {@linkcode Feed}.
    */
   readonly itemSecondaryProperty?: string
+}
+
+/** A feed ID is globally unique. */
+export type FeedId = string
+
+export interface Feed {
+  id: FeedId
+  service: FeedServiceId
+  topic: FeedTopicId
+  title: string
+  summary: string
+  constantParams: Json
+  /**
+   * The variable parameters schema of a feed is a schema an administrative user
+   * can define to advertise the parameters feed consumers can pass when
+   * fetching content from a feed.  This schema could be the same as that of the
+   * source  {@linkcode FeedTopic} or could be a more restrictive subset of the
+   * topic schema.
+   */
+  variableParamsSchema: JSONSchema4
+  /**
+   * A feed's update frequency is similar to the like-named property on its
+   * underlying topic.  While a topic's update frequency would come from the
+   * implementing plugin, a feed's update frequency would likely come from user
+   * configuration based on the parameters of the feed as well as the update
+   * frequency of the underlying topic.  This allows for feed service type
+   * plugins that are too generic to know what an appropriate update interval
+   * would be for particular service's topics.
+   */
+  updateFrequency: FeedUpdateFrequency | null
+  /**
+   * This flag is similar to the like-named property on its source
+   * {@linkcode FeedTopic}, but as with {@linkcode Feed.updateFrequency}, allows
+   * configuration by an administrative user.
+   */
+  itemsHaveIdentity: boolean
+  itemsHaveSpatialDimension: boolean
+  itemTemporalProperty?: string
+  /**
+   * A feed that does not have a primary property (implying there is no
+   * secondary as well) covers the case that a data set might provide only
+   * spatial geometries, and the feed/topic context provides the implicit
+   * meaning of the geometry data.
+   */
+  itemPrimaryProperty?: string
+  itemSecondaryProperty?: string
+}
+
+export type FeedCreateAttrs = Pick<Feed, 'service' | 'topic'> & Partial<Omit<Feed, 'id'>>
+
+export interface FeedRepository {
+
+}
+
+export type FeedParams = {
+  constantParams: Json,
+  variableParams: Json
+}
+
+export interface FeedContent {
+  readonly feed: Feed
+  readonly variableParams: Json
+  readonly items: FeatureCollection
+  readonly pageCursor?: Json
 }
