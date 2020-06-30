@@ -659,7 +659,10 @@ describe('feeds administration', function() {
     describe('saving the feed', function() {
 
       it('saves the feed', async function() {
+        expect.fail('todo')
+      })
 
+      it('saves a feed from a preview', async function() {
         expect.fail('todo')
       })
     })
