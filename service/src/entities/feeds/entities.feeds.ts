@@ -1,5 +1,5 @@
 
-import { Json } from '../entities.global.json'
+import { Json, JsonObject } from '../entities.global.json'
 import { FeatureCollection } from 'geojson'
 import { JSONSchema4 } from 'json-schema'
 
@@ -79,6 +79,12 @@ export interface FeedService {
 export interface FeedServiceConnection {
   fetchServiceInfo(): Promise<FeedServiceInfo | null>
   fetchAvailableTopics(): Promise<FeedTopic[]>
+  // TODO: maybe would be valuable to implement some caching of topics or
+  // require the client to pass a populated topic in case the connection needs
+  // extra information to fetch topic content and avoid fetching the topic
+  // information for every content fetch.  caching could also be left to the
+  // plugin to implement, but mage could provide hooks for caching.
+  fetchTopicContent(topic: FeedTopicId, params?: JsonObject): Promise<FeedContent>
 }
 
 export interface FeedServiceTypeRepository {
@@ -184,8 +190,8 @@ export interface Feed {
   service: FeedServiceId
   topic: FeedTopicId
   title: string
-  summary: string
-  constantParams: Json
+  summary: string | null
+  constantParams: FeedContentParams
   /**
    * The variable parameters schema of a feed is a schema an administrative user
    * can define to advertise the parameters feed consumers can pass when
@@ -228,14 +234,11 @@ export interface FeedRepository {
 
 }
 
-export type FeedParams = {
-  constantParams: Json,
-  variableParams: Json
-}
+export type FeedContentParams = JsonObject | null
 
 export interface FeedContent {
   readonly feed: Feed
-  readonly variableParams: Json
+  readonly variableParams: FeedContentParams
   readonly items: FeatureCollection
   readonly pageCursor?: Json
 }

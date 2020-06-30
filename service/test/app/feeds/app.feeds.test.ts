@@ -8,6 +8,8 @@ import { UserId } from '../../../lib/entities/authn/entities.authn'
 import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest } from '../../../lib/app.api/feeds/app.api.feeds'
 import uniqid from 'uniqid'
 import { AppRequestContext, AppRequest } from '../../../lib/app.api/app.api.global'
+import { FeatureCollection } from 'geojson'
+import { JsonObject } from '../../../lib/entities/entities.global.json'
 
 
 function mockServiceType(descriptor: FeedServiceTypeDescriptor): SubstituteOf<RegisteredFeedServiceType> {
@@ -542,6 +544,7 @@ describe('feeds administration', function() {
     let serviceConn: SubstituteOf<FeedServiceConnection>
 
     beforeEach(function() {
+      app.registerServiceTypes(...someServiceTypes)
       app.registerServices(service)
       serviceConn = Sub.for<FeedServiceConnection>()
       someServiceTypes[0].createConnection(Arg.deepEquals(service.config)).returns(serviceConn)
@@ -549,18 +552,64 @@ describe('feeds administration', function() {
 
     describe('previewing the feed', function() {
 
-      it('fetches creates feed preview with items with minimal config', async function() {
+      it('fetches items and creates feed preview with minimal config', async function() {
 
         const feed: FeedCreateAttrs = {
           service: service.id,
           topic: topics[0].id,
         }
+
+        const previewFeed: Feed = {
+          id: 'preview',
+          service: service.id,
+          topic: topics[0].id,
+          title: topics[0].title,
+          summary: topics[0].summary,
+          constantParams: null,
+          variableParamsSchema: {},
+          updateFrequency: null,
+          itemsHaveIdentity: false,
+          itemsHaveSpatialDimension: false
+        }
+        const previewItems: FeatureCollection = {
+          type: 'FeatureCollection',
+          features: [
+            {
+              type: 'Feature',
+              geometry: {
+                type: 'Point',
+                coordinates: [ -72, 20 ]
+              },
+              properties: {
+                when: '2020-06-01T23:23:00'
+              }
+            }
+          ]
+        }
+        serviceConn.fetchTopicContent(feed.topic, Arg.deepEquals({} as JsonObject)).resolves({
+          feed: previewFeed,
+          items: previewItems,
+          variableParams: {}
+        })
+
         const req = requestBy(adminPrincipal, { feed })
         const res = await app.previewFeed(req)
 
+        expect(res.error).to.be.null
+        expect(res.success?.feed).to.deep.equal(previewFeed)
+        expect(res.success?.items).to.deep.equal(previewItems)
+        expect(res.success?.variableParams).to.deep.equal({})
       })
 
       it('does not save the preview feed', async function() {
+        expect.fail('todo')
+      })
+
+      it('fails if the service does not exists', async function() {
+        expect.fail('todo')
+      })
+
+      it('checks permission for previewing a feed', async function() {
         expect.fail('todo')
       })
     })

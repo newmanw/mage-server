@@ -5,10 +5,10 @@ import { describe, it, before, beforeEach, after, afterEach } from 'mocha'
 import { expect } from 'chai'
 import { MongoMemoryServer } from 'mongodb-memory-server'
 import { BaseMongooseRepository } from '../../../lib/adapters/base/adapters.base.db.mongoose'
-import { FeedServiceRepository, FeedServiceTypeUnregistered, InvalidServiceConfigError, FeedServiceConnection, FeedServiceInfo, FeedTopic } from '../../../lib/entities/feeds/entities.feeds'
+import { FeedServiceRepository, FeedServiceTypeUnregistered, InvalidServiceConfigError, FeedServiceConnection, FeedServiceInfo, FeedTopic, FeedTopicId } from '../../../lib/entities/feeds/entities.feeds'
 import { FeedServiceTypeIdentityModel, FeedsModels, FeedServiceTypeIdentitySchema, FeedServiceModel, FeedServiceSchema, MongooseFeedServiceTypeRepository, MongooseFeedServiceRepository, FeedServiceTypeIdentity, FeedServiceTypeIdentityDocument } from '../../../lib/adapters/feeds/adapters.feeds.db.mongoose'
 import { FeedServiceType } from '../../../lib/entities/feeds/entities.feeds'
-import { Json } from '../../../src/entities/entities.global.json'
+import { Json, JsonObject } from '../../../src/entities/entities.global.json'
 
 describe('feeds repositories', function() {
 
@@ -75,6 +75,9 @@ describe('feeds repositories', function() {
           },
           async fetchAvailableTopics(): Promise<FeedTopic[]> {
             return topics
+          },
+          async fetchTopicContent(topic: FeedTopicId, params: JsonObject) {
+            throw new Error('unimplemented')
           }
         }
       },

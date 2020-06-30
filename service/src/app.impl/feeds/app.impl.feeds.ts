@@ -1,4 +1,4 @@
-import { FeedServiceTypeRepository, FeedServiceRepository, FeedTopic, FeedService, InvalidServiceConfigError } from '../../entities/feeds/entities.feeds';
+import { FeedServiceTypeRepository, FeedServiceRepository, FeedTopic, FeedService, InvalidServiceConfigError, FeedContent } from '../../entities/feeds/entities.feeds';
 import * as api from '../../app.api/feeds/app.api.feeds'
 import { AppRequest, KnownErrorsOf, withPermission, AppResponse } from '../../app.api/app.api.global'
 import { PermissionDeniedError, EntityNotFoundError, InvalidInputError, entityNotFound, invalidInput } from '../../app.api/app.api.global.errors'
@@ -94,7 +94,21 @@ export function ListServiceTopics(permissionService: api.FeedsPermissionService,
 
 export function PreviewFeed(permissionService: api.FeedsPermissionService, serviceTypeRepo: FeedServiceTypeRepository, serviceRepo: FeedServiceRepository): api.PreviewFeed {
   return async function previewFeed(req: api.PreviewFeedRequest): ReturnType<api.PreviewFeed> {
-    throw new Error('todo')
+    const feed = req.feed
+    const service = await serviceRepo.findById(feed.service)
+    if (!service) {
+      return AppResponse.error<FeedContent, EntityNotFoundError>(entityNotFound(feed.service, 'FeedService'))
+    }
+    const serviceType = await serviceTypeRepo.findById(service.serviceType)
+    if (!serviceType) {
+      return AppResponse.error<FeedContent, EntityNotFoundError>(entityNotFound(service.serviceType, 'FeedServiceType'))
+    }
+    const conn = serviceType.createConnection(service.config)
+    const constantParams = feed.constantParams || {}
+    const variableParams = req.variableParams || {}
+    const mergedParams = Object.assign({}, variableParams, constantParams)
+    const content = await conn.fetchTopicContent(feed.topic, mergedParams)
+    return AppResponse.success<FeedContent, unknown>(content)
   }
 }
 
