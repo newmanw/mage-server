@@ -84,7 +84,7 @@ export interface FeedServiceConnection {
   // extra information to fetch topic content and avoid fetching the topic
   // information for every content fetch.  caching could also be left to the
   // plugin to implement, but mage could provide hooks for caching.
-  fetchTopicContent(topic: FeedTopicId, params?: JsonObject): Promise<FeedContent>
+  fetchTopicContent(topic: FeedTopicId, params?: JsonObject): Promise<FeedTopicContent>
 }
 
 export interface FeedServiceTypeRepository {
@@ -120,18 +120,10 @@ export interface FeedTopic {
   readonly title: string
   readonly summary: string | null
   /**
-   * The constant paramters schema defines parameters that an administrative
-   * user must supply when defining a feed derived from this topic.  An example
-   * of a constant parameter this schema defines might be `apiKey`.
+   * The paramters schema defines the parameters MAGE can use to fetch and
+   * filter content from the topic.
    */
-  readonly constantParamsSchema?: JSONSchema4
-  /**
-   * The variable parameters schema defines parameters that a consuming client
-   * can supply when fetching items from a feed dervied from this topic.  A
-   * MAGE mobile app user could change the parameters this schema defines.  An
-   * example parameter this schema defines might be `lastUpdatedTime`.
-   */
-  readonly variableParamsSchema?: JSONSchema4
+  readonly paramsSchema?: JSONSchema4
   /**
    * A topic's update frequency is a hint about how often a service might
    * publish new data to a topic.  A value of `undefined` indicates a topic's
@@ -182,16 +174,29 @@ export interface FeedTopic {
   readonly itemSecondaryProperty?: string
 }
 
+export interface FeedTopicContent {
+  topic: FeedTopicId
+  items: FeatureCollection
+  pageCursor?: Json
+}
+
 /** A feed ID is globally unique. */
 export type FeedId = string
 
 export interface Feed {
-  id: FeedId
-  service: FeedServiceId
-  topic: FeedTopicId
-  title: string
-  summary: string | null
-  constantParams: FeedContentParams
+  readonly id: FeedId
+  readonly service: FeedServiceId
+  readonly topic: FeedTopicId
+  readonly title: string
+  readonly summary: string | null
+  /**
+   * The constant paramters are a subset of a topic's parameters that an
+   * administrative user defines and that MAGE will apply to every fetch
+   * request to the feed's source topic.  An example of a constant parameter
+   * might be `apiKey`.  MAGE does not expose constant parameters to the end-
+   * user consumer of the feed.
+   */
+  readonly constantParams: FeedContentParams
   /**
    * The variable parameters schema of a feed is a schema an administrative user
    * can define to advertise the parameters feed consumers can pass when
@@ -199,7 +204,7 @@ export interface Feed {
    * source  {@linkcode FeedTopic} or could be a more restrictive subset of the
    * topic schema.
    */
-  variableParamsSchema: JSONSchema4
+  readonly variableParamsSchema: JSONSchema4
   /**
    * A feed's update frequency is similar to the like-named property on its
    * underlying topic.  While a topic's update frequency would come from the
@@ -209,23 +214,23 @@ export interface Feed {
    * plugins that are too generic to know what an appropriate update interval
    * would be for particular service's topics.
    */
-  updateFrequency: FeedUpdateFrequency | null
+  readonly updateFrequency: FeedUpdateFrequency | null
   /**
    * This flag is similar to the like-named property on its source
    * {@linkcode FeedTopic}, but as with {@linkcode Feed.updateFrequency}, allows
    * configuration by an administrative user.
    */
-  itemsHaveIdentity: boolean
-  itemsHaveSpatialDimension: boolean
-  itemTemporalProperty?: string
+  readonly itemsHaveIdentity: boolean
+  readonly itemsHaveSpatialDimension: boolean
+  readonly itemTemporalProperty?: string
   /**
    * A feed that does not have a primary property (implying there is no
    * secondary as well) covers the case that a data set might provide only
    * spatial geometries, and the feed/topic context provides the implicit
    * meaning of the geometry data.
    */
-  itemPrimaryProperty?: string
-  itemSecondaryProperty?: string
+  readonly itemPrimaryProperty?: string
+  readonly itemSecondaryProperty?: string
 }
 
 export type FeedCreateAttrs = Pick<Feed, 'service' | 'topic'> & Partial<Omit<Feed, 'id'>>
@@ -236,9 +241,7 @@ export interface FeedRepository {
 
 export type FeedContentParams = JsonObject | null
 
-export interface FeedContent {
-  readonly feed: Feed
+export interface FeedContent extends FeedTopicContent {
+  readonly feed: FeedId
   readonly variableParams: FeedContentParams
-  readonly items: FeatureCollection
-  readonly pageCursor?: Json
 }

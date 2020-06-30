@@ -1,7 +1,7 @@
 import { describe, it, beforeEach } from 'mocha'
 import { expect } from 'chai'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
-import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedService, FeedServiceConnection, RegisteredFeedServiceType, Feed, FeedCreateAttrs } from '../../../lib/entities/feeds/entities.feeds'
+import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedService, FeedServiceConnection, RegisteredFeedServiceType, Feed, FeedCreateAttrs, FeedRepository, FeedId, FeedContent } from '../../../lib/entities/feeds/entities.feeds'
 import { ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics, ListFeedServices, PreviewFeed } from '../../../lib/app.impl/feeds/app.impl.feeds'
 import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError } from '../../../lib/app.api/app.api.global.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
@@ -340,8 +340,7 @@ describe('feeds administration', function() {
           id: 'crime_reports',
           title: 'Criminal Activity',
           summary: 'Reports of criminal activity with locations',
-          constantParamsSchema: {},
-          variableParamsSchema: {
+          paramsSchema: {
             $ref: 'urn:mage:current_user_location'
           },
           itemsHaveIdentity: true,
@@ -351,8 +350,7 @@ describe('feeds administration', function() {
           id: 'fire_reports',
           title: 'Fires',
           summary: 'Reports of fires',
-          constantParamsSchema: {},
-          variableParamsSchema: {
+          paramsSchema: {
             $ref: 'urn:mage:current_user_location'
           },
           itemsHaveIdentity: true,
@@ -558,7 +556,6 @@ describe('feeds administration', function() {
           service: service.id,
           topic: topics[0].id,
         }
-
         const previewFeed: Feed = {
           id: 'preview',
           service: service.id,
@@ -569,7 +566,10 @@ describe('feeds administration', function() {
           variableParamsSchema: {},
           updateFrequency: null,
           itemsHaveIdentity: false,
-          itemsHaveSpatialDimension: false
+          itemsHaveSpatialDimension: false,
+          itemPrimaryProperty: undefined,
+          itemSecondaryProperty: undefined,
+          itemTemporalProperty: undefined,
         }
         const previewItems: FeatureCollection = {
           type: 'FeatureCollection',
@@ -586,26 +586,68 @@ describe('feeds administration', function() {
             }
           ]
         }
+        serviceConn.fetchAvailableTopics().resolves(topics)
         serviceConn.fetchTopicContent(feed.topic, Arg.deepEquals({} as JsonObject)).resolves({
-          feed: previewFeed,
+          topic: feed.topic,
           items: previewItems,
-          variableParams: {}
         })
+        const previewContent: FeedContent = {
+          feed: 'preview',
+          topic: feed.topic,
+          variableParams: null,
+          items: previewItems,
+        }
 
         const req = requestBy(adminPrincipal, { feed })
         const res = await app.previewFeed(req)
 
         expect(res.error).to.be.null
         expect(res.success?.feed).to.deep.equal(previewFeed)
-        expect(res.success?.items).to.deep.equal(previewItems)
-        expect(res.success?.variableParams).to.deep.equal({})
+        expect(res.success?.content).to.deep.equal(previewContent)
       })
 
       it('does not save the preview feed', async function() {
-        expect.fail('todo')
+
+        const feed: FeedCreateAttrs = {
+          service: service.id,
+          topic: topics[0].id
+        }
+        serviceConn.fetchTopicContent(Arg.all()).resolves({
+          topic: feed.topic,
+          items: {
+            type: 'FeatureCollection',
+            features: []
+          }
+        })
+
+        const req = requestBy(adminPrincipal, { feed })
+        const res = await app.previewFeed(req)
+
+        expect(res.error).to.be.null
+        expect(res.success).to.be.instanceOf(Object)
+        expect(app.feedRepo.db).to.be.empty
       })
 
-      it('fails if the service does not exists', async function() {
+      it('fails if the service does not exist', async function() {
+
+        const feed: FeedCreateAttrs = {
+          service: 'not there',
+          topic: topics[0].id
+        }
+
+        const req = requestBy(adminPrincipal, { feed })
+        const res = await app.previewFeed(req)
+
+        expect(res.success).to.be.null
+        const error = res.error as EntityNotFoundError
+        expect(error).to.be.instanceOf(MageError)
+        expect(error.code).to.equal(ErrEntityNotFound)
+        expect(error.data.entityType).to.equal('FeedService')
+        expect(error.data.entityId).to.equal('not there')
+        serviceConn.didNotReceive().fetchTopicContent(Arg.all())
+      })
+
+      it('fails if the topic does not exist', async function() {
         expect.fail('todo')
       })
 
@@ -704,6 +746,7 @@ class TestApp {
 
   readonly serviceTypeRepo = new TestFeedServiceTypeRepository()
   readonly serviceRepo = new TestFeedServiceRepository()
+  readonly feedRepo = new TestFeedRepository()
   readonly permissionService = new TestPermissionService()
   readonly listServiceTypes = ListFeedServiceTypes(this.permissionService, this.serviceTypeRepo)
   readonly previewTopics = PreviewTopics(this.permissionService, this.serviceTypeRepo)
@@ -764,6 +807,10 @@ class TestFeedServiceRepository implements FeedServiceRepository {
   }
 }
 
+class TestFeedRepository implements FeedRepository {
+
+  readonly db = new Map<FeedId, Feed>()
+}
 class TestPermissionService implements FeedsPermissionService {
 
   // TODO: add acl for specific services and listing topics

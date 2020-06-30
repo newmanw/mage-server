@@ -1,5 +1,5 @@
 import { AppRequest, AppResponse, Descriptor, AppRequestContext } from '../app.api.global'
-import { FeedService, FeedTopic, FeedContent, FeedId, FeedServiceTypeId, FeedServiceId, Feed, FeedTopicId, FeedServiceType, FeedCreateAttrs } from '../../entities/feeds/entities.feeds'
+import { FeedService, FeedTopic, FeedContent, FeedId, FeedServiceTypeId, FeedServiceId, Feed, FeedTopicId, FeedServiceType, FeedCreateAttrs, FeedContentParams } from '../../entities/feeds/entities.feeds'
 import { Json, JsonObject } from '../../entities/entities.global.json'
 import { PermissionDeniedError, EntityNotFoundError, InvalidInputError } from '../app.api.global.errors'
 
@@ -42,11 +42,16 @@ export interface ListServiceTopics {
 
 export interface PreviewFeedRequest extends AppRequest {
   feed: FeedCreateAttrs
-  variableParams?: Json
+  variableParams?: FeedContentParams
+}
+
+export interface FeedPreview {
+  feed: Feed & { id: 'preview' }
+  content: FeedContent & { feed: 'preview' }
 }
 
 export interface PreviewFeed {
-  (req: PreviewFeedRequest): Promise<AppResponse<FeedContent, PermissionDeniedError | EntityNotFoundError>>
+  (req: PreviewFeedRequest): Promise<AppResponse<FeedPreview, PermissionDeniedError | EntityNotFoundError>>
 }
 
 export interface CreateFeedRequest extends AppRequest {
@@ -54,8 +59,8 @@ export interface CreateFeedRequest extends AppRequest {
   topic: FeedTopicId
   title: string,
   summary: string,
-  constantParams: Json
-  variableParams: Json
+  constantParams: FeedContentParams
+  variableParams: FeedContentParams
 }
 
 export interface CreateFeed {

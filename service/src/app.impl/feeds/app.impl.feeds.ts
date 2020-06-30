@@ -1,4 +1,4 @@
-import { FeedServiceTypeRepository, FeedServiceRepository, FeedTopic, FeedService, InvalidServiceConfigError, FeedContent } from '../../entities/feeds/entities.feeds';
+import { FeedServiceTypeRepository, FeedServiceRepository, FeedTopic, FeedService, InvalidServiceConfigError, FeedContent, Feed, FeedTopicId } from '../../entities/feeds/entities.feeds';
 import * as api from '../../app.api/feeds/app.api.feeds'
 import { AppRequest, KnownErrorsOf, withPermission, AppResponse } from '../../app.api/app.api.global'
 import { PermissionDeniedError, EntityNotFoundError, InvalidInputError, entityNotFound, invalidInput } from '../../app.api/app.api.global.errors'
@@ -97,18 +97,51 @@ export function PreviewFeed(permissionService: api.FeedsPermissionService, servi
     const feed = req.feed
     const service = await serviceRepo.findById(feed.service)
     if (!service) {
-      return AppResponse.error<FeedContent, EntityNotFoundError>(entityNotFound(feed.service, 'FeedService'))
+      return AppResponse.error<api.FeedPreview, EntityNotFoundError>(entityNotFound(feed.service, 'FeedService'))
     }
     const serviceType = await serviceTypeRepo.findById(service.serviceType)
     if (!serviceType) {
-      return AppResponse.error<FeedContent, EntityNotFoundError>(entityNotFound(service.serviceType, 'FeedServiceType'))
+      return AppResponse.error<api.FeedPreview, EntityNotFoundError>(entityNotFound(service.serviceType, 'FeedServiceType'))
     }
     const conn = serviceType.createConnection(service.config)
-    const constantParams = feed.constantParams || {}
+    const topics =  await conn.fetchAvailableTopics()
+    const topic = topics.find(x => x.id === feed.topic)
+    if (!topic) {
+      return AppResponse.error<api.FeedPreview, EntityNotFoundError>(entityNotFound(feed.topic, 'FeedTopic'))
+    }
+    const constantParams = feed.constantParams || null
     const variableParams = req.variableParams || {}
     const mergedParams = Object.assign({}, variableParams, constantParams)
-    const content = await conn.fetchTopicContent(feed.topic, mergedParams)
-    return AppResponse.success<FeedContent, unknown>(content)
+    const topicContent = await conn.fetchTopicContent(feed.topic, mergedParams)
+    const previewFeed: Feed & { id: 'preview' } = {
+      id: 'preview',
+      service: feed.service,
+      topic: topic.id,
+      title: feed.title || topic.title,
+      summary: feed.summary || topic.summary,
+      constantParams,
+      variableParamsSchema: feed.variableParamsSchema || {},
+      itemsHaveIdentity: feed.itemsHaveIdentity || false,
+      itemsHaveSpatialDimension: feed.itemsHaveSpatialDimension || false,
+      itemPrimaryProperty: feed.itemPrimaryProperty,
+      itemSecondaryProperty: feed.itemSecondaryProperty,
+      itemTemporalProperty: feed.itemTemporalProperty,
+      updateFrequency: feed.updateFrequency || null
+    }
+    const previewContent: FeedContent & { feed: 'preview' } = {
+      feed: 'preview',
+      topic: topicContent.topic,
+      variableParams: req.variableParams || null,
+      items: topicContent.items,
+    }
+    if (topicContent.pageCursor) {
+      previewContent.pageCursor = topicContent.pageCursor
+    }
+    const feedPreview: api.FeedPreview = {
+      feed: previewFeed,
+      content: previewContent,
+    }
+    return AppResponse.success<api.FeedPreview, unknown>(feedPreview)
   }
 }
 
