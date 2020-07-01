@@ -94,54 +94,59 @@ export function ListServiceTopics(permissionService: api.FeedsPermissionService,
 
 export function PreviewFeed(permissionService: api.FeedsPermissionService, serviceTypeRepo: FeedServiceTypeRepository, serviceRepo: FeedServiceRepository): api.PreviewFeed {
   return async function previewFeed(req: api.PreviewFeedRequest): ReturnType<api.PreviewFeed> {
-    const feed = req.feed
-    const service = await serviceRepo.findById(feed.service)
-    if (!service) {
-      return AppResponse.error<api.FeedPreview, EntityNotFoundError>(entityNotFound(feed.service, 'FeedService'))
-    }
-    const serviceType = await serviceTypeRepo.findById(service.serviceType)
-    if (!serviceType) {
-      return AppResponse.error<api.FeedPreview, EntityNotFoundError>(entityNotFound(service.serviceType, 'FeedServiceType'))
-    }
-    const conn = serviceType.createConnection(service.config)
-    const topics =  await conn.fetchAvailableTopics()
-    const topic = topics.find(x => x.id === feed.topic)
-    if (!topic) {
-      return AppResponse.error<api.FeedPreview, EntityNotFoundError>(entityNotFound(feed.topic, 'FeedTopic'))
-    }
-    const constantParams = feed.constantParams || null
-    const variableParams = req.variableParams || {}
-    const mergedParams = Object.assign({}, variableParams, constantParams)
-    const topicContent = await conn.fetchTopicContent(feed.topic, mergedParams)
-    const previewFeed: Feed & { id: 'preview' } = {
-      id: 'preview',
-      service: feed.service,
-      topic: topic.id,
-      title: feed.title || topic.title,
-      summary: feed.summary || topic.summary,
-      constantParams,
-      variableParamsSchema: feed.variableParamsSchema || {},
-      itemsHaveIdentity: feed.itemsHaveIdentity || false,
-      itemsHaveSpatialDimension: feed.itemsHaveSpatialDimension || false,
-      itemPrimaryProperty: feed.itemPrimaryProperty,
-      itemSecondaryProperty: feed.itemSecondaryProperty,
-      itemTemporalProperty: feed.itemTemporalProperty,
-      updateFrequency: feed.updateFrequency || null
-    }
-    const previewContent: FeedContent & { feed: 'preview' } = {
-      feed: 'preview',
-      topic: topicContent.topic,
-      variableParams: req.variableParams || null,
-      items: topicContent.items,
-    }
-    if (topicContent.pageCursor) {
-      previewContent.pageCursor = topicContent.pageCursor
-    }
-    const feedPreview: api.FeedPreview = {
-      feed: previewFeed,
-      content: previewContent,
-    }
-    return AppResponse.success<api.FeedPreview, unknown>(feedPreview)
+    const reqFeed = req.feed
+    return await withPermission<api.FeedPreview, KnownErrorsOf<api.PreviewFeed>>(
+      permissionService.ensureCreateFeedPermissionFor(req.context, reqFeed.service),
+      async (): Promise<api.FeedPreview | EntityNotFoundError> => {
+        const service = await serviceRepo.findById(reqFeed.service)
+        if (!service) {
+          return entityNotFound(reqFeed.service, 'FeedService')
+        }
+        const serviceType = await serviceTypeRepo.findById(service.serviceType)
+        if (!serviceType) {
+          return entityNotFound(service.serviceType, 'FeedServiceType')
+        }
+        const conn = serviceType.createConnection(service.config)
+        const topics =  await conn.fetchAvailableTopics()
+        const topic = topics.find(x => x.id === reqFeed.topic)
+        if (!topic) {
+          return entityNotFound(reqFeed.topic, 'FeedTopic')
+        }
+        const constantParams = reqFeed.constantParams || null
+        const variableParams = req.variableParams || {}
+        const mergedParams = Object.assign({}, variableParams, constantParams)
+        const topicContent = await conn.fetchTopicContent(reqFeed.topic, mergedParams)
+        const previewFeed: Feed & { id: 'preview' } = {
+          id: 'preview',
+          service: reqFeed.service,
+          topic: topic.id,
+          title: reqFeed.title || topic.title,
+          summary: reqFeed.summary || topic.summary,
+          constantParams,
+          variableParamsSchema: reqFeed.variableParamsSchema || {},
+          itemsHaveIdentity: reqFeed.itemsHaveIdentity || false,
+          itemsHaveSpatialDimension: reqFeed.itemsHaveSpatialDimension || false,
+          itemPrimaryProperty: reqFeed.itemPrimaryProperty,
+          itemSecondaryProperty: reqFeed.itemSecondaryProperty,
+          itemTemporalProperty: reqFeed.itemTemporalProperty,
+          updateFrequency: reqFeed.updateFrequency || null
+        }
+        const previewContent: FeedContent & { feed: 'preview' } = {
+          feed: 'preview',
+          topic: topicContent.topic,
+          variableParams: req.variableParams || null,
+          items: topicContent.items,
+        }
+        if (topicContent.pageCursor) {
+          previewContent.pageCursor = topicContent.pageCursor
+        }
+        const feedPreview: api.FeedPreview = {
+          feed: previewFeed,
+          content: previewContent,
+        }
+        return feedPreview
+      }
+    )
   }
 }
 

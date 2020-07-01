@@ -2,8 +2,8 @@ import { describe, it, beforeEach } from 'mocha'
 import { expect } from 'chai'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
 import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedService, FeedServiceConnection, RegisteredFeedServiceType, Feed, FeedCreateAttrs, FeedRepository, FeedId, FeedContent } from '../../../lib/entities/feeds/entities.feeds'
-import { ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics, ListFeedServices, PreviewFeed } from '../../../lib/app.impl/feeds/app.impl.feeds'
-import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError } from '../../../lib/app.api/app.api.global.errors'
+import { ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics, ListFeedServices, PreviewFeed, CreateFeed } from '../../../lib/app.impl/feeds/app.impl.feeds'
+import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError, PermissionDeniedErrorData } from '../../../lib/app.api/app.api.global.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
 import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest } from '../../../lib/app.api/feeds/app.api.feeds'
 import uniqid from 'uniqid'
@@ -513,7 +513,7 @@ describe('feeds administration', function() {
     })
   })
 
-  describe.only('creating a feed', function() {
+  describe('creating a feed', function() {
 
     const service: FeedService = {
       id: uniqid(),
@@ -544,6 +544,7 @@ describe('feeds administration', function() {
     beforeEach(function() {
       app.registerServiceTypes(...someServiceTypes)
       app.registerServices(service)
+      app.permissionService.grantCreateFeed(adminPrincipal.user, service.id)
       serviceConn = Sub.for<FeedServiceConnection>()
       someServiceTypes[0].createConnection(Arg.deepEquals(service.config)).returns(serviceConn)
     })
@@ -634,6 +635,7 @@ describe('feeds administration', function() {
           service: 'not there',
           topic: topics[0].id
         }
+        app.permissionService.grantCreateFeed(adminPrincipal.user, feed.service)
 
         const req = requestBy(adminPrincipal, { feed })
         const res = await app.previewFeed(req)
@@ -648,11 +650,49 @@ describe('feeds administration', function() {
       })
 
       it('fails if the topic does not exist', async function() {
-        expect.fail('todo')
+
+        const feed: FeedCreateAttrs = {
+          service: service.id,
+          topic: 'not there'
+        }
+        serviceConn.fetchAvailableTopics().resolves(topics)
+
+        const req = requestBy(adminPrincipal, { feed })
+        const res = await app.previewFeed(req)
+
+        expect(res.success).to.be.null
+        const error = res.error as EntityNotFoundError
+        expect(error).to.be.instanceOf(MageError)
+        expect(error.code).to.equal(ErrEntityNotFound)
+        expect(error.data.entityType).to.equal('FeedTopic')
+        expect(error.data.entityId).to.equal('not there')
+        serviceConn.didNotReceive().fetchTopicContent(Arg.all())
       })
 
       it('checks permission for previewing a feed', async function() {
-        expect.fail('todo')
+
+        const feed: FeedCreateAttrs = {
+          service: service.id,
+          topic: topics[0].id
+        }
+
+        const req = requestBy(bannedPrincipal, { feed })
+        let res = await app.previewFeed(req)
+
+        expect(res.success).to.be.null
+        const error = res.error
+        expect(error).to.be.instanceOf(MageError)
+        expect(error?.code).to.equal(ErrPermissionDenied)
+        const errData = error?.data as PermissionDeniedErrorData
+        expect(errData.subject).to.equal(bannedPrincipal.user)
+        expect(errData.permission).to.equal(CreateFeed.name)
+        expect(errData.object).to.equal(feed.service)
+
+        app.permissionService.grantCreateFeed(bannedPrincipal.user, service.id)
+        res = await app.previewFeed(req)
+
+        expect(res.error).to.be.null
+        expect(res.success).to.be.instanceOf(Object)
       })
     })
 
@@ -840,12 +880,11 @@ class TestPermissionService implements FeedsPermissionService {
   }
 
   async ensureListTopicsPermissionFor(context: AppRequestContext<TestPrincipal>, service: FeedServiceId): Promise<null | PermissionDeniedError> {
-    const acl = this.serviceAcls.get(service)
-    const principal = context.requestingPrincipal()
-    if (acl?.get(principal.user)?.has(ListServiceTopics.name)) {
-      return null
-    }
-    return permissionDenied(ListServiceTopics.name, principal.user)
+    return this.ensureServicePrivilege(context, service, ListServiceTopics.name)
+  }
+
+  async ensureCreateFeedPermissionFor(context: AppRequestContext<TestPrincipal>, service: FeedServiceId): Promise<null | PermissionDeniedError> {
+    return this.ensureServicePrivilege(context, service, CreateFeed.name)
   }
 
   grantCreateService(user: UserId) {
@@ -857,27 +896,17 @@ class TestPermissionService implements FeedsPermissionService {
   }
 
   grantListTopics(user: UserId, service: FeedServiceId) {
-    let acl = this.serviceAcls.get(service)
-    if (!acl) {
-      acl = new Map<UserId, Set<string>>()
-      this.serviceAcls.set(service, acl)
-    }
-    let servicePermissions = acl.get(user)
-    if (!servicePermissions) {
-      servicePermissions = new Set<string>()
-      acl.set(user, servicePermissions)
-    }
-    servicePermissions.add(ListServiceTopics.name)
+    this.grantServicePrivilege(user, service, ListServiceTopics.name)
+  }
+
+  grantCreateFeed(user: UserId, service: FeedServiceId) {
+    this.grantServicePrivilege(user, service, CreateFeed.name)
   }
 
   revokeListTopics(user: UserId, service: FeedServiceId) {
     const acl = this.serviceAcls.get(service)
     const servicePermissions = acl?.get(user)
     servicePermissions?.delete(ListServiceTopics.name)
-  }
-
-  async ensureCreateFeedPermissionFor(context: AppRequestContext<TestPrincipal>): Promise<null | PermissionDeniedError> {
-    throw new Error('todo')
   }
 
   checkPrivilege(user: UserId, privilege: string): null | PermissionDeniedError {
@@ -897,5 +926,28 @@ class TestPermissionService implements FeedsPermissionService {
     const privs = this.privleges[user] || {}
     privs[privilege] = false
     this.privleges[user] = privs
+  }
+
+  grantServicePrivilege(user: UserId, service: FeedServiceId, privilege: string): void {
+    let acl = this.serviceAcls.get(service)
+    if (!acl) {
+      acl = new Map<UserId, Set<string>>()
+      this.serviceAcls.set(service, acl)
+    }
+    let servicePermissions = acl.get(user)
+    if (!servicePermissions) {
+      servicePermissions = new Set<string>()
+      acl.set(user, servicePermissions)
+    }
+    servicePermissions.add(privilege)
+  }
+
+  ensureServicePrivilege(context: AppRequestContext<TestPrincipal>, service: FeedServiceId, privilege: string): null | PermissionDeniedError {
+    const acl = this.serviceAcls.get(service)
+    const principal = context.requestingPrincipal()
+    if (acl?.get(principal.user)?.has(privilege)) {
+      return null
+    }
+    return permissionDenied(privilege, principal.user, service)
   }
 }

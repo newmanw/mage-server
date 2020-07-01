@@ -14,8 +14,9 @@ export class MageError<Code extends symbol, Data = null> extends Error {
 }
 
 export interface PermissionDeniedErrorData {
-  permission: string
   subject: string
+  permission: string
+  object: string | null
 }
 
 export interface EntityNotFoundErrorData {
@@ -25,8 +26,9 @@ export interface EntityNotFoundErrorData {
 
 export type InvalidInputErrorData = string[]
 
-export function permissionDenied(permission: string, subject: string): PermissionDeniedError {
-  return new MageError(ErrPermissionDenied, { permission, subject }, `${subject} does not have permission ${permission}`)
+export function permissionDenied(permission: string, subject: string, object?: string): PermissionDeniedError {
+  const message = `${subject} does not have permission ${permission}` + object ? ` on ${object}` : ''
+  return new MageError(ErrPermissionDenied, { permission, subject, object: object || null }, message)
 }
 
 export function entityNotFound(entityId: any, entityType: string): EntityNotFoundError {
