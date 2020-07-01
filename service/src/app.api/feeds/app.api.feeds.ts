@@ -1,4 +1,4 @@
-import { AppRequest, AppResponse, Descriptor, AppRequestContext } from '../app.api.global'
+import { AppRequest, AppResponse, Descriptor, AppRequestContext, KnownErrorsOf } from '../app.api.global'
 import { FeedService, FeedTopic, FeedContent, FeedId, FeedServiceTypeId, FeedServiceId, Feed, FeedTopicId, FeedServiceType, FeedCreateAttrs, FeedContentParams } from '../../entities/feeds/entities.feeds'
 import { Json, JsonObject } from '../../entities/entities.global.json'
 import { PermissionDeniedError, EntityNotFoundError, InvalidInputError } from '../app.api.global.errors'
@@ -40,8 +40,11 @@ export interface ListServiceTopics {
   (req: ListServiceTopicsRequest): Promise<AppResponse<FeedTopic[], PermissionDeniedError | EntityNotFoundError>>
 }
 
-export interface PreviewFeedRequest extends AppRequest {
+export interface CreateFeedRequest extends AppRequest {
   feed: FeedCreateAttrs
+}
+
+export interface PreviewFeedRequest extends CreateFeedRequest {
   variableParams?: FeedContentParams
 }
 
@@ -51,20 +54,11 @@ export interface FeedPreview {
 }
 
 export interface PreviewFeed {
-  (req: PreviewFeedRequest): Promise<AppResponse<FeedPreview, PermissionDeniedError | EntityNotFoundError>>
-}
-
-export interface CreateFeedRequest extends AppRequest {
-  service: FeedServiceId,
-  topic: FeedTopicId
-  title: string,
-  summary: string,
-  constantParams: FeedContentParams
-  variableParams: FeedContentParams
+  (req: PreviewFeedRequest): Promise<AppResponse<FeedPreview, KnownErrorsOf<CreateFeed>>>
 }
 
 export interface CreateFeed {
-  (req: CreateFeedRequest): Promise<FeedService>
+  (req: CreateFeedRequest): Promise<AppResponse<Feed, PermissionDeniedError | EntityNotFoundError>>
 }
 
 export interface FetchEventFeedsRequest extends AppRequest {

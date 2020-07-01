@@ -1,4 +1,4 @@
-import { FeedServiceTypeRepository, FeedServiceRepository, FeedTopic, FeedService, InvalidServiceConfigError, FeedContent, Feed, FeedTopicId } from '../../entities/feeds/entities.feeds';
+import { FeedServiceTypeRepository, FeedServiceRepository, FeedTopic, FeedService, InvalidServiceConfigError, FeedContent, Feed, FeedTopicId, FeedServiceConnection, FeedRepository, FeedCreateAttrs } from '../../entities/feeds/entities.feeds';
 import * as api from '../../app.api/feeds/app.api.feeds'
 import { AppRequest, KnownErrorsOf, withPermission, AppResponse } from '../../app.api/app.api.global'
 import { PermissionDeniedError, EntityNotFoundError, InvalidInputError, entityNotFound, invalidInput } from '../../app.api/app.api.global.errors'
@@ -92,6 +92,25 @@ export function ListServiceTopics(permissionService: api.FeedsPermissionService,
   }
 }
 
+type PreviewOrCreateFeedResult = ReturnType<api.CreateFeed> | ReturnType<api.PreviewFeed>
+type AfterCreateFeedPreconditions = <R extends PreviewOrCreateFeedResult>(feed: Feed, service: FeedService, serviceConn: FeedServiceConnection) => R
+
+// async function ensureCreateFeedPreconditions(
+//   permissionService: api.FeedsPermissionService,
+//   serviceTypeRepo: FeedServiceTypeRepository,
+//   serviceRepo: FeedServiceRepository,
+//   req: api.CreateFeedRequest):
+//   { then: () => Promise<Feed | EntityNotFoundError> } {
+//   const reqFeed = req.feed
+//   return {
+//     then<R>(after: AfterCreateFeedPreconditions): () => Promise<R | EntityNotFoundError> {
+//       return async () => {
+//         return await after(feed, service, serviceConn)
+//       }
+//     }
+//   }
+// }
+
 export function PreviewFeed(permissionService: api.FeedsPermissionService, serviceTypeRepo: FeedServiceTypeRepository, serviceRepo: FeedServiceRepository): api.PreviewFeed {
   return async function previewFeed(req: api.PreviewFeedRequest): ReturnType<api.PreviewFeed> {
     const reqFeed = req.feed
@@ -150,20 +169,45 @@ export function PreviewFeed(permissionService: api.FeedsPermissionService, servi
   }
 }
 
-export function CreateFeed(permissionService: api.FeedsPermissionService, serviceTypeRepo: FeedServiceTypeRepository, serviceRepo: FeedServiceRepository): api.CreateFeed {
+export function CreateFeed(permissionService: api.FeedsPermissionService, serviceTypeRepo: FeedServiceTypeRepository, serviceRepo: FeedServiceRepository, feedRepo: FeedRepository): api.CreateFeed {
   return async function createFeed(req: api.CreateFeedRequest): ReturnType<api.CreateFeed> {
-    throw new Error('todo')
-    // await permissionService.ensureCreateFeedPermissionFor(req.user)
-    // if (!req.feedType) {
-    //   throw new MageError(MageErrorCode.InvalidInput)
-    // }
-    // const feedType = await feedTypeRepo.findById(req.feedType)
-    // if (!feedType) {
-    //   throw new MageError(MageErrorCode.InvalidInput)
-    // }
-    // const feedAttrs = { ...req }
-    // delete feedAttrs.user
-    // return await feedRepo.create(req)
+    const reqFeed = req.feed
+    return await withPermission<Feed, KnownErrorsOf<api.CreateFeed>>(
+      permissionService.ensureCreateFeedPermissionFor(req.context, reqFeed.service),
+      async (): Promise<Feed | EntityNotFoundError> => {
+        const service = await serviceRepo.findById(reqFeed.service)
+        if (!service) {
+          return entityNotFound(reqFeed.service, 'FeedService')
+        }
+        const serviceType = await serviceTypeRepo.findById(service.serviceType)
+        if (!serviceType) {
+          return entityNotFound(service.serviceType, 'FeedServiceType')
+        }
+        const conn = serviceType.createConnection(service.config)
+        const topics =  await conn.fetchAvailableTopics()
+        const topic = topics.find(x => x.id === reqFeed.topic)
+        if (!topic) {
+          return entityNotFound(reqFeed.topic, 'FeedTopic')
+        }
+        const constantParams = reqFeed.constantParams || null
+        const previewFeed: FeedCreateAttrs = {
+          service: reqFeed.service,
+          topic: topic.id,
+          title: reqFeed.title || topic.title,
+          summary: reqFeed.summary || topic.summary,
+          constantParams,
+          variableParamsSchema: reqFeed.variableParamsSchema || {},
+          itemsHaveIdentity: reqFeed.itemsHaveIdentity || false,
+          itemsHaveSpatialDimension: reqFeed.itemsHaveSpatialDimension || false,
+          itemPrimaryProperty: reqFeed.itemPrimaryProperty,
+          itemSecondaryProperty: reqFeed.itemSecondaryProperty,
+          itemTemporalProperty: reqFeed.itemTemporalProperty,
+          updateFrequency: reqFeed.updateFrequency || null
+        }
+        const feed = await feedRepo.create(previewFeed)
+        return feed
+      }
+    )
   }
 }
 

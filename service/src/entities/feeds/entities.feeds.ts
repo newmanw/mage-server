@@ -236,7 +236,7 @@ export interface Feed {
 export type FeedCreateAttrs = Pick<Feed, 'service' | 'topic'> & Partial<Omit<Feed, 'id'>>
 
 export interface FeedRepository {
-
+  create(attrs: FeedCreateAttrs): Feed
 }
 
 export type FeedContentParams = JsonObject | null

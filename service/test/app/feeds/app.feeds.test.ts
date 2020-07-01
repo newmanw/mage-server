@@ -1,7 +1,7 @@
-import { describe, it, beforeEach } from 'mocha'
+import { describe, it, beforeEach, Context } from 'mocha'
 import { expect } from 'chai'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
-import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedService, FeedServiceConnection, RegisteredFeedServiceType, Feed, FeedCreateAttrs, FeedRepository, FeedId, FeedContent } from '../../../lib/entities/feeds/entities.feeds'
+import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedService, FeedServiceConnection, RegisteredFeedServiceType, Feed, FeedCreateAttrs, FeedRepository, FeedId, FeedContent, InvalidServiceConfigError } from '../../../lib/entities/feeds/entities.feeds'
 import { ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics, ListFeedServices, PreviewFeed, CreateFeed } from '../../../lib/app.impl/feeds/app.impl.feeds'
 import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError, PermissionDeniedErrorData } from '../../../lib/app.api/app.api.global.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
@@ -513,9 +513,9 @@ describe('feeds administration', function() {
     })
   })
 
-  describe('creating a feed', function() {
+  describe.only('creating a feed', function() {
 
-    const service: FeedService = {
+    const service: FeedService = Object.freeze({
       id: uniqid(),
       serviceType: someServiceTypeDescs[0].id,
       title: 'Local Weather WFS',
@@ -523,20 +523,20 @@ describe('feeds administration', function() {
       config: {
         url: 'https://weather.local.gov/wfs'
       }
-    }
+    })
     const topics: FeedTopic[] = [
-      {
+      Object.freeze({
         id: 'lightning',
         title: 'Lightning Strikes',
         summary: 'Locations of lightning strikes',
         itemsHaveSpatialDimension: true,
-      },
-      {
+      }),
+      Object.freeze({
         id: 'tornadoes',
         title: 'Tornado Touchdowns',
         summary: 'Locations and severity of tornado touchdowns',
         itemsHaveSpatialDimension: true,
-      }
+      })
     ]
 
     let serviceConn: SubstituteOf<FeedServiceConnection>
@@ -548,6 +548,115 @@ describe('feeds administration', function() {
       serviceConn = Sub.for<FeedServiceConnection>()
       someServiceTypes[0].createConnection(Arg.deepEquals(service.config)).returns(serviceConn)
     })
+
+    type PreviewOrCreateOp = 'previewFeed' | 'createFeed'
+
+    const sharedErrorConditions: [string, (op: PreviewOrCreateOp) => any][] = [
+      [
+        'fails if the service type does not exist',
+        async function(appOperation) {
+          const service: FeedService = {
+            id: 'defunct',
+            serviceType: 'not there',
+            title: 'Defunct',
+            summary: null,
+            config: null
+          }
+          app.registerServices(service)
+          const feed: FeedCreateAttrs = {
+            service: service.id,
+            topic: topics[0].id
+          }
+          app.permissionService.grantCreateFeed(adminPrincipal.user, feed.service)
+
+          const req = requestBy(adminPrincipal, { feed })
+          const res = await app[appOperation](req)
+
+          expect(res.success).to.be.null
+          const error = res.error as EntityNotFoundError
+          expect(error).to.be.instanceOf(MageError)
+          expect(error.code).to.equal(ErrEntityNotFound)
+          expect(error.data.entityType).to.equal('FeedServiceType')
+          expect(error.data.entityId).to.equal('not there')
+          serviceConn.didNotReceive().fetchTopicContent(Arg.all())
+        }
+      ],
+      [
+        'fails if the service does not exist',
+        async function(appOperation: PreviewOrCreateOp) {
+          const feed: FeedCreateAttrs = {
+            service: 'not there',
+            topic: topics[0].id
+          }
+          app.permissionService.grantCreateFeed(adminPrincipal.user, feed.service)
+
+          const req = requestBy(adminPrincipal, { feed })
+          const res = await app[appOperation](req)
+
+          expect(res.success).to.be.null
+          const error = res.error as EntityNotFoundError
+          expect(error).to.be.instanceOf(MageError)
+          expect(error.code).to.equal(ErrEntityNotFound)
+          expect(error.data.entityType).to.equal('FeedService')
+          expect(error.data.entityId).to.equal('not there')
+          serviceConn.didNotReceive().fetchTopicContent(Arg.all())
+        }
+      ],
+      [
+        'fails if the topic does not exist',
+        async function(appOperation: PreviewOrCreateOp) {
+          const feed: FeedCreateAttrs = {
+            service: service.id,
+            topic: 'not there'
+          }
+          serviceConn.fetchAvailableTopics().resolves(topics)
+
+          const req = requestBy(adminPrincipal, { feed })
+          const res = await app[appOperation](req)
+
+          expect(res.success).to.be.null
+          const error = res.error as EntityNotFoundError
+          expect(error).to.be.instanceOf(MageError)
+          expect(error.code).to.equal(ErrEntityNotFound)
+          expect(error.data.entityType).to.equal('FeedTopic')
+          expect(error.data.entityId).to.equal('not there')
+          serviceConn.didNotReceive().fetchTopicContent(Arg.all())
+        }
+      ],
+      [
+        'checks permission for creating a feed',
+        async function(appOperation: PreviewOrCreateOp) {
+          const feed: FeedCreateAttrs = {
+            service: service.id,
+            topic: topics[0].id
+          }
+
+          const req = requestBy(bannedPrincipal, { feed })
+          let res = await app[appOperation](req)
+
+          expect(res.success).to.be.null
+          const error = res.error
+          expect(error).to.be.instanceOf(MageError)
+          expect(error?.code).to.equal(ErrPermissionDenied)
+          const errData = error?.data as PermissionDeniedErrorData
+          expect(errData.subject).to.equal(bannedPrincipal.user)
+          expect(errData.permission).to.equal(CreateFeed.name)
+          expect(errData.object).to.equal(feed.service)
+
+          app.permissionService.grantCreateFeed(bannedPrincipal.user, service.id)
+          res = await app[appOperation](req)
+
+          expect(res.error).to.be.null
+          expect(res.success).to.be.instanceOf(Object)
+        }
+      ]
+    ]
+
+    function testSharedErrorConditionsFor(this: Context, appOperation: PreviewOrCreateOp) {
+      for (const test of sharedErrorConditions) {
+        it(test[0], test[1].bind(this, appOperation))
+      }
+    }
 
     describe('previewing the feed', function() {
 
@@ -607,6 +716,45 @@ describe('feeds administration', function() {
         expect(res.success?.content).to.deep.equal(previewContent)
       })
 
+      it('applies request inputs to the feed preview', async function() {
+
+        const feed: FeedCreateAttrs = {
+          service: service.id,
+          topic: topics[1].id,
+          title: 'My Tornadoes',
+          summary: 'Tornadoes I like',
+          constantParams: {
+            favoriteOf: adminPrincipal.user
+          },
+          variableParamsSchema: {
+            type: 'object',
+            properties: {
+              limit: {
+                type: 'number'
+              }
+            }
+          }
+        }
+        const variableParams = {
+          limit: 10
+        }
+        const req = requestBy(adminPrincipal, {
+          feed, variableParams
+        })
+
+        const res = await app.previewFeed(req)
+
+        expect.fail('todo')
+      })
+
+      it('validates variable params', async function() {
+        expect.fail('todo')
+      })
+
+      it('validates the constant params', async function() {
+        expect.fail('todo')
+      })
+
       it('does not save the preview feed', async function() {
 
         const feed: FeedCreateAttrs = {
@@ -629,81 +777,31 @@ describe('feeds administration', function() {
         expect(app.feedRepo.db).to.be.empty
       })
 
-      it('fails if the service does not exist', async function() {
-
-        const feed: FeedCreateAttrs = {
-          service: 'not there',
-          topic: topics[0].id
-        }
-        app.permissionService.grantCreateFeed(adminPrincipal.user, feed.service)
-
-        const req = requestBy(adminPrincipal, { feed })
-        const res = await app.previewFeed(req)
-
-        expect(res.success).to.be.null
-        const error = res.error as EntityNotFoundError
-        expect(error).to.be.instanceOf(MageError)
-        expect(error.code).to.equal(ErrEntityNotFound)
-        expect(error.data.entityType).to.equal('FeedService')
-        expect(error.data.entityId).to.equal('not there')
-        serviceConn.didNotReceive().fetchTopicContent(Arg.all())
-      })
-
-      it('fails if the topic does not exist', async function() {
-
-        const feed: FeedCreateAttrs = {
-          service: service.id,
-          topic: 'not there'
-        }
-        serviceConn.fetchAvailableTopics().resolves(topics)
-
-        const req = requestBy(adminPrincipal, { feed })
-        const res = await app.previewFeed(req)
-
-        expect(res.success).to.be.null
-        const error = res.error as EntityNotFoundError
-        expect(error).to.be.instanceOf(MageError)
-        expect(error.code).to.equal(ErrEntityNotFound)
-        expect(error.data.entityType).to.equal('FeedTopic')
-        expect(error.data.entityId).to.equal('not there')
-        serviceConn.didNotReceive().fetchTopicContent(Arg.all())
-      })
-
-      it('checks permission for previewing a feed', async function() {
-
-        const feed: FeedCreateAttrs = {
-          service: service.id,
-          topic: topics[0].id
-        }
-
-        const req = requestBy(bannedPrincipal, { feed })
-        let res = await app.previewFeed(req)
-
-        expect(res.success).to.be.null
-        const error = res.error
-        expect(error).to.be.instanceOf(MageError)
-        expect(error?.code).to.equal(ErrPermissionDenied)
-        const errData = error?.data as PermissionDeniedErrorData
-        expect(errData.subject).to.equal(bannedPrincipal.user)
-        expect(errData.permission).to.equal(CreateFeed.name)
-        expect(errData.object).to.equal(feed.service)
-
-        app.permissionService.grantCreateFeed(bannedPrincipal.user, service.id)
-        res = await app.previewFeed(req)
-
-        expect(res.error).to.be.null
-        expect(res.success).to.be.instanceOf(Object)
+      describe('error conditions shared with creating a feed', function() {
+        testSharedErrorConditionsFor.call(this.ctx, 'previewFeed')
       })
     })
 
     describe('saving the feed', function() {
 
       it('saves the feed', async function() {
+
+        const feed: FeedCreateAttrs = {
+          service: service.id,
+          topic: topics[1].id
+        }
+
+        const req = requestBy(adminPrincipal, { feed })
+        const res = await app.createFeed(req)
         expect.fail('todo')
       })
 
       it('saves a feed from a preview', async function() {
         expect.fail('todo')
+      })
+
+      describe('error conditions shared with previewing a feed', function() {
+        testSharedErrorConditionsFor.call(this.ctx, 'createFeed')
       })
     })
   })
@@ -797,6 +895,7 @@ class TestApp {
   readonly listServices = ListFeedServices(this.permissionService, this.serviceRepo)
   readonly listTopics = ListServiceTopics(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
   readonly previewFeed = PreviewFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
+  readonly createFeed = CreateFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
 
   registerServiceTypes(...types: RegisteredFeedServiceType[]): void {
     for (const type of types) {
