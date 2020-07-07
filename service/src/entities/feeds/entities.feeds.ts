@@ -204,7 +204,7 @@ export interface Feed {
    * source  {@linkcode FeedTopic} or could be a more restrictive subset of the
    * topic schema.
    */
-  readonly variableParamsSchema: JSONSchema4
+  readonly variableParamsSchema?: JSONSchema4
   /**
    * A feed's update frequency is similar to the like-named property on its
    * underlying topic.  While a topic's update frequency would come from the
@@ -214,7 +214,7 @@ export interface Feed {
    * plugins that are too generic to know what an appropriate update interval
    * would be for particular service's topics.
    */
-  readonly updateFrequency: FeedUpdateFrequency | null
+  readonly updateFrequency?: FeedUpdateFrequency
   /**
    * This flag is similar to the like-named property on its source
    * {@linkcode FeedTopic}, but as with {@linkcode Feed.updateFrequency}, allows
@@ -233,10 +233,30 @@ export interface Feed {
   readonly itemSecondaryProperty?: string
 }
 
-export type FeedCreateAttrs = Pick<Feed, 'service' | 'topic'> & Partial<Omit<Feed, 'id'>>
+export type FeedCreateAttrs = Omit<Feed, 'id'> & { id?: FeedId }
 
 export interface FeedRepository {
-  create(attrs: FeedCreateAttrs): Feed
+  create(attrs: FeedCreateAttrs): Promise<Feed>
+}
+
+export type FeedMinimalAttrs = Partial<Feed> & Pick<Feed, 'topic' | 'service'>
+
+export const FeedCreateAttrs = (topic: FeedTopic, feedAttrs: FeedMinimalAttrs): FeedCreateAttrs => {
+  const createAttrs: FeedCreateAttrs = {
+    service: feedAttrs.service,
+    topic: topic.id,
+    title: feedAttrs.title || topic.title,
+    summary: feedAttrs.summary || topic.summary,
+    constantParams: feedAttrs.constantParams || null,
+    variableParamsSchema: feedAttrs.variableParamsSchema || {},
+    itemsHaveIdentity: feedAttrs.itemsHaveIdentity || false,
+    itemsHaveSpatialDimension: feedAttrs.itemsHaveSpatialDimension || false,
+    itemPrimaryProperty: feedAttrs.itemPrimaryProperty,
+    itemSecondaryProperty: feedAttrs.itemSecondaryProperty,
+    itemTemporalProperty: feedAttrs.itemTemporalProperty,
+    updateFrequency: feedAttrs.updateFrequency || undefined
+  }
+  return createAttrs
 }
 
 export type FeedContentParams = JsonObject | null

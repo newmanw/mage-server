@@ -135,21 +135,7 @@ export function PreviewFeed(permissionService: api.FeedsPermissionService, servi
         const variableParams = req.variableParams || {}
         const mergedParams = Object.assign({}, variableParams, constantParams)
         const topicContent = await conn.fetchTopicContent(reqFeed.topic, mergedParams)
-        const previewFeed: Feed & { id: 'preview' } = {
-          id: 'preview',
-          service: reqFeed.service,
-          topic: topic.id,
-          title: reqFeed.title || topic.title,
-          summary: reqFeed.summary || topic.summary,
-          constantParams,
-          variableParamsSchema: reqFeed.variableParamsSchema || {},
-          itemsHaveIdentity: reqFeed.itemsHaveIdentity || false,
-          itemsHaveSpatialDimension: reqFeed.itemsHaveSpatialDimension || false,
-          itemPrimaryProperty: reqFeed.itemPrimaryProperty,
-          itemSecondaryProperty: reqFeed.itemSecondaryProperty,
-          itemTemporalProperty: reqFeed.itemTemporalProperty,
-          updateFrequency: reqFeed.updateFrequency || null
-        }
+        const previewFeed = FeedCreateAttrs(topic, reqFeed)
         const previewContent: FeedContent & { feed: 'preview' } = {
           feed: 'preview',
           topic: topicContent.topic,
@@ -189,22 +175,8 @@ export function CreateFeed(permissionService: api.FeedsPermissionService, servic
         if (!topic) {
           return entityNotFound(reqFeed.topic, 'FeedTopic')
         }
-        const constantParams = reqFeed.constantParams || null
-        const previewFeed: FeedCreateAttrs = {
-          service: reqFeed.service,
-          topic: topic.id,
-          title: reqFeed.title || topic.title,
-          summary: reqFeed.summary || topic.summary,
-          constantParams,
-          variableParamsSchema: reqFeed.variableParamsSchema || {},
-          itemsHaveIdentity: reqFeed.itemsHaveIdentity || false,
-          itemsHaveSpatialDimension: reqFeed.itemsHaveSpatialDimension || false,
-          itemPrimaryProperty: reqFeed.itemPrimaryProperty,
-          itemSecondaryProperty: reqFeed.itemSecondaryProperty,
-          itemTemporalProperty: reqFeed.itemTemporalProperty,
-          updateFrequency: reqFeed.updateFrequency || null
-        }
-        const feed = await feedRepo.create(previewFeed)
+        const feedAttrs = FeedCreateAttrs(topic, reqFeed)
+        const feed = await feedRepo.create(feedAttrs)
         return feed
       }
     )

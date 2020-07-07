@@ -1,11 +1,11 @@
 import { describe, it, beforeEach, Context } from 'mocha'
 import { expect } from 'chai'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
-import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedService, FeedServiceConnection, RegisteredFeedServiceType, Feed, FeedCreateAttrs, FeedRepository, FeedId, FeedContent, InvalidServiceConfigError } from '../../../lib/entities/feeds/entities.feeds'
+import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedService, FeedServiceConnection, RegisteredFeedServiceType, Feed, FeedMinimalAttrs, FeedCreateAttrs, FeedRepository, FeedId, FeedContent } from '../../../lib/entities/feeds/entities.feeds'
 import { ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics, ListFeedServices, PreviewFeed, CreateFeed } from '../../../lib/app.impl/feeds/app.impl.feeds'
 import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError, PermissionDeniedErrorData } from '../../../lib/app.api/app.api.global.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
-import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest } from '../../../lib/app.api/feeds/app.api.feeds'
+import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, FeedPreview } from '../../../lib/app.api/feeds/app.api.feeds'
 import uniqid from 'uniqid'
 import { AppRequestContext, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeatureCollection } from 'geojson'
@@ -563,7 +563,7 @@ describe('feeds administration', function() {
             config: null
           }
           app.registerServices(service)
-          const feed: FeedCreateAttrs = {
+          const feed: FeedMinimalAttrs = {
             service: service.id,
             topic: topics[0].id
           }
@@ -584,7 +584,7 @@ describe('feeds administration', function() {
       [
         'fails if the service does not exist',
         async function(appOperation: PreviewOrCreateOp) {
-          const feed: FeedCreateAttrs = {
+          const feed: FeedMinimalAttrs = {
             service: 'not there',
             topic: topics[0].id
           }
@@ -605,7 +605,7 @@ describe('feeds administration', function() {
       [
         'fails if the topic does not exist',
         async function(appOperation: PreviewOrCreateOp) {
-          const feed: FeedCreateAttrs = {
+          const feed: FeedMinimalAttrs = {
             service: service.id,
             topic: 'not there'
           }
@@ -626,7 +626,7 @@ describe('feeds administration', function() {
       [
         'checks permission for creating a feed',
         async function(appOperation: PreviewOrCreateOp) {
-          const feed: FeedCreateAttrs = {
+          const feed: FeedMinimalAttrs = {
             service: service.id,
             topic: topics[0].id
           }
@@ -660,21 +660,20 @@ describe('feeds administration', function() {
 
     describe('previewing the feed', function() {
 
-      it('fetches items and creates feed preview with minimal config', async function() {
+      it('fetches items and creates feed preview with minimal inputs', async function() {
 
-        const feed: FeedCreateAttrs = {
+        const feed: FeedMinimalAttrs = {
           service: service.id,
           topic: topics[0].id,
         }
-        const previewFeed: Feed = {
-          id: 'preview',
+        const previewFeed: FeedCreateAttrs = {
           service: service.id,
           topic: topics[0].id,
           title: topics[0].title,
           summary: topics[0].summary,
           constantParams: null,
           variableParamsSchema: {},
-          updateFrequency: null,
+          updateFrequency: undefined,
           itemsHaveIdentity: false,
           itemsHaveSpatialDimension: false,
           itemPrimaryProperty: undefined,
@@ -718,7 +717,7 @@ describe('feeds administration', function() {
 
       it('applies request inputs to the feed preview', async function() {
 
-        const feed: FeedCreateAttrs = {
+        const feed: FeedMinimalAttrs = {
           service: service.id,
           topic: topics[1].id,
           title: 'My Tornadoes',
@@ -741,13 +740,26 @@ describe('feeds administration', function() {
         const req = requestBy(adminPrincipal, {
           feed, variableParams
         })
+        const mergedParams = { ...feed.constantParams, ...variableParams } as JsonObject
+        serviceConn.fetchAvailableTopics().resolves(topics)
+        serviceConn.fetchTopicContent(topics[1].id, Arg.deepEquals(mergedParams)).resolves({
+          topic: topics[1].id,
+          pageCursor: null,
+          items: {
+            type: 'FeatureCollection',
+            features: []
+          }
+        })
 
         const res = await app.previewFeed(req)
 
-        expect.fail('todo')
+        expect(res.error).to.be.null
+        expect(res.success).to.be.instanceOf(Object)
+        const preview = res.success as FeedPreview
+        expect(preview.feed).to.deep.include(feed)
       })
 
-      it('validates variable params', async function() {
+      it('validates the variable params', async function() {
         expect.fail('todo')
       })
 
@@ -755,9 +767,13 @@ describe('feeds administration', function() {
         expect.fail('todo')
       })
 
+      it('prefers constant params over variable params', async function() {
+        expect.fail('todo')
+      })
+
       it('does not save the preview feed', async function() {
 
-        const feed: FeedCreateAttrs = {
+        const feed = {
           service: service.id,
           topic: topics[0].id
         }
@@ -784,16 +800,34 @@ describe('feeds administration', function() {
 
     describe('saving the feed', function() {
 
-      it('saves the feed', async function() {
+      it('saves the feed with minimal inputs', async function() {
 
-        const feed: FeedCreateAttrs = {
+        const feed: FeedMinimalAttrs = {
           service: service.id,
           topic: topics[1].id
         }
-
+        serviceConn.fetchAvailableTopics().resolves(topics)
         const req = requestBy(adminPrincipal, { feed })
         const res = await app.createFeed(req)
-        expect.fail('todo')
+
+        expect(res.error).to.be.null
+        expect(res.success).to.be.instanceOf(Object)
+        const created = res.success as Feed
+        expect(created.id).to.be.a('string')
+        expect(created.id).to.not.equal('preview')
+        expect(created).to.deep.include({
+          service: service.id,
+          title: topics[1].title,
+          summary: topics[1].summary,
+          constantParams: null,
+          variableParamsSchema: {},
+          itemsHaveIdentity: false,
+          itemPrimaryProperty: undefined,
+          itemSecondaryProperty: undefined,
+          itemTemporalProperty: undefined,
+        })
+        const inDb = app.feedRepo.db.get(created.id)
+        expect(inDb).to.deep.include(created)
       })
 
       it('saves a feed from a preview', async function() {
@@ -895,7 +929,7 @@ class TestApp {
   readonly listServices = ListFeedServices(this.permissionService, this.serviceRepo)
   readonly listTopics = ListServiceTopics(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
   readonly previewFeed = PreviewFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
-  readonly createFeed = CreateFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
+  readonly createFeed = CreateFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo)
 
   registerServiceTypes(...types: RegisteredFeedServiceType[]): void {
     for (const type of types) {
@@ -952,6 +986,13 @@ class TestFeedServiceRepository implements FeedServiceRepository {
 class TestFeedRepository implements FeedRepository {
 
   readonly db = new Map<FeedId, Feed>()
+
+  async create(attrs: FeedCreateAttrs): Promise<Feed> {
+    const id = uniqid()
+    const saved: Feed = { id, ...attrs }
+    this.db.set(id, saved)
+    return saved
+  }
 }
 class TestPermissionService implements FeedsPermissionService {
 
