@@ -759,11 +759,15 @@ describe('feeds administration', function() {
         expect(preview.feed).to.deep.include(feed)
       })
 
-      it('validates the variable params', async function() {
+      it('validates the variable params schema', async function() {
         expect.fail('todo')
       })
 
-      it('validates the constant params', async function() {
+      it('validates the variable params against the variable params schema', async function() {
+        expect.fail('todo')
+      })
+
+      it('validates the merged params against the topic params schema', async function() {
         expect.fail('todo')
       })
 
@@ -831,6 +835,10 @@ describe('feeds administration', function() {
       })
 
       it('saves a feed from a preview', async function() {
+        expect.fail('todo')
+      })
+
+      it('validates the variable params schema', async function() {
         expect.fail('todo')
       })
 
