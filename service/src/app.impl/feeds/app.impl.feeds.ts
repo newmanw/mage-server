@@ -1,4 +1,4 @@
-import { FeedServiceTypeRepository, FeedServiceRepository, FeedTopic, FeedService, InvalidServiceConfigError, FeedContent, Feed, FeedTopicId, FeedServiceConnection, FeedRepository, FeedCreateAttrs } from '../../entities/feeds/entities.feeds';
+import { FeedServiceTypeRepository, FeedServiceRepository, FeedTopic, FeedService, InvalidServiceConfigError, FeedContent, Feed, FeedTopicId, FeedServiceConnection, FeedRepository, FeedCreateAttrs, FeedMinimalAttrs, FeedServiceType } from '../../entities/feeds/entities.feeds';
 import * as api from '../../app.api/feeds/app.api.feeds'
 import { AppRequest, KnownErrorsOf, withPermission, AppResponse } from '../../app.api/app.api.global'
 import { PermissionDeniedError, EntityNotFoundError, InvalidInputError, entityNotFound, invalidInput } from '../../app.api/app.api.global.errors'
@@ -92,36 +92,31 @@ export function ListServiceTopics(permissionService: api.FeedsPermissionService,
   }
 }
 
-type PreviewOrCreateFeedResult = ReturnType<api.CreateFeed> | ReturnType<api.PreviewFeed>
-type AfterCreateFeedPreconditions = <R extends PreviewOrCreateFeedResult>(feed: Feed, service: FeedService, serviceConn: FeedServiceConnection) => R
+type CreateFeedDependencies = {
+  serviceTypeRepo: FeedServiceTypeRepository,
+  serviceRepo: FeedServiceRepository,
+}
 
-// async function ensureCreateFeedPreconditions(
-//   permissionService: api.FeedsPermissionService,
-//   serviceTypeRepo: FeedServiceTypeRepository,
-//   serviceRepo: FeedServiceRepository,
-//   req: api.CreateFeedRequest):
-//   { then: () => Promise<Feed | EntityNotFoundError> } {
-//   const reqFeed = req.feed
-//   return {
-//     then<R>(after: AfterCreateFeedPreconditions): () => Promise<R | EntityNotFoundError> {
-//       return async () => {
-//         return await after(feed, service, serviceConn)
-//       }
-//     }
-//   }
-// }
+type CreateFeedContext = {
+  serviceType: FeedServiceType,
+  service: FeedService,
+  topic: FeedTopic,
+  conn: FeedServiceConnection,
+}
 
-export function PreviewFeed(permissionService: api.FeedsPermissionService, serviceTypeRepo: FeedServiceTypeRepository, serviceRepo: FeedServiceRepository): api.PreviewFeed {
-  return async function previewFeed(req: api.PreviewFeedRequest): ReturnType<api.PreviewFeed> {
-    const reqFeed = req.feed
-    return await withPermission<api.FeedPreview, KnownErrorsOf<api.PreviewFeed>>(
-      permissionService.ensureCreateFeedPermissionFor(req.context, reqFeed.service),
-      async (): Promise<api.FeedPreview | EntityNotFoundError> => {
-        const service = await serviceRepo.findById(reqFeed.service)
+interface WithCreateFeedContext<R> {
+  then(createFeedOp: (context: CreateFeedContext) => Promise<R>): () => Promise<EntityNotFoundError | R>
+}
+
+function ensurePreconditionsToCreateFeed<R>(reqFeed: FeedMinimalAttrs, deps: CreateFeedDependencies): WithCreateFeedContext<R> {
+  return {
+    then(createFeedOp: (context: CreateFeedContext) => Promise<R>): () => Promise<EntityNotFoundError | R> {
+      return async (): Promise<EntityNotFoundError | R> => {
+        const service = await deps.serviceRepo.findById(reqFeed.service)
         if (!service) {
           return entityNotFound(reqFeed.service, 'FeedService')
         }
-        const serviceType = await serviceTypeRepo.findById(service.serviceType)
+        const serviceType = await deps.serviceTypeRepo.findById(service.serviceType)
         if (!serviceType) {
           return entityNotFound(service.serviceType, 'FeedServiceType')
         }
@@ -131,26 +126,39 @@ export function PreviewFeed(permissionService: api.FeedsPermissionService, servi
         if (!topic) {
           return entityNotFound(reqFeed.topic, 'FeedTopic')
         }
-        const constantParams = reqFeed.constantParams || null
-        const variableParams = req.variableParams || {}
-        const mergedParams = Object.assign({}, variableParams, constantParams)
-        const topicContent = await conn.fetchTopicContent(reqFeed.topic, mergedParams)
-        const previewFeed = FeedCreateAttrs(topic, reqFeed)
-        const previewContent: FeedContent & { feed: 'preview' } = {
-          feed: 'preview',
-          topic: topicContent.topic,
-          variableParams: req.variableParams || null,
-          items: topicContent.items,
-        }
-        if (topicContent.pageCursor) {
-          previewContent.pageCursor = topicContent.pageCursor
-        }
-        const feedPreview: api.FeedPreview = {
-          feed: previewFeed,
-          content: previewContent,
-        }
-        return feedPreview
+        return await createFeedOp({ serviceType, service, topic, conn })
       }
+    }
+  }
+}
+
+export function PreviewFeed(permissionService: api.FeedsPermissionService, serviceTypeRepo: FeedServiceTypeRepository, serviceRepo: FeedServiceRepository): api.PreviewFeed {
+  return async function previewFeed(req: api.PreviewFeedRequest): ReturnType<api.PreviewFeed> {
+    const reqFeed = req.feed
+    return await withPermission<api.FeedPreview, KnownErrorsOf<api.PreviewFeed>>(
+      permissionService.ensureCreateFeedPermissionFor(req.context, reqFeed.service),
+      ensurePreconditionsToCreateFeed<api.FeedPreview>(reqFeed, { serviceTypeRepo, serviceRepo})
+        .then(async (context: CreateFeedContext): Promise<api.FeedPreview> => {
+          const constantParams = reqFeed.constantParams || null
+          const variableParams = req.variableParams || {}
+          const mergedParams = Object.assign({}, variableParams, constantParams)
+          const topicContent = await context.conn.fetchTopicContent(reqFeed.topic, mergedParams)
+          const previewCreateAttrs = FeedCreateAttrs(context.topic, reqFeed)
+          const previewContent: FeedContent & { feed: 'preview' } = {
+            feed: 'preview',
+            topic: topicContent.topic,
+            variableParams: req.variableParams || null,
+            items: topicContent.items,
+          }
+          if (topicContent.pageCursor) {
+            previewContent.pageCursor = topicContent.pageCursor
+          }
+          const feedPreview: api.FeedPreview = {
+            feed: previewCreateAttrs,
+            content: previewContent,
+          }
+          return feedPreview
+        })
     )
   }
 }
@@ -160,25 +168,12 @@ export function CreateFeed(permissionService: api.FeedsPermissionService, servic
     const reqFeed = req.feed
     return await withPermission<Feed, KnownErrorsOf<api.CreateFeed>>(
       permissionService.ensureCreateFeedPermissionFor(req.context, reqFeed.service),
-      async (): Promise<Feed | EntityNotFoundError> => {
-        const service = await serviceRepo.findById(reqFeed.service)
-        if (!service) {
-          return entityNotFound(reqFeed.service, 'FeedService')
-        }
-        const serviceType = await serviceTypeRepo.findById(service.serviceType)
-        if (!serviceType) {
-          return entityNotFound(service.serviceType, 'FeedServiceType')
-        }
-        const conn = serviceType.createConnection(service.config)
-        const topics =  await conn.fetchAvailableTopics()
-        const topic = topics.find(x => x.id === reqFeed.topic)
-        if (!topic) {
-          return entityNotFound(reqFeed.topic, 'FeedTopic')
-        }
-        const feedAttrs = FeedCreateAttrs(topic, reqFeed)
-        const feed = await feedRepo.create(feedAttrs)
-        return feed
-      }
+      ensurePreconditionsToCreateFeed<Feed>(reqFeed, { serviceRepo, serviceTypeRepo })
+        .then(async (context: CreateFeedContext): Promise<Feed> => {
+          const feedAttrs = FeedCreateAttrs(context.topic, reqFeed)
+          const feed = await feedRepo.create(feedAttrs)
+          return feed
+        })
     )
   }
 }
