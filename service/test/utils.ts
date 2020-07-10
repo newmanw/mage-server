@@ -3,7 +3,7 @@ import { Argument, Arg } from '@fluffy-spoon/substitute/dist/src/Arguments'
 import deepEqual from 'deep-equal';
 
 Arg.deepEquals = <T>(expected: T): Argument<T> & T => {
-  return Arg.is(x => deepEqual(x, expected))
+  return new Argument<T>(`deeply equal to ${JSON.stringify(expected)}`, (x: T): boolean => deepEqual(x, expected)) as Argument<T> & T
 }
 
 import mongoose, { Document } from 'mongoose'
