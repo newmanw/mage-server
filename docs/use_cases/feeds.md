@@ -81,13 +81,14 @@ The new feed service is saved and available to configure new feeds.
 1. A1 selects the desired feed service.
 1. The app presents the list of topics the feed service provides.
 1. A1 selects the desired topic.
-1. The app presents the options for the new feed grouped according to options that users cannot change and fetch parameters that users will be able to change when fetching data from the feed.
-   * Potential options could be fetch interval, maximum number of items to fetch, maximum age of content, caching options, etc.
-1. A1 changes the options as desired.
-1. A1 requests a preview of the feed content with the configured options.
+1. The app presents the content fetch parameters for the topic.
+1. A1 groups the fetch parameters according to parameters that the user can change when fetching feed content and parameters that remain constant across all fetches by all users.
+   * Potential parameters could be geographic bounding box, maximum age of content, maximum number of items to fetch, caching options, etc.
+1. A1 enters the desired values for the constant fetch parameters.
+1. A1 enters sample values for the variable fetch parameters and requests a preview of the feed content with the configured parameters.
 1. The app begins fetching preview content from the feed service with the configured options.
 1. The fetch completes and the app presents the preview content.
-1. A1 examines the preview and confirms the configuration options for the new feed.
+1. A1 examines the preview and confirms the configuration for the new feed.
 1. The app stores the configuration for the new feed and prompts whether to add the feed to an event.
 1. A1 requests to add the new feed to an event.
 1. The app begins the `Assign feed to event` flow assuming the selection of the newly configured feed.
