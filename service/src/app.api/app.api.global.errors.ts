@@ -24,7 +24,11 @@ export interface EntityNotFoundErrorData {
   readonly entityId: any
 }
 
-export type InvalidInputErrorData = string[]
+/**
+ * The keys are the properties on the input that have invalid values.  The
+ * values are descriptions of why the value for the key is invalid.
+ */
+export type InvalidInputErrorData = Map<string, string>
 
 export function permissionDenied(permission: string, subject: string, object?: string): PermissionDeniedError {
   const message = `${subject} does not have permission ${permission}` + object ? ` on ${object}` : ''
@@ -35,6 +39,11 @@ export function entityNotFound(entityId: any, entityType: string): EntityNotFoun
   return new MageError(ErrEntityNotFound, { entityId, entityType }, `${entityType} not found: ${entityId}`)
 }
 
-export function invalidInput(...problems: string[]): InvalidInputError {
-  return new MageError(ErrInvalidInput, problems, 'invalid input:\n  ' + problems.join('\n  '))
+export function invalidInput(summary?: string, ...invalidKeys: [string, string][]): InvalidInputError {
+  let message = summary || 'invalid input'
+  message = invalidKeys.reduce((message, invalidKey) => {
+    return message + `\n  ${invalidKey[0]}: ${invalidKey[1]}`
+  }, message)
+  const data = new Map(invalidKeys)
+  return new MageError(ErrInvalidInput, data, message)
 }
