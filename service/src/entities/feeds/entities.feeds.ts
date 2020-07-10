@@ -248,7 +248,7 @@ export const FeedCreateAttrs = (topic: FeedTopic, feedAttrs: FeedMinimalAttrs): 
     title: feedAttrs.title || topic.title,
     summary: feedAttrs.summary || topic.summary,
     constantParams: feedAttrs.constantParams || null,
-    variableParamsSchema: feedAttrs.variableParamsSchema || {},
+    variableParamsSchema: feedAttrs.variableParamsSchema || undefined,
     itemsHaveIdentity: feedAttrs.itemsHaveIdentity || false,
     itemsHaveSpatialDimension: feedAttrs.itemsHaveSpatialDimension || false,
     itemPrimaryProperty: feedAttrs.itemPrimaryProperty,

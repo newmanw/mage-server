@@ -1,8 +1,9 @@
 import { FeedServiceTypeRepository, FeedServiceRepository, FeedTopic, FeedService, InvalidServiceConfigError, FeedContent, Feed, FeedTopicId, FeedServiceConnection, FeedRepository, FeedCreateAttrs, FeedMinimalAttrs, FeedServiceType } from '../../entities/feeds/entities.feeds';
 import * as api from '../../app.api/feeds/app.api.feeds'
 import { AppRequest, KnownErrorsOf, withPermission, AppResponse } from '../../app.api/app.api.global'
-import { PermissionDeniedError, EntityNotFoundError, InvalidInputError, entityNotFound, invalidInput } from '../../app.api/app.api.global.errors'
+import { PermissionDeniedError, EntityNotFoundError, InvalidInputError, entityNotFound, invalidInput, MageError, ErrInvalidInput } from '../../app.api/app.api.global.errors'
 import { FeedServiceTypeDescriptor } from '../../app.api/feeds/app.api.feeds'
+import { JsonSchemaService, JsonValidator } from '../../entities/entities.global.json'
 
 
 export function ListFeedServiceTypes(permissionService: api.FeedsPermissionService, repo: FeedServiceTypeRepository): api.ListFeedServiceTypes {
@@ -95,23 +96,25 @@ export function ListServiceTopics(permissionService: api.FeedsPermissionService,
 type CreateFeedDependencies = {
   serviceTypeRepo: FeedServiceTypeRepository,
   serviceRepo: FeedServiceRepository,
+  jsonSchemaService: JsonSchemaService,
 }
 
-type CreateFeedContext = {
+type FeedFetchContext = {
   serviceType: FeedServiceType,
   service: FeedService,
   topic: FeedTopic,
   conn: FeedServiceConnection,
+  variableParamsValidator?: JsonValidator,
 }
 
-interface WithCreateFeedContext<R> {
-  then(createFeedOp: (context: CreateFeedContext) => Promise<R>): () => Promise<EntityNotFoundError | R>
+interface WithFeedFetchContext<R> {
+  then(createFeedOp: (context: FeedFetchContext) => Promise<R>): () => Promise<EntityNotFoundError | InvalidInputError | R>
 }
 
-function ensurePreconditionsToCreateFeed<R>(reqFeed: FeedMinimalAttrs, deps: CreateFeedDependencies): WithCreateFeedContext<R> {
+function buildFeedFetchContext<R>(reqFeed: FeedMinimalAttrs, deps: CreateFeedDependencies): WithFeedFetchContext<R> {
   return {
-    then(createFeedOp: (context: CreateFeedContext) => Promise<R>): () => Promise<EntityNotFoundError | R> {
-      return async (): Promise<EntityNotFoundError | R> => {
+    then(createFeedOp: (context: FeedFetchContext) => Promise<R>): () => Promise<EntityNotFoundError | InvalidInputError | R> {
+      return async (): Promise<EntityNotFoundError | InvalidInputError | R> => {
         const service = await deps.serviceRepo.findById(reqFeed.service)
         if (!service) {
           return entityNotFound(reqFeed.service, 'FeedService')
@@ -121,26 +124,41 @@ function ensurePreconditionsToCreateFeed<R>(reqFeed: FeedMinimalAttrs, deps: Cre
           return entityNotFound(service.serviceType, 'FeedServiceType')
         }
         const conn = serviceType.createConnection(service.config)
-        const topics =  await conn.fetchAvailableTopics()
+        const topics = await conn.fetchAvailableTopics()
         const topic = topics.find(x => x.id === reqFeed.topic)
         if (!topic) {
           return entityNotFound(reqFeed.topic, 'FeedTopic')
         }
-        return await createFeedOp({ serviceType, service, topic, conn })
+        let variableParamsValidator: JsonValidator | undefined = undefined
+        if (reqFeed.variableParamsSchema) {
+          try {
+            variableParamsValidator = await deps.jsonSchemaService.validateSchema(reqFeed.variableParamsSchema)
+          }
+          catch (err) {
+            return invalidInput('invalid variable parameters schema', [ 'variableParamsSchema', err.toString() ])
+          }
+        }
+        return await createFeedOp({ serviceType, service, topic, conn, variableParamsValidator })
       }
     }
   }
 }
 
-export function PreviewFeed(permissionService: api.FeedsPermissionService, serviceTypeRepo: FeedServiceTypeRepository, serviceRepo: FeedServiceRepository): api.PreviewFeed {
+export function PreviewFeed(permissionService: api.FeedsPermissionService, serviceTypeRepo: FeedServiceTypeRepository, serviceRepo: FeedServiceRepository, jsonSchemaService: JsonSchemaService): api.PreviewFeed {
   return async function previewFeed(req: api.PreviewFeedRequest): ReturnType<api.PreviewFeed> {
     const reqFeed = req.feed
     return await withPermission<api.FeedPreview, KnownErrorsOf<api.PreviewFeed>>(
       permissionService.ensureCreateFeedPermissionFor(req.context, reqFeed.service),
-      ensurePreconditionsToCreateFeed<api.FeedPreview>(reqFeed, { serviceTypeRepo, serviceRepo})
-        .then(async (context: CreateFeedContext): Promise<api.FeedPreview> => {
+      buildFeedFetchContext<api.FeedPreview | InvalidInputError>(reqFeed, { serviceTypeRepo, serviceRepo, jsonSchemaService })
+        .then(async (context: FeedFetchContext): Promise<api.FeedPreview | InvalidInputError> => {
           const constantParams = reqFeed.constantParams || null
-          const variableParams = req.variableParams || {}
+          const variableParams = req.variableParams || null
+          if (variableParams && context.variableParamsValidator) {
+            const invalid = await context.variableParamsValidator.validate(variableParams)
+            if (invalid) {
+              return invalidInput('invalid variable parameters', [ 'variableParameters', invalid.message ])
+            }
+          }
           const mergedParams = Object.assign({}, variableParams, constantParams)
           const topicContent = await context.conn.fetchTopicContent(reqFeed.topic, mergedParams)
           const previewCreateAttrs = FeedCreateAttrs(context.topic, reqFeed)
@@ -163,13 +181,13 @@ export function PreviewFeed(permissionService: api.FeedsPermissionService, servi
   }
 }
 
-export function CreateFeed(permissionService: api.FeedsPermissionService, serviceTypeRepo: FeedServiceTypeRepository, serviceRepo: FeedServiceRepository, feedRepo: FeedRepository): api.CreateFeed {
+export function CreateFeed(permissionService: api.FeedsPermissionService, serviceTypeRepo: FeedServiceTypeRepository, serviceRepo: FeedServiceRepository, feedRepo: FeedRepository, jsonSchemaService: JsonSchemaService): api.CreateFeed {
   return async function createFeed(req: api.CreateFeedRequest): ReturnType<api.CreateFeed> {
     const reqFeed = req.feed
     return await withPermission<Feed, KnownErrorsOf<api.CreateFeed>>(
       permissionService.ensureCreateFeedPermissionFor(req.context, reqFeed.service),
-      ensurePreconditionsToCreateFeed<Feed>(reqFeed, { serviceRepo, serviceTypeRepo })
-        .then(async (context: CreateFeedContext): Promise<Feed> => {
+      buildFeedFetchContext<Feed>(reqFeed, { serviceRepo, serviceTypeRepo, jsonSchemaService })
+        .then(async (context: FeedFetchContext): Promise<Feed> => {
           const feedAttrs = FeedCreateAttrs(context.topic, reqFeed)
           const feed = await feedRepo.create(feedAttrs)
           return feed

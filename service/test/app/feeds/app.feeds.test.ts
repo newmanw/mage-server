@@ -9,7 +9,7 @@ import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescri
 import uniqid from 'uniqid'
 import { AppRequestContext, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeatureCollection } from 'geojson'
-import { JsonObject } from '../../../lib/entities/entities.global.json'
+import { JsonObject, JsonSchemaService, JSONSchema4 } from '../../../lib/entities/entities.global.json'
 
 
 function mockServiceType(descriptor: FeedServiceTypeDescriptor): SubstituteOf<RegisteredFeedServiceType> {
@@ -672,7 +672,7 @@ describe('feeds administration', function() {
           title: topics[0].title,
           summary: topics[0].summary,
           constantParams: null,
-          variableParamsSchema: {},
+          variableParamsSchema: undefined,
           updateFrequency: undefined,
           itemsHaveIdentity: false,
           itemsHaveSpatialDimension: false,
@@ -750,6 +750,9 @@ describe('feeds administration', function() {
             features: []
           }
         })
+        app.jsonSchemaService.validateSchema(Arg.all()).resolves({
+          validate: async () => null
+        })
 
         const res = await app.previewFeed(req)
 
@@ -760,11 +763,76 @@ describe('feeds administration', function() {
       })
 
       it('validates the variable params schema', async function() {
-        expect.fail('todo')
+
+        const feed: FeedMinimalAttrs = {
+          service: service.id,
+          topic: topics[0].id,
+          variableParamsSchema: {
+            type: 'object',
+            properties: {
+              bbox: {
+                type: 'array',
+                items: { type: 'number'},
+                minItems: 4,
+                maxItems: 4
+              },
+              timestamp: {
+                type: 'number',
+                description: 'The millisecond epoch time the strike ocurred',
+                minimum: 0
+              }
+            }
+          }
+        }
+        app.jsonSchemaService.validateSchema(Arg.deepEquals(feed.variableParamsSchema)).rejects(new Error('bad schema'))
+        const req = requestBy(adminPrincipal, { feed })
+
+        const res = await app.previewFeed(req)
+
+        expect(res.success).to.be.null
+        const err = res.error as InvalidInputError
+        expect(err.code).to.equal(ErrInvalidInput)
+        expect(err.data).to.include.keys('variableParamsSchema')
+        expect(err.message).to.match(/variableParamsSchema: Error: bad schema/)
       })
 
       it('validates the variable params against the variable params schema', async function() {
-        expect.fail('todo')
+
+        const feed: FeedMinimalAttrs = {
+          service: service.id,
+          topic: topics[0].id,
+          variableParamsSchema: {
+            type: 'object',
+            properties: {
+              bbox: {
+                type: 'array',
+                items: { type: 'number'},
+                minItems: 4,
+                maxItems: 4
+              },
+              timestamp: {
+                type: 'number',
+                description: 'The millisecond epoch time the strike ocurred',
+                minimum: 0
+              }
+            }
+          }
+        }
+        const variableParams = {
+          invalidParameter: true
+        }
+        app.jsonSchemaService.validateSchema(feed.variableParamsSchema!).resolves({
+          validate: async () => new Error('invalid instance')
+        })
+        const req = requestBy(adminPrincipal, { feed, variableParams })
+
+        const res = await app.previewFeed(req)
+
+        expect(res.success).to.be.null
+        const err = res.error as InvalidInputError
+        expect(err.code).to.equal(ErrInvalidInput)
+        expect(err.message).to.match(/invalid variable parameters/)
+        expect(err.data).to.include.keys('variableParameters')
       })
 
       it('validates the merged params against the topic params schema', async function() {
@@ -824,7 +892,7 @@ describe('feeds administration', function() {
           title: topics[1].title,
           summary: topics[1].summary,
           constantParams: null,
-          variableParamsSchema: {},
+          variableParamsSchema: undefined,
           itemsHaveIdentity: false,
           itemPrimaryProperty: undefined,
           itemSecondaryProperty: undefined,
@@ -855,13 +923,14 @@ class TestApp {
   readonly serviceRepo = new TestFeedServiceRepository()
   readonly feedRepo = new TestFeedRepository()
   readonly permissionService = new TestPermissionService()
+  readonly jsonSchemaService = Sub.for<JsonSchemaService>()
   readonly listServiceTypes = ListFeedServiceTypes(this.permissionService, this.serviceTypeRepo)
   readonly previewTopics = PreviewTopics(this.permissionService, this.serviceTypeRepo)
   readonly createService = CreateFeedService(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
   readonly listServices = ListFeedServices(this.permissionService, this.serviceRepo)
   readonly listTopics = ListServiceTopics(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
-  readonly previewFeed = PreviewFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
-  readonly createFeed = CreateFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo)
+  readonly previewFeed = PreviewFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.jsonSchemaService)
+  readonly createFeed = CreateFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo, this.jsonSchemaService)
 
   registerServiceTypes(...types: RegisteredFeedServiceType[]): void {
     for (const type of types) {

@@ -23,4 +23,20 @@ export type JsonCompatible<T> = {
     : JsonCompatible<T[P]>;
 };
 
-export { JSONSchema4 as JSONSchema4 } from 'json-schema'
+export { JSONSchema4 } from 'json-schema'
+
+import { JSONSchema4 } from 'json-schema'
+
+export interface JsonValidator {
+  validate(instance: Json): Promise<null | Error>
+}
+
+export interface JsonSchemaService {
+  /**
+   * Validate the given JSON Schema and resolve an object that is essentially
+   * a compiled, cacheable version of the schema that can validate JSON
+   * instances.
+   * @param schema the JSON Schema to validate and compile
+   */
+  validateSchema(schema: JSONSchema4): Promise<JsonValidator>
+}
