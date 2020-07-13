@@ -87,7 +87,7 @@ function requestBy<RequestType>(principal: TestPrincipal, params?: RequestType):
   )
 }
 
-describe('feeds administration', function() {
+describe.only('feeds administration', function() {
 
   let app: TestApp
   let someServiceTypes: SubstituteOf<RegisteredFeedServiceType>[]
@@ -917,8 +917,67 @@ describe('feeds administration', function() {
         paramsValidator.received(1).validate(Arg.deepEquals(mergedParams))
       })
 
+      it('does not validate merged params if topic params schema is undefined', async function() {
+
+        const feed: FeedMinimalAttrs = {
+          service: service.id,
+          topic: topics[0].id,
+          variableParamsSchema: {
+            properties: {
+              maxAgeDays: { type: 'number' }
+            }
+          }
+        }
+        const variableParams = { maxAgeDays: 10 }
+        const validator = Sub.for<JsonValidator>()
+        serviceConn.fetchAvailableTopics().resolves(topics)
+        app.jsonSchemaService.validateSchema(Arg.deepEquals(feed.variableParamsSchema)).resolves(validator)
+        validator.validate(Arg.deepEquals(variableParams)).resolves(null)
+
+        const req = requestBy(adminPrincipal, { feed, variableParams })
+        const res = await app.previewFeed(req)
+
+        expect(res.error).to.be.null
+        expect(res.success).to.be.an('object')
+        app.jsonSchemaService.received(1).validateSchema(Arg.all())
+        validator.received(1).validate(Arg.all())
+      })
+
       it('prefers constant params over variable params', async function() {
-        expect.fail('todo')
+
+        const variableParams = { limit: 1000 }
+        const constantParams = { limit: 25 }
+        const topic: FeedTopic = Object.assign({
+          paramsSchema: {
+            properties: {
+              limit: { type: 'number' }
+            }
+          }
+        }, topics[0])
+        const feed: FeedMinimalAttrs = {
+          service: service.id,
+          topic: topics[0].id,
+          constantParams,
+          variableParamsSchema: {}
+        }
+        const mergedValidator = Sub.for<JsonValidator>()
+        const variableValidator = Sub.for<JsonValidator>()
+        serviceConn.fetchAvailableTopics().resolves([ topic ])
+        app.jsonSchemaService.validateSchema(Arg.deepEquals(topic.paramsSchema)).resolves(mergedValidator)
+        app.jsonSchemaService.validateSchema(Arg.deepEquals(feed.variableParamsSchema)).resolves(variableValidator)
+        mergedValidator.validate(Arg.all()).resolves(null)
+        variableValidator.validate(Arg.all()).resolves(null)
+
+        const req = requestBy(adminPrincipal, {
+          feed,
+          variableParams
+        })
+        const res = await app.previewFeed(req)
+
+        expect(res.error).to.be.null
+        expect(res.success).to.be.an('object')
+        mergedValidator.received(1).validate(Arg.all())
+        mergedValidator.received(1).validate(Arg.deepEquals(constantParams))
       })
 
       it('does not save the preview feed', async function() {
