@@ -9,7 +9,7 @@ import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescri
 import uniqid from 'uniqid'
 import { AppRequestContext, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeatureCollection } from 'geojson'
-import { JsonObject, JsonSchemaService, JSONSchema4 } from '../../../lib/entities/entities.global.json'
+import { JsonObject, JsonSchemaService, JsonValidator } from '../../../lib/entities/entities.global.json'
 
 
 function mockServiceType(descriptor: FeedServiceTypeDescriptor): SubstituteOf<RegisteredFeedServiceType> {
@@ -643,11 +643,13 @@ describe('feeds administration', function() {
           expect(errData.permission).to.equal(CreateFeed.name)
           expect(errData.object).to.equal(feed.service)
 
+          serviceConn.fetchAvailableTopics().resolves(topics)
           app.permissionService.grantCreateFeed(bannedPrincipal.user, service.id)
+
           res = await app[appOperation](req)
 
           expect(res.error).to.be.null
-          expect(res.success).to.be.instanceOf(Object)
+          expect(res.success).to.be.an('object')
         }
       ]
     ]
@@ -737,9 +739,6 @@ describe('feeds administration', function() {
         const variableParams = {
           limit: 10
         }
-        const req = requestBy(adminPrincipal, {
-          feed, variableParams
-        })
         const mergedParams = { ...feed.constantParams, ...variableParams } as JsonObject
         serviceConn.fetchAvailableTopics().resolves(topics)
         serviceConn.fetchTopicContent(topics[1].id, Arg.deepEquals(mergedParams)).resolves({
@@ -754,6 +753,9 @@ describe('feeds administration', function() {
           validate: async () => null
         })
 
+        const req = requestBy(adminPrincipal, {
+          feed, variableParams
+        })
         const res = await app.previewFeed(req)
 
         expect(res.error).to.be.null
@@ -784,16 +786,19 @@ describe('feeds administration', function() {
             }
           }
         }
-        app.jsonSchemaService.validateSchema(Arg.deepEquals(feed.variableParamsSchema)).rejects(new Error('bad schema'))
-        const req = requestBy(adminPrincipal, { feed })
+        const validationError = new Error('bad schema')
+        app.jsonSchemaService.validateSchema(Arg.deepEquals(feed.variableParamsSchema)).rejects(validationError)
 
+        const req = requestBy(adminPrincipal, { feed })
         const res = await app.previewFeed(req)
 
         expect(res.success).to.be.null
         const err = res.error as InvalidInputError
         expect(err.code).to.equal(ErrInvalidInput)
-        expect(err.data).to.include.keys('variableParamsSchema')
-        expect(err.message).to.match(/variableParamsSchema: Error: bad schema/)
+        expect(err.data.length).to.equal(1)
+        expect(err.data[0]).to.have.members([ validationError, 'feed', 'variableParamsSchema' ])
+        expect(err.message).to.match(/invalid variable parameters schema/)
+        expect(err.message).to.match(/feed > variableParamsSchema: bad schema/)
       })
 
       it('validates the variable params against the variable params schema', async function() {
@@ -821,22 +826,95 @@ describe('feeds administration', function() {
         const variableParams = {
           invalidParameter: true
         }
+        const validationError = new Error('invalidParameter is not a valid property')
         app.jsonSchemaService.validateSchema(feed.variableParamsSchema!).resolves({
-          validate: async () => new Error('invalid instance')
+          validate: async () => validationError
         })
-        const req = requestBy(adminPrincipal, { feed, variableParams })
 
+        const req = requestBy(adminPrincipal, { feed, variableParams })
         const res = await app.previewFeed(req)
 
         expect(res.success).to.be.null
         const err = res.error as InvalidInputError
         expect(err.code).to.equal(ErrInvalidInput)
         expect(err.message).to.match(/invalid variable parameters/)
-        expect(err.data).to.include.keys('variableParameters')
+        expect(err.data).to.deep.equal([
+          [ validationError, 'variableParams' ]
+        ])
+      })
+
+      it('does not validate the variable params schema when the schema is undefined', async function() {
+
+        const feed: FeedMinimalAttrs = {
+          service: service.id,
+          topic: topics[0].id,
+        }
+        serviceConn.fetchAvailableTopics().resolves(topics)
+
+        const req = requestBy(adminPrincipal, { feed })
+        const res = await app.previewFeed(req)
+
+        expect(res.error).to.be.null
+        expect(res.success).to.be.an('object')
+        app.jsonSchemaService.didNotReceive().validateSchema(Arg.all())
       })
 
       it('validates the merged params against the topic params schema', async function() {
-        expect.fail('todo')
+
+        const topic: FeedTopic = {
+          id: 'topic_with_params_schema',
+          title: 'With Constant Params',
+          summary: null,
+          paramsSchema: {
+            type: 'object',
+            properties: {
+              apiKey: { type: 'string' },
+              limit: { type: 'number' },
+              bbox: {
+                title: 'Bounding Box',
+                type: 'array',
+                items: { type: 'number', minItems: 4, maxItems: 6 }
+              }
+            }
+          }
+        }
+        const feed: FeedMinimalAttrs = {
+          service: service.id,
+          topic: topic.id,
+          constantParams: {
+            apiKey: 'abc123',
+            limit: 100
+          },
+          variableParamsSchema: {
+            type: 'object',
+            properties: {
+              bbox: topic.paramsSchema!.properties!.bbox
+            }
+          }
+        }
+        const variableParams = { bbox: [ -22.6, 38.1, -22.5, 38.3 ]}
+        const mergedParams = Object.assign({}, variableParams, feed.constantParams)
+        const paramsValidator = Sub.for<JsonValidator>()
+        const validationError = new Error('bad parameters')
+        serviceConn.fetchAvailableTopics().resolves([ topic ])
+        paramsValidator.validate(Arg.deepEquals(variableParams)).resolves(null)
+        paramsValidator.validate(Arg.deepEquals(mergedParams)).resolves(validationError)
+        app.jsonSchemaService.validateSchema(Arg.deepEquals(feed.variableParamsSchema)).resolves(paramsValidator)
+        app.jsonSchemaService.validateSchema(Arg.deepEquals(topic.paramsSchema)).resolves(paramsValidator)
+
+        const req = requestBy(adminPrincipal, { feed, variableParams })
+        const res = await app.previewFeed(req)
+
+        expect(res.success).to.be.null
+        expect(res.error).to.be.instanceOf(MageError)
+        expect(res.error?.code).to.equal(ErrInvalidInput)
+        expect(res.error?.data).to.have.deep.members([
+          [ validationError, 'feed', 'constantParams' ],
+          [ validationError, 'variableParams' ]
+        ])
+        expect(res.error?.message).to.match(/invalid parameters/)
+        app.jsonSchemaService.received(1).validateSchema(Arg.deepEquals(topic.paramsSchema))
+        paramsValidator.received(1).validate(Arg.deepEquals(mergedParams))
       })
 
       it('prefers constant params over variable params', async function() {
@@ -849,6 +927,7 @@ describe('feeds administration', function() {
           service: service.id,
           topic: topics[0].id
         }
+        serviceConn.fetchAvailableTopics().resolves(topics)
         serviceConn.fetchTopicContent(Arg.all()).resolves({
           topic: feed.topic,
           items: {
@@ -861,7 +940,7 @@ describe('feeds administration', function() {
         const res = await app.previewFeed(req)
 
         expect(res.error).to.be.null
-        expect(res.success).to.be.instanceOf(Object)
+        expect(res.success).to.be.an('object')
         expect(app.feedRepo.db).to.be.empty
       })
 
@@ -879,6 +958,7 @@ describe('feeds administration', function() {
           topic: topics[1].id
         }
         serviceConn.fetchAvailableTopics().resolves(topics)
+
         const req = requestBy(adminPrincipal, { feed })
         const res = await app.createFeed(req)
 

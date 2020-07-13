@@ -4,7 +4,7 @@ export const ErrInvalidInput = Symbol.for('err.invalid_input')
 export const ErrEntityNotFound = Symbol.for('err.entity_not_found')
 
 export type PermissionDeniedError = MageError<typeof ErrPermissionDenied, PermissionDeniedErrorData>
-export type InvalidInputError = MageError<typeof ErrInvalidInput, InvalidInputErrorData>
+export type InvalidInputError = MageError<typeof ErrInvalidInput, KeyPathError[]>
 export type EntityNotFoundError = MageError<typeof ErrEntityNotFound, EntityNotFoundErrorData>
 
 export class MageError<Code extends symbol, Data = null> extends Error {
@@ -24,12 +24,6 @@ export interface EntityNotFoundErrorData {
   readonly entityId: any
 }
 
-/**
- * The keys are the properties on the input that have invalid values.  The
- * values are descriptions of why the value for the key is invalid.
- */
-export type InvalidInputErrorData = Map<string, string>
-
 export function permissionDenied(permission: string, subject: string, object?: string): PermissionDeniedError {
   const message = `${subject} does not have permission ${permission}` + object ? ` on ${object}` : ''
   return new MageError(ErrPermissionDenied, { permission, subject, object: object || null }, message)
@@ -39,11 +33,23 @@ export function entityNotFound(entityId: any, entityType: string): EntityNotFoun
   return new MageError(ErrEntityNotFound, { entityId, entityType }, `${entityType} not found: ${entityId}`)
 }
 
-export function invalidInput(summary?: string, ...invalidKeys: [string, string][]): InvalidInputError {
+/**
+ * The KeyPathError type is simply an array whose first element is an error
+ * (string message or `Error` object, typically), and the remaining elements are
+ * strings that represent the chain of JSON properties whose value the error
+ * describes.
+ */
+export type KeyPathError = [any, ...string[]]
+
+export function invalidInput(summary?: string, ...errors: KeyPathError[]): InvalidInputError {
   let message = summary || 'invalid input'
-  message = invalidKeys.reduce((message, invalidKey) => {
-    return message + `\n  ${invalidKey[0]}: ${invalidKey[1]}`
+  message = errors.reduce((message, keyPathError) => {
+    let err = keyPathError[0]
+    if ('message' in err) {
+      err = err.message
+    }
+    const keyPath = keyPathError.slice(1, keyPathError.length)
+    return message + `\n  ${keyPath.join(' > ')}: ${err}`
   }, message)
-  const data = new Map(invalidKeys)
-  return new MageError(ErrInvalidInput, data, message)
+  return new MageError(ErrInvalidInput, errors, message)
 }
