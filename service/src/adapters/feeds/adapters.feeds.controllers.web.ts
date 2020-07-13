@@ -74,10 +74,10 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
         summary: body.summary
       }
       if (!params.serviceType) {
-        return next(invalidInput('missing service type'))
+        return next(invalidInput('invalid request', [ 'missing', 'serviceType' ]))
       }
       if (!params.title) {
-        return next(invalidInput('missing title'))
+        return next(invalidInput('invalid request', [ 'missing', 'title' ]))
       }
       const appReq = createAppRequest(req, params)
       const appRes = await appLayer.createService(appReq)

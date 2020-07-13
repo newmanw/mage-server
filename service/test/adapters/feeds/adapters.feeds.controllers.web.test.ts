@@ -174,7 +174,7 @@ describe('feeds web controller', function() {
     it('fails with 400 if the service config is invalid', async function() {
 
       appLayer.previewTopics(Arg.any())
-        .resolves(AppResponse.error<FeedTopic[], InvalidInputError>(invalidInput('bad config')))
+        .resolves(AppResponse.error<FeedTopic[], InvalidInputError>(invalidInput('bad service config', [ 'unexpected null', 'serviceConfig' ])))
 
       const res = await client.post('/service_types/nga-msi/topic_preview').send({
         serviceConfig: null
@@ -182,7 +182,7 @@ describe('feeds web controller', function() {
 
       expect(res.status).to.equal(400)
       expect(res.type).to.match(jsonMimeType)
-      expect(res.body).to.equal('invalid input:\n  bad config')
+      expect(res.body).to.equal('bad service config\n  serviceConfig: unexpected null')
     })
   })
 
@@ -215,7 +215,7 @@ describe('feeds web controller', function() {
       expect(res.body).to.deep.equal(created)
     })
 
-    it('fails without permission', async function() {
+    it('fails with 403 without permission', async function() {
 
       appLayer.createService(Arg.any()).resolves(AppResponse.error<any, PermissionDeniedError>(permissionDenied('create service', 'admin')))
 
@@ -231,7 +231,7 @@ describe('feeds web controller', function() {
       expect(res.body).to.equal('permission denied: create service')
     })
 
-    it('fails if the request is invalid', async function() {
+    it('fails with 400 if the request is invalid', async function() {
 
       const reqBody = {
         serviceType: 'wfs',
@@ -240,20 +240,20 @@ describe('feeds web controller', function() {
           url: 'https://invalid.service.url'
         },
       }
-      appLayer.createService(Arg.any()).resolves(AppResponse.error<any, InvalidInputError>(invalidInput('invalid service url')))
+      appLayer.createService(Arg.any()).resolves(AppResponse.error<any, InvalidInputError>(invalidInput('invalid service config', [ 'url is invalid', 'config', 'url' ])))
 
       const res = await client.post('/services').send(reqBody)
 
       expect(res.status).to.equal(400)
       expect(res.type).to.match(jsonMimeType)
       expect(res.body).to.equal(`
-invalid input:
-  invalid service url`
+invalid service config
+  config > url: url is invalid`
         .trim())
       appLayer.received(1).createService(Arg.any())
     })
 
-    it('fails if the service type does not exist', async function() {
+    it('fails with 400 if the service type does not exist', async function() {
 
       const reqBody = {
         serviceType: 'not_found',
@@ -272,7 +272,7 @@ invalid input:
 
     describe('request body mapping', function() {
 
-      it('fails if the request body has no service type', async function() {
+      it('fails with 400 if the request body has no service type', async function() {
 
         appLayer.createService(Arg.any()).rejects(new Error('unexpected'))
         const res = await client.post('/services')
@@ -286,8 +286,8 @@ invalid input:
         expect(res.status).to.equal(400)
         expect(res.type).to.match(jsonMimeType)
         expect(res.body).to.equal(`
-invalid input:
-  missing service type
+invalid request
+  serviceType: missing
           `.trim())
         appLayer.didNotReceive().createService(Arg.any())
       })
@@ -306,8 +306,8 @@ invalid input:
         expect(res.status).to.equal(400)
         expect(res.type).to.match(jsonMimeType)
         expect(res.body).to.equal(`
-invalid input:
-  missing title`
+invalid request
+  title: missing`
           .trim())
         appLayer.didNotReceive().createService(Arg.any())
       })

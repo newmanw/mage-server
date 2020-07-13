@@ -151,7 +151,7 @@ describe('feeds administration', function() {
 
       expect(err).to.be.instanceOf(MageError)
       expect(err.code).to.equal(ErrInvalidInput)
-      expect(err.data).to.deep.equal(['url'])
+      expect(err.data).to.deep.equal([[ 'url is invalid', 'config', 'url' ]])
       expect(app.serviceRepo.db).to.be.empty
       serviceType.received(1).validateServiceConfig(Arg.deepEquals(invalidConfig))
     })
@@ -323,7 +323,7 @@ describe('feeds administration', function() {
       const err = res.error as InvalidInputError | undefined
       expect(err).to.be.instanceOf(MageError)
       expect(err?.code).to.equal(ErrInvalidInput)
-      expect(err?.data).to.deep.equal(['invalid'])
+      expect(err?.data).to.deep.equal([[ 'invalid is invalid', 'serviceConfig', 'invalid' ]])
     })
 
     it('lists the topics for the service config', async function() {
@@ -513,7 +513,7 @@ describe('feeds administration', function() {
     })
   })
 
-  describe.only('creating a feed', function() {
+  describe('creating a feed', function() {
 
     const service: FeedService = Object.freeze({
       id: uniqid(),

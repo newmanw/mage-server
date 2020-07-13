@@ -1,7 +1,7 @@
 import { FeedServiceTypeRepository, FeedServiceRepository, FeedTopic, FeedService, InvalidServiceConfigError, FeedContent, Feed, FeedTopicId, FeedServiceConnection, FeedRepository, FeedCreateAttrs, FeedMinimalAttrs, FeedServiceType } from '../../entities/feeds/entities.feeds';
 import * as api from '../../app.api/feeds/app.api.feeds'
 import { AppRequest, KnownErrorsOf, withPermission, AppResponse } from '../../app.api/app.api.global'
-import { PermissionDeniedError, EntityNotFoundError, InvalidInputError, entityNotFound, invalidInput, MageError, ErrInvalidInput } from '../../app.api/app.api.global.errors'
+import { PermissionDeniedError, EntityNotFoundError, InvalidInputError, entityNotFound, invalidInput, MageError, ErrInvalidInput, KeyPathError } from '../../app.api/app.api.global.errors'
 import { FeedServiceTypeDescriptor } from '../../app.api/feeds/app.api.feeds'
 import { JsonSchemaService, JsonValidator } from '../../entities/entities.global.json'
 
@@ -29,7 +29,7 @@ export function PreviewTopics(permissionService: api.FeedsPermissionService, rep
         }
         const invalid = await serviceType.validateServiceConfig(req.serviceConfig)
         if (invalid) {
-          return invalidInputServiceConfig(invalid)
+          return invalidInputServiceConfig(invalid, 'serviceConfig')
         }
         const conn = serviceType.createConnection(req.serviceConfig)
         return await conn.fetchAvailableTopics()
@@ -49,7 +49,7 @@ export function CreateFeedService(permissionService: api.FeedsPermissionService,
         }
         const invalid = await serviceType.validateServiceConfig(req.config)
         if (invalid) {
-          return invalidInputServiceConfig(invalid)
+          return invalidInputServiceConfig(invalid, 'config')
         }
         return await serviceRepo.create({
           serviceType: req.serviceType,
@@ -205,7 +205,9 @@ export function CreateFeed(permissionService: api.FeedsPermissionService, servic
   }
 }
 
-function invalidInputServiceConfig(err: InvalidServiceConfigError): InvalidInputError {
-  const problems = err.data?.invalidKeys || [ 'invalid service config' ]
-  return invalidInput(...problems)
+function invalidInputServiceConfig(err: InvalidServiceConfigError, ...configKey: string[]): InvalidInputError {
+  const problems = err.data?.invalidKeys.map(invalidKey => {
+    return [ `${invalidKey} is invalid`, ...configKey, invalidKey ] as KeyPathError
+  }) || [[ err.message, 'config' ]]
+  return invalidInput(`invalid service config: ${err.message}`, ...problems)
 }

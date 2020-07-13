@@ -42,14 +42,13 @@ export function entityNotFound(entityId: any, entityType: string): EntityNotFoun
 export type KeyPathError = [any, ...string[]]
 
 export function invalidInput(summary?: string, ...errors: KeyPathError[]): InvalidInputError {
-  let message = summary || 'invalid input'
-  message = errors.reduce((message, keyPathError) => {
+  const message = errors.reduce((message, keyPathError) => {
     let err = keyPathError[0]
-    if ('message' in err) {
+    if (typeof err === 'object' && 'message' in err) {
       err = err.message
     }
     const keyPath = keyPathError.slice(1, keyPathError.length)
     return message + `\n  ${keyPath.join(' > ')}: ${err}`
-  }, message)
+  }, summary || 'invalid request')
   return new MageError(ErrInvalidInput, errors, message)
 }
