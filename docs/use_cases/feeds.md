@@ -102,6 +102,30 @@ The new feed configuration is saved and the feed is available to add to events.
 
 ### Assign feed to event
 
+#### Actors
+1. Administrator (A1)
+
+#### Assumptions
+1. A1 is an authenticated user with administrative privileges.
+1. A feed (F1) A1 wishes to assign to an event exists.
+1. An event (E1) to which A1 wishes to assign F1 exists.
+
+#### Main Flow
+1. A1 requests the list of available events.
+1. The app presents the list of events.
+1. A1 chooses the desired event E1.
+1. The app presents the E1 configuration including the list of feeds assigned
+   to E1.
+1. A1 requests to assign a feed to E1.
+1. The app presents the list of available feeds.
+1. A1 chooses the desired feed F1.
+1. The app adds F1 to the list of feeds assigned to E1.
+
+#### Result
+Participants of the event E1 have permission to fetch data of feed F1 within E1.
+
 ### Remove feed from event
 
 ### Configure existing feed
+
+### Delete feed
