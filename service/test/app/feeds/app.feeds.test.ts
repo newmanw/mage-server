@@ -551,7 +551,7 @@ describe.only('feeds administration', function() {
 
     type PreviewOrCreateOp = 'previewFeed' | 'createFeed'
 
-    const sharedErrorConditions: [string, (op: PreviewOrCreateOp) => any][] = [
+    const sharedBehaviors: [string, (op: PreviewOrCreateOp) => any][] = [
       [
         'fails if the service type does not exist',
         async function(appOperation) {
@@ -651,11 +651,66 @@ describe.only('feeds administration', function() {
           expect(res.error).to.be.null
           expect(res.success).to.be.an('object')
         }
+      ],
+      [
+        'validates the variable params schema',
+        async function(appOperation: PreviewOrCreateOp) {
+          const feed: FeedMinimalAttrs = {
+            service: service.id,
+            topic: topics[0].id,
+            variableParamsSchema: {
+              type: 'object',
+              properties: {
+                bbox: {
+                  type: 'array',
+                  items: { type: 'number'},
+                  minItems: 4,
+                  maxItems: 4
+                },
+                timestamp: {
+                  type: 'number',
+                  description: 'The millisecond epoch time the strike ocurred',
+                  minimum: 0
+                }
+              }
+            }
+          }
+          const validationError = new Error('bad schema')
+          app.jsonSchemaService.validateSchema(Arg.deepEquals(feed.variableParamsSchema)).rejects(validationError)
+
+          const req = requestBy(adminPrincipal, { feed })
+          const res = await app[appOperation](req)
+
+          expect(res.success).to.be.null
+          const err = res.error as InvalidInputError
+          expect(err.code).to.equal(ErrInvalidInput)
+          expect(err.data.length).to.equal(1)
+          expect(err.data[0]).to.have.members([ validationError, 'feed', 'variableParamsSchema' ])
+          expect(err.message).to.match(/invalid variable parameters schema/)
+          expect(err.message).to.match(/feed > variableParamsSchema: bad schema/)
+        }
+      ],
+      [
+        'does not validate the variable params schema when the schema is undefined',
+        async function(appOperation: PreviewOrCreateOp) {
+          const feed: FeedMinimalAttrs = {
+            service: service.id,
+            topic: topics[0].id,
+          }
+          serviceConn.fetchAvailableTopics().resolves(topics)
+
+          const req = requestBy(adminPrincipal, { feed })
+          const res = await app[appOperation](req)
+
+          expect(res.error).to.be.null
+          expect(res.success).to.be.an('object')
+          app.jsonSchemaService.didNotReceive().validateSchema(Arg.all())
+        }
       ]
     ]
 
-    function testSharedErrorConditionsFor(this: Context, appOperation: PreviewOrCreateOp) {
-      for (const test of sharedErrorConditions) {
+    function testSharedBehaviorFor(this: Context, appOperation: PreviewOrCreateOp) {
+      for (const test of sharedBehaviors) {
         it(test[0], test[1].bind(this, appOperation))
       }
     }
@@ -764,43 +819,6 @@ describe.only('feeds administration', function() {
         expect(preview.feed).to.deep.include(feed)
       })
 
-      it('validates the variable params schema', async function() {
-
-        const feed: FeedMinimalAttrs = {
-          service: service.id,
-          topic: topics[0].id,
-          variableParamsSchema: {
-            type: 'object',
-            properties: {
-              bbox: {
-                type: 'array',
-                items: { type: 'number'},
-                minItems: 4,
-                maxItems: 4
-              },
-              timestamp: {
-                type: 'number',
-                description: 'The millisecond epoch time the strike ocurred',
-                minimum: 0
-              }
-            }
-          }
-        }
-        const validationError = new Error('bad schema')
-        app.jsonSchemaService.validateSchema(Arg.deepEquals(feed.variableParamsSchema)).rejects(validationError)
-
-        const req = requestBy(adminPrincipal, { feed })
-        const res = await app.previewFeed(req)
-
-        expect(res.success).to.be.null
-        const err = res.error as InvalidInputError
-        expect(err.code).to.equal(ErrInvalidInput)
-        expect(err.data.length).to.equal(1)
-        expect(err.data[0]).to.have.members([ validationError, 'feed', 'variableParamsSchema' ])
-        expect(err.message).to.match(/invalid variable parameters schema/)
-        expect(err.message).to.match(/feed > variableParamsSchema: bad schema/)
-      })
-
       it('validates the variable params against the variable params schema', async function() {
 
         const feed: FeedMinimalAttrs = {
@@ -841,22 +859,6 @@ describe.only('feeds administration', function() {
         expect(err.data).to.deep.equal([
           [ validationError, 'variableParams' ]
         ])
-      })
-
-      it('does not validate the variable params schema when the schema is undefined', async function() {
-
-        const feed: FeedMinimalAttrs = {
-          service: service.id,
-          topic: topics[0].id,
-        }
-        serviceConn.fetchAvailableTopics().resolves(topics)
-
-        const req = requestBy(adminPrincipal, { feed })
-        const res = await app.previewFeed(req)
-
-        expect(res.error).to.be.null
-        expect(res.success).to.be.an('object')
-        app.jsonSchemaService.didNotReceive().validateSchema(Arg.all())
       })
 
       it('validates the merged params against the topic params schema', async function() {
@@ -1003,8 +1005,8 @@ describe.only('feeds administration', function() {
         expect(app.feedRepo.db).to.be.empty
       })
 
-      describe('error conditions shared with creating a feed', function() {
-        testSharedErrorConditionsFor.call(this.ctx, 'previewFeed')
+      describe('behaviors shared with creating a feed', function() {
+        testSharedBehaviorFor.call(this.ctx, 'previewFeed')
       })
     })
 
@@ -1072,12 +1074,8 @@ describe.only('feeds administration', function() {
         expect(app.feedRepo.db.get(createRes.success!.id)).to.deep.include(feed)
       })
 
-      it('validates the variable params schema', async function() {
-        expect.fail('todo')
-      })
-
-      describe('error conditions shared with previewing a feed', function() {
-        testSharedErrorConditionsFor.call(this.ctx, 'createFeed')
+      describe('behaviors shared with previewing a feed', function() {
+        testSharedBehaviorFor.call(this.ctx, 'createFeed')
       })
     })
   })
