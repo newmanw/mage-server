@@ -1042,7 +1042,34 @@ describe.only('feeds administration', function() {
       })
 
       it('saves a feed from a preview', async function() {
-        expect.fail('todo')
+
+        const feed: FeedMinimalAttrs = {
+          service: service.id,
+          topic: topics[1].id,
+          title: 'Save From Preview',
+          constantParams: {
+            limit: 50
+          },
+          itemsHaveIdentity: true,
+          itemsHaveSpatialDimension: true
+        }
+        serviceConn.fetchAvailableTopics().resolves(topics)
+
+        const previewReq = requestBy(adminPrincipal, { feed, variableParams: { bbox: [ 20, 20, 21, 21 ]} })
+        const previewRes = await app.previewFeed(previewReq)
+
+        expect(previewRes.error).to.be.null
+        expect(previewRes.success).to.be.an('object')
+
+        const previewFeed = previewRes.success?.feed as FeedCreateAttrs
+
+        const createReq = requestBy(adminPrincipal, { feed: previewFeed })
+        const createRes = await app.createFeed(createReq)
+
+        expect(createRes.error).to.be.null
+        expect(createRes.success).to.be.an('object')
+        expect(createRes.success).to.deep.include(feed)
+        expect(app.feedRepo.db.get(createRes.success!.id)).to.deep.include(feed)
       })
 
       it('validates the variable params schema', async function() {
