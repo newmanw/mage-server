@@ -115,8 +115,8 @@ const EventSchema = new Schema(
 
 EventSchema.plugin(require('mongoose-beautiful-unique-validation'));
 
-FormSchema.path('fields').validate(hasAtLeastOneField, 'Form must contain at least one field.');
-FormSchema.path('fields').validate(fieldNamesAreUnique, 'Form contains non unique field names');
+FormSchema.path('fields').validate(hasAtLeastOneField, 'A form must contain at least one field.');
+FormSchema.path('fields').validate(fieldNamesAreUnique, 'Form field names must be unique.');
 FormSchema.path('color').validate(validateColor, 'Form color must be valid hex string.');
 
 function validateTeamIds(eventId, teamIds, next) {
