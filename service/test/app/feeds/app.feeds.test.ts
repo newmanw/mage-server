@@ -1057,7 +1057,7 @@ describe.only('feeds administration', function() {
         }
         serviceConn.fetchAvailableTopics().resolves(topics)
 
-        const previewReq = requestBy(adminPrincipal, { feed, variableParams: { bbox: [ 20, 20, 21, 21 ]} })
+        const previewReq = requestBy(adminPrincipal, { feed, variableParams: { bbox: [ 20, 20, 21, 21 ]}})
         const previewRes = await app.previewFeed(previewReq)
 
         expect(previewRes.error).to.be.null
@@ -1088,6 +1088,7 @@ class TestApp {
   readonly feedRepo = new TestFeedRepository()
   readonly permissionService = new TestPermissionService()
   readonly jsonSchemaService = Sub.for<JsonSchemaService>()
+
   readonly listServiceTypes = ListFeedServiceTypes(this.permissionService, this.serviceTypeRepo)
   readonly previewTopics = PreviewTopics(this.permissionService, this.serviceTypeRepo)
   readonly createService = CreateFeedService(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
