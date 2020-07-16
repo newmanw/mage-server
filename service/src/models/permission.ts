@@ -80,6 +80,7 @@ export const feedsPermissions = Object.freeze({
   FEEDS_CREATE_SERVICE: 'FEEDS_CREATE_SERVICE',
   FEEDS_LIST_SERVICES: 'FEEDS_LIST_SERVICES',
   FEEDS_LIST_TOPICS: 'FEEDS_LIST_TOPICS',
+  FEEDS_CREATE_FEED: 'FEEDS_CREATE_FEED',
 })
 
 export const allPermissions = Object.freeze({

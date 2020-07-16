@@ -9,7 +9,7 @@ import { RoleDocument } from '../../src/models/role'
 import { MageError, ErrPermissionDenied } from '../../lib/app.api/app.api.global.errors'
 import { AnyPermission } from '../../lib/models/permission'
 
-describe('feeds permission service', function() {
+describe.only('feeds permission service', function() {
 
   const permissions = new PreFetchedUserRoleFeedsPermissionService()
 
@@ -87,10 +87,39 @@ describe('feeds permission service', function() {
 
       context = contextWithPermissions('FEEDS_LIST_SERVICE_TYPES')
       denied = await permissions.ensureListTopicsPermissionFor(context, serviceId)
+
+      expect(denied).to.be.instanceOf(MageError)
+      expect(denied?.code).to.equal(ErrPermissionDenied)
+      expect(denied?.data.permission).to.equal('FEEDS_LIST_TOPICS')
+      expect(denied?.data.subject).to.equal(context.requestingPrincipal().username)
     })
 
     it('ensures permission on a pre-fetched service', async function() {
+      expect.fail('todo')
+    })
+  })
 
+  describe('ensuring create feed permission', function() {
+
+    it('ensures permission with a service id', async function() {
+
+      let context = contextWithPermissions('FEEDS_CREATE_FEED')
+      const serviceId = uniqid()
+      let denied = await permissions.ensureCreateFeedPermissionFor(context, serviceId)
+
+      expect(denied).to.be.null
+
+      context = contextWithPermissions('FEEDS_LIST_TOPICS')
+      denied = await permissions.ensureCreateFeedPermissionFor(context, serviceId)
+
+      expect(denied).to.be.instanceOf(MageError)
+      expect(denied?.code).to.equal(ErrPermissionDenied)
+      expect(denied?.data.permission).to.equal('FEEDS_CREATE_FEED')
+      expect(denied?.data.subject).to.equal(context.requestingPrincipal().username)
+    })
+
+    it('ensures permission with a pre-fetched service', async function() {
+      expect.fail('todo')
     })
   })
 })
