@@ -497,12 +497,7 @@ function dropObservationCollection(event, callback) {
   });
 }
 
-exports.create = function(event, user, options, callback) {
-  if (typeof options === 'function') {
-    callback = options;
-    options = {};
-  }
-
+exports.create = function(event, user, callback) {
   async.waterfall([
     function(done) {
       Counter.getNext('event')

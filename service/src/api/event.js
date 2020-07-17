@@ -57,46 +57,6 @@ Event.prototype.createEvent = function(event, user, callback) {
   });
 };
 
-Event.prototype.importEvent = function(event, formFile, callback) {
-  function validateForm(callback) {
-    new api.Form().validate(formFile, function(err, form) {
-      callback(err, form);
-    });
-  }
-
-  function createEvent(form, callback) {
-    event.form = form;
-    EventModel.create(event, function(err, event) {
-      callback(err, event, form);
-    });
-  }
-
-  function importIcons(event, form, callback) {
-    new api.Form(event).importIcons(formFile, form, function(err) {
-      callback(err, event);
-    });
-  }
-
-  function populateUserFields(event, callback) {
-    new api.Form(event).populateUserFields(function(err) {
-      callback(err, event);
-    });
-  }
-
-  async.waterfall([
-    validateForm,
-    createEvent,
-    importIcons,
-    populateUserFields
-  ], function (err, event) {
-    if (!err) {
-      EventEmitter.emit(EventEvents.events.add, event);
-    }
-
-    callback(err, event);
-  });
-};
-
 Event.prototype.updateEvent = function(event, options, callback) {
   EventModel.update(this._event._id, event, options, function(err, updatedEvent) {
     if (err) return callback(err);
