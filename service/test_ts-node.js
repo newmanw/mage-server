@@ -3,4 +3,3 @@
 const project = require.resolve('./test/tsconfig.json')
 const tsNode = require('ts-node');
 tsNode.register({ project })
-// tsNode.register()

@@ -1,7 +1,8 @@
 
 import mongoose from 'mongoose'
-import Mocha, { Context } from 'mocha'
+import Mocha from 'mocha'
 import { MongoMemoryServer } from 'mongodb-memory-server'
+import { MongoMemoryServerOptsT } from 'mongodb-memory-server-core/lib/MongoMemoryServer'
 
 
 declare module 'mocha' {
@@ -33,9 +34,9 @@ export interface MongoTestContext {
  * })
  * ```
  */
-export function mongoTestBeforeAllHook(): () => Promise<void> {
+export function mongoTestBeforeAllHook(opts?: MongoMemoryServerOptsT): () => Promise<void> {
   return async function setupMongoServer(this: Mocha.Context) {
-    const server = new MongoMemoryServer()
+    const server = new MongoMemoryServer(opts)
     const uri = await server.getUri()
     const conn = await mongoose.createConnection(uri, {
       useMongoClient: true,
