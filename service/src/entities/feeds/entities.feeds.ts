@@ -196,7 +196,7 @@ export interface Feed {
    * might be `apiKey`.  MAGE does not expose constant parameters to the end-
    * user consumer of the feed.
    */
-  readonly constantParams: FeedContentParams
+  readonly constantParams?: FeedContentParams
   /**
    * The variable parameters schema of a feed is a schema an administrative user
    * can define to advertise the parameters feed consumers can pass when
@@ -247,7 +247,7 @@ export const FeedCreateAttrs = (topic: FeedTopic, feedAttrs: FeedMinimalAttrs): 
     topic: topic.id,
     title: feedAttrs.title || topic.title,
     summary: feedAttrs.summary || topic.summary,
-    constantParams: feedAttrs.constantParams || null,
+    constantParams: feedAttrs.constantParams,
     variableParamsSchema: feedAttrs.variableParamsSchema || undefined,
     itemsHaveIdentity: feedAttrs.itemsHaveIdentity || false,
     itemsHaveSpatialDimension: feedAttrs.itemsHaveSpatialDimension || false,
@@ -259,9 +259,9 @@ export const FeedCreateAttrs = (topic: FeedTopic, feedAttrs: FeedMinimalAttrs): 
   return createAttrs
 }
 
-export type FeedContentParams = JsonObject | null
+export type FeedContentParams = JsonObject
 
 export interface FeedContent extends FeedTopicContent {
   readonly feed: FeedId
-  readonly variableParams: FeedContentParams
+  readonly variableParams?: FeedContentParams
 }

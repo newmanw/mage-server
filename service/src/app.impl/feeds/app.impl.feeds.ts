@@ -174,7 +174,7 @@ export function PreviewFeed(permissionService: api.FeedsPermissionService, servi
           const previewContent: FeedContent & { feed: 'preview' } = {
             feed: 'preview',
             topic: topicContent.topic,
-            variableParams: req.variableParams || null,
+            variableParams: req.variableParams,
             items: topicContent.items,
           }
           if (topicContent.pageCursor) {

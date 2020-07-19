@@ -728,7 +728,7 @@ describe.only('feeds administration', function() {
           topic: topics[0].id,
           title: topics[0].title,
           summary: topics[0].summary,
-          constantParams: null,
+          constantParams: undefined,
           variableParamsSchema: undefined,
           updateFrequency: undefined,
           itemsHaveIdentity: false,
@@ -760,8 +760,8 @@ describe.only('feeds administration', function() {
         const previewContent: FeedContent = {
           feed: 'preview',
           topic: feed.topic,
-          variableParams: null,
           items: previewItems,
+          variableParams: undefined
         }
 
         const req = requestBy(adminPrincipal, { feed })
@@ -1032,7 +1032,7 @@ describe.only('feeds administration', function() {
           service: service.id,
           title: topics[1].title,
           summary: topics[1].summary,
-          constantParams: null,
+          constantParams: undefined,
           variableParamsSchema: undefined,
           itemsHaveIdentity: false,
           itemPrimaryProperty: undefined,
