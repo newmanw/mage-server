@@ -4,7 +4,7 @@ export type MageEventId = number
 
 export interface MageEvent {
   id: MageEventId
-  feeds: FeedId[]
+  feedIds: FeedId[]
 }
 
 export interface MageEventRepository {
@@ -14,5 +14,5 @@ export interface MageEventRepository {
    * @param event an Event ID
    * @param feed a Feed ID
    */
-  addFeedToEvent(event: MageEventId, feed: FeedId): Promise<MageEvent | null>
+  addFeedsToEvent(event: MageEventId, feed: FeedId): Promise<MageEvent | null>
 }

@@ -7,17 +7,29 @@ import * as legacy from '../../models/event'
 
 export const MageEventModelName = 'Event'
 
-export type MageEventDocument = mongoose.Document & MageEvent
-export type MageEventModel = mongoose.Model<MageEventDocument>
+export type MageEventDocument = legacy.MageEventDocument
+export type MageEventModel = mongoose.Model<legacy.MageEventDocument>
 export const MageEventSchema = legacy.Model.schema
 
 export class MongooseMageEventRepository extends BaseMongooseRepository<MageEventDocument, MageEventModel, MageEvent> implements MageEventRepository {
-  async addFeedToEvent(event: MageEventId, feed: FeedId): Promise<MageEvent | null> {
-    const updated = await this.model.findByIdAndUpdate(event, {
-      $addToSet: {
-        feedIds: feed
-      }
-    })
+
+  async create(): Promise<MageEvent> {
+    throw new Error('method not allowed')
+  }
+
+  async update(attrs: Partial<MageEvent> & { id: MageEventId }): Promise<MageEvent | null> {
+    throw new Error('method not allowed')
+  }
+
+  async addFeedsToEvent(event: MageEventId, ...feeds: FeedId[]): Promise<MageEvent | null> {
+    const updated = await this.model.findByIdAndUpdate(
+      event,
+      {
+        $addToSet: {
+          feedIds: { $each: feeds }
+        }
+      },
+      { new: true })
     return updated?.toJSON()
   }
 }

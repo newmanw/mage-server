@@ -41,7 +41,7 @@ export class BaseMongooseRepository<D extends mongoose.Document, M extends mongo
     return doc ? this.docToEntity(doc) : null
   }
 
-  async update(attrs: Partial<E> & EntityReference): Promise<E> {
+  async update(attrs: Partial<E> & EntityReference): Promise<E | null> {
     let doc = (await this.model.findById(attrs.id))
     if (!doc) {
       throw new Error(`document not found for id: ${attrs.id}`)

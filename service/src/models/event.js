@@ -6,6 +6,7 @@ const mongoose = require('mongoose')
   , api = require('../api')
   , whitelist = require('../utilities/whitelist')
   , log = require('winston');
+const { FeedsModels } = require('../adapters/feeds/adapters.feeds.db.mongoose');
 
 // Creates a new Mongoose Schema object
 const Schema = mongoose.Schema;
@@ -93,6 +94,7 @@ const EventSchema = new Schema(
     collectionName: { type: String, required: true },
     teamIds: [{ type: Schema.Types.ObjectId, ref: 'Team' }],
     layerIds: [{ type: Number, ref: 'Layer' }],
+    feedIds: [{ type: String, ref: 'Feed' }],
     forms: [FormSchema],
     style: {
       type: Schema.Types.Mixed,

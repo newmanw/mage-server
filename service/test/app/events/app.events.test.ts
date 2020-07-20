@@ -26,15 +26,15 @@ describe('events use case interactions', function() {
         feed: uniqid(),
         event: 123
       }
-      const event: MageEvent = { id: 123, feeds: [ req.feed ] }
-      app.eventRepo.addFeedToEvent(req.event, req.feed).resolves(event)
+      const event: MageEvent = { id: 123, feedIds: [ req.feed ] }
+      app.eventRepo.addFeedsToEvent(req.event, req.feed).resolves(event)
 
       const res = await app.addFeedToEvent(req)
 
       expect(res.error).to.be.null
       expect(res.success).to.be.an('object')
-      expect(res.success?.feeds).to.deep.equal([ req.feed ])
-      app.eventRepo.received(1).addFeedToEvent(req.event, req.feed)
+      expect(res.success?.feedIds).to.deep.equal([ req.feed ])
+      app.eventRepo.received(1).addFeedsToEvent(req.event, req.feed)
     })
 
     it('fails if the event id does not exist', async function() {
@@ -47,7 +47,7 @@ describe('events use case interactions', function() {
         feed: uniqid(),
         event: 123
       }
-      app.eventRepo.addFeedToEvent(Arg.all()).resolves(null)
+      app.eventRepo.addFeedsToEvent(Arg.all()).resolves(null)
 
       const res = await app.addFeedToEvent(req)
 
@@ -56,7 +56,7 @@ describe('events use case interactions', function() {
       expect(res.error?.code).to.equal(ErrEntityNotFound)
       expect(res.error?.data.entityId).to.equal(req.event)
       expect(res.error?.data.entityType).to.equal('MageEvent')
-      app.eventRepo.received(1).addFeedToEvent(req.event, req.feed)
+      app.eventRepo.received(1).addFeedsToEvent(req.event, req.feed)
     })
 
     xit('checks permission for assigning a feed to the event', async function() {

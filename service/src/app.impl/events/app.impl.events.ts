@@ -6,7 +6,7 @@ import { AppResponse } from '../../app.api/app.api.global'
 
 export function AddFeedToEvent(eventRepo: MageEventRepository): AddFeedToEvent {
   return async function(req: AddFeedToEventRequest): ReturnType<AddFeedToEvent> {
-    const event = await eventRepo.addFeedToEvent(req.event, req.feed)
+    const event = await eventRepo.addFeedsToEvent(req.event, req.feed)
     if (!event) {
       return AppResponse.error<MageEvent, EntityNotFoundError>(entityNotFound(req.event, 'MageEvent'))
     }
