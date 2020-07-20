@@ -1,0 +1,77 @@
+.mat-list-base {
+  padding: 0px;
+}
+
+.mat-list-icon {
+  color: rgba(0, 0, 0, 0.54);
+  border-radius: unset !important;
+}
+
+.mat-card-avatar {
+  border-radius: unset;
+  flex-shrink: unset;
+  object-fit: unset;
+}
+
+.mat-body-1 {
+  opacity: .60;
+}
+
+.mat-body-2 {
+  opacity: .87;
+}
+
+.mat-icon {
+  font-size: 18px;
+	height: 18px;
+	width: 18px;
+	line-height: 18px;
+	margin-right: 8px;
+	margin-left: -4px;
+}
+
+.card-header {
+  display: flex;
+  flex-direction: row;
+}
+
+.card-header-text {
+  flex: 1;
+  margin: 0 16px;
+}
+
+.card-overline {
+  font: 500 10px/12px Roboto, "Helvetica Neue", sans-serif;
+  font-size: 10px !important;
+  text-transform: uppercase;
+  opacity: .60;
+  margin-bottom: 8px;
+}
+
+.card-title {
+  font: 500 20px/32px Roboto, "Helvetica Neue", sans-serif;
+}
+
+.card-subtitle {
+  font-size: 14px;
+  color: rgba(0, 0, 0, 0.60);
+  margin-bottom: 16px;
+}
+
+.item {
+  background: white;
+  width: 100%;
+}
+
+.mat-card-image {
+  height: 200px;
+  width: calc(100% + 32px);
+  margin: 0 -16px;
+}
+
+.map {
+  position: absolute;
+  height: 200px;
+  width: 100%;
+  background: blue;
+}

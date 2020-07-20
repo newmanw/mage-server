@@ -1,12 +1,15 @@
 <!doctype html>
 <html>
 
+
 <head>
   <title>MAGE</title>
   <meta id="view" name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
 </head>
 
 <body class="mdc-typography" ng-controller="NavController as $ctrl">
+  <bootstrap></bootstrap>
+
   <banner ng-if="myself" class="banner" type="header"></banner>
   <navbar myself="myself" ng-show="myself" on-feed-toggle="$ctrl.feedToggle()"></navbar>
   <ui-view class="route-content" toggle-feed="$ctrl.toggleFeed"></ui-view>

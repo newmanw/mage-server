@@ -6,7 +6,9 @@ import fileUpload from './file-upload/file.upload.component';
 import fileBrowser from './file-upload/file.browser.component';
 import uiRouter from "@uirouter/angularjs";
 import { SwaggerComponent } from "../app/swagger/swagger.component";
-import { downgradeComponent } from '@angular/upgrade/static';
+import { downgradeComponent, downgradeInjectable } from '@angular/upgrade/static';
+
+import { BootstrapComponent } from "../app/bootstrap/bootstrap.component"
 
 import {
   MatIcon,
@@ -29,6 +31,11 @@ import { ScrollWrapperComponent } from '../app/wrapper/scroll/feed-scroll.compon
 import { DropdownComponent } from '../app/observation/edit/dropdown/dropdown.component';
 import { MultiSelectDropdownComponent } from '../app/observation/edit/multiselectdropdown/multiselectdropdown.component';
 
+import { FeedService } from '../app/feed/feed.service'
+import { FeedComponent } from '../app/feed/feed.component'
+import { FeedItemComponent } from '../app/feed/item/item.component'
+import { FeedItemService } from '../app/feed/item/item.service';
+
 require('angular-minicolors');
 require('select2');
 
@@ -44,6 +51,12 @@ const app = angular.module('mage', [
   require('angular-messages'),
   require('./auth/http-auth-interceptor')
 ]);
+
+app.
+  directive('bootstrap', downgradeComponent({ component: BootstrapComponent }));
+
+app.
+  factory('FeedItemService', downgradeInjectable(FeedItemService))
 
 // Downgraded Angular components 
 app
@@ -63,8 +76,12 @@ app
   .directive('mapControlSearch', downgradeComponent({ component: SearchComponent }))
   .directive('mapControlLocation', downgradeComponent({ component: LocationComponent }))
   .directive('mapControlAddObservation', downgradeComponent({ component: AddObservationComponent }))
+  .directive('feed', downgradeComponent({ component: FeedComponent }))
+  .directive('feedItem', downgradeComponent({ component: FeedItemComponent }))
   .directive('swagger', downgradeComponent({ component: SwaggerComponent }));
 
+app
+  .factory('FeedService', downgradeInjectable(FeedService));
 
 app
   .component('filterPanel', require('./filter/filter'))

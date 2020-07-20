@@ -41,6 +41,8 @@ import {
   MatExpansionModule
 } from '@angular/material';
 
+import { TokenInterceptorService } from './http/token-interceptor.service'
+
 import { ZoomComponent } from './map/controls/zoom.component';
 import { AddObservationComponent } from './map/controls/add-observation.component';
 import { SwaggerComponent } from './swagger/swagger.component';
@@ -51,7 +53,7 @@ import { MultiSelectDropdownComponent } from './observation/edit/multiselectdrop
 // import app from '../ng1/app.js';
 import { LocationComponent } from './map/controls/location.component';
 import { SearchComponent } from './map/controls/search.component';
-import { HttpClientModule } from '@angular/common/http';
+import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
 import { LayersComponent } from './map/layers/layers.component'
 import { LayersControlComponent } from './map/controls/layers-control.component';
 import { LeafletComponent } from './map/leaflet.component';
@@ -60,7 +62,15 @@ import { LayerHeaderComponent } from './map/layers/layer-header.component';
 import { LayerContentComponent } from './map/layers/layer-content.component';
 import { ColorPickerComponent } from './color-picker/color-picker.component';
 
-import { mapServiceProvider } from './upgrade/ajs-upgraded-providers';
+import { mapServiceProvider, localStorageServiceProvider } from './upgrade/ajs-upgraded-providers';
+import { BootstrapComponent } from './bootstrap/bootstrap.component';
+import { FeedComponent } from './feed/feed.component';
+import { FeedListItemComponent } from './feed/feed-list-item.component';
+import { MomentPipe } from './moment/moment.pipe';
+import { FeedItemComponent } from './feed/item/item.component';
+import { FeedItemService } from './feed/item/item.service';
+import { MapClipComponent } from './map/clip/clip.component';
+import { GeometryPipe } from './geometry/geometry.pipe';
 
 @NgModule({
   declarations: [
@@ -78,7 +88,14 @@ import { mapServiceProvider } from './upgrade/ajs-upgraded-providers';
     LayersComponent,
     LayerHeaderComponent,
     LayerContentComponent,
-    ColorPickerComponent
+    ColorPickerComponent,
+    BootstrapComponent,
+    FeedComponent,
+    FeedListItemComponent,
+    MomentPipe,
+    FeedItemComponent,
+    MapClipComponent,
+    GeometryPipe,
   ],
   imports: [
     BrowserModule,
@@ -115,10 +132,14 @@ import { mapServiceProvider } from './upgrade/ajs-upgraded-providers';
     CheckboardModule
   ],
   providers: [
-    mapServiceProvider
+    FeedItemService,
+    mapServiceProvider,
+    localStorageServiceProvider,
+    { provide: HTTP_INTERCEPTORS, useClass: TokenInterceptorService, multi: true }
   ],
   bootstrap: [],
   entryComponents: [
+    BootstrapComponent,
     MatIcon,
     MatButton,
     MatToolbar,
@@ -137,7 +158,9 @@ import { mapServiceProvider } from './upgrade/ajs-upgraded-providers';
     LayersControlComponent,
     ScrollWrapperComponent,
     SwaggerComponent,
-    ColorPickerComponent
+    ColorPickerComponent,
+    FeedComponent,
+    FeedItemComponent
   ]
 })
 export class AppModule {

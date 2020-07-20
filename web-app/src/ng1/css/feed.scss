@@ -8,8 +8,7 @@ observation-form-edit {
   background: #E1E2E1;
   order: 1;
   display: flex;
-  flex-direction: column;
-  width: 450px;
+  flex-direction: row;
   position: relative;
   transition: margin-left 0.3s linear;
   z-index: 1;
@@ -29,6 +28,7 @@ observation-form-edit {
 }
 
 .observation-feed-container {
+  overflow-y: auto;
   background: #E1E2E1;
 }
 
@@ -161,7 +161,7 @@ observation-form-edit {
 
 .people-feed-container,
 .people-card-background-container {
-  height: 100%;
+  overflow-y: auto;
 }
 
 .feed-card-content {
@@ -178,4 +178,48 @@ observation-form-edit {
 
 .page-select-width {
   width: 100%;
+}
+
+.feeds-panel {
+  background-color: #555;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow-y: auto;
+}
+
+.feeds-content {
+  position: relative;
+  display: flex;
+}
+
+.feed-panel-item {
+  position: relative;
+  padding: 25px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  color: rgba(255, 255, 255, 0.54);
+  cursor: pointer;
+  cursor: hand;
+}
+
+.feed-panel-icon {
+    position: relative;
+}
+
+.feed-panel-title {
+  font-size: 12px;
+}
+
+.feed-panel-item > mat-icon {
+  font-size: 24px;
+  height: 24px;
+  width: 24px;
+  margin-bottom: 8px;
+}
+
+.feed-container {
+  overflow-y: auto;
 }

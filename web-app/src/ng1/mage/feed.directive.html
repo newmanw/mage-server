@@ -1,37 +1,48 @@
-<div class="slide-left new-obs-card form-chooser feed-card ng-animatable" ng-if="newObservationForms">
-  <div class="feed-card-content">
-    <observation-form-chooser 
-      forms="newObservationForms" 
-      on-form-picked="createObservation(form)" 
-      on-form-close="cancelNewObservation()">
-    </observation-form-chooser>
+<div class="feeds-panel">
+  <div ng-repeat="tab in tabs" class="feed-panel-item" ng-click="onTabSwitched(tab)">
+    <mat-icon class="feed-panel-icon-1">{{tab.icon}}</mat-icon>
+    <div class="feed-panel-title">{{tab.title}}</div>
   </div>
 </div>
 
-<div class="slide-left view-obs-card ng-animatable" ng-if="newObservation">
-  <observation-form form="newObservationForm" observation="newObservation" on-form-close="onFormClose()"></observation-form>
+<div class="feeds-content">
+  <div class="slide-left new-obs-card form-chooser feed-card ng-animatable" ng-if="newObservationForms">
+    <div class="feed-card-content">
+      <observation-form-chooser forms="newObservationForms" on-form-picked="createObservation(form)"
+        on-form-close="cancelNewObservation()">
+      </observation-form-chooser>
+    </div>
+  </div>
+  
+  <div class="slide-left view-obs-card ng-animatable" ng-if="newObservation">
+    <observation-form form="newObservationForm" observation="newObservation" on-form-close="onFormClose()">
+    </observation-form>
+  </div>
+  
+  <user-view class="slide-left new-obs-card view-obs-card feed-card ng-animatable" ng-if="viewUser" user="viewUser"
+    event="event" observations="observations"></user-view>
+  
+  <observation-view class="slide-left new-obs-card view-obs-card feed-card ng-animatable" ng-if="viewObservation"
+    observation="viewObservation" event="event"></observation-view>
+  
+  <feed-item class="slide-left new-obs-card view-obs-card feed-card ng-animatable" ng-if="feedItem" [item]="feedItem.item" [feed]="feedItem.feed">
+  </feed-item>
+  
+  <observation-form ng-if="editObservation" class="slide-left view-obs-card ng-animatable" form="editForm"
+    observation="editObservation" on-form-close="onFormClose()" on-observation-delete="onObservationDelete($event)">
+  </observation-form>
+  
+  <div class="observation-feed-container">
+    <observation-feed ng-if="tab.id === 'observations'"></observation-feed>
+  </div>
+  
+  <div class="people-feed-container">
+    <user-feed ng-if="tab.id === 'people'"></user-feed>
+  </div>
+  
+  <div class="feed-container">
+    <feed ng-if="tab.feed" [feed]="tab.feed"></feed>
+  </div>
 </div>
 
-<user-view 
-  class="slide-left new-obs-card view-obs-card feed-card ng-animatable" 
-  ng-if="viewUser" 
-  user="viewUser" 
-  event="event" 
-  observations="observations"></user-view>
 
-<observation-view
-  class="slide-left new-obs-card view-obs-card feed-card ng-animatable"
-  ng-if="viewObservation"
-  observation="viewObservation" 
-  event="event"></observation-view>
-
-<observation-form ng-if="editObservation" class="slide-left view-obs-card ng-animatable" form="editForm" observation="editObservation" on-form-close="onFormClose()" on-observation-delete="onObservationDelete($event)"></observation-form>
-
-<tab-list on-tab-switch="onTabSwitched(index)" tabs="tabs" class="tab-bg"></tab-list>
-<div class="observation-feed-container content content--active">
-  <observation-feed ng-if="currentFeedPanel === 'observations'"></observation-feed>
-</div>
-
-<div class="people-feed-container content">
-  <user-feed ng-if="currentFeedPanel === 'people'"></user-feed>
-</div>

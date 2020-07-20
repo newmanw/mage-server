@@ -1,10 +1,10 @@
-var _ = require('underscore')
+const _ = require('underscore')
   , moment = require('moment');
 
 module.exports = NewsFeed;
 
 function NewsFeed() {
-  var directive = {
+  const directive = {
     restrict: "A",
     template:  require('./feed.directive.html'),
     scope: {
@@ -19,29 +19,29 @@ function NewsFeed() {
   return directive;
 }
 
-NewsFeedController.$inject = ['$scope', '$element', 'MapService', 'EventService', 'ObservationService', 'FilterService', 'UserService', 'Observation', '$uibModal'];
+NewsFeedController.$inject = ['$scope', '$element', 'MapService', 'EventService', 'ObservationService', 'FilterService', 'UserService', 'FeedService', 'FeedItemService', 'Observation', '$uibModal'];
 
-function NewsFeedController($scope, $element, MapService, EventService, ObservationService, FilterService, UserService, Observation, $uibModal) {
-  var contentEls = $element.find('.content');
+function NewsFeedController($scope, $element, MapService, EventService, ObservationService, FilterService, UserService, FeedService, FeedItemService, Observation, $uibModal) {
 
-  $scope.tabs = [{
-    tabName: 'Observations',
-    tabId: 'observations',
+  const tabs = [{
+    id: 'observations',
+    title: 'Observations',
     icon: 'place'
   }, {
-    tabName: 'People',
-    tabId: 'people',
-    icon: 'supervisor_account'
+    id: 'people',
+    title: 'People',
+    icon: 'people'
   }];
 
-  $scope.onTabSwitched = function(index) {
-    $scope.currentFeedPanel = $scope.tabs[index].tabId;
-    let active = $element.find('.content--active')[0];
-    active.classList.remove('content--active');
-    contentEls[index].classList.add('content--active');
+  $scope.tabs = tabs.slice();
+  $scope.tab = $scope.tabs[0];
+
+  $scope.onTabSwitched = function(tab) {
+    $scope.tab = tab;
   };
 
-  $scope.currentFeedPanel = 'observations';
+  FeedService.feeds.subscribe(feeds => onFeedsChanged(feeds));
+  FeedItemService.item$.subscribe(event => onFeedItemEvent(event));
 
   var newObservation;
 
@@ -82,6 +82,7 @@ function NewsFeedController($scope, $element, MapService, EventService, Observat
     $scope.newObservation = null;
     $scope.editObservation = null;
     $scope.viewObservation = null;
+    $scope.feedItem = null;
 
     $scope.onToggleFeed({
       $event: {
@@ -100,6 +101,7 @@ function NewsFeedController($scope, $element, MapService, EventService, Observat
     $scope.newObservation = null;
     $scope.editObservation = null;
     $scope.viewUser = null;
+    $scope.feedItem = null;
 
     $scope.onToggleFeed({
       $event: {
@@ -201,6 +203,17 @@ function NewsFeedController($scope, $element, MapService, EventService, Observat
     return ObservationService.getObservationIconUrlForEvent(event.id, primaryForm.id, primary.value, secondary.value);
   }
 
+  function onFeedsChanged(feeds) {
+    $scope.tabs = tabs.concat(_.map(feeds, feed => {
+      return {
+        id: `feed-${feed.id}`,
+        title: feed.title,
+        icon: 'rss_feed',
+        feed: feed
+      };
+    }))
+  }
+
   $scope.onFormClose = function() {
     $scope.newObservation = null;
     $scope.editObservation = null;
@@ -213,11 +226,12 @@ function NewsFeedController($scope, $element, MapService, EventService, Observat
     MapService.removeFeatureFromLayer($event.observation, 'Observations');
   }
 
-  $scope.$watch('event', function() {
+  $scope.$watch('event', function(event) {
     $scope.newObservation = null;
     $scope.editObservation = null;
     $scope.viewObservation = null;
     $scope.viewUser = null;
+    $scope.feedItem = null;
   });
 
   $scope.$watch('currentFeedPanel', function(currentFeedPanel) {
@@ -260,6 +274,7 @@ function NewsFeedController($scope, $element, MapService, EventService, Observat
     $scope.viewObservation = null;
     $scope.editObservation = null;
     $scope.newObservation = null;
+    $scope.feedItem = null;
 
     $scope.onToggleFeed({
       $event: {
@@ -267,4 +282,27 @@ function NewsFeedController($scope, $element, MapService, EventService, Observat
       }
     });
   });
+
+  $scope.$on('item:view', function (e, item) {
+    $scope.feedItem = item;
+    $scope.viewObservation = null;
+    $scope.newObservation = null;
+    $scope.editObservation = null;
+    $scope.viewUser = null;
+
+    $scope.onToggleFeed({
+      $event: {
+        hidden: false
+      }
+    });
+  });
+
+  function onFeedItemEvent(event) {
+    $scope.$apply(() => {
+      $scope.feedItem = {
+        feed: event.feed,
+        item: event.item
+      };
+    })
+  }
 }

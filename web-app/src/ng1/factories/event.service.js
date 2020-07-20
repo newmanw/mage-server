@@ -4,12 +4,13 @@ var _ = require('underscore')
 
 module.exports = EventService;
 
-EventService.$inject = ['$rootScope', '$q', '$timeout', '$http', 'Event', 'ObservationService', 'LocationService', 'LayerService', 'FilterService', 'PollingService'];
+EventService.$inject = ['$rootScope', '$q', '$timeout', '$http', 'Event', 'ObservationService', 'LocationService', 'LayerService', 'FeedService', 'FilterService', 'PollingService'];
 
-function EventService($rootScope, $q, $timeout, $http, Event, ObservationService, LocationService, LayerService, FilterService, PollingService) {
+function EventService($rootScope, $q, $timeout, $http, Event, ObservationService, LocationService, LayerService, FeedService, FilterService, PollingService) {
   var observationsChangedListeners = [];
   var usersChangedListeners = [];
   var layersChangedListeners = [];
+  var feedsChangedListeners = [];
   var pollListeners = [];
   var eventsById = {};
   var pollingTimeout = null;
@@ -35,13 +36,23 @@ function EventService($rootScope, $q, $timeout, $http, Event, ObservationService
 
   function onEventChanged(event) {
     _.each(event.added, function(added) {
+      if (!eventsById[added.id]) {
+        eventsById[added.id] = angular.copy(added);
+        eventsById[added.id].filteredObservationsById = {};
+        eventsById[added.id].observationsById = {};
+        eventsById[added.id].usersById = {};
+        eventsById[added.id].filteredUsersById = {};
+      }
+
       fetchLayers(added);
+      fetchFeeds(added);
     });
 
     _.each(event.removed, function(removed) {
       observationsChanged({removed: _.values(eventsById[removed.id].filteredObservationsById)});
       usersChanged({removed: _.values(eventsById[removed.id].filteredUsersById)});
       layersChanged({removed: _.values(eventsById[removed.id].layersById)}, removed);
+      feedsChanged({ removed: _.values(eventsById[removed.id].feedsById) }, removed);
       delete eventsById[removed.id];
     });
   }
@@ -148,6 +159,7 @@ function EventService($rootScope, $q, $timeout, $http, Event, ObservationService
     addUsersChangedListener: addUsersChangedListener,
     removeUsersChangedListener: removeUsersChangedListener,
     addLayersChangedListener: addLayersChangedListener,
+    addFeedsChangedListener: addFeedsChangedListener,
     addPollListener: addPollListener,
     removePollListener: removePollListener,
     removeLayersChangedListener: removeLayersChangedListener,
@@ -208,6 +220,16 @@ function EventService($rootScope, $q, $timeout, $http, Event, ObservationService
     if (_.isFunction(listener.onLayersChanged)) {
       _.each(_.values(eventsById), function(event) {
         listener.onLayersChanged({added: _.values(event.layersById)}, event); // TODO this could be old layers, admin panel might have changed layers
+      });
+    }
+  }
+
+  function addFeedsChangedListener(listener) {
+    feedsChangedListeners.push(listener);
+
+    if (_.isFunction(listener.onFeedsChanged)) {
+      _.each(_.values(eventsById), function (event) {
+        listener.onFeedsChanged({ added: _.values(event.feedsById) }, event);
       });
     }
   }
@@ -406,17 +428,21 @@ function EventService($rootScope, $q, $timeout, $http, Event, ObservationService
     });
   }
 
-  function fetch() {
-    var event = FilterService.getEvent();
-    if (!event) return;
+  function feedsChanged(changed, event) {
+    _.each(feedsChangedListeners, function (listener) {
+      changed.added = changed.added || [];
+      changed.updated = changed.updated || [];
+      changed.removed = changed.removed || [];
 
-    if (!eventsById[event.id]) {
-      eventsById[event.id] = angular.copy(event);
-      eventsById[event.id].filteredObservationsById = {};
-      eventsById[event.id].observationsById = {};
-      eventsById[event.id].usersById = {};
-      eventsById[event.id].filteredUsersById = {};
-    }
+      if (_.isFunction(listener.onFeedsChanged)) {
+        listener.onFeedsChanged(changed, event);
+      }
+    });
+  }
+
+  function fetch() {
+    const event = FilterService.getEvent();
+    if (!event) return;
 
     var parameters = {};
     var interval = FilterService.getInterval();
@@ -433,13 +459,13 @@ function EventService($rootScope, $q, $timeout, $http, Event, ObservationService
 
   function fetchLayers(event) {
     return LayerService.getLayersForEvent(event).then(function(layers) {
-      var added = _.filter(layers, function(l) {
+      const added = _.filter(layers, function(l) {
         return !_.some(eventsById[event.id].layersById, function(layer, layerId) {
           return l.id === layerId;
         });
       });
 
-      var removed = _.filter(eventsById[event.id].layersById, function(layer, layerId) {
+      const removed = _.filter(eventsById[event.id].layersById, function(layer, layerId) {
         return !_.some(layers, function(l) {
           return l.id === layerId;
         });
@@ -448,6 +474,27 @@ function EventService($rootScope, $q, $timeout, $http, Event, ObservationService
       eventsById[event.id].layersById = _.indexBy(layers, 'id');
       layersChanged({added: added, removed: removed}, event);
     });
+  }
+
+  function fetchFeeds(event) {
+    FeedService.fetchFeeds(event.id).subscribe(feeds => {
+      const added = _.filter(feeds, function (f) {
+        return !_.some(eventsById[event.id].feedsById, function (_feed, feedId) {
+          return f.id === feedId;
+        });
+      });
+
+      const removed = _.filter(eventsById[event.id].feedsById, function (_feed, feedId) {
+        return !_.some(feeds, function (f) {
+          return f.id === feedId;
+        });
+      }); 
+
+      eventsById[event.id].feedsById = _.indexBy(feeds, 'id');
+      feedsChanged({ added: added, removed: removed }, event);
+
+      pollFeeds();
+    });  
   }
 
   function fetchObservations(event, parameters) {
@@ -554,6 +601,26 @@ function EventService($rootScope, $q, $timeout, $http, Event, ObservationService
 
       pollingTimeout = $timeout(function() {
         poll(interval);
+      }, interval);
+    });
+  }
+
+  function getNextFeed(event) {
+    const feeds = _.values(eventsById[event.id].feedsById);
+    return feeds[1];
+  }
+
+  function pollFeeds() {
+    const event = FilterService.getEvent();
+
+    // TODO implement this like Android
+    const interval = 3000 * 1000;
+
+    const feed = getNextFeed(event);
+
+    FeedService.fetchFeedItems(event.id, feed.id).subscribe(() => {
+      $timeout(function () {
+        pollFeeds(interval);
       }, interval);
     });
   }

@@ -1,0 +1,34 @@
+.mat-list-icon {
+  color: rgba(0, 0, 0, 0.54);
+  border-radius: unset !important;
+}
+
+.mat-body-1 {
+  opacity: .60;
+}
+
+.mat-body-2 {
+  opacity: .87;
+}
+
+.overline {
+  font: 500 10px/24px Roboto, "Helvetica Neue", sans-serif;
+  font-size: 10px !important;
+  text-transform: uppercase;
+  opacity: .60;
+}
+
+.item {
+  background: white;
+  width: 100%;
+}
+
+.no-content {
+  font-size: 24px;
+  padding-left: 16px;
+}
+
+.no-content > span {
+  opacity: .6;
+}
+
