@@ -111,7 +111,6 @@ describe('feeds web controller', function() {
         {
           id: 'asam',
           title: 'Anti-Shipping Activity Messages',
-          summary: null,
           itemsHaveSpatialDimension: true,
           itemTemporalProperty: 'date',
           itemPrimaryProperty: 'description'
@@ -119,7 +118,6 @@ describe('feeds web controller', function() {
         {
           id: 'navwarn',
           title: 'Navigational Warnings',
-          summary: null,
           itemsHaveSpatialDimension: false,
           itemTemporalProperty: 'issueDate'
         }

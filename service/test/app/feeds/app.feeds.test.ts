@@ -866,7 +866,6 @@ describe.only('feeds administration', function() {
         const topic: FeedTopic = {
           id: 'topic_with_params_schema',
           title: 'With Constant Params',
-          summary: null,
           paramsSchema: {
             type: 'object',
             properties: {

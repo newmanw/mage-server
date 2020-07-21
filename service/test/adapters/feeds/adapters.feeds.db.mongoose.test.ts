@@ -90,7 +90,6 @@ describe('feeds repositories', function() {
         {
           id: 'volcanoes',
           title: 'Volcano Activity',
-          summary: null,
           paramsSchema: {},
           itemsHaveIdentity: true,
           updateFrequency: { seconds: 60 * 60 * 2 }

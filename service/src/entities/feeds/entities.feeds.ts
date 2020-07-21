@@ -118,7 +118,7 @@ export class FeedUpdateFrequency {
 export interface FeedTopic {
   readonly id: FeedTopicId
   readonly title: string
-  readonly summary: string | null
+  readonly summary?: string
   /**
    * The paramters schema defines the parameters MAGE can use to fetch and
    * filter content from the topic.
@@ -188,7 +188,7 @@ export interface Feed {
   readonly service: FeedServiceId
   readonly topic: FeedTopicId
   readonly title: string
-  readonly summary: string | null
+  readonly summary?: string
   /**
    * The constant paramters are a subset of a topic's parameters that an
    * administrative user defines and that MAGE will apply to every fetch
@@ -237,6 +237,7 @@ export type FeedCreateAttrs = Omit<Feed, 'id'> & { id?: FeedId }
 
 export interface FeedRepository {
   create(attrs: FeedCreateAttrs): Promise<Feed>
+  findFeedsByIds(...feedIds: FeedId[]): Promise<Feed[]>
 }
 
 export type FeedMinimalAttrs = Partial<Feed> & Pick<Feed, 'topic' | 'service'>
