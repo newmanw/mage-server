@@ -39,10 +39,8 @@ before(function() {
 import * as mongoSupport from './mongo.test'
 import { waitForDefaultMongooseConnection } from '../lib/adapters/adapters.db.mongoose'
 import { runDatabaseMigrations } from '../lib/migrate'
+import mongoose from 'mongoose'
 
-before('increase timeout for ts-node', function() {
-  this.timeout
-})
 before('initialize default mongo database', mongoSupport.mongoTestBeforeAllHook({ instance: { dbName: 'mage_test_default' }}))
 before('initialize default mongoose connection', async function() {
   await waitForDefaultMongooseConnection(this.mongo!.uri, 1000, 1000, {
@@ -53,5 +51,8 @@ before('initialize default mongoose connection', async function() {
 before('migrate default test db', async function() {
   this.timeout(10000)
   await runDatabaseMigrations(this.mongo!.uri)
+})
+after('close mongoose connection', async function() {
+  await mongoose.connection.close()
 })
 after('destroy default mongo database', mongoSupport.mongoTestAfterAllHook())

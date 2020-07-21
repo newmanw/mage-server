@@ -64,6 +64,9 @@ export function mongoTestAfterAllHook(): () => Promise<void> {
       return
     }
     await this.mongo.conn.close()
-    await this.mongo.server.stop()
+    const stopped = await this.mongo.server.stop()
+    if (!stopped) {
+      throw new Error('failed to stop server')
+    }
   }
 }
