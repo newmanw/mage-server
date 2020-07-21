@@ -87,7 +87,7 @@ function requestBy<RequestType>(principal: TestPrincipal, params?: RequestType):
   )
 }
 
-describe.only('feeds administration', function() {
+describe('feeds administration', function() {
 
   let app: TestApp
   let someServiceTypes: SubstituteOf<RegisteredFeedServiceType>[]
@@ -1157,6 +1157,10 @@ class TestFeedRepository implements FeedRepository {
     const saved: Feed = { id, ...attrs }
     this.db.set(id, saved)
     return saved
+  }
+
+  async findFeedsByIds(...feedIds: FeedId[]): Promise<Feed[]> {
+    throw new Error('unimplemented')
   }
 }
 class TestPermissionService implements FeedsPermissionService {

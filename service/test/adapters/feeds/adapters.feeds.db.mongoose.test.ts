@@ -4,11 +4,13 @@ import _ from 'lodash'
 import { describe, it, before, beforeEach, after, afterEach } from 'mocha'
 import { expect } from 'chai'
 import { MongoMemoryServer } from 'mongodb-memory-server'
+import { Substitute as Sub, SubstituteOf } from '@fluffy-spoon/substitute'
 import { BaseMongooseRepository } from '../../../lib/adapters/base/adapters.base.db.mongoose'
-import { FeedServiceRepository, FeedServiceTypeUnregistered, InvalidServiceConfigError, FeedServiceConnection, FeedServiceInfo, FeedTopic, FeedTopicId } from '../../../lib/entities/feeds/entities.feeds'
-import { FeedServiceTypeIdentityModel, FeedsModels, FeedServiceTypeIdentitySchema, FeedServiceModel, FeedServiceSchema, MongooseFeedServiceTypeRepository, MongooseFeedServiceRepository, FeedServiceTypeIdentity, FeedServiceTypeIdentityDocument } from '../../../lib/adapters/feeds/adapters.feeds.db.mongoose'
+import { FeedServiceRepository, FeedServiceTypeUnregistered, InvalidServiceConfigError, FeedServiceConnection, FeedServiceInfo, FeedTopic, FeedTopicId, FeedRepository } from '../../../lib/entities/feeds/entities.feeds'
+import { FeedServiceTypeIdentityModel, FeedsModels, FeedServiceTypeIdentitySchema, FeedServiceModel, FeedServiceSchema, MongooseFeedServiceTypeRepository, MongooseFeedServiceRepository, FeedServiceTypeIdentity, FeedServiceTypeIdentityDocument, FeedModel, FeedSchema, MongooseFeedRepository } from '../../../lib/adapters/feeds/adapters.feeds.db.mongoose'
 import { FeedServiceType } from '../../../lib/entities/feeds/entities.feeds'
 import { Json, JsonObject } from '../../../src/entities/entities.global.json'
+import { EntityIdFactory } from '../../../lib/entities/entities.global'
 
 describe('feeds repositories', function() {
 
@@ -200,6 +202,34 @@ describe('feeds repositories', function() {
 
     it('does what base repository can do', async function() {
       expect(repo).to.be.instanceOf(BaseMongooseRepository)
+    })
+  })
+
+  describe.only('feed repository', function() {
+
+    const collection = 'test_feeds'
+    let model: FeedModel
+    let repo: FeedRepository
+    let idFactory: SubstituteOf<EntityIdFactory>
+
+    beforeEach(function() {
+      model = conn.model(FeedsModels.Feed, FeedSchema, collection)
+      idFactory = Sub.for<EntityIdFactory>()
+      repo = new MongooseFeedRepository(model, idFactory)
+    })
+
+    describe('creating a feed', function() {
+
+      it('saves the feed', async function() {
+        expect.fail('todo')
+      })
+    })
+
+    describe('finding feeds for ids', function() {
+
+      it('returns all the feeds for the given ids', async function() {
+        expect.fail('todo')
+      })
     })
   })
 })

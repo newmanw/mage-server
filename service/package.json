@@ -70,6 +70,7 @@
     "shp-write": "git+https://github.com/newmanw/shp-write.git#fix-polygon-export",
     "terraformer": "1.0.4",
     "terraformer-arcgis-parser": "1.0.4",
+    "uniqid": "^5.2.0",
     "walk": "2.3.4",
     "winston": "1.0.1",
     "wkx": "0.4.8",
@@ -114,7 +115,7 @@
     "eslint-config-prettier": "^6.9.0",
     "eslint-plugin-prettier": "^3.1.2",
     "iconv-lite": "^0.5.1",
-    "lodash": "^4.17.15",
+    "lodash": "^4.17.19",
     "mocha": "^7.1.1",
     "mock-fs": "4.10.1",
     "mongodb-memory-server": "^6.3.1",
@@ -132,7 +133,6 @@
     "ts-mockito": "^2.5.0",
     "ts-node": "^8.0.0",
     "typescript": "~3.8.0",
-    "uniqid": "^5.2.0",
     "wtfnode": "^0.8.1"
   },
   "nyc": {

@@ -1,31 +1,35 @@
 
 import mongoose, { Model, SchemaOptions } from 'mongoose'
 import { BaseMongooseRepository } from '../base/adapters.base.db.mongoose'
-import { FeedServiceType, FeedService, FeedServiceTypeId, RegisteredFeedServiceType } from '../../entities/feeds/entities.feeds'
+import { FeedServiceType, FeedService, FeedServiceTypeId, RegisteredFeedServiceType, FeedRepository, Feed, FeedId } from '../../entities/feeds/entities.feeds'
 import { FeedServiceTypeRepository, FeedServiceRepository } from '../../entities/feeds/entities.feeds'
 import { FeedServiceDescriptor } from '../../app.api/feeds/app.api.feeds'
+import { EntityIdFactory } from '../../entities/entities.global'
 
 
 
 export const FeedsModels = {
   FeedServiceTypeIdentity: 'FeedServiceTypeIdentity',
-  FeedService: 'FeedService'
+  FeedService: 'FeedService',
+  Feed: 'Feed',
 }
 
 export type FeedServiceTypeIdentity = Pick<FeedServiceType, 'pluginServiceTypeId'> & {
   id: string
   moduleName: string
 }
+export type FeedServiceTypeIdentityDocument = FeedServiceTypeIdentity & mongoose.Document
+export type FeedServiceTypeIdentityModel = Model<FeedServiceTypeIdentityDocument>
 export const FeedServiceTypeIdentitySchema = new mongoose.Schema({
   pluginServiceTypeId: { type: String, required: true },
   moduleName: { type: String, required: true }
 })
-export type FeedServiceTypeIdentityDocument = FeedServiceTypeIdentity & mongoose.Document
-export type FeedServiceTypeIdentityModel = Model<FeedServiceTypeIdentityDocument>
 export function FeedServiceTypeIdentityModel(conn: mongoose.Connection): FeedServiceTypeIdentityModel {
   return conn.model(FeedsModels.FeedServiceTypeIdentity, FeedServiceTypeIdentitySchema, 'feed_service_types')
 }
 
+export type FeedServiceDocument = FeedServiceDescriptor & mongoose.Document
+export type FeedServiceModel = Model<FeedServiceDocument>
 export const FeedServiceSchema = new mongoose.Schema(
   {
     serviceType: { type: mongoose.SchemaTypes.ObjectId, required: true, ref: FeedsModels.FeedServiceTypeIdentity },
@@ -41,10 +45,37 @@ export const FeedServiceSchema = new mongoose.Schema(
       }
     }
   })
-export type FeedServiceDocument = FeedServiceDescriptor & mongoose.Document
-export type FeedServiceModel = Model<FeedServiceDocument>
 export function FeedServiceModel(conn: mongoose.Connection): FeedServiceModel {
   return conn.model(FeedsModels.FeedService, FeedServiceSchema, 'feed_services')
+}
+
+export type FeedDocument = Feed & mongoose.Document
+export type FeedModel = Model<FeedDocument>
+export const FeedSchema = new mongoose.Schema(
+  {
+    service: { type: mongoose.SchemaTypes.ObjectId, required: true, ref: FeedsModels.FeedService },
+    topic: { type: String, required: true },
+    title: { type: String, required: true },
+    summary: { type: String, required: false },
+    constantParams: { type: mongoose.Schema.Types.Mixed, required: false },
+    variableParamsSchema: { type: mongoose.Schema.Types.Mixed, required: false },
+    updateFrequency: { type: Number, require: false },
+    itemsHaveIdentity: { type: Boolean, required: true },
+    itemsHaveSpatialDimension: { type: Boolean, required: true },
+    itemTemporalProperty: { type: String, required: false },
+    itemPrimaryProperty: { type: String, required: false },
+    itemSecondaryProperty: { type: String, required: false },
+  },
+  {
+    toJSON: {
+      getters: true,
+      transform: (doc: FeedDocument, json: any & Feed, options: SchemaOptions): void => {
+        delete json._id
+      }
+    }
+  })
+export function FeedModel(conn: mongoose.Connection): FeedModel {
+  return conn.model(FeedsModels.Feed, FeedSchema, 'feeds')
 }
 
 export class MongooseFeedServiceTypeRepository implements FeedServiceTypeRepository {
@@ -86,10 +117,24 @@ export class MongooseFeedServiceTypeRepository implements FeedServiceTypeReposit
   }
 }
 
-
 export class MongooseFeedServiceRepository extends BaseMongooseRepository<FeedServiceDocument, FeedServiceModel, FeedService> implements FeedServiceRepository {
-
   constructor(model: FeedServiceModel) {
     super(model)
+  }
+}
+
+export class MongooseFeedRepository extends BaseMongooseRepository<FeedDocument, FeedModel, Feed> implements FeedRepository {
+  constructor(model: FeedModel, private readonly idFactory: EntityIdFactory) {
+    super(model)
+  }
+
+  async create(attrs: Partial<Feed>): Promise<Feed> {
+    const id = await this.idFactory.nextId()
+    const seed = Object.assign(attrs, { id })
+    return await super.create(seed)
+  }
+
+  async findFeedsByIds(...feedIds: FeedId[]): Promise<Feed[]> {
+    throw new Error('id')
   }
 }

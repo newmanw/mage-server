@@ -9,7 +9,7 @@ import { RoleDocument } from '../../src/models/role'
 import { MageError, ErrPermissionDenied } from '../../lib/app.api/app.api.global.errors'
 import { AnyPermission } from '../../lib/models/permission'
 
-describe.only('feeds permission service', function() {
+describe('feeds permission service', function() {
 
   const permissions = new PreFetchedUserRoleFeedsPermissionService()
 

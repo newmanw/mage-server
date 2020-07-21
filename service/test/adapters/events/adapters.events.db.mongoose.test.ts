@@ -7,7 +7,7 @@ import { MongooseMageEventRepository, MageEventModel } from '../../../lib/adapte
 import * as legacy from '../../../lib/models/event'
 import { MageEventDocument } from '../../../src/models/event'
 
-describe.only('event mongoose repository', function() {
+describe('event mongoose repository', function() {
 
   let mongo: MongoMemoryServer
   let uri: string
