@@ -21,18 +21,37 @@ A feed implementation should be a plugin that can be deployed alongside core MAG
 1. Participant (P1)
 
 #### Assumptions
-1. P1 is an end user using a MAGE client to collect observations for an active event.
 1. P1 is authenticated and has access to the active event.
+1. A feed, F1, is assigned to the participant's active event.
 
 #### Main Flow
 1. P1 requests to add a feed to the active event.
 1. The app presents a list of feeds available for the active event with brief summaries of their content.
 1. P1 selects the desired feed.
-1. The app begins fetching the feed content and presents an indication the feed content is loading.
-1. The app indicates the fetch is complete and presents the fetched content of the feed.
+1. The app begins the `Fetch content from feed` flow.
 
 #### Result
-P1 is able to view the feed content in the context of the active event.  The app presents content with a geospatial dimension on the map, as well as in  a list of elements with various attributes and text, depending on the nature of the feed content.
+P1 is able to view the feed content in the context of the active event, including observations and other participant locations.
+
+### Fetch content from feed
+
+#### Actors
+1. Participant (P1)
+
+#### Assumptions
+1. P1 is authenticated and has access to the active event.
+1. A feed, F1, is assigned to the participant's active event.
+
+#### Main Flow
+1. P1 requests to fetch content for F1.
+1. The app begins fetching the feed content and presents an indication the feed content is loading.
+1. The app indicates the fetch is complete and presents the fetched content items.
+
+#### Variations
+1. The app initiates the main flow without an explicit request from P1, usually based on a regular interval trigger or some notification from another application.
+
+#### Result
+The app presents the feed content with a geospatial dimension on the map, as well as in a list of elements with various attributes and text, depending on the nature of the feed content.
 
 ### Modify feed parameters
 
@@ -97,8 +116,6 @@ The new feed service is saved and available to configure new feeds.
 The new feed configuration is saved and the feed is available to add to events.
 
 #### Variations
-
-### Fetch items from feed
 
 ### Assign feed to event
 
