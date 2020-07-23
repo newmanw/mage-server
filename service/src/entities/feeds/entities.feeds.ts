@@ -237,7 +237,9 @@ export type FeedCreateAttrs = Omit<Feed, 'id'> & { id?: FeedId }
 
 export interface FeedRepository {
   create(attrs: FeedCreateAttrs): Promise<Feed>
+  findById(id: FeedId): Promise<Feed | null>
   findFeedsByIds(...feedIds: FeedId[]): Promise<Feed[]>
+  findAll(): Promise<Feed[]>
 }
 
 export type FeedMinimalAttrs = Partial<Feed> & Pick<Feed, 'topic' | 'service'>

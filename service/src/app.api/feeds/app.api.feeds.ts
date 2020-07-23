@@ -61,21 +61,17 @@ export interface CreateFeed {
   (req: CreateFeedRequest): Promise<AppResponse<Feed, PermissionDeniedError | EntityNotFoundError | InvalidInputError>>
 }
 
-export interface FetchEventFeedsRequest extends AppRequest {
-  eventId: string
-}
-
-export interface FetchEventFeeds {
-  (req: FetchEventFeedsRequest): Promise<Feed[]>
+export interface ListAllFeeds {
+  (req: AppRequest): Promise<AppResponse<Feed[], PermissionDeniedError>>
 }
 
 export interface FetchFeedContentRequest extends AppRequest {
-  feedId: FeedId,
-  variableParams: Json
+  feed: FeedId,
+  variableParams?: FeedContentParams
 }
 
 export interface FetchFeedContent {
-  (req: FetchFeedContentRequest): Promise<FeedContent>
+  (req: FetchFeedContentRequest): Promise<AppResponse<FeedContent, PermissionDeniedError | EntityNotFoundError>>
 }
 
 export interface FeedServiceTypeDescriptor extends Descriptor<'FeedServiceType'>, Pick<FeedServiceType, 'id' | 'title' | 'summary'> {
@@ -114,4 +110,5 @@ export interface FeedsPermissionService {
   ensureListServicesPermissionFor(context: AppRequestContext): Promise<PermissionDeniedError | null>
   ensureListTopicsPermissionFor(context: AppRequestContext, service: FeedServiceId): Promise<PermissionDeniedError | null>
   ensureCreateFeedPermissionFor(context: AppRequestContext, service: FeedServiceId): Promise<PermissionDeniedError | null>
+  ensureListAllFeedsPermissionFor(context: AppRequestContext): Promise<PermissionDeniedError | null>
 }

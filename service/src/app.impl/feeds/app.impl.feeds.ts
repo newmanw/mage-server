@@ -205,6 +205,17 @@ export function CreateFeed(permissionService: api.FeedsPermissionService, servic
   }
 }
 
+export function ListAllFeeds(permissionService: api.FeedsPermissionService, feedRepo: FeedRepository): api.ListAllFeeds {
+  return async function listFeeds(req: AppRequest): ReturnType<api.ListAllFeeds> {
+    return await withPermission<Feed[], KnownErrorsOf<api.ListAllFeeds>>(
+      permissionService.ensureListAllFeedsPermissionFor(req.context),
+      async (): Promise<Feed[]> => {
+        return await feedRepo.findAll()
+      }
+    )
+  }
+}
+
 function invalidInputServiceConfig(err: InvalidServiceConfigError, ...configKey: string[]): InvalidInputError {
   const problems = err.data?.invalidKeys.map(invalidKey => {
     return [ `${invalidKey} is invalid`, ...configKey, invalidKey ] as KeyPathError

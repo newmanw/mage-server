@@ -75,12 +75,21 @@ const settingPermissions = {
   UPDATE_SETTINGS: 'UPDATE_SETTINGS'
 }
 
-export const feedsPermissions = Object.freeze({
+export type FeedsPermission =
+  | 'FEEDS_LIST_SERVICE_TYPES'
+  | 'FEEDS_CREATE_SERVICE'
+  | 'FEEDS_LIST_SERVICES'
+  | 'FEEDS_LIST_TOPICS'
+  | 'FEEDS_CREATE_FEED'
+  | 'FEEDS_LIST_ALL'
+
+export const feedsPermissions: Readonly<Record<FeedsPermission, FeedsPermission>> = Object.freeze({
   FEEDS_LIST_SERVICE_TYPES: 'FEEDS_LIST_SERVICE_TYPES',
   FEEDS_CREATE_SERVICE: 'FEEDS_CREATE_SERVICE',
   FEEDS_LIST_SERVICES: 'FEEDS_LIST_SERVICES',
   FEEDS_LIST_TOPICS: 'FEEDS_LIST_TOPICS',
   FEEDS_CREATE_FEED: 'FEEDS_CREATE_FEED',
+  FEEDS_LIST_ALL: 'FEEDS_LIST_ALL',
 })
 
 export const allPermissions = Object.freeze({
