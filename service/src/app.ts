@@ -5,7 +5,7 @@ import http from 'http'
 import fs from 'fs-extra'
 import mongoose, { ConnectionOptions } from 'mongoose'
 import express from 'express'
-import { MongooseFeedServiceTypeRepository, FeedServiceTypeIdentityModel, MongooseFeedServiceRepository, FeedServiceModel } from './adapters/feeds/adapters.feeds.db.mongoose'
+import { MongooseFeedServiceTypeRepository, FeedServiceTypeIdentityModel, MongooseFeedServiceRepository, FeedServiceModel, MongooseFeedRepository, FeedModel } from './adapters/feeds/adapters.feeds.db.mongoose'
 import { waitForDefaultMongooseConnection } from './adapters/adapters.db.mongoose'
 import { FeedServiceTypeRepository } from './entities/feeds/entities.feeds'
 import * as feedsApi from './app.api/feeds/app.api.feeds'
@@ -15,6 +15,8 @@ import { FeedsRoutes } from './adapters/feeds/adapters.feeds.controllers.web'
 import { WebAppRequestFactory } from './adapters/adapters.controllers.web'
 import { AppRequest } from './app.api/app.api.global'
 import { UserDocument } from './models/user'
+import SimpleIdFactory from './adapters/adapters.simple_id_factory'
+import { JsonSchemaService, JsonValidator, JSONSchema4 } from './entities/entities.global.json'
 
 
 export interface MageService {
@@ -98,6 +100,7 @@ type DatabaseModels = {
   feeds: {
     feedServiceTypeIdentity: FeedServiceTypeIdentityModel
     feedService: FeedServiceModel
+    feed: FeedModel
   }
 }
 
@@ -110,6 +113,7 @@ type AppLayer = {
     createService: feedsApi.CreateFeedService
     listServices: feedsApi.ListFeedServices
     listTopics: feedsApi.ListServiceTopics
+    createFeed: feedsApi.CreateFeed
   }
 }
 
@@ -120,13 +124,15 @@ async function initializeDatabase(): Promise<DatabaseModels> {
   // TODO: inject connection to migrations
   // TODO: explore performing migrations without mongoose models because current models may not be compatible with past migrations
   require('./models').initializeModels()
+  const idFactory = new SimpleIdFactory()
   const migrate = await import('./migrate')
   await migrate.runDatabaseMigrations(uri, options)
   return {
     conn,
     feeds: {
       feedServiceTypeIdentity: FeedServiceTypeIdentityModel(conn),
-      feedService: FeedServiceModel(conn)
+      feedService: FeedServiceModel(conn),
+      feed: FeedModel(conn)
     }
   }
 }
@@ -141,12 +147,23 @@ function intitializeAppLayer(dbModels: DatabaseModels): AppLayer {
 function intializeFeedsAppLayer(dbModels: DatabaseModels): AppLayer['feeds'] {
   const serviceTypeRepo = new MongooseFeedServiceTypeRepository(dbModels.feeds.feedServiceTypeIdentity)
   const serviceRepo = new MongooseFeedServiceRepository(dbModels.feeds.feedService)
+  const feedRepo = new MongooseFeedRepository(dbModels.feeds.feed, new SimpleIdFactory())
+  // TODO: the real thing
+  const jsonSchemaService: JsonSchemaService = {
+    async validateSchema(schema: JSONSchema4): Promise<JsonValidator> {
+      return {
+        validate: async () => null
+      }
+    }
+  }
+
   const permissionService = new PreFetchedUserRoleFeedsPermissionService()
   const listServiceTypes = feedsImpl.ListFeedServiceTypes(permissionService, serviceTypeRepo)
   const previewTopics = feedsImpl.PreviewTopics(permissionService, serviceTypeRepo)
   const createService = feedsImpl.CreateFeedService(permissionService, serviceTypeRepo, serviceRepo)
   const listServices = feedsImpl.ListFeedServices(permissionService, serviceRepo)
   const listTopics = feedsImpl.ListServiceTopics(permissionService, serviceTypeRepo, serviceRepo)
+  const createFeed = feedsImpl.CreateFeed(permissionService, serviceTypeRepo, serviceRepo, feedRepo, jsonSchemaService)
   return {
     serviceTypeRepo,
     permissionService,
@@ -154,7 +171,8 @@ function intializeFeedsAppLayer(dbModels: DatabaseModels): AppLayer['feeds'] {
     previewTopics,
     createService,
     listServices,
-    listTopics
+    listTopics,
+    createFeed,
   }
 }
 

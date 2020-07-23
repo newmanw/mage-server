@@ -8,14 +8,15 @@ import uniqid from 'uniqid'
 import _, { functionsIn } from 'lodash'
 import { AppResponse, AppRequestContext, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeedsRoutes, FeedsAppLayer } from '../../../lib/adapters/feeds/adapters.feeds.controllers.web'
-import { CreateFeedServiceRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest } from '../../../lib/app.api/feeds/app.api.feeds'
+import { CreateFeedServiceRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, CreateFeedRequest } from '../../../lib/app.api/feeds/app.api.feeds'
 import { FeedService, Feed, FeedTopic } from '../../../lib/entities/feeds/entities.feeds'
 import { permissionDenied, PermissionDeniedError, InvalidInputError, invalidInput, EntityNotFoundError, entityNotFound } from '../../../lib/app.api/app.api.global.errors'
 import { WebAppRequestFactory } from '../../../lib/adapters/adapters.controllers.web'
+import { JSONSchema4 } from 'json-schema'
 
 const jsonMimeType = /^application\/json/
 
-describe('feeds web controller', function() {
+describe.only('feeds web controller', function() {
 
   const adminPrincipal = {
     user: 'admin'
@@ -38,6 +39,7 @@ describe('feeds web controller', function() {
     createRequest: WebAppRequestFactory
   }
 
+  const rootPath = '/test/feeds'
   let client: supertest.SuperTest<supertest.Test>
   let appLayer: SubstituteOf<FeedsAppLayer>
   let appRequestFactory: SubstituteOf<AppRequestFactoryHandle>
@@ -51,7 +53,7 @@ describe('feeds web controller', function() {
       req.user = req.headers['user'] as string
       next()
     })
-    endpoint.use('/', feedsRoutes)
+    endpoint.use(rootPath, feedsRoutes)
     client = supertest(endpoint)
   })
 
@@ -83,7 +85,7 @@ describe('feeds web controller', function() {
       const appReq = createAdminRequest()
       appRequestFactory.createRequest(Arg.any(), Arg.deepEquals(void 0)).returns(appReq)
       appLayer.listServiceTypes(Arg.deepEquals(appReq)).resolves(AppResponse.success(serviceTypes))
-      const res = await client.get('/service_types')
+      const res = await client.get(`${rootPath}/service_types`)
         .set('user', adminPrincipal.user)
 
       expect(res.type).to.match(jsonMimeType)
@@ -95,7 +97,7 @@ describe('feeds web controller', function() {
 
       appLayer.listServiceTypes(Arg.any()).resolves(AppResponse.error<any, PermissionDeniedError>(permissionDenied('list service types', 'admin')))
 
-      const res = await client.get('/service_types')
+      const res = await client.get(`${rootPath}/service_types`)
 
       expect(res.status).to.equal(403)
       expect(res.type).to.match(jsonMimeType)
@@ -134,7 +136,7 @@ describe('feeds web controller', function() {
       appLayer.previewTopics(Arg.deepEquals(appReq))
         .resolves(AppResponse.success<FeedTopic[], unknown>(topics))
 
-      const res = await client.post('/service_types/nga-msi/topic_preview').send(postBody)
+      const res = await client.post(`${rootPath}/service_types/nga-msi/topic_preview`).send(postBody)
 
       expect(res.status).to.equal(200)
       expect(res.type).to.match(jsonMimeType)
@@ -146,7 +148,7 @@ describe('feeds web controller', function() {
       appLayer.previewTopics(Arg.any())
         .resolves(AppResponse.error<FeedTopic[], PermissionDeniedError>(permissionDenied('preview topics', 'you')))
 
-      const res = await client.post('/service_types/nga-msi/topic_preview').send({
+      const res = await client.post(`${rootPath}/service_types/nga-msi/topic_preview`).send({
         serviceConfig: 'https://msi.gs.mil'
       })
 
@@ -160,7 +162,7 @@ describe('feeds web controller', function() {
       appLayer.previewTopics(Arg.any())
         .resolves(AppResponse.error<FeedTopic[], EntityNotFoundError>(entityNotFound('nga-msi', 'feed service type')))
 
-      const res = await client.post('/service_types/nga-msi/topic_preview').send({
+      const res = await client.post(`${rootPath}/service_types/nga-msi/topic_preview`).send({
         serviceConfig: 'does not exist'
       })
 
@@ -174,7 +176,7 @@ describe('feeds web controller', function() {
       appLayer.previewTopics(Arg.any())
         .resolves(AppResponse.error<FeedTopic[], InvalidInputError>(invalidInput('bad service config', [ 'unexpected null', 'serviceConfig' ])))
 
-      const res = await client.post('/service_types/nga-msi/topic_preview').send({
+      const res = await client.post(`${rootPath}/service_types/nga-msi/topic_preview`).send({
         serviceConfig: null
       })
 
@@ -204,7 +206,7 @@ describe('feeds web controller', function() {
       appRequestFactory.createRequest(Arg.any(), Arg.deepEquals(submitted)).returns(appReq)
       appLayer.createService(Arg.deepEquals(appReq)).resolves(AppResponse.success(created))
 
-      const res = await client.post('/services')
+      const res = await client.post(`${rootPath}/services`)
         .set('user', adminPrincipal.user)
         .send(submitted)
 
@@ -217,7 +219,7 @@ describe('feeds web controller', function() {
 
       appLayer.createService(Arg.any()).resolves(AppResponse.error<any, PermissionDeniedError>(permissionDenied('create service', 'admin')))
 
-      const res = await client.post('/services')
+      const res = await client.post(`${rootPath}/services`)
         .send({
           serviceType: 'nga-msi',
           title: 'NGA Maritime Safety Information',
@@ -240,7 +242,7 @@ describe('feeds web controller', function() {
       }
       appLayer.createService(Arg.any()).resolves(AppResponse.error<any, InvalidInputError>(invalidInput('invalid service config', [ 'url is invalid', 'config', 'url' ])))
 
-      const res = await client.post('/services').send(reqBody)
+      const res = await client.post(`${rootPath}/services`).send(reqBody)
 
       expect(res.status).to.equal(400)
       expect(res.type).to.match(jsonMimeType)
@@ -260,7 +262,7 @@ invalid service config
       }
       appLayer.createService(Arg.any()).resolves(AppResponse.error<any, EntityNotFoundError>(entityNotFound(reqBody.serviceType, 'FeedServiceType')))
 
-      const res = await client.post('/services').send(reqBody)
+      const res = await client.post(`${rootPath}/services`).send(reqBody)
 
       expect(res.status).to.equal(400)
       expect(res.type).to.match(jsonMimeType)
@@ -273,7 +275,7 @@ invalid service config
       it('fails with 400 if the request body has no service type', async function() {
 
         appLayer.createService(Arg.any()).rejects(new Error('unexpected'))
-        const res = await client.post('/services')
+        const res = await client.post(`${rootPath}/services`)
           .send({
             title: 'Forgot Service Type',
             config: {
@@ -293,7 +295,7 @@ invalid request
       it('fails if the request body has no title', async function() {
 
         appLayer.createService(Arg.any()).rejects(new Error('unexpected'))
-        const res = await client.post('/services')
+        const res = await client.post(`${rootPath}/services`)
           .send({
             serviceType: 'wfs',
             config: {
@@ -330,7 +332,7 @@ invalid request
         appLayer.createService(Arg.deepEquals(appReq))
           .resolves(AppResponse.success<FeedService, unknown>(created))
 
-        const res = await client.post('/services')
+        const res = await client.post(`${rootPath}/services`)
           .set('user', 'admin')
           .send(_.omit(appReq, 'config'))
 
@@ -366,7 +368,7 @@ invalid request
       ]
       appLayer.listServices(Arg.is((x: AppRequest) => x.context.requestToken === appReq.context.requestToken))
         .resolves(AppResponse.success<FeedService[], unknown>(services))
-      const res = await client.get('/services')
+      const res = await client.get(`${rootPath}/services`)
 
       expect(res.status).to.equal(200)
       expect(res.type).to.match(jsonMimeType)
@@ -377,11 +379,97 @@ invalid request
 
       appLayer.listServices(Arg.any())
         .resolves(AppResponse.error<FeedService[], PermissionDeniedError>(permissionDenied('list services', 'you')))
-      const res = await client.get('/services')
+      const res = await client.get(`${rootPath}/services`)
 
       expect(res.status).to.equal(403)
       expect(res.type).to.match(jsonMimeType)
       expect(res.body).to.equal('permission denied: list services')
     })
+  })
+
+  describe('POST /services/{serviceId}/topics/{topicId}/feeds', function() {
+
+    it('creates a feed for service and topic', async function() {
+
+      const service = uniqid()
+      const topic = uniqid()
+      const postBody = {
+        title: 'Created Feed',
+        summary: 'The feed we created',
+        constantParams: {
+          test: true
+        },
+        variableParamsSchema: <JSONSchema4>{
+          type: 'object',
+          properties: {
+            where: {
+              type: 'array', items: { type: 'number' }
+            },
+            when: {
+              type: 'number'
+            }
+          }
+        }
+      }
+      const appReq: CreateFeedRequest = createAdminRequest({
+        feed: {
+          service,
+          topic,
+          ...postBody,
+          itemsHaveIdentity: undefined,
+          itemsHaveSpatialDimension: undefined,
+          itemPrimaryProperty: undefined,
+          itemSecondaryProperty: undefined,
+          itemTemporalProperty: undefined,
+          updateFrequency: undefined
+        }
+      })
+      const feed: Feed = {
+        id: uniqid(),
+        service,
+        topic,
+        title: appReq.feed.title!,
+        summary: appReq.feed.summary!,
+        itemsHaveIdentity: false,
+        itemsHaveSpatialDimension: false,
+        constantParams: appReq.feed.constantParams,
+        variableParamsSchema: appReq.feed.variableParamsSchema
+      }
+      appRequestFactory.createRequest(Arg.any(), Arg.deepEquals({ feed: appReq.feed })).returns(appReq)
+      appLayer.createFeed(Arg.is((x: AppRequest) => x.context?.requestToken === appReq.context.requestToken)).resolves(AppResponse.success<Feed, unknown>(feed))
+
+      const res = await client
+        .post(`${rootPath}/services/${service}/topics/${topic}/feeds`)
+        .send(postBody)
+
+      expect(res.status).to.equal(201)
+      expect(res.header.location).to.equal(`${rootPath}/all_feeds/${feed.id}`)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.deep.equal(feed)
+    })
+
+    it('tests all the input parameters', async function() {
+      expect.fail('todo')
+    })
+
+    it('returns 403 for permission denied error', async function() {
+      expect.fail('todo')
+    })
+
+    it('returns 404 when the service does not exist', async function() {
+      expect.fail('todo')
+    })
+
+    it('returns 500 when the service type is not found', async function() {
+      expect.fail('todo')
+    })
+  })
+
+  describe('GET /all_feeds', function() {
+
+  })
+
+  describe('GET /all_feeds/{feedId}', function() {
+
   })
 })

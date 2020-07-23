@@ -9,7 +9,7 @@ declare global {
 
 import express from 'express'
 import bodyParser from 'body-parser'
-import { ListFeedServiceTypes, ListServiceTopics, CreateFeedService, ListFeedServices, PreviewTopics, PreviewTopicsRequest } from '../../app.api/feeds/app.api.feeds'
+import { ListFeedServiceTypes, ListServiceTopics, CreateFeedService, ListFeedServices, PreviewTopics, PreviewTopicsRequest, CreateFeed, CreateFeedRequest } from '../../app.api/feeds/app.api.feeds'
 import { ErrPermissionDenied, MageError, PermissionDeniedError, ErrInvalidInput, invalidInput, ErrEntityNotFound } from '../../app.api/app.api.global.errors'
 import { WebAppRequestFactory } from '../adapters.controllers.web'
 
@@ -19,6 +19,7 @@ export interface FeedsAppLayer {
   listServices: ListFeedServices
   previewTopics: PreviewTopics
   listTopics: ListServiceTopics
+  createFeed: CreateFeed
 }
 
 export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppRequestFactory): express.Router {
@@ -99,6 +100,36 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
     })
 
   routes.route('/services/:serviceId/topics')
+
+  routes.route('/services/:serviceId/topics/:topicId/feeds')
+    .post(async (req, res, next) => {
+      const body = req.body
+      const params: Omit<CreateFeedRequest, 'context'> = {
+        feed: {
+          service: req.params.serviceId,
+          topic: req.params.topicId,
+          title: body.title,
+          summary: body.summary,
+          constantParams: body.constantParams,
+          variableParamsSchema: body.variableParamsSchema,
+          itemsHaveIdentity: body.itemsHaveIdentity,
+          itemsHaveSpatialDimension: body.itemsHaveSpatialDimension,
+          itemTemporalProperty: body.itemTemporalProperty,
+          itemPrimaryProperty: body.itemPrimaryProperty,
+          itemSecondaryProperty: body.itemSecondaryProperty,
+          updateFrequency: body.updateFrequency
+        }
+      }
+      const appReq = createAppRequest(req, params)
+      const appRes = await appLayer.createFeed(appReq)
+      if (appRes.success) {
+        return res
+          .status(201)
+          .header('location', `${req.baseUrl}/all_feeds/${appRes.success.id}`)
+          .json(appRes.success)
+      }
+      return next(appRes.error)
+    })
 
   routes.use(errorHandler)
 
