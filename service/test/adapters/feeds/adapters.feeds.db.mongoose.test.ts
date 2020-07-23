@@ -7,7 +7,7 @@ import { expect } from 'chai'
 import { MongoMemoryServer } from 'mongodb-memory-server'
 import { Substitute as Sub, SubstituteOf } from '@fluffy-spoon/substitute'
 import { BaseMongooseRepository } from '../../../lib/adapters/base/adapters.base.db.mongoose'
-import { FeedServiceRepository, FeedServiceTypeUnregistered, InvalidServiceConfigError, FeedServiceConnection, FeedServiceInfo, FeedTopic, FeedTopicId, FeedRepository } from '../../../lib/entities/feeds/entities.feeds'
+import { FeedServiceRepository, FeedServiceTypeUnregistered, InvalidServiceConfigError, FeedServiceConnection, FeedServiceInfo, FeedTopic, FeedTopicId, FeedRepository, Feed } from '../../../lib/entities/feeds/entities.feeds'
 import { FeedServiceTypeIdentityModel, FeedsModels, FeedServiceTypeIdentitySchema, FeedServiceModel, FeedServiceSchema, MongooseFeedServiceTypeRepository, MongooseFeedServiceRepository, FeedServiceTypeIdentity, FeedServiceTypeIdentityDocument, FeedModel, FeedSchema, MongooseFeedRepository } from '../../../lib/adapters/feeds/adapters.feeds.db.mongoose'
 import { FeedServiceType } from '../../../lib/entities/feeds/entities.feeds'
 import { Json, JsonObject } from '../../../src/entities/entities.global.json'
@@ -245,7 +245,34 @@ describe('feeds repositories', function() {
     describe('finding feeds for ids', function() {
 
       it('returns all the feeds for the given ids', async function() {
-        expect.fail('todo')
+
+        const feeds: Feed[] = []
+        idFactory.nextId().resolves('0', '1', '2')
+        feeds.push(await repo.create({
+          service: mongoose.Types.ObjectId().toHexString(),
+          topic: 'topic0',
+          title: 'Feed 0',
+          itemsHaveIdentity: true,
+          itemsHaveSpatialDimension: true,
+        }))
+        feeds.push(await repo.create({
+          service: mongoose.Types.ObjectId().toHexString(),
+          topic: 'topic1',
+          title: 'Feed 1',
+          itemsHaveIdentity: true,
+          itemsHaveSpatialDimension: true,
+        }))
+        feeds.push(await repo.create({
+          service: mongoose.Types.ObjectId().toHexString(),
+          topic: 'topic2',
+          title: 'Feed 2',
+          itemsHaveIdentity: true,
+          itemsHaveSpatialDimension: true,
+        }))
+        const fetched = await repo.findFeedsByIds('0', '2')
+
+        expect(fetched).to.have.length(2)
+        expect(fetched).to.include.deep.members([ feeds[0], feeds[2] ])
       })
     })
   })

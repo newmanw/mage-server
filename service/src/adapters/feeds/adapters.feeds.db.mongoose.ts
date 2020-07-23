@@ -137,6 +137,7 @@ export class MongooseFeedRepository extends BaseMongooseRepository<FeedDocument,
   }
 
   async findFeedsByIds(...feedIds: FeedId[]): Promise<Feed[]> {
-    throw new Error('todo')
+    const docs = await this.model.find({ _id: { $in: feedIds }})
+    return docs.map(x => x.toJSON())
   }
 }
