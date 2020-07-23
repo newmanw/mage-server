@@ -53,6 +53,7 @@ export type FeedDocument = Feed & mongoose.Document
 export type FeedModel = Model<FeedDocument>
 export const FeedSchema = new mongoose.Schema(
   {
+    _id: { type: String, required: true },
     service: { type: mongoose.SchemaTypes.ObjectId, required: true, ref: FeedsModels.FeedService },
     topic: { type: String, required: true },
     title: { type: String, required: true },
@@ -129,12 +130,13 @@ export class MongooseFeedRepository extends BaseMongooseRepository<FeedDocument,
   }
 
   async create(attrs: Partial<Feed>): Promise<Feed> {
-    const id = await this.idFactory.nextId()
-    const seed = Object.assign(attrs, { id })
+    const _id = await this.idFactory.nextId()
+    const service = mongoose.Types.ObjectId(attrs.service)
+    const seed = Object.assign(attrs, { _id, service })
     return await super.create(seed)
   }
 
   async findFeedsByIds(...feedIds: FeedId[]): Promise<Feed[]> {
-    throw new Error('id')
+    throw new Error('todo')
   }
 }

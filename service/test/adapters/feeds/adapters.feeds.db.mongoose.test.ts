@@ -1,6 +1,7 @@
 
 import mongoose from 'mongoose'
 import _ from 'lodash'
+import uniqid from 'uniqid'
 import { describe, it, before, beforeEach, after, afterEach } from 'mocha'
 import { expect } from 'chai'
 import { MongoMemoryServer } from 'mongodb-memory-server'
@@ -221,7 +222,23 @@ describe('feeds repositories', function() {
     describe('creating a feed', function() {
 
       it('saves the feed', async function() {
-        expect.fail('todo')
+
+        const nextId = `feed:test:${Date.now()}`
+        idFactory.nextId().resolves(nextId)
+        const created = await repo.create({
+          id: 'not this one',
+          service: mongoose.Types.ObjectId().toHexString(),
+          topic: uniqid(),
+          title: uniqid(),
+          itemsHaveIdentity: true,
+          itemsHaveSpatialDimension: true,
+        })
+        const fetched = await model.findById(nextId)
+
+        expect(created.id).to.equal(nextId)
+        expect(fetched).to.not.be.null
+        expect(created).to.deep.equal(fetched?.toJSON())
+        idFactory.received(1).nextId()
       })
     })
 
