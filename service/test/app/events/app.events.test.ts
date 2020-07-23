@@ -7,7 +7,7 @@ import { AddFeedToEventRequest, ListEventFeedsRequest } from '../../../lib/app.a
 import { AddFeedToEvent, ListEventFeeds } from '../../../lib/app.impl/events/app.impl.events'
 import { MageError, ErrEntityNotFound } from '../../../lib/app.api/app.api.global.errors'
 import { AppRequest } from '../../../lib/app.api/app.api.global'
-import { Feed, FeedRepository } from '../../../lib/entities/feeds/entities.feeds'
+import { Feed, FeedRepository, FeedServiceRepository, FeedServiceTypeRepository } from '../../../lib/entities/feeds/entities.feeds'
 
 
 function requestBy<P extends object>(user: string, params: P): AppRequest<string> & P {
@@ -172,14 +172,7 @@ describe.only('events use case interactions', function() {
     })
 
     xit('checks permission for listing event feeds', async function() {
-      expect.fail('todo: legacy express middleware covers this for now')
-    })
-  })
-
-  describe('fetching feed content', function() {
-
-    it('is implemented', async function() {
-      expect.fail('todo')
+      expect.fail('todo: legacy express middleware handles this for now')
     })
   })
 })
@@ -188,8 +181,9 @@ class EventsUseCaseInteractions {
 
   readonly eventRepo = Sub.for<MageEventRepository>()
   readonly feedRepo = Sub.for<FeedRepository>()
+  readonly feedServiceRepo = Sub.for<FeedServiceRepository>()
+  readonly feedServiceTypeRepo = Sub.for<FeedServiceTypeRepository>()
 
   readonly addFeedToEvent = AddFeedToEvent(this.eventRepo)
   readonly listEventFeeds = ListEventFeeds(this.eventRepo, this.feedRepo)
 }
-

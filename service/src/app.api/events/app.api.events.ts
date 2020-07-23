@@ -1,5 +1,5 @@
 import { AppRequest, AppResponse } from '../app.api.global'
-import { FeedId, Feed } from '../../entities/feeds/entities.feeds'
+import { FeedId, Feed, FeedContent } from '../../entities/feeds/entities.feeds'
 import { MageEventId, MageEvent } from '../../entities/events/entities.events'
 import { EntityNotFoundError } from '../app.api.global.errors'
 

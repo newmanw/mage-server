@@ -2,10 +2,10 @@ import { describe, it, beforeEach, Context } from 'mocha'
 import { expect } from 'chai'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
 import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedService, FeedServiceConnection, RegisteredFeedServiceType, Feed, FeedMinimalAttrs, FeedCreateAttrs, FeedRepository, FeedId, FeedContent } from '../../../lib/entities/feeds/entities.feeds'
-import { ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics, ListFeedServices, PreviewFeed, CreateFeed, ListAllFeeds } from '../../../lib/app.impl/feeds/app.impl.feeds'
+import { ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics, ListFeedServices, PreviewFeed, CreateFeed, ListAllFeeds, FetchFeedContent } from '../../../lib/app.impl/feeds/app.impl.feeds'
 import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError, PermissionDeniedErrorData } from '../../../lib/app.api/app.api.global.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
-import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, FeedPreview } from '../../../lib/app.api/feeds/app.api.feeds'
+import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, FeedPreview, FetchFeedContentRequest } from '../../../lib/app.api/feeds/app.api.feeds'
 import uniqid from 'uniqid'
 import { AppRequestContext, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeatureCollection } from 'geojson'
@@ -1145,76 +1145,80 @@ describe('feeds use case interactions', function() {
     })
   })
 
-  describe('fetching feed content', function() {
+  describe.only('fetching feed content', function() {
 
     it('fetches content from the feed topic', async function() {
 
-      // const feed: Feed = {
-      //   id: uniqid(),
-      //   service: uniqid(),
-      //   topic: 'crimes',
-      //   title: 'Robberies',
-      //   constantParams: {
-      //     type: 'robbery'
-      //   },
-      //   itemsHaveIdentity: true,
-      //   itemsHaveSpatialDimension: true,
-      //   itemTemporalProperty: 'when',
-      //   itemPrimaryProperty: 'address',
-      // }
-      // const expectedContent: FeedContent = {
-      //   feed: feed.id,
-      //   topic: feed.topic,
-      //   variableParams: {
-      //     bbox: [ -120, 40, -119, 41 ],
-      //     maxAgeInDays: 3
-      //   },
-      //   items: {
-      //     type: 'FeatureCollection',
-      //     features: [
-      //       {
-      //         type: 'Feature',
-      //         geometry: {
-      //           type: 'Point',
-      //           coordinates: [ -119.67, 40.25 ]
-      //         },
-      //         properties: {
-      //           when: Date.now() - 1000 * 60 * 60 * 13,
-      //           address: '123 Test Ave. Testington, Wadata 56789'
-      //         }
-      //       }
-      //     ]
-      //   }
-      // }
-      // const mergedParams = Object.assign({ ...expectedContent.variableParams }, feed.constantParams )
-      // const serviceType = Sub.for<FeedServiceType>()
-      // const service: FeedService = {
-      //   id: feed.service,
-      //   serviceType: uniqid(),
-      //   title: 'Test Service',
-      //   summary: 'For testing',
-      //   config: {
-      //     url: 'https://mage.test/service/' + uniqid()
-      //   }
-      // }
-      // const conn = Sub.for<FeedServiceConnection>()
-      // serviceType.createConnection(Arg.deepEquals(service.config)).returns(conn)
-      // conn.fetchTopicContent(feed.topic, mergedParams).resolves(expectedContent)
-      // app.feedRepo.findById(feed.id).resolves(feed)
-      // app.feedServiceRepo.findById(feed.service).resolves(service)
-      // app.feedServiceTypeRepo.findById(service.serviceType).resolves(serviceType)
-      // const req: FetchEventFeedContentRequest = requestBy('admin', {
-      //   event: 1,
-      //   feed: uniqid()
-      // })
-      // const res = await app.fetchEventFeedContent(req)
+      const feed: Feed = {
+        id: uniqid(),
+        service: uniqid(),
+        topic: 'crimes',
+        title: 'Robberies',
+        constantParams: {
+          type: 'robbery'
+        },
+        itemsHaveIdentity: true,
+        itemsHaveSpatialDimension: true,
+        itemTemporalProperty: 'when',
+        itemPrimaryProperty: 'address',
+      }
+      const expectedContent: FeedContent = {
+        feed: feed.id,
+        topic: feed.topic,
+        variableParams: {
+          bbox: [ -120, 40, -119, 41 ],
+          maxAgeInDays: 3
+        },
+        items: {
+          type: 'FeatureCollection',
+          features: [
+            {
+              type: 'Feature',
+              geometry: {
+                type: 'Point',
+                coordinates: [ -119.67, 40.25 ]
+              },
+              properties: {
+                when: Date.now() - 1000 * 60 * 60 * 13,
+                address: '123 Test Ave. Testington, Wadata 56789'
+              }
+            }
+          ]
+        }
+      }
+      const mergedParams = Object.assign({ ...expectedContent.variableParams }, feed.constantParams )
+      const serviceType = someServiceTypes[0]
+      const service: FeedService = {
+        id: feed.service,
+        serviceType: serviceType.id,
+        title: 'Test Service',
+        summary: 'For testing',
+        config: {
+          url: 'https://mage.test/service/' + uniqid()
+        }
+      }
+      app.registerServiceTypes(serviceType)
+      app.registerServices(service)
+      app.registerFeeds(feed)
+      const conn = Sub.for<FeedServiceConnection>()
+      serviceType.createConnection(Arg.deepEquals(service.config)).returns(conn)
+      conn.fetchTopicContent(feed.topic, mergedParams).resolves(expectedContent)
+      const req: FetchFeedContentRequest = requestBy(adminPrincipal, {
+        feed: feed.id,
+        variableParams: expectedContent.variableParams
+      })
+      const res = await app.fetchFeedContent(req)
 
-      // expect(res.error).to.be.null
-      // expect(res.success).to.deep.equal(expectedContent)
+      expect(res.error).to.be.null
+      expect(res.success).to.deep.equal(expectedContent)
     })
 
-    xit('checks permission to fetch feed content', async function() {
-      expect.fail('todo: legacy express middleware handles this for now')
+    it('validates the parameters', async function() {
+      expect.fail('todo')
+    })
+
+    it('checks permission to fetch feed content', async function() {
+      expect.fail('todo: handle with legacy express middleware on the event routes?')
     })
   })
 })
@@ -1235,6 +1239,7 @@ class TestApp {
   readonly previewFeed = PreviewFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.jsonSchemaService)
   readonly createFeed = CreateFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo, this.jsonSchemaService)
   readonly listFeeds = ListAllFeeds(this.permissionService, this.feedRepo)
+  readonly fetchFeedContent = FetchFeedContent(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo, this.jsonSchemaService)
 
   registerServiceTypes(...types: RegisteredFeedServiceType[]): void {
     for (const type of types) {
