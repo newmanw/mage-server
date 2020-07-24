@@ -20,7 +20,7 @@ function requestBy<P extends object>(user: string, params: P): AppRequest<string
   }
 }
 
-describe.only('events use case interactions', function() {
+describe('events use case interactions', function() {
 
   let app: EventsUseCaseInteractions
 

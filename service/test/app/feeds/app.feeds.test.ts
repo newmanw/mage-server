@@ -1081,7 +1081,7 @@ describe('feeds use case interactions', function() {
       })
     })
 
-    describe.only('listing all feeds', async function() {
+    describe('listing all feeds', async function() {
 
       it('returns all the feeds', async function() {
 
@@ -1145,7 +1145,7 @@ describe('feeds use case interactions', function() {
     })
   })
 
-  describe.only('fetching feed content', function() {
+  describe('fetching feed content', function() {
 
     it('fetches content from the feed topic', async function() {
 

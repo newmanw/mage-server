@@ -16,7 +16,7 @@ import { JSONSchema4 } from 'json-schema'
 
 const jsonMimeType = /^application\/json/
 
-describe.only('feeds web controller', function() {
+describe('feeds web controller', function() {
 
   const adminPrincipal = {
     user: 'admin'
