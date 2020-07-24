@@ -7,11 +7,6 @@ import express from 'express'
 import { RoleDocument } from '../models/role'
 import { UserDocument } from '../models/user'
 
-/**
- * `Access` constructor.
- *
- * @api public
- */
 class Access {
 
   authorize = function(permission: AnyPermission): express.RequestHandler {
@@ -39,7 +34,4 @@ class Access {
   }
 }
 
-/**
- * Expose `Access`.
- */
-module.exports = new Access();
+export = new Access();

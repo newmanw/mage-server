@@ -14,6 +14,12 @@ import { permissionDenied, PermissionDeniedError, InvalidInputError, invalidInpu
 import { WebAppRequestFactory } from '../../../lib/adapters/adapters.controllers.web'
 import { JSONSchema4 } from 'json-schema'
 
+declare module 'express-serve-static-core' {
+  interface Request {
+    testUser: string
+  }
+}
+
 const jsonMimeType = /^application\/json/
 
 describe('feeds web controller', function() {
@@ -50,7 +56,7 @@ describe('feeds web controller', function() {
     const feedsRoutes: express.Router = FeedsRoutes(appLayer, appRequestFactory.createRequest)
     const endpoint = express()
     endpoint.use(function lookupUser(req: express.Request, res: express.Response, next: express.NextFunction) {
-      req.user = req.headers['user'] as string
+      req.testUser = req.headers['user'] as string
       next()
     })
     endpoint.use(rootPath, feedsRoutes)

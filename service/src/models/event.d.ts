@@ -1,4 +1,4 @@
-import mongoose from 'mongoose'
+import mongoose, { DocumentToObjectOptions } from 'mongoose'
 import { FeedId } from '../entities/feeds/entities.feeds'
 import { UserDocument } from './user'
 
@@ -22,27 +22,35 @@ export interface MageEventDocumentAttrs {
 
 export type MageEventCreateAttrs = Pick<MageEventDocumentAttrs, 'name' | 'description'>
 
-export type MageEventDocument = MageEventDocumentAttrs & mongoose.Document
+export interface MageEventDocumentToObjectOptions extends DocumentToObjectOptions {
+  access: { user: UserDocument, permission: EventPermission }
+  projection: any
+}
+export type MageEventDocument = MageEventDocumentAttrs & mongoose.Document & {
+  toObject(options?: MageEventDocumentToObjectOptions): any
+}
 
-export interface FormDocument {
-  _id: number
+export interface FormDocument extends mongoose.Document {
+  _id: number,
+  name: string,
+  color: string,
 }
 
 export interface Style {
   /**
    * Hex RGB string beginning with '#'
    */
-  fill: string,
+  fill?: string,
   /**
    * Hex RGB string beginning with '#'
    */
-  stroke: string,
+  stroke?: string,
   /**
    * Number between 0 and 1
    */
-  fillOpacity: number,
-  strokeOpacity: number,
-  strokeWidth: number,
+  fillOpacity?: number,
+  strokeOpacity?: number,
+  strokeWidth?: number,
 }
 
 export type RoleName = string
@@ -74,5 +82,13 @@ export declare function getById(id: MageEventId, options: TODO, callback: Callba
 export declare function filterEventsByUserId(events: MageEventDocument[], userId: string, callback: Callback<MageEventDocument[]>): void
 export declare function userHasEventPermission(event: MageEventDocument, userId: string, permission: EventPermission, callback: Callback<boolean>): void
 export declare function create(event: MageEventCreateAttrs, user: Partial<UserDocument> & Pick<UserDocument, '_id'>, callback: Callback<MageEventDocument>): void
+export declare function addLayer(event: MageEventDocument, layer: any, callback: Callback<MageEventDocument>): void
+export declare function removeLayer(event: MageEventDocument, layer: { id: any }, callback: Callback<MageEventDocument>): void
+export declare function getUsers(eventId: MageEventId, callback: Callback<UserDocument[]>): void
+export declare function addTeam(event: MageEventDocument, team: any, callback: Callback<MageEventDocument>): void
+export declare function getTeams(eventId: MageEventId, options: { populate: string[] | null }, callback: Callback): void
+export declare function removeTeam(event: MageEventDocument, team: any, callback: Callback<MageEventDocument>): void
+export declare function updateUserInAcl(eventId: MageEventId, userId: string, role: string, callback: Callback<MageEventDocument>): void
+export declare function removeUserFromAcl(eventId: MageEventId, userId: string, callback: Callback<MageEventDocument>): void
 
 export declare const Model: mongoose.Model<MageEventDocument>

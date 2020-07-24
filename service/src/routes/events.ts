@@ -1,120 +1,178 @@
-const Event = require('../models/event')
-  , access = require('../access')
-  , api = require('../api')
-  , fs = require('fs-extra')
+const  api = require('../api')
   , async = require('async')
   , util = require('util')
   , fileType = require('file-type')
-  , {default: upload} = require('../upload')
   , userTransformer = require('../transformers/user');
 
-function determineReadAccess(req, res, next) {
+import EventModel, { Style, MageEventDocument, FormDocument } from '../models/event'
+import access from '../access'
+import express from 'express'
+import { AnyPermission } from '../models/permission'
+import { JsonObject } from '../entities/entities.global.json'
+import authentication from '../authentication'
+import fs from 'fs-extra'
+import { MageEventRepository } from '../entities/events/entities.events'
+import { FeedRepository } from '../entities/feeds/entities.feeds'
+import { defaultHandler as upload } from '../upload'
+
+declare module 'express-serve-static-core' {
+  export interface Request {
+    access: { user: express.Request['user'], permission: EventModel.EventPermission }
+    event: EventModel.MageEventDocument
+    parameters: EventQueryParams
+    form?: FormJson
+    team?: any
+  }
+}
+
+function determineReadAccess(req: express.Request, res: express.Response, next: express.NextFunction) {
   if (!access.userHasPermission(req.user, 'READ_EVENT_ALL')) {
     req.access = { user: req.user, permission: 'read' };
   }
-
   next();
 }
 
-function authorizeAccess(collectionPermission, aclPermission) {
+function authorizeAccess(collectionPermission: AnyPermission, aclPermission: EventModel.EventPermission): express.RequestHandler {
   return function(req, res, next) {
     if (access.userHasPermission(req.user, collectionPermission)) {
       next();
-    } else {
-      Event.userHasEventPermission(req.event, req.user._id, aclPermission, function(err, hasPermission) {
+    }
+    else {
+      EventModel.userHasEventPermission(req.event, req.user._id.toHexString(), aclPermission, function(err, hasPermission) {
         hasPermission ? next() : res.sendStatus(403);
       });
     }
   };
 }
 
-function parseEventQueryParams(req, res, next) {
-  var parameters = {};
 
-  var projection = req.param('projection');
-  if (projection) {
-    parameters.projection = JSON.parse(projection);
-  }
-
-  var state = req.param('state');
-  if (!state || state === 'active') {
-    parameters.complete = false;
-  } else if (state === 'complete') {
-    parameters.complete = true;
-  }
-
-  parameters.userId = req.param('userId');
-  parameters.populate = req.query.populate !== 'false';
-
-  var form = req.body.form || {};
-  var fields = form.fields || [];
-  var userFields = form.userFields || [];
-  fields.forEach(function(field) {
-    // remove userFields chocies, these are set dynamically
-    if (userFields.indexOf(field.name) !== -1) {
-      field.choices = [];
-    }
-  });
-
-  req.parameters = parameters;
-
-  next();
+interface FormFieldChoiceJson {
+  title: string
 }
 
-function parseForm(req, res, next) {
-  var form = req.body || {};
-  var fields = form.fields || [];
-  var userFields = form.userFields || [];
-  fields.forEach(function(field) {
-    // remove userFields chocies, these are set dynamically
-    if (userFields.indexOf(field.name) !== -1) {
-      field.choices = [];
+interface FormFieldJson {
+  name: string
+  choices: FormFieldChoiceJson[]
+}
+
+interface FieldChoiceStyles extends Style {
+  [fieldTitle: string]: FieldChoiceStyles | string | number | undefined
+}
+
+interface FormJson {
+  fields: FormFieldJson[]
+  primaryField: string
+  variantField: string
+  userFields: string[]
+  style: FieldChoiceStyles
+}
+
+interface EventQueryParams {
+  projection?: JsonObject
+  complete?: boolean
+  userId?: string
+  populate?: boolean
+}
+
+function clearUserFieldChoicesFromFormJson(form: FormJson): FormJson {
+  const fields = form.fields || []
+  const userFields = form.userFields || []
+  for (const field of fields) {
+    if (userFields.indexOf(field.name as string) !== -1) {
+      // remove userFields chocies, these are set dynamically
+      field.choices = []
     }
-  });
+  }
+  return form
+}
+
+const parseEventQueryParams: express.RequestHandler = (req, res, next) => {
+  const parameters: EventQueryParams = {}
+
+  const projection = req.query.projection as string | undefined
+  if (projection) {
+    parameters.projection = JSON.parse(projection)
+  }
+
+  const state = req.query.state as string | undefined
+  if (!state || state === 'active') {
+    parameters.complete = false
+  }
+  else if (state === 'complete') {
+    parameters.complete = true
+  }
+
+  parameters.userId = req.query.userId as string
+  parameters.populate = req.query.populate !== 'false'
+
+  clearUserFieldChoicesFromFormJson(req.body.form || {})
+
+  req.parameters = parameters
+  next()
+}
+
+const parseForm: express.RequestHandler = function parseRequestBodyAsForm(req, res, next) {
+  const form = clearUserFieldChoicesFromFormJson(req.body)
 
   if (form.style) {
-    var whitelistStyle = reduceStyle(form.style);
-    var primaryField = form.fields.filter(function(field) {
+    const whitelistStyle = reduceStyle(form.style) as FieldChoiceStyles
+    const primaryField = form.fields.filter(function(field) {
       return field.name === form.primaryField;
     }).shift();
-    var primaryChoices = primaryField ? primaryField.choices.map(function(item) {
+    const primaryChoices = primaryField ? primaryField.choices.map(function(item) {
       return item.title;
     }) : [];
-    var secondaryField = form.fields.filter(function(field) {
+    const secondaryField = form.fields.filter(function(field) {
       return field.name === form.variantField;
     }).shift();
-    var secondaryChoices = secondaryField ? secondaryField.choices.map(function(choice) {
+    const secondaryChoices = secondaryField ? secondaryField.choices.map(function(choice) {
       return choice.title;
     }) : [];
 
-    primaryChoices.reduce(function(o, primary) {
-      if (form.style[primary] !== undefined && typeof form.style[primary] === 'object') {
-        whitelistStyle[primary] = reduceStyle(form.style[primary]);
-
-        secondaryChoices.reduce(function(o, secondary) {
-          if (form.style[primary][secondary] !== undefined && typeof form.style[primary][secondary] === 'object') {
-            whitelistStyle[primary][secondary] = reduceStyle(form.style[primary][secondary]);
+    for (const primaryTitle of primaryChoices) {
+      const primaryStyleIn = form.style[primaryTitle]
+      if (typeof primaryStyleIn === 'object') {
+        const primaryTree: any = reduceStyle(primaryStyleIn)
+        for (const secondaryTitle of secondaryChoices) {
+          let secondaryStyleIn = primaryStyleIn[secondaryTitle]
+          if (typeof secondaryStyleIn === 'object') {
+            primaryTree[secondaryTitle] = reduceStyle(secondaryStyleIn)
           }
-        }, whitelistStyle[primary]);
+        }
+        whitelistStyle[primaryTitle] = primaryTree
       }
-
-    }, whitelistStyle);
-
-    form.style = whitelistStyle;
+    }
+    form.style = whitelistStyle
   }
-
-  req.form = form;
-  next();
+  req.form = form
+  next()
 }
 
-function reduceStyle(style) {
-  return ['fill', 'fillOpacity', 'stroke', 'strokeOpacity', 'strokeWidth'].reduce(function(o, k) {
-    if (style[k] !== undefined) o[k] = style[k];
-    return o;
-  }, {});
+/**
+ * Return a new object with only the basic top level style keys from the given
+ * that have values.
+ * @param style an object that could have style keys
+ */
+function reduceStyle(style: any): Style {
+  const styleKeys: (string & keyof Style)[] = ['fill', 'fillOpacity', 'stroke', 'strokeOpacity', 'strokeWidth']
+  return styleKeys.reduce<Style>(function(result, styleKey): Style {
+    if (style[styleKey] !== undefined) {
+      result[styleKey] = style[styleKey]
+    }
+    return result
+  }, {})
 }
 
-module.exports = function(app, security) {
+type EventFeedsApp = {
+  eventRepo: MageEventRepository
+  feedRepo: FeedRepository
+}
+
+function FeedsRoutes(eventFeeds: EventFeedsApp) {
+
+}
+
+function EventRoutes(app: express.Application, security: { authentication: authentication.AuthLayer }) {
 
   const passport = security.authentication.passport;
 
@@ -123,7 +181,7 @@ module.exports = function(app, security) {
     passport.authenticate('bearer'),
     access.authorize('CREATE_EVENT'),
     function(req, res, next) {
-      new api.Event().createEvent(req.body, req.user, function(err, event) {
+      new api.Event().createEvent(req.body, req.user, function(err: any, event: MageEventDocument) {
         if (err) {
           return next(err);
         }
@@ -138,15 +196,17 @@ module.exports = function(app, security) {
     determineReadAccess,
     parseEventQueryParams,
     function (req, res, next) {
-      var filter = {
-        complete: req.parameters.complete
-      };
-      if (req.parameters.userId) filter.userId = req.parameters.userId;
-
-      Event.getEvents({access: req.access, filter: filter, populate: req.parameters.populate, projection: req.parameters.projection}, function(err, events) {
-        if (err) return next(err);
-
-        res.json(events.map(function(event) {
+      const filter = {
+        complete: req.parameters.complete,
+      } as any
+      if (req.parameters.userId) {
+        filter.userId = req.parameters.userId
+      }
+      EventModel.getEvents({access: req.access, filter: filter, populate: req.parameters.populate, projection: req.parameters.projection}, function(err, events) {
+        if (err) {
+          return next(err);
+        }
+        res.json(events!.map(function(event) {
           return event.toObject({access: req.access, projection: req.parameters.projection});
         }));
       });
@@ -158,7 +218,7 @@ module.exports = function(app, security) {
     passport.authenticate('bearer'),
     determineReadAccess,
     function(req, res, next) {
-      Event.count({access: req.access}, function(err, count) {
+      EventModel.count({access: req.access}, function(err, count) {
         if (err) return next(err);
 
         return res.json({count: count});
@@ -175,7 +235,7 @@ module.exports = function(app, security) {
     function (req, res, next) {
       // TODO already queried event to check access, don't need to get it again.  Just need to populate the
       // correct fields based on query params
-      Event.getById(req.event._id, {access: req.access, populate: req.parameters.populate}, function(err, event) {
+      EventModel.getById(req.event._id, {access: req.access, populate: req.parameters.populate}, function(err, event) {
         if (err) return next(err);
         if (!event) return res.sendStatus(404);
 
@@ -189,11 +249,11 @@ module.exports = function(app, security) {
     passport.authenticate('bearer'),
     authorizeAccess('UPDATE_EVENT', 'update'),
     function(req, res, next) {
-      new api.Event(req.event).updateEvent(req.body, {}, function(err, event) {
+      new api.Event(req.event).updateEvent(req.body, {}, function(err: any, event: MageEventDocument) {
         if (err) {
           return next(err);
         }
-        new api.Form(event).populateUserFields(function(err) {
+        new api.Form(event).populateUserFields(function(err: any) {
           if (err) {
             return next(err);
           }
@@ -208,7 +268,7 @@ module.exports = function(app, security) {
     passport.authenticate('bearer'),
     authorizeAccess('DELETE_EVENT', 'delete'),
     function(req, res, next) {
-      new api.Event(req.event).deleteEvent(function(err) {
+      new api.Event(req.event).deleteEvent(function(err: any) {
         if (err) return next(err);
         res.status(204).send();
       });
@@ -226,20 +286,20 @@ module.exports = function(app, security) {
         return next();
       }
 
-      function validateForm(callback) {
+      function validateForm(callback: any) {
         new api.Form().validate(req.file, callback);
       }
 
-      function updateEvent(form, callback) {
+      function updateEvent(form: FormDocument, callback: any) {
         form.name = req.param('name');
         form.color = req.param('color');
-        new api.Event(req.event).addForm(form, function(err, form) {
+        new api.Event(req.event).addForm(form, function(err: any, form: FormDocument) {
           callback(err, form);
         });
       }
 
-      function importIcons(form, callback) {
-        new api.Form(req.event).importIcons(req.file, form, function(err) {
+      function importIcons(form: FormDocument, callback: any) {
+        new api.Form(req.event).importIcons(req.file, form, function(err: any) {
           callback(err, form);
         });
       }
@@ -248,11 +308,10 @@ module.exports = function(app, security) {
         validateForm,
         updateEvent,
         importIcons
-      ], function (err, form) {
+      ], function (err: any, form: FormDocument) {
         if (err) {
           return next(err);
         }
-
         res.status(201).json(form);
       });
     }
@@ -264,22 +323,22 @@ module.exports = function(app, security) {
     authorizeAccess('UPDATE_EVENT', 'update'),
     parseForm,
     function(req, res, next) {
-      var form = req.form;
-      new api.Event(req.event).addForm(form, function(err, form) {
+      const form = req.form;
+      new api.Event(req.event).addForm(form, function(err: any, form: FormDocument) {
         if (err) return next(err);
 
         async.parallel([
-          function(done) {
-            new api.Icon(req.event._id, form._id).saveDefaultIconToEventForm(function(err) {
+          function(done: any) {
+            new api.Icon(req.event._id, form._id).saveDefaultIconToEventForm(function(err: any) {
               done(err);
             });
           },
-          function(done) {
-            new api.Form(req.event, form).populateUserFields(function(err) {
+          function(done: any) {
+            new api.Form(req.event, form).populateUserFields(function(err: any) {
               done(err);
             });
           }
-        ], function(err) {
+        ], function(err: any) {
           if (err) return next(err);
           res.status(201).json(form.toJSON());
         });
@@ -293,14 +352,16 @@ module.exports = function(app, security) {
     authorizeAccess('UPDATE_EVENT', 'update'),
     parseForm,
     function(req, res, next) {
-      var form = req.form;
-      form._id = parseInt(req.params.formId);
-      new api.Event(req.event).updateForm(form, function(err, form) {
-        if (err) return next(err);
-
-        new api.Form(req.event, form).populateUserFields(function(err) {
-          if (err) return next(err);
-
+      const form = req.form as any
+      form._id = parseInt(req.params.formId)
+      new api.Event(req.event).updateForm(form, function(err: any, form: any) {
+        if (err) {
+          return next(err);
+        }
+        new api.Form(req.event, form).populateUserFields(function(err: any) {
+          if (err) {
+            return next(err);
+          }
           res.json(form);
         });
       });
@@ -314,9 +375,10 @@ module.exports = function(app, security) {
     passport.authenticate('bearer'),
     authorizeAccess('READ_EVENT_ALL', 'read'),
     function(req, res, next) {
-      new api.Form(req.event).export(parseInt(req.params.formId, 10), function(err, form) {
-        if (err) return next(err);
-
+      new api.Form(req.event).export(parseInt(req.params.formId, 10), function(err: any, form: any) {
+        if (err) {
+          return next(err);
+        }
         res.attachment(req.event.name + "-" + form.name + "-form.zip");
         form.file.pipe(res);
       });
@@ -328,7 +390,7 @@ module.exports = function(app, security) {
     passport.authenticate('bearer'),
     authorizeAccess('READ_EVENT_ALL', 'read'),
     function(req, res) {
-      new api.Icon(req.event._id).getZipPath(function(err, zipPath) {
+      new api.Icon(req.event._id).getZipPath(function(err: any, zipPath: string) {
         res.on('finish', function() {
           fs.remove(zipPath, function() {
             console.log('Deleted the temp icon zip %s', zipPath);
@@ -355,17 +417,19 @@ module.exports = function(app, security) {
     passport.authenticate('bearer'),
     authorizeAccess('READ_EVENT_ALL', 'read'),
     function(req, res, next) {
-      new api.Icon(req.event._id, req.params.formId).getIcons(function(err, icons) {
-        if (err) return next();
-
-        async.map(icons, function(icon, done) {
+      new api.Icon(req.event._id, req.params.formId).getIcons(function(err: any, icons: any) {
+        if (err) {
+          return next();
+        }
+        async.map(icons, function(icon: any, done: any) {
           fs.readFile(icon.path, function(err, data) {
-            if (err) return done(err);
-
-            var base64;
-            var metadata = fileType(data);
+            if (err) {
+              return done(err);
+            }
+            let base64;
+            const metadata = fileType(data);
             if (metadata) {
-              base64 = util.format('data:%s;base64,%s', metadata.mime, Buffer(data).toString('base64'));
+              base64 = util.format('data:%s;base64,%s', metadata.mime, data.toString('base64'));
             }
 
             done(null, {
@@ -376,9 +440,11 @@ module.exports = function(app, security) {
               icon: base64
             });
           });
-        }, function(err, icons) {
-          if (err) return next(err);
-
+        },
+        function(err: any, icons: any) {
+          if (err) {
+            return next(err);
+          }
           res.json(icons);
         });
       });
@@ -393,9 +459,10 @@ module.exports = function(app, security) {
     authorizeAccess('UPDATE_EVENT', 'update'),
     upload.single('icon'),
     function(req, res, next) {
-      new api.Icon(req.event._id, req.params.formId, req.params.primary, req.params.variant).create(req.file, function(err, icon) {
-        if (err) return next(err);
-
+      new api.Icon(req.event._id, req.params.formId, req.params.primary, req.params.variant).create(req.file, function(err: any, icon: any) {
+        if (err) {
+          return next(err);
+        }
         return res.json(icon);
       });
     }
@@ -407,23 +474,25 @@ module.exports = function(app, security) {
     passport.authenticate('bearer'),
     authorizeAccess('READ_EVENT_ALL', 'read'),
     function(req, res, next) {
-      new api.Icon(req.event._id, req.params.formId, req.params.primary, req.params.variant).getIcon(function(err, icon) {
-        if (err || !icon) return next();
-
+      new api.Icon(req.event._id, req.params.formId, req.params.primary, req.params.variant).getIcon(function(err: any, icon: any) {
+        if (err || !icon) {
+          return next();
+        }
         res.format({
           'image/*': function() {
             res.sendFile(icon.path);
           },
           'application/json': function() {
-            fs.readFile(icon.path, function(err, data) {
-              if (err) return next(err);
-
+            fs.readFile(icon.path, function(err: any, data) {
+              if (err) {
+                return next(err);
+              }
               res.json({
                 eventId: icon.eventId,
                 formId: icon.formId,
                 primary: icon.primary,
                 variant: icon.variant,
-                icon: util.format('data:%s;base64,%s', fileType(data).mime, Buffer(data).toString('base64'))
+                icon: util.format('data:%s;base64,%s', fileType(data).mime, data.toString('base64'))
               });
             });
           }
@@ -438,7 +507,7 @@ module.exports = function(app, security) {
     passport.authenticate('bearer'),
     authorizeAccess('UPDATE_EVENT', 'update'),
     function(req, res, next) {
-      new api.Icon(req.event._id, req.params.formId, req.params.primary, req.params.variant).delete(function(err) {
+      new api.Icon(req.event._id, req.params.formId, req.params.primary, req.params.variant).delete(function(err: any) {
         if (err) return next(err);
 
         return res.status(204).send();
@@ -451,9 +520,10 @@ module.exports = function(app, security) {
     passport.authenticate('bearer'),
     authorizeAccess('UPDATE_EVENT', 'update'),
     function(req, res, next) {
-      Event.addLayer(req.event, req.body, function(err, event) {
-        if (err) return next(err);
-
+      EventModel.addLayer(req.event, req.body, function(err: any, event?: MageEventDocument) {
+        if (err) {
+          return next(err);
+        }
         res.json(event);
       });
     }
@@ -464,9 +534,10 @@ module.exports = function(app, security) {
     passport.authenticate('bearer'),
     authorizeAccess('UPDATE_EVENT', 'update'),
     function(req, res, next) {
-      Event.removeLayer(req.event, {id: req.params.id}, function(err, event) {
-        if (err) return next(err);
-
+      EventModel.removeLayer(req.event, {id: req.params.id}, function(err: any, event?: MageEventDocument) {
+        if (err) {
+          return next(err);
+        }
         res.json(event);
       });
     }
@@ -478,9 +549,10 @@ module.exports = function(app, security) {
     authorizeAccess('READ_EVENT_ALL', 'read'),
     determineReadAccess,
     function (req, res, next) {
-      Event.getUsers(req.event._id, function(err, users) {
-        if (err) return next(err);
-
+      EventModel.getUsers(req.event._id, function(err, users) {
+        if (err) {
+          return next(err);
+        }
         users = userTransformer.transform(users, {path: req.getRoot()});
         res.json(users);
       });
@@ -492,9 +564,10 @@ module.exports = function(app, security) {
     passport.authenticate('bearer'),
     authorizeAccess('UPDATE_EVENT', 'update'),
     function(req, res, next) {
-      Event.addTeam(req.event, req.body, function(err, event) {
-        if (err) return next(err);
-
+      EventModel.addTeam(req.event, req.body, function(err, event) {
+        if (err) {
+          return next(err);
+        }
         res.json(event);
       });
     }
@@ -506,15 +579,15 @@ module.exports = function(app, security) {
     authorizeAccess('READ_EVENT_ALL', 'read'),
     determineReadAccess,
     function (req, res, next) {
-      var populate = null;
-      if (req.query.populate) {
+      let populate: string[] | null = null
+      if (typeof req.query.populate === 'string') {
         populate = req.query.populate.split(",");
       }
-
-      Event.getTeams(req.event._id, {populate: populate}, function(err, teams) {
-        if (err) return next(err);
-
-        res.json(teams.map(function(team) {
+      EventModel.getTeams(req.event._id, {populate: populate}, function(err: any, teams: any) {
+        if (err) {
+          return next(err);
+        }
+        res.json(teams.map(function(team: any) {
           return team.toObject({access: req.access});
         }));
       });
@@ -526,9 +599,10 @@ module.exports = function(app, security) {
     passport.authenticate('bearer'),
     authorizeAccess('UPDATE_EVENT', 'update'),
     function(req, res, next) {
-      Event.removeTeam(req.event, req.team, function(err, event) {
-        if (err) return next(err);
-
+      EventModel.removeTeam(req.event, req.team, function(err, event) {
+        if (err) {
+          return next(err);
+        }
         res.json(event);
       });
     }
@@ -539,8 +613,10 @@ module.exports = function(app, security) {
     passport.authenticate('bearer'),
     authorizeAccess('UPDATE_EVENT', 'update'),
     function(req, res, next) {
-      Event.updateUserInAcl(req.event._id, req.params.targetUserId, req.body.role, function(err, event) {
-        if (err) return next(err);
+      EventModel.updateUserInAcl(req.event._id, req.params.targetUserId, req.body.role, function(err, event) {
+        if (err) {
+          return next(err);
+        }
         res.json(event);
       });
     }
@@ -551,10 +627,18 @@ module.exports = function(app, security) {
     passport.authenticate('bearer'),
     authorizeAccess('UPDATE_EVENT', 'update'),
     function(req, res, next) {
-      Event.removeUserFromAcl(req.event._id, req.params.targetUserId, function(err, event) {
-        if (err) return next(err);
+      EventModel.removeUserFromAcl(req.event._id, req.params.targetUserId, function(err, event) {
+        if (err) {
+          return next(err);
+        }
         res.json(event);
       });
     }
   );
 };
+
+namespace EventRoutes {
+  export const addFeedsRoutes = FeedsRoutes
+}
+
+export = EventRoutes
