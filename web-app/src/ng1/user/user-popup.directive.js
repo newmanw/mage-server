@@ -30,7 +30,7 @@ function LocationPopupController($scope, MapService) {
   };
 
   $scope.followUser = function() {
-    MapService.followFeatureInLayer($scope.user, 'People');
+    MapService.followFeatureInLayer($scope.user, 'people');
   };
 
   $scope.$watch('user', function() {

@@ -35,6 +35,6 @@ function UserViewController($scope, $element, MapService) {
   };
 
   $scope.onUserLocationClick = function(user) {
-    MapService.zoomToFeatureInLayer(user, 'People');
+    MapService.zoomToFeatureInLayer(user, 'people');
   };
 }

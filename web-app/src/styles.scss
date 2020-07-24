@@ -10,3 +10,17 @@ body {
   font-family: Roboto, "Helvetica Neue", sans-serif;
   font-size: unset;
 }
+
+/* Angular Material Overrides */
+
+:not(.mat-fab):not(.mat-mini-fab):not(.mat-icon-button) > .mat-button-wrapper .mat-icon,
+:not([mat-fab]):not([mat-mini-fab]):not([mat-icon-button]) > .mat-button-wrapper .mat-icon {
+  font-size: 18px;
+	height: 18px;
+	width: 18px;
+	line-height: 18px;
+	margin-right: 8px;
+	margin-left: -4px;
+}
+
+/* Angular Material Overrides End */

@@ -1,5 +1,6 @@
 const _ = require('underscore')
-  , moment = require('moment');
+  , moment = require('moment')
+  , FeedAction = require('../../app/feed/item/item.service').FeedAction;
 
 module.exports = NewsFeed;
 
@@ -19,9 +20,9 @@ function NewsFeed() {
   return directive;
 }
 
-NewsFeedController.$inject = ['$scope', '$element', 'MapService', 'EventService', 'ObservationService', 'FilterService', 'UserService', 'FeedService', 'FeedItemService', 'Observation', '$uibModal'];
+NewsFeedController.$inject = ['$scope', 'MapService', 'EventService', 'ObservationService', 'FilterService', 'UserService', 'FeedService', 'FeedItemService', 'Observation', '$uibModal'];
 
-function NewsFeedController($scope, $element, MapService, EventService, ObservationService, FilterService, UserService, FeedService, FeedItemService, Observation, $uibModal) {
+function NewsFeedController($scope, MapService, EventService, ObservationService, FilterService, UserService, FeedService, FeedItemService, Observation, $uibModal) {
 
   const tabs = [{
     id: 'observations',
@@ -38,6 +39,12 @@ function NewsFeedController($scope, $element, MapService, EventService, Observat
 
   $scope.onTabSwitched = function(tab) {
     $scope.tab = tab;
+
+    $scope.newObservation = null;
+    $scope.editObservation = null;
+    $scope.viewObservation = null;
+    $scope.viewUser = null;
+    $scope.feedItem = null;
   };
 
   FeedService.feeds.subscribe(feeds => onFeedsChanged(feeds));
@@ -92,7 +99,7 @@ function NewsFeedController($scope, $element, MapService, EventService, Observat
   });
 
   $scope.$on('user:viewDone', function() {
-    MapService.deselectFeatureInLayer($scope.viewUser, 'People');
+    MapService.deselectFeatureInLayer($scope.viewUser, 'people');
     $scope.viewUser = null;
   });
 
@@ -111,7 +118,7 @@ function NewsFeedController($scope, $element, MapService, EventService, Observat
   });
 
   $scope.$on('observation:viewDone', function() {
-    MapService.deselectFeatureInLayer($scope.viewObservation, 'Observations');
+    MapService.deselectFeatureInLayer($scope.viewObservation, 'observations');
     $scope.viewObservation = null;
   });
 
@@ -208,7 +215,7 @@ function NewsFeedController($scope, $element, MapService, EventService, Observat
       return {
         id: `feed-${feed.id}`,
         title: feed.title,
-        icon: 'rss_feed',
+        iconUrl: feed.style.iconUrl,
         feed: feed
       };
     }))
@@ -223,7 +230,7 @@ function NewsFeedController($scope, $element, MapService, EventService, Observat
     $scope.newObservation = null;
     $scope.editObservation = null;
     $scope.viewObservation = null;
-    MapService.removeFeatureFromLayer($event.observation, 'Observations');
+    MapService.removeFeatureFromLayer($event.observation, 'observations');
   }
 
   $scope.$watch('event', function(event) {
@@ -298,11 +305,15 @@ function NewsFeedController($scope, $element, MapService, EventService, Observat
   });
 
   function onFeedItemEvent(event) {
-    $scope.$apply(() => {
+    if (event.action == FeedAction.Select) {
       $scope.feedItem = {
         feed: event.feed,
         item: event.item
       };
-    })
+    } else {
+      $scope.feedItem = null;
+    }
+
+    $scope.$apply();
   }
 }

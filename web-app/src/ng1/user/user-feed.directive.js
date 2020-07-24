@@ -19,11 +19,11 @@ function UserNewsItemController($scope, MapService) {
 
   $scope.followUser = function(e, user) {
     e.stopPropagation();
-    MapService.followFeatureInLayer(user, 'People');
+    MapService.followFeatureInLayer(user, 'people');
   };
 
   $scope.onUserLocationClick = function(user) {
-    MapService.zoomToFeatureInLayer(user, 'People');
+    MapService.zoomToFeatureInLayer(user, 'people');
   };
 
   $scope.viewUser = function() {

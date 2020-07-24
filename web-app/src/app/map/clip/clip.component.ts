@@ -44,6 +44,8 @@ export class MapClipComponent implements AfterViewInit, OnDestroy {
     });
 
     this.mapService.addListener(this.mapListener);
+
+    this.addFeature();
   }
 
   ngOnDestroy(): void {
@@ -78,5 +80,28 @@ export class MapClipComponent implements AfterViewInit, OnDestroy {
     }
 
     return baseLayer;
+  }
+
+  addFeature(): void {
+    if (!this.feature || !this.feature.geometry) {
+      const mapPosition = this.localStorageService.getMapPosition();
+      this.map.setView(mapPosition.center, 1);
+      return;
+    }
+
+    const layer = L.geoJSON(this.feature, {
+      pointToLayer: function (feature: any, latlng) {
+        const marker = L.fixedWidthMarker(latlng, {
+          iconUrl: feature.style ? feature.style.iconUrl : ''
+        });
+        return marker;
+      },
+      style: function (feature: any) {
+        return feature.style;
+      }
+    });
+    
+    layer.addTo(this.map);
+    this.map.fitBounds(layer.getBounds());
   }
 }

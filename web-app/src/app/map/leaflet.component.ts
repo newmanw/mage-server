@@ -34,6 +34,11 @@ export class LeafletComponent {
       layers: []
     };
 
+    this.groups['feed'] = {
+      offset: LeafletComponent.MAGE_PANE_Z_INDEX_OFFSET,
+      layers: []
+    };
+
     this.groups['tile'] = {
       offset: LeafletComponent.TILE_PANE_Z_INDEX_OFFSET,
       layers: []
@@ -73,10 +78,10 @@ export class LeafletComponent {
   }
 
   removeLayer($event: any): void {
+    console.log(`********************** remove layer ${$event.layer.name}`);
     Object.values(this.groups).forEach((group: any) => {
       group.layers = group.layers.filter(layer => {
-        const different = layer.layer !== $event.layer.layer;
-        return different;
+        return layer.layer !== $event.layer.layer;
       });
     });
   }

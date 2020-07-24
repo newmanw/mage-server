@@ -2,7 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, Subject } from 'rxjs';
 import { Feed } from './feed.model';
-import { FeedItem } from './feed-item.model';
+import { FeedItem } from './item/item.model';
 
 @Injectable({
   providedIn: 'root'
@@ -47,6 +47,12 @@ export class FeedService {
 
     const feedItems = this._feedItems.get(feedId);
     this.http.get<Array<FeedItem>>(`/api/events/${eventId}/feeds/${feedId}/items`).subscribe(items => {
+      items.map(item => {
+        item.id = item.id.toString();
+        item.properties = item.properties || {};
+        return item;
+      });
+
       subject.next(items);
       feedItems.next(items);
     });

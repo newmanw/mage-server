@@ -1,12 +1,13 @@
-import { Component, OnInit, Input } from '@angular/core';
-import { FeedItem } from './feed-item.model';
-import { Feed } from './feed.model';
-import { FeedItemService } from './item/item.service';
+import { Component, OnInit, Input, Inject } from '@angular/core';
+import { FeedItem } from './item.model';
+import { Feed } from '../feed.model';
+import { FeedItemService } from './item.service';
+import { MapService } from 'src/app/upgrade/ajs-upgraded-providers';
 
 @Component({
   selector: 'feed-list-item',
-  templateUrl: './feed-list-item.component.html',
-  styleUrls: ['./feed-list-item.component.scss']
+  templateUrl: './list-item.component.html',
+  styleUrls: ['./list-item.component.scss']
 })
 export class FeedListItemComponent implements OnInit {
   @Input() feed: Feed;
@@ -17,7 +18,7 @@ export class FeedListItemComponent implements OnInit {
   primary: string;
   secondary: string;
 
-  constructor(private feedItemService: FeedItemService) {}
+  constructor(private feedItemService: FeedItemService, @Inject(MapService) private mapService: any) { }
 
   ngOnInit(): void {
     if (!this.item.properties) return;
@@ -40,5 +41,6 @@ export class FeedListItemComponent implements OnInit {
 
   onItemSelect(): void {
     this.feedItemService.select(this.feed, this.item);
+    this.mapService.zoomToFeatureInLayer(this.item, `feed-${this.feed.id}`);
   }
 }

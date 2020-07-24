@@ -11,6 +11,11 @@
   border-radius: unset;
   flex-shrink: unset;
   object-fit: unset;
+  margin-bottom: 16px;
+}
+
+.mat-card {
+  border-radius: unset;
 }
 
 .mat-body-1 {
@@ -21,15 +26,6 @@
   opacity: .87;
 }
 
-.mat-icon {
-  font-size: 18px;
-	height: 18px;
-	width: 18px;
-	line-height: 18px;
-	margin-right: 8px;
-	margin-left: -4px;
-}
-
 .card-header {
   display: flex;
   flex-direction: row;
@@ -38,6 +34,7 @@
 .card-header-text {
   flex: 1;
   margin: 0 16px;
+  min-width: 0;
 }
 
 .card-overline {
@@ -48,17 +45,29 @@
   margin-bottom: 8px;
 }
 
+.card-actions {
+  padding: 8px 0;
+}
+
 .card-title {
   font: 500 20px/32px Roboto, "Helvetica Neue", sans-serif;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 8px;
 }
 
 .card-subtitle {
   font-size: 14px;
   color: rgba(0, 0, 0, 0.60);
   margin-bottom: 16px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .item {
+  padding: 16px;
   background: white;
   width: 100%;
 }

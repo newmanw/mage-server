@@ -33,8 +33,11 @@ import { MultiSelectDropdownComponent } from '../app/observation/edit/multiselec
 
 import { FeedService } from '../app/feed/feed.service'
 import { FeedComponent } from '../app/feed/feed.component'
+import { FeedTabComponent } from '../app/feed/tab.component'
 import { FeedItemComponent } from '../app/feed/item/item.component'
 import { FeedItemService } from '../app/feed/item/item.service';
+import { FeedItemPopupService } from '../app/feed/item/map/popup.service';
+import { FeedItemMapPopupComponent } from '../app/feed/item/map/popup.component'
 import { FeedsComponent } from '../app/admin/feed/feeds/feeds.component';
 
 require('angular-minicolors');
@@ -53,11 +56,12 @@ const app = angular.module('mage', [
   require('./auth/http-auth-interceptor')
 ]);
 
-app.
-  directive('bootstrap', downgradeComponent({ component: BootstrapComponent }));
+app
+  .directive('bootstrap', downgradeComponent({ component: BootstrapComponent }));
 
-app.
-  factory('FeedItemService', downgradeInjectable(FeedItemService))
+app
+  .factory('FeedItemService', downgradeInjectable(FeedItemService))
+  .factory('FeedItemPopupService', downgradeInjectable(FeedItemPopupService))
 
 // Downgraded Angular components 
 app
@@ -78,6 +82,9 @@ app
   .directive('mapControlLocation', downgradeComponent({ component: LocationComponent }))
   .directive('mapControlAddObservation', downgradeComponent({ component: AddObservationComponent }))
   .directive('feed', downgradeComponent({ component: FeedComponent }))
+  .directive('feedTab', downgradeComponent({ component: FeedTabComponent }))
+  .directive('feedItem', downgradeComponent({ component: FeedItemComponent }))
+  .directive('feedItemMapPopup', downgradeComponent({ component: FeedItemMapPopupComponent }))
   .directive('feeds', downgradeComponent({ component: FeedsComponent }))
   .directive('swagger', downgradeComponent({ component: SwaggerComponent }));
 
