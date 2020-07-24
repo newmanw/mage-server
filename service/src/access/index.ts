@@ -2,38 +2,42 @@
  * Module dependencies.
  */
 
+import { AnyPermission } from '../models/permission'
+import express from 'express'
+import { RoleDocument } from '../models/role'
+import { UserDocument } from '../models/user'
+
 /**
  * `Access` constructor.
  *
  * @api public
  */
-function Access() {
-}
+class Access {
 
-Access.prototype.authorize = function(permission) {
-  return function(req, res, next) {
-    if (!req.user) return next();
-
-    var role = req.user.roleId;
-    if (!role) {
-      return res.sendStatus(403);
+  authorize = function(permission: AnyPermission): express.RequestHandler {
+    return function(req, res, next): any {
+      if (!req.user) {
+        return next();
+      }
+      const role = req.user.roleId as RoleDocument;
+      if (!role) {
+        return res.sendStatus(403);
+      }
+      const userPermissions = role.permissions;
+      const ok = userPermissions.indexOf(permission) !== -1;
+      if (!ok) {
+        return res.sendStatus(403);
+      }
+      next();
     }
+  }
 
-    var userPermissions = role.permissions;
-
-    var ok = userPermissions.indexOf(permission) !== -1;
-
-    if (!ok) return res.sendStatus(403);
-
-    next();
-  };
-};
-
-Access.prototype.userHasPermission = function(user, permission) {
-  if (!user || !user.roleId) return false;
-
-  return user.roleId.permissions.indexOf(permission) !== -1;
-};
+  userHasPermission = function(user: UserDocument, permission: AnyPermission) {
+    if (!user || !user.roleId) return false;
+    const role = user.roleId as RoleDocument
+    return role.permissions.indexOf(permission) !== -1;
+  }
+}
 
 /**
  * Expose `Access`.
