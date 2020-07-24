@@ -1,4 +1,4 @@
-import mongoose from 'mongoose'
+import mongoose, { Mongoose } from 'mongoose'
 // eslint-disable-next-line @typescript-eslint/no-var-requires
 const log = require('winston')
 
@@ -14,6 +14,7 @@ class RetryConnection {
    * @param reject
    */
   constructor(
+    readonly mongoose: mongoose.Mongoose,
     readonly uri: string,
     totalRetryTime: number,
     readonly retryInterval: number,
@@ -39,12 +40,17 @@ class RetryConnection {
   }
 }
 
-export const waitForDefaultMongooseConnection = (uri: string, retryTotalTime: number, retryInterval: number, options: mongoose.ConnectionOptions): Promise<void> => {
+/**
+ * The `any` type on mongoose argument should really be `mongoose.Mongoose`, but
+ * there is some circular type reference in the `@types/mongoose` module that
+ * causes the compile to fail.
+ */
+export const waitForDefaultMongooseConnection = (mongoose: any, uri: string, retryTotalTime: number, retryInterval: number, options: mongoose.ConnectionOptions): Promise<void> => {
   if (mongoose.connection.readyState === mongoose.STATES.connected) {
     return Promise.resolve()
   }
   return new Promise<void>((resolve, reject) => {
-    const retries = new RetryConnection(uri, retryTotalTime, retryInterval, options, resolve, reject)
+    const retries = new RetryConnection(mongoose, uri, retryTotalTime, retryInterval, options, resolve, reject)
     retries.attemptConnection()
   })
 };

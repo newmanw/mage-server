@@ -14,7 +14,10 @@ describe('waitForMongooseConnection', function() {
 
   const retryDelay = 2000
   const connectTimeout = 2 * 60 * 1000
-  const waitForConnection = waitForDefaultMongooseConnection.bind({}, 'mongodb://test', connectTimeout, retryDelay, {})
+  const mongooseInstance = new mongoose.Mongoose()
+  const waitForConnection = () => {
+    return waitForDefaultMongooseConnection(mongooseInstance, 'mongodb://test', connectTimeout, retryDelay, {})
+  }
 
   type ConnectMethod = Mongoose['connect']
   let connectStub: sinon.SinonStub<Parameters<ConnectMethod>, ReturnType<ConnectMethod>>

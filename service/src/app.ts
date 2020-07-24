@@ -119,7 +119,7 @@ type AppLayer = {
 
 async function initializeDatabase(): Promise<DatabaseModels> {
   const { uri, connectRetryDelay, connectTimeout, options } = environment.mongo
-  const conn = await waitForDefaultMongooseConnection(uri, connectTimeout, connectRetryDelay, options).then(() => mongoose.connection)
+  const conn = await waitForDefaultMongooseConnection(mongoose, uri, connectTimeout, connectRetryDelay, options).then(() => mongoose.connection)
   // TODO: transition legacy model initialization
   // TODO: inject connection to migrations
   // TODO: explore performing migrations without mongoose models because current models may not be compatible with past migrations
