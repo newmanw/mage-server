@@ -1,121 +1,122 @@
+const Event = require('../models/event')
+  , access = require('../access')
+  , api = require('../api')
+  , fs = require('fs-extra')
+  , async = require('async')
+  , util = require('util')
+  , fileType = require('file-type')
+  , {default: upload} = require('../upload')
+  , userTransformer = require('../transformers/user');
+
+function determineReadAccess(req, res, next) {
+  if (!access.userHasPermission(req.user, 'READ_EVENT_ALL')) {
+    req.access = { user: req.user, permission: 'read' };
+  }
+
+  next();
+}
+
+function authorizeAccess(collectionPermission, aclPermission) {
+  return function(req, res, next) {
+    if (access.userHasPermission(req.user, collectionPermission)) {
+      next();
+    } else {
+      Event.userHasEventPermission(req.event, req.user._id, aclPermission, function(err, hasPermission) {
+        hasPermission ? next() : res.sendStatus(403);
+      });
+    }
+  };
+}
+
+function parseEventQueryParams(req, res, next) {
+  var parameters = {};
+
+  var projection = req.param('projection');
+  if (projection) {
+    parameters.projection = JSON.parse(projection);
+  }
+
+  var state = req.param('state');
+  if (!state || state === 'active') {
+    parameters.complete = false;
+  } else if (state === 'complete') {
+    parameters.complete = true;
+  }
+
+  parameters.userId = req.param('userId');
+  parameters.populate = req.query.populate !== 'false';
+
+  var form = req.body.form || {};
+  var fields = form.fields || [];
+  var userFields = form.userFields || [];
+  fields.forEach(function(field) {
+    // remove userFields chocies, these are set dynamically
+    if (userFields.indexOf(field.name) !== -1) {
+      field.choices = [];
+    }
+  });
+
+  req.parameters = parameters;
+
+  next();
+}
+
+function parseForm(req, res, next) {
+  var form = req.body || {};
+  var fields = form.fields || [];
+  var userFields = form.userFields || [];
+  fields.forEach(function(field) {
+    // remove userFields chocies, these are set dynamically
+    if (userFields.indexOf(field.name) !== -1) {
+      field.choices = [];
+    }
+  });
+
+  if (form.style) {
+    var whitelistStyle = reduceStyle(form.style);
+    var primaryField = form.fields.filter(function(field) {
+      return field.name === form.primaryField;
+    }).shift();
+    var primaryChoices = primaryField ? primaryField.choices.map(function(item) {
+      return item.title;
+    }) : [];
+    var secondaryField = form.fields.filter(function(field) {
+      return field.name === form.variantField;
+    }).shift();
+    var secondaryChoices = secondaryField ? secondaryField.choices.map(function(choice) {
+      return choice.title;
+    }) : [];
+
+    primaryChoices.reduce(function(o, primary) {
+      if (form.style[primary] !== undefined && typeof form.style[primary] === 'object') {
+        whitelistStyle[primary] = reduceStyle(form.style[primary]);
+
+        secondaryChoices.reduce(function(o, secondary) {
+          if (form.style[primary][secondary] !== undefined && typeof form.style[primary][secondary] === 'object') {
+            whitelistStyle[primary][secondary] = reduceStyle(form.style[primary][secondary]);
+          }
+        }, whitelistStyle[primary]);
+      }
+
+    }, whitelistStyle);
+
+    form.style = whitelistStyle;
+  }
+
+  req.form = form;
+  next();
+}
+
+function reduceStyle(style) {
+  return ['fill', 'fillOpacity', 'stroke', 'strokeOpacity', 'strokeWidth'].reduce(function(o, k) {
+    if (style[k] !== undefined) o[k] = style[k];
+    return o;
+  }, {});
+}
+
 module.exports = function(app, security) {
-  const Event = require('../models/event')
-    , access = require('../access')
-    , api = require('../api')
-    , fs = require('fs-extra')
-    , async = require('async')
-    , util = require('util')
-    , fileType = require('file-type')
-    , {default: upload} = require('../upload')
-    , userTransformer = require('../transformers/user');
 
-  var passport = security.authentication.passport;
-
-  function determineReadAccess(req, res, next) {
-    if (!access.userHasPermission(req.user, 'READ_EVENT_ALL')) {
-      req.access = { user: req.user, permission: 'read' };
-    }
-
-    next();
-  }
-
-  function authorizeAccess(collectionPermission, aclPermission) {
-    return function(req, res, next) {
-      if (access.userHasPermission(req.user, collectionPermission)) {
-        next();
-      } else {
-        Event.userHasEventPermission(req.event, req.user._id, aclPermission, function(err, hasPermission) {
-          hasPermission ? next() : res.sendStatus(403);
-        });
-      }
-    };
-  }
-
-  function parseEventQueryParams(req, res, next) {
-    var parameters = {};
-
-    var projection = req.param('projection');
-    if (projection) {
-      parameters.projection = JSON.parse(projection);
-    }
-
-    var state = req.param('state');
-    if (!state || state === 'active') {
-      parameters.complete = false;
-    } else if (state === 'complete') {
-      parameters.complete = true;
-    }
-
-    parameters.userId = req.param('userId');
-    parameters.populate = req.query.populate !== 'false';
-
-    var form = req.body.form || {};
-    var fields = form.fields || [];
-    var userFields = form.userFields || [];
-    fields.forEach(function(field) {
-      // remove userFields chocies, these are set dynamically
-      if (userFields.indexOf(field.name) !== -1) {
-        field.choices = [];
-      }
-    });
-
-    req.parameters = parameters;
-
-    next();
-  }
-
-  function parseForm(req, res, next) {
-    var form = req.body || {};
-    var fields = form.fields || [];
-    var userFields = form.userFields || [];
-    fields.forEach(function(field) {
-      // remove userFields chocies, these are set dynamically
-      if (userFields.indexOf(field.name) !== -1) {
-        field.choices = [];
-      }
-    });
-
-    if (form.style) {
-      var whitelistStyle = reduceStyle(form.style);
-      var primaryField = form.fields.filter(function(field) {
-        return field.name === form.primaryField;
-      }).shift();
-      var primaryChoices = primaryField ? primaryField.choices.map(function(item) {
-        return item.title;
-      }) : [];
-      var secondaryField = form.fields.filter(function(field) {
-        return field.name === form.variantField;
-      }).shift();
-      var secondaryChoices = secondaryField ? secondaryField.choices.map(function(choice) {
-        return choice.title;
-      }) : [];
-
-      primaryChoices.reduce(function(o, primary) {
-        if (form.style[primary] !== undefined && typeof form.style[primary] === 'object') {
-          whitelistStyle[primary] = reduceStyle(form.style[primary]);
-
-          secondaryChoices.reduce(function(o, secondary) {
-            if (form.style[primary][secondary] !== undefined && typeof form.style[primary][secondary] === 'object') {
-              whitelistStyle[primary][secondary] = reduceStyle(form.style[primary][secondary]);
-            }
-          }, whitelistStyle[primary]);
-        }
-
-      }, whitelistStyle);
-
-      form.style = whitelistStyle;
-    }
-
-    req.form = form;
-    next();
-  }
-
-  function reduceStyle(style) {
-    return ['fill', 'fillOpacity', 'stroke', 'strokeOpacity', 'strokeWidth'].reduce(function(o, k) {
-      if (style[k] !== undefined) o[k] = style[k];
-      return o;
-    }, {});
-  }
+  const passport = security.authentication.passport;
 
   app.post(
     '/api/events',
