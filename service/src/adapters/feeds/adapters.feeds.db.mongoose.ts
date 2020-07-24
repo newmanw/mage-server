@@ -24,8 +24,8 @@ export const FeedServiceTypeIdentitySchema = new mongoose.Schema({
   pluginServiceTypeId: { type: String, required: true },
   moduleName: { type: String, required: true }
 })
-export function FeedServiceTypeIdentityModel(conn: mongoose.Connection): FeedServiceTypeIdentityModel {
-  return conn.model(FeedsModels.FeedServiceTypeIdentity, FeedServiceTypeIdentitySchema, 'feed_service_types')
+export function FeedServiceTypeIdentityModel(conn: mongoose.Connection, collection?: string): FeedServiceTypeIdentityModel {
+  return conn.model(FeedsModels.FeedServiceTypeIdentity, FeedServiceTypeIdentitySchema, collection || 'feed_service_types')
 }
 
 export type FeedServiceDocument = FeedServiceDescriptor & mongoose.Document
@@ -45,8 +45,8 @@ export const FeedServiceSchema = new mongoose.Schema(
       }
     }
   })
-export function FeedServiceModel(conn: mongoose.Connection): FeedServiceModel {
-  return conn.model(FeedsModels.FeedService, FeedServiceSchema, 'feed_services')
+export function FeedServiceModel(conn: mongoose.Connection, collection?: string): FeedServiceModel {
+  return conn.model(FeedsModels.FeedService, FeedServiceSchema, collection || 'feed_services')
 }
 
 export type FeedDocument = Feed & mongoose.Document
@@ -75,8 +75,8 @@ export const FeedSchema = new mongoose.Schema(
       }
     }
   })
-export function FeedModel(conn: mongoose.Connection): FeedModel {
-  return conn.model(FeedsModels.Feed, FeedSchema, 'feeds')
+export function FeedModel(conn: mongoose.Connection, collection?: string): FeedModel {
+  return conn.model(FeedsModels.Feed, FeedSchema, collection || 'feeds')
 }
 
 export class MongooseFeedServiceTypeRepository implements FeedServiceTypeRepository {
