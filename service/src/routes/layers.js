@@ -10,7 +10,7 @@ module.exports = function(app, security) {
     environment = require('../environment/env'),
     layerXform = require('../transformers/layer'),
     geopackage = require('../utilities/geopackage'),
-    { default: upload } = require('../upload');
+    { defaultHandler: upload } = require('../upload');
 
   const passport = security.authentication.passport;
   app.all('/api/layers*', passport.authenticate('bearer'));
@@ -140,7 +140,7 @@ module.exports = function(app, security) {
     for (let i = 0; i < layer.processing.length; i++) {
       layerStatusMap[layer.processing[i].layer] = i;
     }
-    
+
     let currentLayer;
     geopackage
       .optimize(path.join(environment.layerBaseDirectory, layer.file.relativePath), function(progress) {
@@ -198,9 +198,9 @@ module.exports = function(app, security) {
   }
 
   // get all layers
-  app.get('/api/layers', 
-    access.authorize('READ_LAYER_ALL'), 
-    parseQueryParams, 
+  app.get('/api/layers',
+    access.authorize('READ_LAYER_ALL'),
+    parseQueryParams,
     function(req, res, next) {
       new api.Layer()
         .getLayers({ includeUnavailable: req.parameters.includeUnavailable })
@@ -260,7 +260,7 @@ module.exports = function(app, security) {
 
   // get features for layer (must be a feature layer)
   app.get('/api/layers/:layerId/features',
-    access.authorize('READ_LAYER_ALL'), 
+    access.authorize('READ_LAYER_ALL'),
     function(req, res, next) {
       if (req.layer.type !== 'Feature') return res.status(400).send('cannot get features, layer type is not "Feature"');
 
@@ -327,8 +327,8 @@ module.exports = function(app, security) {
   );
 
   // get layer
-  app.get('/api/layers/:layerId', 
-    access.authorize('READ_LAYER_ALL'), 
+  app.get('/api/layers/:layerId',
+    access.authorize('READ_LAYER_ALL'),
     function(req, res) {
       if (req.accepts('application/json')) {
         const response = layerXform.transform(req.layer, { path: req.getPath() });
@@ -346,9 +346,9 @@ module.exports = function(app, security) {
   );
 
   // get layer
-  app.get('/api/events/:eventId/layers/:layerId', 
-    passport.authenticate('bearer'), 
-    validateEventAccess, 
+  app.get('/api/events/:eventId/layers/:layerId',
+    passport.authenticate('bearer'),
+    validateEventAccess,
     function(req,res) {
       if (req.accepts('application/json')) {
         const response = layerXform.transform(req.layer, { path: req.getPath() });

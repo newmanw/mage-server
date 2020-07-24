@@ -2,7 +2,7 @@ module.exports = function(app, security) {
   var api = require('../api')
     , access = require('../access')
     , fs = require('fs-extra')
-    , {default: upload} = require('../upload')
+    , {defaultHandler: upload} = require('../upload')
     , toGeoJson = require('../utilities/togeojson');
 
   var passport = security.authentication.passport;

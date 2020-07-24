@@ -14,7 +14,7 @@ module.exports = function(app, security) {
     , turfCentroid = require('@turf/centroid')
     , geometryFormat = require('../format/geoJsonFormat')
     , observationXform = require('../transformers/observation')
-    , {default: upload} = require('../upload')
+    , {defaultHandler: upload} = require('../upload')
     , passport = security.authentication.passport;
 
   var sortColumnWhitelist = ["lastModified"];

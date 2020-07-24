@@ -8,7 +8,7 @@ module.exports = function (app, security) {
     , fs = require('fs-extra')
     , userTransformer = require('../transformers/user')
     , pageInfoTransformer = require('../transformers/pageinfo.js')
-    , { default: upload } = require('../upload')
+    , { defaultHandler: upload } = require('../upload')
     , passport = security.authentication.passport;
 
   // TODO: smells
