@@ -1,10 +1,10 @@
+<mat-toolbar color="primary">
+  <button mat-icon-button (click)="close()">
+    <mat-icon>arrow_back</mat-icon>
+  </button>
+</mat-toolbar>
+
 <mat-card>
-  <!-- <mat-card-header>
-    <mat-icon *ngIf="!feed.style.iconUrl">rss_feed</mat-icon>
-    <img mat-card-avatar *ngIf="feed.style.iconUrl" [src]="feed.style.iconUrl"/>
-    <mat-card-title>{{primary}}</mat-card-title>
-    <mat-card-subtitle>{{secondary}}</mat-card-subtitle>
-  </mat-card-header> -->
   <div class="card-header">
     <div class="card-header-text">
       <div class="card-overline">{{timestamp | moment}}</div>
@@ -15,24 +15,23 @@
     <img mat-card-avatar *ngIf="feed.style.iconUrl" [src]="feed.style.iconUrl" />
   </div>
   <div mat-card-image>
-    <map-clip class="map"></map-clip>
+    <map-clip class="map" [feature]=item></map-clip>
   </div>
-  <mat-card-content>
-    <mat-list>
-      <ng-container *ngFor="let property of properties">
-        <mat-list-item class="item">
-          <span matLine class="mat-body-2">{{property.key}}</span>
-          <span matLine class="mat-body-1">{{property.value}}</span>
-        </mat-list-item>
-        <mat-divider></mat-divider>
-      </ng-container>
-    </mat-list>
-  </mat-card-content>
-  <mat-card-actions>
-    <button mat-button color="primary">
+  <div class="card-actions">
+    <button mat-button color="primary" (click)="onLocationClick()">
       <mat-icon>gps_fixed</mat-icon>
       {{item.geometry|geometry:5}}
     </button>
-  </mat-card-actions>
+  </div>
+  <mat-divider></mat-divider>
+  <mat-card-content>
+    <div *ngFor="let property of properties">
+      <div class="item">
+        <div class="mat-body-1">{{property.key}}</div>
+        <div class="mat-body-2">{{property.value}}</div>
+      </div>
+      <mat-divider></mat-divider>
+    </div>
+  </mat-card-content>
 </mat-card>
 

@@ -68,7 +68,7 @@ class GeometryEditFormController {
       this.featureEdit.save();
       this.saveEdit({value: this.feature});
     } else {
-      this._MapService.removeFeatureFromLayer({ id: this.feature.id }, 'Observations');
+      this._MapService.removeFeatureFromLayer({ id: this.feature.id }, 'observations');
       this.featureEdit.cancel();
       this.saveEdit({value: undefined});
     }

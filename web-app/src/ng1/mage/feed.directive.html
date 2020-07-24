@@ -1,7 +1,6 @@
-<div class="feeds-panel">
-  <div ng-repeat="tab in tabs" class="feed-panel-item" ng-click="onTabSwitched(tab)">
-    <mat-icon class="feed-panel-icon-1">{{tab.icon}}</mat-icon>
-    <div class="feed-panel-title">{{tab.title}}</div>
+<div class="feeds-nav">
+  <div ng-repeat="t in tabs" ng-click="onTabSwitched(t)">
+    <feed-tab [tab]="t" [active]="t.id === tab.id"></feed-tab>
   </div>
 </div>
 
@@ -25,24 +24,20 @@
   <observation-view class="slide-left new-obs-card view-obs-card feed-card ng-animatable" ng-if="viewObservation"
     observation="viewObservation" event="event"></observation-view>
   
-  <feed-item class="slide-left new-obs-card view-obs-card feed-card ng-animatable" ng-if="feedItem" [item]="feedItem.item" [feed]="feedItem.feed">
-  </feed-item>
+  <div class="slide-left new-obs-card view-obs-card feed-card ng-animatable" ng-if="feedItem">
+    <feed-item [item]="feedItem.item"
+      [feed]="feedItem.feed">
+    </feed-item>
+  </div>
   
   <observation-form ng-if="editObservation" class="slide-left view-obs-card ng-animatable" form="editForm"
     observation="editObservation" on-form-close="onFormClose()" on-observation-delete="onObservationDelete($event)">
   </observation-form>
   
-  <div class="observation-feed-container">
-    <observation-feed ng-if="tab.id === 'observations'"></observation-feed>
-  </div>
+  <observation-feed class="feed-container" ng-if="tab.id === 'observations'"></observation-feed>
+  <user-feed class="feed-container"ng-if="tab.id === 'people'"></user-feed>
+  <feed class="feed-container" [feed]="tab.feed" ng-if="tab.feed"></feed>
   
-  <div class="people-feed-container">
-    <user-feed ng-if="tab.id === 'people'"></user-feed>
-  </div>
-  
-  <div class="feed-container">
-    <feed ng-if="tab.feed" [feed]="tab.feed"></feed>
-  </div>
 </div>
 
 

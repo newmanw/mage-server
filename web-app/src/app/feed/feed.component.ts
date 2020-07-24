@@ -1,8 +1,7 @@
-import { Component, OnInit, Input, Inject, OnChanges, SimpleChanges, SimpleChange } from '@angular/core';
+import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { FeedService } from './feed.service';
-import { FeedItem } from './feed-item.model';
+import { FeedItem } from './item/item.model';
 import { Feed } from './feed.model';
-import { FeedItemService } from './item/item.service';
 
 @Component({
   selector: 'feed',

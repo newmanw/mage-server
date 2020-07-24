@@ -4,16 +4,17 @@ var _ = require('underscore')
 
 module.exports = EventService;
 
-EventService.$inject = ['$rootScope', '$q', '$timeout', '$http', 'Event', 'ObservationService', 'LocationService', 'LayerService', 'FeedService', 'FilterService', 'PollingService'];
+EventService.$inject = ['$rootScope', '$q', '$timeout', '$http', 'ObservationService', 'LocationService', 'LayerService', 'FeedService', 'FilterService', 'PollingService'];
 
-function EventService($rootScope, $q, $timeout, $http, Event, ObservationService, LocationService, LayerService, FeedService, FilterService, PollingService) {
+function EventService($rootScope, $q, $timeout, $http, ObservationService, LocationService, LayerService, FeedService, FilterService, PollingService) {
   var observationsChangedListeners = [];
   var usersChangedListeners = [];
   var layersChangedListeners = [];
-  var feedsChangedListeners = [];
+  var feedItemsChangedListeners = [];
   var pollListeners = [];
   var eventsById = {};
   var pollingTimeout = null;
+  let feedSync = {};
 
   var filterServiceListener = {
     onFilterChanged: function(filter) {
@@ -52,7 +53,7 @@ function EventService($rootScope, $q, $timeout, $http, Event, ObservationService
       observationsChanged({removed: _.values(eventsById[removed.id].filteredObservationsById)});
       usersChanged({removed: _.values(eventsById[removed.id].filteredUsersById)});
       layersChanged({removed: _.values(eventsById[removed.id].layersById)}, removed);
-      feedsChanged({ removed: _.values(eventsById[removed.id].feedsById) }, removed);
+      feedItemsChanged({ removed: _.values(eventsById[removed.id].feedsById) }, removed);
       delete eventsById[removed.id];
     });
   }
@@ -159,7 +160,7 @@ function EventService($rootScope, $q, $timeout, $http, Event, ObservationService
     addUsersChangedListener: addUsersChangedListener,
     removeUsersChangedListener: removeUsersChangedListener,
     addLayersChangedListener: addLayersChangedListener,
-    addFeedsChangedListener: addFeedsChangedListener,
+    addFeedItemsChangedListener: addFeedItemsChangedListener,
     addPollListener: addPollListener,
     removePollListener: removePollListener,
     removeLayersChangedListener: removeLayersChangedListener,
@@ -224,12 +225,13 @@ function EventService($rootScope, $q, $timeout, $http, Event, ObservationService
     }
   }
 
-  function addFeedsChangedListener(listener) {
-    feedsChangedListeners.push(listener);
+  function addFeedItemsChangedListener(listener) {
+    feedItemsChangedListeners.push(listener);
 
-    if (_.isFunction(listener.onFeedsChanged)) {
+    if (_.isFunction(listener.onFeedItemsChanged)) {
       _.each(_.values(eventsById), function (event) {
-        listener.onFeedsChanged({ added: _.values(event.feedsById) }, event);
+        // TODO what do I send here?
+        // listener.onFeedItemsChanged({ added: _.values(event.feedsById) }, event);
       });
     }
   }
@@ -428,14 +430,14 @@ function EventService($rootScope, $q, $timeout, $http, Event, ObservationService
     });
   }
 
-  function feedsChanged(changed, event) {
-    _.each(feedsChangedListeners, function (listener) {
+  function feedItemsChanged(changed, event) {
+    _.each(feedItemsChangedListeners, function (listener) {
       changed.added = changed.added || [];
       changed.updated = changed.updated || [];
       changed.removed = changed.removed || [];
 
-      if (_.isFunction(listener.onFeedsChanged)) {
-        listener.onFeedsChanged(changed, event);
+      if (_.isFunction(listener.onFeedItemsChanged)) {
+        listener.onFeedItemsChanged(changed, event);
       }
     });
   }
@@ -478,20 +480,21 @@ function EventService($rootScope, $q, $timeout, $http, Event, ObservationService
 
   function fetchFeeds(event) {
     FeedService.fetchFeeds(event.id).subscribe(feeds => {
-      const added = _.filter(feeds, function (f) {
-        return !_.some(eventsById[event.id].feedsById, function (_feed, feedId) {
-          return f.id === feedId;
-        });
-      });
-
-      const removed = _.filter(eventsById[event.id].feedsById, function (_feed, feedId) {
-        return !_.some(feeds, function (f) {
-          return f.id === feedId;
-        });
-      }); 
+      feedItemsChanged({
+        added: feeds.map(feed => {
+          return {
+            feed,
+            items: []
+          }
+        })
+      }, event);
 
       eventsById[event.id].feedsById = _.indexBy(feeds, 'id');
-      feedsChanged({ added: added, removed: removed }, event);
+      feedSync = feeds.map(feed => {
+        return {
+          id: feed.id
+        }
+      });
 
       pollFeeds();
     });  
@@ -606,22 +609,66 @@ function EventService($rootScope, $q, $timeout, $http, Event, ObservationService
   }
 
   function getNextFeed(event) {
-    const feeds = _.values(eventsById[event.id].feedsById);
-    return feeds[1];
+    const now = Date.now();
+    const feeds = _.sortBy(feedSync, feed => { return feed.lastSync });
+    const feed = feeds.find(localFeed => {
+      if (!localFeed.lastSync) return true;
+
+      const feed = eventsById[event.id].feedsById[localFeed.id]
+
+      if ((now - localFeed.lastSync) > (feed.updateFrequency * 1000)) {
+        return true;
+      }
+    }) || {};
+
+    return eventsById[event.id].feedsById[feed.id];
+  }
+
+  function getFeedFetchDelay(event) {
+    const now = Date.now();
+
+    const delays = feedSync.map(localFeed => {
+      const feed = eventsById[event.id].feedsById[localFeed.id]
+
+      if (!localFeed.lastSync) return 0;
+
+      const elapsed = (now - localFeed.lastSync) / 1000;
+      if (elapsed > feed.updateFrequency) {
+        return 5 
+      } else {
+        return feed.updateFrequency - elapsed
+      } 
+    });
+
+    const delay = Math.min(...delays);
+
+    return delay;
   }
 
   function pollFeeds() {
     const event = FilterService.getEvent();
 
-    // TODO implement this like Android
-    const interval = 3000 * 1000;
-
     const feed = getNextFeed(event);
-
-    FeedService.fetchFeedItems(event.id, feed.id).subscribe(() => {
+    if (!feed) {
       $timeout(function () {
-        pollFeeds(interval);
-      }, interval);
+        pollFeeds();
+      }, getFeedFetchDelay(event) * 1000);
+
+      return;
+    }
+
+    FeedService.fetchFeedItems(event.id, feed.id).subscribe(items => {
+      // TODO is this really created or updated, maybe just create as empty when,
+      // feeds come back
+      feedItemsChanged({
+        updated: [{ feed, items}]
+      }, event);
+
+      feedSync.find(f => f.id === feed.id).lastSync = Date.now();
+
+      $timeout(function () {
+        pollFeeds();
+      }, getFeedFetchDelay(event) * 1000);
     });
   }
 }

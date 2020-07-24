@@ -51,7 +51,7 @@ class FormController {
       };
 
       if (this.isNewObservation) {
-        this.MapService.addFeaturesToLayer([this.observation], 'Observations');
+        this.MapService.addFeaturesToLayer([this.observation], 'observations');
       }
     }
 
@@ -79,7 +79,7 @@ class FormController {
       observation.style = style;
       this.geometryFeature.style = style;
 
-      this.MapService.updateFeatureForLayer(observation, 'Observations');
+      this.MapService.updateFeatureForLayer(observation, 'observations');
     }
   }
 
@@ -193,7 +193,7 @@ class FormController {
       // as the event service will add it back to the map based on it new id
       // if it passes the current filter.
       if (id === 'new') {
-        this.MapService.removeFeatureFromLayer({ id: id }, 'Observations');
+        this.MapService.removeFeatureFromLayer({ id: id }, 'observations');
       }
 
       this.error = null;
@@ -229,9 +229,9 @@ class FormController {
   cancelEdit() {
     this.observation.geometry = this.initialObservation.geometry;
     if (this.observation.id !== 'new') {
-      this.MapService.updateFeatureForLayer(this.observation, 'Observations');
+      this.MapService.updateFeatureForLayer(this.observation, 'observations');
     } else {
-      this.MapService.removeFeatureFromLayer(this.observation, 'Observations');
+      this.MapService.removeFeatureFromLayer(this.observation, 'observations');
     }
 
     _.map(this.observation.attachments, attachment => {

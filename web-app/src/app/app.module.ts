@@ -65,12 +65,15 @@ import { ColorPickerComponent } from './color-picker/color-picker.component';
 import { mapServiceProvider, localStorageServiceProvider } from './upgrade/ajs-upgraded-providers';
 import { BootstrapComponent } from './bootstrap/bootstrap.component';
 import { FeedComponent } from './feed/feed.component';
-import { FeedListItemComponent } from './feed/feed-list-item.component';
+import { FeedListItemComponent } from './feed/item/list-item.component';
 import { MomentPipe } from './moment/moment.pipe';
 import { FeedItemComponent } from './feed/item/item.component';
 import { FeedItemService } from './feed/item/item.service';
 import { MapClipComponent } from './map/clip/clip.component';
 import { GeometryPipe } from './geometry/geometry.pipe';
+import { FeedItemMapPopupComponent } from './feed/item/map/popup.component';
+import { FeedItemPopupService } from './feed/item/map/popup.service';
+import { FeedTabComponent } from './feed/tab.component';
 
 @NgModule({
   declarations: [
@@ -96,6 +99,8 @@ import { GeometryPipe } from './geometry/geometry.pipe';
     FeedItemComponent,
     MapClipComponent,
     GeometryPipe,
+    FeedItemMapPopupComponent,
+    FeedTabComponent,
   ],
   imports: [
     BrowserModule,
@@ -133,6 +138,7 @@ import { GeometryPipe } from './geometry/geometry.pipe';
   ],
   providers: [
     FeedItemService,
+    FeedItemPopupService,
     mapServiceProvider,
     localStorageServiceProvider,
     { provide: HTTP_INTERCEPTORS, useClass: TokenInterceptorService, multi: true }
@@ -160,7 +166,9 @@ import { GeometryPipe } from './geometry/geometry.pipe';
     SwaggerComponent,
     ColorPickerComponent,
     FeedComponent,
-    FeedItemComponent
+    FeedTabComponent,
+    FeedItemComponent,
+    FeedItemMapPopupComponent
   ]
 })
 export class AppModule {

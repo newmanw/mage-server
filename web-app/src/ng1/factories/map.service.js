@@ -3,9 +3,9 @@ var _ = require('underscore')
 
 module.exports = MapService;
 
-MapService.$inject = ['EventService', 'LocationService', 'FeatureService', '$compile', '$rootScope', 'LocalStorageService'];
+MapService.$inject = ['EventService', 'LocationService', 'FeatureService', 'FeedItemPopupService', '$compile', '$rootScope', 'LocalStorageService'];
 
-function MapService(EventService, LocationService, FeatureService, $compile, $rootScope, LocalStorageService) {
+function MapService(EventService, LocationService, FeatureService, FeedItemPopupService, $compile, $rootScope, LocalStorageService) {
 
   // Map Service should delegate to some map provider that implements delegate interface
   // In this case should delegate to leaflet directive.  See if this is possible
@@ -23,11 +23,13 @@ function MapService(EventService, LocationService, FeatureService, $compile, $ro
     selectBaseLayer: selectBaseLayer,
     overlayAdded: overlayAdded,
     removeLayer: removeLayer,
+    removeFeed: removeFeed,
     destroy: destroy,
     initialize: initialize,
     getVectorLayers: getVectorLayers,
     createRasterLayer: createRasterLayer,
     createVectorLayer: createVectorLayer,
+    createFeedLayer: createFeedLayer,
     createFeature: createFeature,
     addFeaturesToLayer: addFeaturesToLayer,
     updateFeatureForLayer: updateFeatureForLayer,
@@ -44,6 +46,7 @@ function MapService(EventService, LocationService, FeatureService, $compile, $ro
 
   var delegate = null;
   var baseLayer = null;
+  var feedLayers = {};
   var rasterLayers = {};
   var vectorLayers = {};
   var listeners = [];
@@ -53,6 +56,9 @@ function MapService(EventService, LocationService, FeatureService, $compile, $ro
 
   var layersChangedListener = {
     onLayersChanged: onLayersChanged
+  };
+  var feedItemsChangedListenner = {
+    onFeedItemsChanged: onFeedItemsChanged
   };
   var usersChangedListener = {
     onUsersChanged: onUsersChanged
@@ -70,8 +76,9 @@ function MapService(EventService, LocationService, FeatureService, $compile, $ro
     EventService.addObservationsChangedListener(observationsChangedListener);
     EventService.addUsersChangedListener(usersChangedListener);
     EventService.addLayersChangedListener(layersChangedListener);
+    EventService.addFeedItemsChangedListener(feedItemsChangedListenner)
 
-    var observationLayer = {
+    const observationLayer = {
       id: 'observations',
       name: 'Observations',
       group: 'MAGE',
@@ -89,16 +96,16 @@ function MapService(EventService, LocationService, FeatureService, $compile, $ro
         },
         popup: {
           html: function(observation) {
-            var el = angular.element('<div class="foo" observation-popup="observation" observation-popup-info="onInfo(observation)" observation-zoom="onZoom(observation)"></div>');
-            var compiled = $compile(el);
-            var newScope = $rootScope.$new(true);
+            const el = angular.element('<div class="foo" observation-popup="observation" observation-popup-info="onInfo(observation)" observation-zoom="onZoom(observation)"></div>');
+            const compiled = $compile(el);
+            const newScope = $rootScope.$new(true);
             newScope.observation = observation;
             newScope.onInfo = function(observation) {
               $rootScope.$broadcast('observation:view', observation);
             };
   
             newScope.onZoom = function(observation) {
-              service.zoomToFeatureInLayer(observation, 'Observations');
+              service.zoomToFeatureInLayer(observation, 'observations');
             };
   
             compiled(newScope);
@@ -112,7 +119,7 @@ function MapService(EventService, LocationService, FeatureService, $compile, $ro
     };
     service.createVectorLayer(observationLayer);
 
-    var peopleLayer = {
+    const peopleLayer = {
       id: 'people',
       name: 'People',
       group: 'MAGE',
@@ -137,7 +144,7 @@ function MapService(EventService, LocationService, FeatureService, $compile, $ro
             };
   
             newScope.onZoom = function(user) {
-              service.zoomToFeatureInLayer(user, 'People');
+              service.zoomToFeatureInLayer(user, 'people');
             };
   
             compiled(newScope);
@@ -156,7 +163,7 @@ function MapService(EventService, LocationService, FeatureService, $compile, $ro
   }
 
   function onLayersChanged(changed, event) {
-    var baseLayerFound = false;
+    let baseLayerFound = false;
     _.each(changed.added, function(layer) {
       // Add token to the url of all private layers
       // TODO add watch for token change and reset the url for these layers
@@ -183,7 +190,7 @@ function MapService(EventService, LocationService, FeatureService, $compile, $ro
               popup: {
                 html: function(feature) {
                   // TODO use leaflet template for this
-                  var content = "";
+                  let content = "";
                   if (feature.properties.name) {
                     content += '<div><strong><u>' + feature.properties.name + '</u></strong></div>';
                   }
@@ -208,27 +215,79 @@ function MapService(EventService, LocationService, FeatureService, $compile, $ro
     });
   }
 
+  function onFeedItemsChanged(changed) {
+    const geospatialFilter = ({feed}) => { return feed.itemsHaveSpatialDimension; }
+
+    // Filter out non geospatial feeds
+    changed.added.filter(geospatialFilter).forEach(({ feed, items }) => {
+      const features = items.map(item => {
+        item.style = feed.style;
+        return item;
+      });
+
+      service.createFeedLayer({
+        id: `feed-${feed.id}`,
+        name: feed.title,
+        group: 'feed',
+        type: 'geojson',
+        geojson: {
+          type: 'FeatureCollection',
+          features: features
+        },
+        options: {
+          iconWidth: 24,
+          selected: true,
+          popup: (layer, feature) => {
+            FeedItemPopupService.popup(layer, feed, feature);
+          },
+          onLayer: (layer, feature) => {
+            FeedItemPopupService.register(layer, feed, feature);
+          }
+        }
+      });
+    });
+
+    changed.updated.filter(geospatialFilter).forEach(({feed, items}) => {
+        const features = items.map(item => {
+          item.style = feed.style;
+          return item;
+        });
+
+        featuresChanged({
+          id: `feed-${feed.id}`,
+          updated: features
+        });
+    });
+
+    changed.removed.filter(geospatialFilter).forEach(change => {
+      const feed = feedLayers[`feed-${change.id}`];
+      if (feed) {
+        service.removeFeed(feed);
+      }
+    });
+  }
+
   function onObservationsChanged(changed) {
     _.each(changed.added, function(added) {
       observationsById[added.id] = added;
     });
-    if (changed.added.length) service.addFeaturesToLayer(changed.added, 'Observations');
+    if (changed.added.length) service.addFeaturesToLayer(changed.added, 'observations');
 
     _.each(changed.updated, function(updated) {
-      var observation = observationsById[updated.id];
+      const observation = observationsById[updated.id];
       if (observation) {
         observationsById[updated.id] = updated;
         popupScopes[updated.id].user = updated;
-        service.updateFeatureForLayer(updated, 'Observations');
+        service.updateFeatureForLayer(updated, 'observations');
       }
     });
 
     _.each(changed.removed, function(removed) {
       delete observationsById[removed.id];
 
-      service.removeFeatureFromLayer(removed, 'Observations');
+      service.removeFeatureFromLayer(removed, 'observations');
 
-      var scope = popupScopes[removed.id];
+      const scope = popupScopes[removed.id];
       if (scope) {
         scope.$destroy();
         delete popupScopes[removed.id];
@@ -239,28 +298,28 @@ function MapService(EventService, LocationService, FeatureService, $compile, $ro
   function onUsersChanged(changed) {
     _.each(changed.added, function(added) {
       usersById[added.id] = added;
-      service.addFeaturesToLayer([added.location], 'People');
+      service.addFeaturesToLayer([added.location], 'people');
     });
 
     _.each(changed.updated, function(updated) {
-      var user = usersById[updated.id];
+      const user = usersById[updated.id];
       if (user) {
         usersById[updated.id] = updated;
         popupScopes[updated.id].user = updated;
-        service.updateFeatureForLayer(updated.location, 'People');
+        service.updateFeatureForLayer(updated.location, 'people');
 
         // pan/zoom map to user if this is the user we are following
-        if (followFeatureInLayer.layer === 'People' && user.id === followFeatureInLayer.id)
-          service.zoomToFeatureInLayer(user, 'People');
+        if (followFeatureInLayer.layer === 'people' && user.id === followFeatureInLayer.id)
+          service.zoomToFeatureInLayer(user, 'people');
       }
 
     });
 
     _.each(changed.removed, function(removed) {
       delete usersById[removed.id];
-      service.removeFeatureFromLayer(removed.location, 'People');
+      service.removeFeatureFromLayer(removed.location, 'people');
 
-      var scope = popupScopes[removed.id];
+      const scope = popupScopes[removed.id];
       if (scope) {
         scope.$destroy();
         delete popupScopes[removed.id];
@@ -276,13 +335,13 @@ function MapService(EventService, LocationService, FeatureService, $compile, $ro
     listeners.push(listener);
 
     if (_.isFunction(listener.onLayersChanged)) {
-      var layers = _.values(rasterLayers).concat(_.values(vectorLayers));
+      const layers = _.values(rasterLayers).concat(_.values(vectorLayers));
       listener.onLayersChanged({added: layers});
     }
 
     if (_.isFunction(listener.onFeaturesChanged)) {
       _.each(_.values(vectorLayers), function(vectorLayer) {
-        listener.onFeaturesChanged({name: vectorLayer.name, added: _.values(vectorLayer.featuresById)});
+        listener.onFeaturesChanged({id: vectorLayer.id, added: _.values(vectorLayer.featuresById)});
       });
     }
 
@@ -308,7 +367,7 @@ function MapService(EventService, LocationService, FeatureService, $compile, $ro
       added: [layer]
     });
 
-    rasterLayers[layer.name] = layer;
+    rasterLayers[layer.id] = layer;
   }
 
   function createVectorLayer(layer) {
@@ -317,7 +376,16 @@ function MapService(EventService, LocationService, FeatureService, $compile, $ro
     });
 
     layer.featuresById = {};
-    vectorLayers[layer.name] = layer;
+    vectorLayers[layer.id] = layer;
+  }
+
+  function createFeedLayer(layer) {
+    layersChanged({
+      added: [layer]
+    });
+
+    layer.featuresById = {};
+    feedLayers[layer.id] = layer;
   }
 
   function createFeature(feature, style, listeners) {
@@ -325,30 +393,30 @@ function MapService(EventService, LocationService, FeatureService, $compile, $ro
   }
 
   function addFeaturesToLayer(features, layerId) {
-    var vectorLayer = vectorLayers[layerId];
+    const vectorLayer = vectorLayers[layerId];
     _.each(features, function(feature) {
       vectorLayer.featuresById[feature.id] = feature;
     });
 
     featuresChanged({
-      name: layerId,
+      id: layerId,
       added: [features]
     });
   }
 
   function updateFeatureForLayer(feature, layerId) {
     featuresChanged({
-      name: layerId,
+      id: layerId,
       updated: [feature]
     });
   }
 
   function removeFeatureFromLayer(feature, layerId) {
-    var vectorLayer = vectorLayers[layerId];
+    const vectorLayer = vectorLayers[layerId];
     delete vectorLayer.featuresById[feature.id];
 
     featuresChanged({
-      name: layerId,
+      id: layerId,
       removed: [feature]
     });
   }
@@ -357,7 +425,7 @@ function MapService(EventService, LocationService, FeatureService, $compile, $ro
     _.each(listeners, function(listener) {
       if (_.isFunction(listener.onFeatureDeselect)) {
         listener.onFeatureDeselect({
-          name: layerId,
+          id: layerId,
           feature: feature
         });
       }
@@ -368,7 +436,7 @@ function MapService(EventService, LocationService, FeatureService, $compile, $ro
     _.each(listeners, function(listener) {
       if (_.isFunction(listener.onFeatureZoom)) {
         listener.onFeatureZoom({
-          name: layerId,
+          id: layerId,
           feature: feature
         });
       }
@@ -477,7 +545,7 @@ function MapService(EventService, LocationService, FeatureService, $compile, $ro
   }
 
   function removeLayer(layer) {
-    var vectorLayer = vectorLayers[layer.name];
+    const vectorLayer = vectorLayers[layer.id];
     if (vectorLayer) {
       _.each(listeners, function(listener) {
         if (_.isFunction(listener.onLayerRemoved)) {
@@ -485,10 +553,10 @@ function MapService(EventService, LocationService, FeatureService, $compile, $ro
         }
       });
 
-      delete vectorLayers[layer.name];
+      delete vectorLayers[layer.id];
     }
 
-    var rasterLayer = rasterLayers[layer.name];
+    const rasterLayer = rasterLayers[layer.id];
     if (rasterLayer) {
       _.each(listeners, function(listener) {
         if (_.isFunction(listener.onLayerRemoved)) {
@@ -496,7 +564,20 @@ function MapService(EventService, LocationService, FeatureService, $compile, $ro
         }
       });
 
-      delete rasterLayers[layer.name];
+      delete rasterLayers[layer.id];
+    }
+  }
+
+  function removeFeed(feed) {
+    const feedLayer = feedLayers[feed.id];
+    if (feedLayer) {
+      _.each(listeners, function (listener) {
+        if (_.isFunction(listener.onFeedRemoved)) {
+          listener.onFeedRemoved(feedLayer);
+        }
+      });
+
+      delete feedLayers[feed.id];
     }
   }
 

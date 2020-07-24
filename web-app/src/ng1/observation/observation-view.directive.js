@@ -122,7 +122,7 @@ function ObservationViewController($scope, $element, $uibModal, EventService, Us
   };
 
   $scope.onObservationLocationClick = function() {
-    MapService.zoomToFeatureInLayer($scope.observation, 'Observations');
+    MapService.zoomToFeatureInLayer($scope.observation, 'observations');
   };
 
   $scope.$on('observation:editDone', function() {
