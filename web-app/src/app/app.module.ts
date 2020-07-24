@@ -10,6 +10,8 @@ import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 
+import { JsonSchemaWidgetsModule } from './json-schema-widgets/json-schema-widgets.module';
+
 import { SaturationModule, HueModule, CheckboardModule, AlphaModule } from 'ngx-color';
 
 import {
@@ -66,6 +68,7 @@ import { mapServiceProvider, localStorageServiceProvider } from './upgrade/ajs-u
 import { BootstrapComponent } from './bootstrap/bootstrap.component';
 import { FeedComponent } from './feed/feed.component';
 import { FeedListItemComponent } from './feed/feed-list-item.component';
+import { FeedModule } from './admin/feed/feed.module';
 import { MomentPipe } from './moment/moment.pipe';
 import { FeedItemComponent } from './feed/item/item.component';
 import { FeedItemService } from './feed/item/item.service';
@@ -129,7 +132,9 @@ import { GeometryPipe } from './geometry/geometry.pipe';
     SaturationModule,
     HueModule,
     AlphaModule,
-    CheckboardModule
+    CheckboardModule,
+    JsonSchemaWidgetsModule,
+    FeedModule
   ],
   providers: [
     FeedItemService,
@@ -148,7 +153,7 @@ import { GeometryPipe } from './geometry/geometry.pipe';
     MatSidenav,
     MatSidenavContent,
     MatSidenavContainer,
-    DropdownComponent, 
+    DropdownComponent,
     MultiSelectDropdownComponent,
     LeafletComponent,
     ZoomComponent,

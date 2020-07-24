@@ -35,6 +35,7 @@ import { FeedService } from '../app/feed/feed.service'
 import { FeedComponent } from '../app/feed/feed.component'
 import { FeedItemComponent } from '../app/feed/item/item.component'
 import { FeedItemService } from '../app/feed/item/item.service';
+import { FeedsComponent } from '../app/admin/feed/feeds/feeds.component';
 
 require('angular-minicolors');
 require('select2');
@@ -77,7 +78,7 @@ app
   .directive('mapControlLocation', downgradeComponent({ component: LocationComponent }))
   .directive('mapControlAddObservation', downgradeComponent({ component: AddObservationComponent }))
   .directive('feed', downgradeComponent({ component: FeedComponent }))
-  .directive('feedItem', downgradeComponent({ component: FeedItemComponent }))
+  .directive('feeds', downgradeComponent({ component: FeedsComponent }))
   .directive('swagger', downgradeComponent({ component: SwaggerComponent }));
 
 app
@@ -379,6 +380,13 @@ function config($httpProvider, $stateProvider, $urlRouterProvider, $urlServicePr
     component: "adminLayerEdit",
     resolve: resolveAdmin()
   });
+
+    // Admin feed routes
+    $stateProvider.state('admin.feeds', {
+      url: '/feeds',
+      component: "adminFeeds",
+      resolve: resolveAdmin()
+    });
 
   // Admin settings routes
   $stateProvider.state('admin.settings', {

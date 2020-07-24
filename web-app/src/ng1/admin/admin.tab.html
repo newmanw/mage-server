@@ -46,6 +46,12 @@
       <div>Layers</div>
     </div>
 
+    <div class="admin-action" ng-class="{'admin-action-selected': $ctrl.tab === 'feeds'}" ng-click="$ctrl.tabChanged('admin.feeds')">
+      <div ng-class="{'admin-action-arrow-left':$ctrl.state === '/feeds'}"></div>
+      <i class="fa fa-rss"></i>
+      <div>Feeds</div>
+    </div>
+
     <div class="admin-action" ng-if="$ctrl.hasPermission('UPDATE_SETTINGS')" ng-class="{'admin-action-selected': $ctrl.tab === 'settings'}" ng-click="$ctrl.tabChanged('admin.settings')">
       <div ng-class="{'admin-action-arrow-left': $ctrl.state === '/settings'}"></div>
       <i class="fa fa-wrench"></i>
