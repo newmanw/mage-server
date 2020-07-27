@@ -8,7 +8,7 @@ class GeometryEditMapController {
     // Only the main geometry is on the map, identified by having an id.
     // Don't zoom to form/field locations as they are not on the map.
     if (this.feature.id) {
-      this.MapService.zoomToFeatureInLayer(this.feature, 'Observations');
+      this.MapService.zoomToFeatureInLayer(this.feature, 'observations');
     }
   }
 

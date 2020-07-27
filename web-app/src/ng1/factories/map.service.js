@@ -259,7 +259,9 @@ function MapService(EventService, LocationService, FeatureService, FeedItemPopup
         });
     });
 
-    changed.removed.filter(geospatialFilter).forEach(change => {
+    changed.removed.filter(({feed}) => {
+      return feed.itemsHaveSpatialDimension;
+    }).forEach(change => {
       const feed = feedLayers[`feed-${change.id}`];
       if (feed) {
         service.removeFeed(feed);

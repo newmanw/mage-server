@@ -11,6 +11,10 @@ body {
   font-size: unset;
 }
 
+bootstrap {
+  height: 100%;
+}
+
 /* Angular Material Overrides */
 
 :not(.mat-fab):not(.mat-mini-fab):not(.mat-icon-button) > .mat-button-wrapper .mat-icon,

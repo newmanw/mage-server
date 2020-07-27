@@ -2,7 +2,7 @@ import { Component } from '@angular/core';
 
 @Component({
   selector: 'bootstrap',
-  template: '',
+  template: '<ng-content></ng-content>',
   styleUrls: ['./bootstrap.component.scss']
 })
 export class BootstrapComponent {}

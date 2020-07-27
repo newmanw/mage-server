@@ -22,7 +22,7 @@ function NavbarController($element, $state, $transitions, UserService) {
 
   this.$onInit = function() {
     this.state = $state.current.name;
-    $transitions.onBefore({}, transition => { 
+    $transitions.onSuccess({}, transition => { 
       this.state = transition.to().name;
     });
   };
@@ -32,9 +32,6 @@ function NavbarController($element, $state, $transitions, UserService) {
       this.hasAdminPermission = UserService.amAdmin;
     }
   }
-
-  this.$postLink = function() {
-  };
 
   this.openDrawer = function() {
     pollingMenu = pollingMenu || new MDCMenuSurface($element.find('.nav-menu')[0]);
