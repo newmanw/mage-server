@@ -111,4 +111,5 @@ export interface FeedsPermissionService {
   ensureListTopicsPermissionFor(context: AppRequestContext, service: FeedServiceId): Promise<PermissionDeniedError | null>
   ensureCreateFeedPermissionFor(context: AppRequestContext, service: FeedServiceId): Promise<PermissionDeniedError | null>
   ensureListAllFeedsPermissionFor(context: AppRequestContext): Promise<PermissionDeniedError | null>
+  ensureFetchFeedContentPermissionFor(context: AppRequestContext, feed: FeedId): Promise<PermissionDeniedError | null>
 }

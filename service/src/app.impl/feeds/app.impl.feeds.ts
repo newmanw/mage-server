@@ -218,23 +218,28 @@ export function ListAllFeeds(permissionService: api.FeedsPermissionService, feed
 
 export function FetchFeedContent(permissionService: api.FeedsPermissionService, serviceTypeRepo: FeedServiceTypeRepository, serviceRepo: FeedServiceRepository, feedRepo: FeedRepository, jsonSchemaService: JsonSchemaService): api.FetchFeedContent {
   return async function fetchFeedContent(req: api.FetchFeedContentRequest): ReturnType<api.FetchFeedContent> {
-    const feed = await feedRepo.findById(req.feed)
-    if (!feed) {
-      return AppResponse.error<FeedContent, EntityNotFoundError>(entityNotFound(req.feed, 'Feed'))
-    }
-    const service = await serviceRepo.findById(feed.service)
-    if (!service) {
-      return AppResponse.error<FeedContent, EntityNotFoundError>(entityNotFound(feed.service, 'FeedService'))
-    }
-    const serviceType = await serviceTypeRepo.findById(service.serviceType)
-    if (!serviceType) {
-      return AppResponse.error<FeedContent, EntityNotFoundError>(entityNotFound(service.serviceType, 'FeedServiceType'))
-    }
-    const conn = serviceType.createConnection(service.config)
-    let params = req.variableParams || {}
-    params = Object.assign(params, feed.constantParams || {})
-    const content = await conn.fetchTopicContent(feed.topic, params)
-    return AppResponse.success({ ...content, feed: feed.id, variableParams: req.variableParams })
+    return await withPermission<FeedContent, KnownErrorsOf<api.FetchFeedContent>>(
+      permissionService.ensureFetchFeedContentPermissionFor(req.context, req.feed),
+      async (): Promise<FeedContent | EntityNotFoundError> => {
+        const feed = await feedRepo.findById(req.feed)
+        if (!feed) {
+          return entityNotFound(req.feed, 'Feed')
+        }
+        const service = await serviceRepo.findById(feed.service)
+        if (!service) {
+          return entityNotFound(feed.service, 'FeedService')
+        }
+        const serviceType = await serviceTypeRepo.findById(service.serviceType)
+        if (!serviceType) {
+          return entityNotFound(service.serviceType, 'FeedServiceType')
+        }
+        const conn = serviceType.createConnection(service.config)
+        let params = req.variableParams || {}
+        params = Object.assign(params, feed.constantParams || {})
+        const content = await conn.fetchTopicContent(feed.topic, params)
+        return { ...content, feed: feed.id, variableParams: req.variableParams }
+      }
+    )
   }
 }
 

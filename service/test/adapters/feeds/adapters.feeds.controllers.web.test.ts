@@ -472,10 +472,14 @@ invalid request
   })
 
   describe('GET /all_feeds', function() {
-
+    it('has tests', async function() {
+      expect.fail('todo')
+    })
   })
 
   describe('GET /all_feeds/{feedId}', function() {
-
+    it('has tests', async function() {
+      expect.fail('todo')
+    })
   })
 })

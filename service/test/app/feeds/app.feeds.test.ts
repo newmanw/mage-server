@@ -10,6 +10,20 @@ import uniqid from 'uniqid'
 import { AppRequestContext, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeatureCollection } from 'geojson'
 import { JsonObject, JsonSchemaService, JsonValidator } from '../../../lib/entities/entities.global.json'
+import { Argument } from '@fluffy-spoon/substitute/dist/src/Arguments'
+
+
+declare module '@fluffy-spoon/substitute' {
+  // use namespace to effectively merge a static function to an existing class
+  namespace Arg {
+    function requestTokenMatches<T extends AppRequest>(expectedRequest: T): Argument<T> & T
+  }
+}
+
+Arg.requestTokenMatches = <T extends AppRequest>(expectedRequest: T): Argument<T> & T => {
+  return new Argument<T>(`request token ${JSON.stringify(expectedRequest.context.requestToken)}`,
+    (x: T): boolean => x.context.requestToken === expectedRequest.context.requestToken) as Argument<T> & T
+}
 
 
 function mockServiceType(descriptor: FeedServiceTypeDescriptor): SubstituteOf<RegisteredFeedServiceType> {
@@ -1147,9 +1161,13 @@ describe('feeds use case interactions', function() {
 
   describe('fetching feed content', function() {
 
-    it('fetches content from the feed topic', async function() {
+    let serviceType: SubstituteOf<RegisteredFeedServiceType>
+    let feed: Feed
+    let service: FeedService
 
-      const feed: Feed = {
+    beforeEach(function() {
+      serviceType = someServiceTypes[0]
+      feed = {
         id: uniqid(),
         service: uniqid(),
         topic: 'crimes',
@@ -1162,6 +1180,23 @@ describe('feeds use case interactions', function() {
         itemTemporalProperty: 'when',
         itemPrimaryProperty: 'address',
       }
+      service = {
+        id: feed.service,
+        serviceType: serviceType.id,
+        title: 'Test Service',
+        summary: 'For testing',
+        config: {
+          url: 'https://mage.test/service/' + uniqid()
+        }
+      }
+      app.registerServiceTypes(serviceType)
+      app.registerServices(service)
+      app.registerFeeds(feed)
+      app.permissionService.grantFetchFeedContent(adminPrincipal.user, feed.id)
+    })
+
+    it('fetches content from the feed topic', async function() {
+
       const expectedContent: FeedContent = {
         feed: feed.id,
         topic: feed.topic,
@@ -1187,19 +1222,6 @@ describe('feeds use case interactions', function() {
         }
       }
       const mergedParams = Object.assign({ ...expectedContent.variableParams }, feed.constantParams )
-      const serviceType = someServiceTypes[0]
-      const service: FeedService = {
-        id: feed.service,
-        serviceType: serviceType.id,
-        title: 'Test Service',
-        summary: 'For testing',
-        config: {
-          url: 'https://mage.test/service/' + uniqid()
-        }
-      }
-      app.registerServiceTypes(serviceType)
-      app.registerServices(service)
-      app.registerFeeds(feed)
       const conn = Sub.for<FeedServiceConnection>()
       serviceType.createConnection(Arg.deepEquals(service.config)).returns(conn)
       conn.fetchTopicContent(feed.topic, mergedParams).resolves(expectedContent)
@@ -1218,7 +1240,23 @@ describe('feeds use case interactions', function() {
     })
 
     it('checks permission to fetch feed content', async function() {
-      expect.fail('todo: handle with legacy express middleware on the event routes?')
+
+      const req: FetchFeedContentRequest = requestBy(bannedPrincipal, { feed: feed.id })
+      let res = await app.fetchFeedContent(req)
+
+      expect(res.success).to.be.null
+      expect(res.error).to.be.instanceOf(MageError)
+      expect(res.error?.code).to.equal(ErrPermissionDenied)
+      const data = res.error?.data as PermissionDeniedErrorData
+      expect(data.permission).to.equal(FetchFeedContent.name)
+      expect(data.subject).to.equal(bannedPrincipal.user)
+      expect(data.object).to.equal(feed.id)
+
+      app.permissionService.grantFetchFeedContent(bannedPrincipal.user, feed.id)
+      res = await app.fetchFeedContent(req)
+
+      expect(res.error).to.be.null
+      expect(res.success).to.be.an('object')
     })
   })
 })
@@ -1335,6 +1373,7 @@ class TestPermissionService implements FeedsPermissionService {
     }
   } as { [user: string]: { [privilege: string]: boolean }}
   readonly serviceAcls = new Map<FeedServiceId, Map<UserId, Set<string>>>()
+  readonly feedAcls = new Map<FeedId, Set<UserId>>()
 
   async ensureListServiceTypesPermissionFor(context: AppRequestContext<TestPrincipal>): Promise<null | PermissionDeniedError> {
     return this.checkPrivilege(context.requestingPrincipal().user, ListFeedServiceTypes.name)
@@ -1360,6 +1399,14 @@ class TestPermissionService implements FeedsPermissionService {
     return this.checkPrivilege(context.requestingPrincipal().user, ListAllFeeds.name)
   }
 
+  async ensureFetchFeedContentPermissionFor(context: AppRequestContext<TestPrincipal>, feed: FeedId): Promise<null | PermissionDeniedError> {
+    const acl = this.feedAcls.get(feed)
+    if (acl?.has(context.requestingPrincipal().user)) {
+      return null
+    }
+    return permissionDenied(FetchFeedContent.name, context.requestingPrincipal().user, feed)
+  }
+
   grantCreateService(user: UserId) {
     this.grantPrivilege(user, CreateFeedService.name)
   }
@@ -1378,6 +1425,12 @@ class TestPermissionService implements FeedsPermissionService {
 
   grantListFeeds(user: UserId) {
     this.grantPrivilege(user, ListAllFeeds.name)
+  }
+
+  grantFetchFeedContent(user: UserId, feed: FeedId) {
+    const acl = this.feedAcls.get(feed) || new Set<UserId>()
+    acl.add(user)
+    this.feedAcls.set(feed, acl)
   }
 
   revokeListTopics(user: UserId, service: FeedServiceId) {

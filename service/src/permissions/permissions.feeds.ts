@@ -40,10 +40,11 @@ export class PreFetchedUserRoleFeedsPermissionService implements FeedsPermission
   async ensureListAllFeedsPermissionFor(context: AppRequestContext<UserWithRole>): Promise<PermissionDeniedError | null> {
     return ensureContextUserHasPermission(context, feedsPermissions.FEEDS_LIST_ALL)
   }
-}
 
-type FeedPermissionKey = keyof (typeof feedsPermissions)
-type FeedPermission = typeof feedsPermissions[FeedPermissionKey]
+  async ensureFetchFeedContentPermissionFor(context: AppRequestContext<UserWithRole>): Promise<PermissionDeniedError | null> {
+    return permissionDenied(feedsPermissions.FEEDS_FETCH_CONTENT, context.requestingPrincipal().username)
+  }
+}
 
 function ensureContextUserHasPermission(context: AppRequestContext<UserWithRole>, permission: FeedsPermission): null | PermissionDeniedError {
   const user = context.requestingPrincipal()

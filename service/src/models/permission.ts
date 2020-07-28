@@ -82,6 +82,7 @@ export type FeedsPermission =
   | 'FEEDS_LIST_TOPICS'
   | 'FEEDS_CREATE_FEED'
   | 'FEEDS_LIST_ALL'
+  | 'FEEDS_FETCH_CONTENT'
 
 export const feedsPermissions: Readonly<Record<FeedsPermission, FeedsPermission>> = Object.freeze({
   FEEDS_LIST_SERVICE_TYPES: 'FEEDS_LIST_SERVICE_TYPES',
@@ -90,6 +91,7 @@ export const feedsPermissions: Readonly<Record<FeedsPermission, FeedsPermission>
   FEEDS_LIST_TOPICS: 'FEEDS_LIST_TOPICS',
   FEEDS_CREATE_FEED: 'FEEDS_CREATE_FEED',
   FEEDS_LIST_ALL: 'FEEDS_LIST_ALL',
+  FEEDS_FETCH_CONTENT: 'FEEDS_FETCH_CONTENT',
 })
 
 export const allPermissions = Object.freeze({
