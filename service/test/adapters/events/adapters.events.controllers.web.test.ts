@@ -9,8 +9,8 @@ import { AppResponse, AppRequest } from '../../../lib/app.api/app.api.global'
 import EventRoutes from '../../../lib/routes/events'
 import { WebAppRequestFactory } from '../../../lib/adapters/adapters.controllers.web'
 import { MageEvent, MageEventRepository } from '../../../lib/entities/events/entities.events'
-import { AddFeedToEventRequest } from '../../../lib/app.api/events/app.api.events'
-import { FeedId, FeedContent } from '../../../lib/entities/feeds/entities.feeds'
+import { AddFeedToEventRequest, ListEventFeedsRequest, UserFeed } from '../../../lib/app.api/events/app.api.events'
+import { FeedId, FeedContent, Feed } from '../../../lib/entities/feeds/entities.feeds'
 import { FetchFeedContentRequest } from '../../../lib/app.api/feeds/app.api.feeds'
 
 const rootPath = '/test/events'
@@ -94,6 +94,51 @@ describe.only('event feeds web controller', function() {
     })
 
     it('fails with 400 if the feed does not exist', async function() {
+      expect.fail('todo')
+    })
+
+    it('fails with 403 without permission', async function() {
+      expect.fail('todo')
+    })
+  })
+
+  describe('GET /events/{eventId/feeds', function() {
+
+    it('returns the list of feeds assigned to the event', async function() {
+
+      const eventFeeds: UserFeed[] = [
+        {
+          id: uniqid(),
+          service: 'service1',
+          topic: 'ringram',
+          title: 'Feed 1',
+          itemsHaveIdentity: true,
+          itemsHaveSpatialDimension: true,
+        },
+        {
+          id: uniqid(),
+          service: 'service2',
+          topic: 'dingdorf',
+          title: 'Feed 2',
+          itemsHaveIdentity: true,
+          itemsHaveSpatialDimension: true,
+        }
+      ]
+      event.feedIds.concat(eventFeeds[0].id, eventFeeds[1].id)
+      const reqParams: Partial<ListEventFeedsRequest> = {
+        event: event.id
+      }
+      eventFeedsApp.listEventFeeds(Arg.is(x => _.isMatch(x, reqParams)))
+        .resolves(AppResponse.success<UserFeed[], unknown>(eventFeeds))
+      const res = await client.get(`${rootPath}/${event.id}/feeds`)
+
+      expect(res.status).to.equal(200)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.deep.equal(eventFeeds)
+      eventFeedsApp.received(1).listEventFeeds(Arg.is(x => _.isMatch(x, reqParams)))
+    })
+
+    it('fails with 404 if the event does not exist', async function() {
       expect.fail('todo')
     })
 
