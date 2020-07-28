@@ -7,7 +7,6 @@ export interface MageEvent {
   name: string
   description?: string
   complete?: boolean
-  collectionName: string
   teamIds: string[]
   layerIds: string[]
   feedIds: FeedId[]
@@ -103,14 +102,6 @@ export type EventRole = keyof EventRolePermissions
  * permissions the user ID has on the event.
  */
 export interface Acl {
-  [userId: string]: EventRole
-}
-
-export type MageEventJson = Omit<MageEvent, 'collectionName' | 'acl'> & {
-  acl: AclJson
-}
-
-export interface AclJson {
   [userId: string]: {
     role: EventRole
     permissions: EventPermission[]

@@ -11,20 +11,22 @@ import { AnyPermission, allPermissions } from '../models/permission'
 import { JsonObject } from '../entities/entities.global.json'
 import authentication from '../authentication'
 import fs from 'fs-extra'
-import { EventPermission, Style, MageEventRepository } from '../entities/events/entities.events'
+import { EventPermission, Style, MageEventRepository, MageEvent, MageEventId } from '../entities/events/entities.events'
 import { defaultHandler as upload } from '../upload'
 import { AddFeedToEvent, ListEventFeeds, AddFeedToEventRequest, ListEventFeedsRequest } from '../app.api/events/app.api.events'
 import { AppRequestContext } from '../app.api/app.api.global'
 import { UserDocument } from '../models/user'
 import { WebAppRequestFactory } from '../adapters/adapters.controllers.web'
-import { FeedsPermissionService } from '../app.api/feeds/app.api.feeds'
+import { FeedsPermissionService, FetchFeedContent, FetchFeedContentRequest } from '../app.api/feeds/app.api.feeds'
 import { PermissionDeniedError, permissionDenied, MageError, ErrPermissionDenied, ErrEntityNotFound, EntityNotFoundError } from '../app.api/app.api.global.errors'
 import { ErrorRequestHandler } from 'express-serve-static-core'
 import { FeedId } from '../entities/feeds/entities.feeds'
+import bodyParser from 'body-parser'
 
 declare module 'express-serve-static-core' {
   export interface Request {
-    event: EventModel.MageEventDocument
+    event?: EventModel.MageEventDocument
+    eventEntity?: MageEvent
     access?: { user: express.Request['user'], permission: EventPermission }
     parameters?: EventQueryParams
     form?: FormJson
@@ -45,7 +47,7 @@ function authorizeAccess(collectionPermission: AnyPermission, aclPermission: Eve
       next();
     }
     else {
-      EventModel.userHasEventPermission(req.event, req.user._id.toHexString(), aclPermission, function(err, hasPermission) {
+      EventModel.userHasEventPermission(req.event!, req.user._id.toHexString(), aclPermission, function(err, hasPermission) {
         hasPermission ? next() : res.sendStatus(403);
       });
     }
@@ -177,7 +179,7 @@ class EventRequestContext implements AppRequestContext<UserDocument> {
 
   constructor(req: express.Request) {
     this.user = req.user
-    this.event = req.event
+    this.event = req.event!
   }
 
   requestingPrincipal() {
@@ -213,22 +215,27 @@ class EventFeedsPermissionService implements FeedsPermissionService {
 function EventFeedsRoutes(eventFeeds: EventRoutes.EventFeedsApp, createAppRequest: WebAppRequestFactory): express.Router {
 
   const routes = express.Router()
+  routes.use(bodyParser.json({
+    strict: false
+  }))
 
   routes.param('eventId', async (req, res, next, value) => {
-    const event = await eventFeeds.eventRepo.findById(value)
+    const eventId: MageEventId = parseInt(value)
+    const event = await eventFeeds.eventRepo.findById(eventId)
     if (!event) {
       return res.status(404).json('event not found')
     }
+    req.eventEntity = event
     return next()
   })
 
-  routes.route('/api/events/:eventId/feeds')
+  routes.route('/:eventId/feeds')
     .post(async (req, res, next) => {
       if (typeof req.body !== 'string') {
         return res.status(400).json('post a json feed id string')
       }
       const feedId = req.body
-      const appReq: AddFeedToEventRequest = createAppRequest(req, { event: req.event.id, feed: feedId })
+      const appReq: AddFeedToEventRequest = createAppRequest(req, { event: req.eventEntity!.id, feed: feedId })
       const appRes = await eventFeeds.addFeedToEvent(appReq)
       if (appRes.success) {
         return res.json(appRes.success)
@@ -237,7 +244,7 @@ function EventFeedsRoutes(eventFeeds: EventRoutes.EventFeedsApp, createAppReques
     })
     .get(async (req, res, next) => {
       const appReq: ListEventFeedsRequest = createAppRequest(req, {
-        event: req.event.id
+        event: req.eventEntity!.id
       })
       const appRes = await eventFeeds.listEventFeeds(appReq)
       if (appRes.success) {
@@ -246,23 +253,36 @@ function EventFeedsRoutes(eventFeeds: EventRoutes.EventFeedsApp, createAppReques
       return next(appRes.error)
     })
 
-    const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
-      if (!(err instanceof MageError)) {
-        next(err)
+  routes.route('/:eventId/feeds/:feedId/content')
+    .post(async (req, res, next) => {
+      const appReq: FetchFeedContentRequest = createAppRequest(req, {
+        feed: req.params.feedId,
+        variableParams: req.body
+      })
+      const appRes = await eventFeeds.fetchFeedContent(appReq)
+      if (appRes.success) {
+        return res.json(appRes.success)
       }
-      const mageErr = err as MageError<symbol, any>
-      if (mageErr.code === ErrPermissionDenied) {
-        return res.status(403)
-      }
-      if (mageErr.code === ErrEntityNotFound) {
-        const enf = mageErr as EntityNotFoundError
-        return res.status(400).json(`invalid ${enf.data.entityType} id: ${enf.data.entityId}`)
-      }
-      return next(err)
-    }
-    routes.use(errorHandler)
+      return next(appRes.error)
+    })
 
-    return routes
+  const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
+    if (!(err instanceof MageError)) {
+      next(err)
+    }
+    const mageErr = err as MageError<symbol, any>
+    if (mageErr.code === ErrPermissionDenied) {
+      return res.status(403)
+    }
+    if (mageErr.code === ErrEntityNotFound) {
+      const enf = mageErr as EntityNotFoundError
+      return res.status(400).json(`invalid ${enf.data.entityType} id: ${enf.data.entityId}`)
+    }
+    return next(err)
+  }
+  routes.use(errorHandler)
+
+  return routes
 }
 
 function EventRoutes(app: express.Application, security: { authentication: authentication.AuthLayer }) {
@@ -422,7 +442,7 @@ function EventRoutes(app: express.Application, security: { authentication: authe
 
         async.parallel([
           function(done: any) {
-            new api.Icon(req.event._id, form._id).saveDefaultIconToEventForm(function(err: any) {
+            new api.Icon(req.event!._id, form._id).saveDefaultIconToEventForm(function(err: any) {
               done(err);
             });
           },
@@ -472,7 +492,7 @@ function EventRoutes(app: express.Application, security: { authentication: authe
         if (err) {
           return next(err);
         }
-        res.attachment(req.event.name + "-" + form.name + "-form.zip");
+        res.attachment(req.event!.name + "-" + form.name + "-form.zip");
         form.file.pipe(res);
       });
     }
@@ -483,7 +503,7 @@ function EventRoutes(app: express.Application, security: { authentication: authe
     passport.authenticate('bearer'),
     authorizeAccess('READ_EVENT_ALL', 'read'),
     function(req, res) {
-      new api.Icon(req.event._id).getZipPath(function(err: any, zipPath: string) {
+      new api.Icon(req.event!._id).getZipPath(function(err: any, zipPath: string) {
         res.on('finish', function() {
           fs.remove(zipPath, function() {
             console.log('Deleted the temp icon zip %s', zipPath);
@@ -510,7 +530,7 @@ function EventRoutes(app: express.Application, security: { authentication: authe
     passport.authenticate('bearer'),
     authorizeAccess('READ_EVENT_ALL', 'read'),
     function(req, res, next) {
-      new api.Icon(req.event._id, req.params.formId).getIcons(function(err: any, icons: any) {
+      new api.Icon(req.event!._id, req.params.formId).getIcons(function(err: any, icons: any) {
         if (err) {
           return next();
         }
@@ -552,7 +572,7 @@ function EventRoutes(app: express.Application, security: { authentication: authe
     authorizeAccess('UPDATE_EVENT', 'update'),
     upload.single('icon'),
     function(req, res, next) {
-      new api.Icon(req.event._id, req.params.formId, req.params.primary, req.params.variant).create(req.file, function(err: any, icon: any) {
+      new api.Icon(req.event!._id, req.params.formId, req.params.primary, req.params.variant).create(req.file, function(err: any, icon: any) {
         if (err) {
           return next(err);
         }
@@ -567,7 +587,7 @@ function EventRoutes(app: express.Application, security: { authentication: authe
     passport.authenticate('bearer'),
     authorizeAccess('READ_EVENT_ALL', 'read'),
     function(req, res, next) {
-      new api.Icon(req.event._id, req.params.formId, req.params.primary, req.params.variant).getIcon(function(err: any, icon: any) {
+      new api.Icon(req.event!._id, req.params.formId, req.params.primary, req.params.variant).getIcon(function(err: any, icon: any) {
         if (err || !icon) {
           return next();
         }
@@ -600,7 +620,7 @@ function EventRoutes(app: express.Application, security: { authentication: authe
     passport.authenticate('bearer'),
     authorizeAccess('UPDATE_EVENT', 'update'),
     function(req, res, next) {
-      new api.Icon(req.event._id, req.params.formId, req.params.primary, req.params.variant).delete(function(err: any) {
+      new api.Icon(req.event!._id, req.params.formId, req.params.primary, req.params.variant).delete(function(err: any) {
         if (err) return next(err);
 
         return res.status(204).send();
@@ -613,7 +633,7 @@ function EventRoutes(app: express.Application, security: { authentication: authe
     passport.authenticate('bearer'),
     authorizeAccess('UPDATE_EVENT', 'update'),
     function(req, res, next) {
-      EventModel.addLayer(req.event, req.body, function(err: any, event?: MageEventDocument) {
+      EventModel.addLayer(req.event!, req.body, function(err: any, event?: MageEventDocument) {
         if (err) {
           return next(err);
         }
@@ -627,7 +647,7 @@ function EventRoutes(app: express.Application, security: { authentication: authe
     passport.authenticate('bearer'),
     authorizeAccess('UPDATE_EVENT', 'update'),
     function(req, res, next) {
-      EventModel.removeLayer(req.event, {id: req.params.id}, function(err: any, event?: MageEventDocument) {
+      EventModel.removeLayer(req.event!, {id: req.params.id}, function(err: any, event?: MageEventDocument) {
         if (err) {
           return next(err);
         }
@@ -642,7 +662,7 @@ function EventRoutes(app: express.Application, security: { authentication: authe
     authorizeAccess('READ_EVENT_ALL', 'read'),
     determineReadAccess,
     function (req, res, next) {
-      EventModel.getUsers(req.event._id, function(err, users) {
+      EventModel.getUsers(req.event!._id, function(err, users) {
         if (err) {
           return next(err);
         }
@@ -657,7 +677,7 @@ function EventRoutes(app: express.Application, security: { authentication: authe
     passport.authenticate('bearer'),
     authorizeAccess('UPDATE_EVENT', 'update'),
     function(req, res, next) {
-      EventModel.addTeam(req.event, req.body, function(err, event) {
+      EventModel.addTeam(req.event!, req.body, function(err, event) {
         if (err) {
           return next(err);
         }
@@ -676,7 +696,7 @@ function EventRoutes(app: express.Application, security: { authentication: authe
       if (typeof req.query.populate === 'string') {
         populate = req.query.populate.split(",");
       }
-      EventModel.getTeams(req.event._id, {populate: populate}, function(err: any, teams: any) {
+      EventModel.getTeams(req.event!._id, {populate: populate}, function(err: any, teams: any) {
         if (err) {
           return next(err);
         }
@@ -692,7 +712,7 @@ function EventRoutes(app: express.Application, security: { authentication: authe
     passport.authenticate('bearer'),
     authorizeAccess('UPDATE_EVENT', 'update'),
     function(req, res, next) {
-      EventModel.removeTeam(req.event, req.team, function(err, event) {
+      EventModel.removeTeam(req.event!, req.team, function(err, event) {
         if (err) {
           return next(err);
         }
@@ -706,7 +726,7 @@ function EventRoutes(app: express.Application, security: { authentication: authe
     passport.authenticate('bearer'),
     authorizeAccess('UPDATE_EVENT', 'update'),
     function(req, res, next) {
-      EventModel.updateUserInAcl(req.event._id, req.params.targetUserId, req.body.role, function(err, event) {
+      EventModel.updateUserInAcl(req.event!._id, req.params.targetUserId, req.body.role, function(err, event) {
         if (err) {
           return next(err);
         }
@@ -720,7 +740,7 @@ function EventRoutes(app: express.Application, security: { authentication: authe
     passport.authenticate('bearer'),
     authorizeAccess('UPDATE_EVENT', 'update'),
     function(req, res, next) {
-      EventModel.removeUserFromAcl(req.event._id, req.params.targetUserId, function(err, event) {
+      EventModel.removeUserFromAcl(req.event!._id, req.params.targetUserId, function(err, event) {
         if (err) {
           return next(err);
         }
@@ -736,6 +756,7 @@ namespace EventRoutes {
     eventRepo: MageEventRepository
     addFeedToEvent: AddFeedToEvent
     listEventFeeds: ListEventFeeds
+    fetchFeedContent: FetchFeedContent
   }
   export const EventAclFeedsPermissionService = EventFeedsPermissionService
 }

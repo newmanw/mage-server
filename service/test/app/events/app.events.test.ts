@@ -39,7 +39,6 @@ describe('events use case interactions', function() {
       const event: MageEvent = {
         id: 123,
         name: 'Maintenance Issues',
-        collectionName: 'observations123',
         teamIds: [],
         layerIds: [],
         style: {},
@@ -93,7 +92,6 @@ describe('events use case interactions', function() {
       event = {
         id: eventId,
         name: 'List Event Feeds',
-        collectionName: 'observations' + eventId,
         teamIds: [],
         layerIds: [],
         forms: [],

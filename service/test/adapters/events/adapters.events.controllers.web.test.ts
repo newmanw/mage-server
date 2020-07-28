@@ -5,18 +5,19 @@ import supertest from 'supertest'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
 import uniqid from 'uniqid'
 import _ from 'lodash'
-import { AppResponse, AppRequestContext, AppRequest } from '../../../lib/app.api/app.api.global'
+import { AppResponse, AppRequest } from '../../../lib/app.api/app.api.global'
 import EventRoutes from '../../../lib/routes/events'
-import { ListEventFeeds } from '../../../lib/app.impl/events/app.impl.events'
 import { WebAppRequestFactory } from '../../../lib/adapters/adapters.controllers.web'
-import { MageEvent, MageEventId, MageEventJson } from '../../../lib/entities/events/entities.events'
-import { AddFeedToEvent, AddFeedToEventRequest } from '../../../lib/app.api/events/app.api.events'
+import { MageEvent, MageEventRepository } from '../../../lib/entities/events/entities.events'
+import { AddFeedToEventRequest } from '../../../lib/app.api/events/app.api.events'
+import { FeedId, FeedContent } from '../../../lib/entities/feeds/entities.feeds'
+import { FetchFeedContentRequest } from '../../../lib/app.api/feeds/app.api.feeds'
 
 const rootPath = '/test/events'
 const jsonMimeType = /^application\/json/
 const testUser = 'lummytin'
 
-describe('event feeds web controller', function() {
+describe.only('event feeds web controller', function() {
 
   let createAppRequest: WebAppRequestFactory = <P>(webReq: express.Request, params?: P): AppRequest<typeof testUser> & P => {
     return {
@@ -31,11 +32,34 @@ describe('event feeds web controller', function() {
   }
   let eventFeedsRoutes: express.Router
   let app: express.Application
+  let eventRepo: SubstituteOf<MageEventRepository>
   let eventFeedsApp: SubstituteOf<EventRoutes.EventFeedsApp>
   let client: supertest.SuperTest<supertest.Test>
+  let event: MageEvent
 
   beforeEach(function() {
+    const eventId = Date.now()
+    event = {
+      id: eventId,
+      name: 'Test Event',
+      description: 'For testing',
+      complete: false,
+      forms: [],
+      teamIds: [],
+      layerIds: [],
+      feedIds: [],
+      style: {},
+      acl: {
+        [testUser]: {
+          role: 'GUEST',
+          permissions: [ 'read' ]
+        }
+      }
+    }
+    eventRepo = Sub.for<MageEventRepository>()
+    eventRepo.findById(eventId).resolves(event)
     eventFeedsApp = Sub.for<EventRoutes.EventFeedsApp>()
+    eventFeedsApp.eventRepo.returns!(eventRepo)
     eventFeedsRoutes = EventRoutes.FeedRoutes(eventFeedsApp, createAppRequest)
     app = express()
     app.use(rootPath, eventFeedsRoutes)
@@ -46,39 +70,22 @@ describe('event feeds web controller', function() {
 
     it('adds a feed to the context event', async function() {
 
-      const eventId: MageEventId = 123
       const feedId = uniqid()
-      const event: MageEvent = {
-        id: eventId,
-        name: 'Test Event',
-        description: 'For testing',
-        collectionName: 'observations' + eventId,
-        complete: false,
-        forms: [],
-        teamIds: [],
-        layerIds: [],
-        feedIds: [ feedId ],
-        style: {},
-        acl: {
-          [testUser]: 'GUEST'
-        }
-      }
-      const eventJson = _.omit(event, 'acl') as any
-      eventJson.acl =  { acl: { [testUser]: { role: 'GUEST', permissions: 'read' }}}
-
+      event.feedIds.push(feedId)
       const requestParams: Partial<AddFeedToEventRequest> = {
-        event: eventId,
+        event: event.id,
         feed: feedId
       }
       eventFeedsApp.addFeedToEvent(Arg.is(x => _.isMatch(x, requestParams)))
         .resolves(AppResponse.success<MageEvent, unknown>(event))
       const res = await client
-        .post(`${rootPath}/${eventId}/feeds`)
-        .send(feedId)
+        .post(`${rootPath}/${event.id}/feeds`)
+        .type('json')
+        .send(JSON.stringify(feedId))
 
       expect(res.status).to.equal(200)
       expect(res.type).to.match(jsonMimeType)
-      expect(res.body).to.deep.equal(eventJson as MageEventJson)
+      expect(res.body).to.deep.equal(event)
       eventFeedsApp.received(1).addFeedToEvent(Arg.is(x => _.isMatch(x, requestParams)))
     })
 
@@ -89,12 +96,51 @@ describe('event feeds web controller', function() {
     it('fails with 400 if the feed does not exist', async function() {
       expect.fail('todo')
     })
+
+    it('fails with 403 without permission', async function() {
+      expect.fail('todo')
+    })
   })
 
-  describe('GET /events/{eventId}/feeds/{feedId}/content', function() {
+  describe('POST /events/{eventId}/feeds/{feedId}/content', function() {
 
-    it('has tests', async function() {
-      expect.fail('todo')
+    it('fetches the feed content', async function() {
+
+      const feedId: FeedId = uniqid()
+      const variableParams = {
+        bbox: [ -104.25, 44.02, -104.20, 44.025 ]
+      }
+      const appReqParams: Partial<FetchFeedContentRequest> = {
+        feed: feedId,
+        variableParams
+      }
+      const content: FeedContent = {
+        feed: feedId,
+        topic: 'testing',
+        items: {
+          type: 'FeatureCollection',
+          features: [
+            {
+              type: 'Feature',
+              id: uniqid(),
+              geometry: { type: 'Point', coordinates: [ -104.23, 44.022 ] },
+              properties: {
+                title: 'fetches the feed content'
+              }
+            }
+          ]
+        }
+      }
+      eventFeedsApp.fetchFeedContent(Arg.is(x => _.isMatch(x, appReqParams)))
+        .resolves(AppResponse.success<FeedContent, unknown>(content))
+      const res = await client
+        .post(`${rootPath}/${event.id}/feeds/${feedId}/content`)
+        .send(variableParams)
+
+      expect(res.status).to.equal(200)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.deep.equal(content)
+      eventFeedsApp.received(1).fetchFeedContent(Arg.is(x => _.isMatch(x, appReqParams)))
     })
   })
 })
