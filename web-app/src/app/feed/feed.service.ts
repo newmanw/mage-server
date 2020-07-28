@@ -11,12 +11,29 @@ export class FeedService {
 
   constructor(private http: HttpClient) { }
 
+  private _allFeeds = new BehaviorSubject<Array<Feed>>([]);
+  readonly allFeeds = this._allFeeds.asObservable();
+
   private _feeds = new BehaviorSubject<Array<Feed>>([]);
   readonly feeds = this._feeds.asObservable();
 
   private _feedItems = new Map<string, BehaviorSubject<Array<FeedItem>>>();
   feedItems(feedId: string): Observable<Array<FeedItem>> {
     return this._feedItems.get(feedId).asObservable();
+  }
+
+  fetchAllFeeds(): Observable<Array<Feed>> {
+    const subject = new Subject<Array<Feed>>();
+    this.http.get<Array<Feed>>(`/api/feeds`).subscribe(feeds => {
+      feeds.map(feed => {
+        feed.id = feed.id.toString();
+        return feed;
+      });
+      subject.next(feeds);
+      this._allFeeds.next(feeds);
+    });
+
+    return subject;
   }
 
   fetchFeeds(eventId: number): Observable<Array<Feed>> {
@@ -57,7 +74,7 @@ export class FeedService {
       feedItems.next(items);
     });
 
-    return subject;    
+    return subject;
   }
 
 }

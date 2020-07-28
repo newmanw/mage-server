@@ -413,6 +413,7 @@ function config($httpProvider, $stateProvider, $urlRouterProvider, $urlServicePr
     component: "about",
     resolve: resolveLogin()
   });
+  
 }
 
 run.$inject = ['$rootScope', '$uibModal', '$templateCache', '$state', 'Api'];

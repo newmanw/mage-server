@@ -8,6 +8,70 @@
 
 <div class="container">
   <div class="row">
-    <app-feed-configuration></app-feed-configuration>
+    <div class="col-md-3">
+      <form class="form">
+        <div class="form-group">
+          <label>Search</label>
+          <input name="feedSearch" type="text" class="form-control" placeholder="feed name, description" [(ngModel)]="feedSearch" (keyup)="searchChanged()">
+        </div>
+      </form>
+      <hr>
+      <button class="btn btn-default pull-right" (click)="reset()">Reset</button>
+    </div>
+    <a uiSref="feed"
+    [uiParams]="{ feedId: 1 }"
+    uiSrefActive="active">test</a>
+
+    <div class="col-md-9">
+      <nav class="navbar navbar-default admin-dashboard-navbar">
+        <div class="container-fluid">
+          <div class="navbar-header">
+            <a class="navbar-brand">Feeds</a>
+          </div>
+
+          <form class="navbar-form navbar-right" role="search" ng-if="hasFeedCreatePermission">
+            <button type="submit" class="btn btn-default" ng-click="newFeed()">New Feed</button>
+          </form>
+        </div>
+      </nav>
+      <div class="row">
+        <div class="col-md-12">
+          <div class="admin-table">
+            <ng-container *ngFor="let feed of feeds | slice:page*itemsPerPage:itemsPerPage;">
+              <div class="well-item">
+                <div class="row pointer" (click)="goToFeed(feed)">
+                  <div class="col-md-8">
+                    <div class="right-gap pull-left">
+                      <i class="fa fa-rss admin-layer-icon"></i>
+                    </div>
+                    <div class="strong">{{feed.title}}</div>
+                    <div class="muted"><span class="right-gap">{{feed.summary}}</span></div>
+                  </div>
+                  <div class="col-md-4">
+                    <button class="btn btn-sm btn-danger pull-right admin-user-button" ng-if="hasFeedDeletePermission" ng-click="deleteFeed($event, feed)">Delete</button>
+                    <button class="btn btn-sm btn-default pull-right" ng-if="hasFeedEditPermission" ng-click="editFeed($event, feed)">Edit</button>
+                  </div>
+                </div>
+              </div>
+            </ng-container>
+          </div>
+          <div class="row">
+            <div class="col-md-12">
+              <ul class="pager pull-right">
+                <li [ngClass]="{'disabled': page == 0}">
+                  <a href="javascript:void(0);" (click)="page == 0 || (page=page-1)">&larr; Previous</a>
+                </li>
+                <li [ngClass]="{'disabled': page >= (feeds.length/itemsPerPage) - 1}">
+                  <a href="javascript:void(0);" (click)="page >= (feeds.length/itemsPerPage) - 1 || (page=page+1)">Next&rarr;</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
+
+<!-- <app-feed-configuration></app-feed-configuration> -->
+

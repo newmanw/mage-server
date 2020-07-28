@@ -1,9 +1,11 @@
 import { BrowserModule } from '@angular/platform-browser';
-import { NgModule } from '@angular/core';
+import { NgModule, ApplicationRef } from '@angular/core';
 
 import { UpgradeModule } from '@angular/upgrade/static';
 import { UIRouterUpgradeModule } from '@uirouter/angular-hybrid';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+
+import { UIRouter } from '@uirouter/core';
 
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
@@ -13,7 +15,6 @@ import { DragDropModule } from '@angular/cdk/drag-drop';
 import { JsonSchemaWidgetsModule } from './json-schema-widgets/json-schema-widgets.module';
 
 import { SaturationModule, HueModule, CheckboardModule, AlphaModule } from 'ngx-color';
-
 import {
   MatIcon,
   MatButton,
@@ -64,7 +65,7 @@ import { LayerHeaderComponent } from './map/layers/layer-header.component';
 import { LayerContentComponent } from './map/layers/layer-content.component';
 import { ColorPickerComponent } from './color-picker/color-picker.component';
 
-import { mapServiceProvider, localStorageServiceProvider } from './upgrade/ajs-upgraded-providers';
+import { mapServiceProvider, localStorageServiceProvider, userServiceProvider } from './upgrade/ajs-upgraded-providers';
 import { BootstrapComponent } from './bootstrap/bootstrap.component';
 import { FeedComponent } from './feed/feed.component';
 import { FeedListItemComponent } from './feed/item/list-item.component';
@@ -103,13 +104,13 @@ import { FeedTabComponent } from './feed/tab.component';
     MapClipComponent,
     GeometryPipe,
     FeedItemMapPopupComponent,
-    FeedTabComponent,
+    FeedTabComponent
   ],
   imports: [
     BrowserModule,
     HttpClientModule,
     UpgradeModule,
-    UIRouterUpgradeModule.forRoot({ states: [] }),
+    UIRouterUpgradeModule.forRoot(),
     FormsModule,
     ReactiveFormsModule,
     BrowserAnimationsModule,
@@ -146,6 +147,7 @@ import { FeedTabComponent } from './feed/tab.component';
     FeedItemPopupService,
     mapServiceProvider,
     localStorageServiceProvider,
+    userServiceProvider,
     { provide: HTTP_INTERCEPTORS, useClass: TokenInterceptorService, multi: true }
   ],
   bootstrap: [],
@@ -177,6 +179,37 @@ import { FeedTabComponent } from './feed/tab.component';
   ]
 })
 export class AppModule {
+
+  constructor(private router: UIRouter) {
+
+  }
   // eslint-disable-next-line @typescript-eslint/no-empty-function
-  public ngDoBootstrap(): void {}
+  public ngDoBootstrap(appRef: ApplicationRef): void {
+    // this.upgrade.bootstrap(document.body, ["app"], { strictDi: true });
+  }
 }
+
+// platformBrowserDynamic().bootstrapModule(AppModule).then(platformRef => {
+//   const upgrade = platformRef.injector.get(UpgradeModule) as UpgradeModule;
+//   upgrade.bootstrap(document.body, ['myApp'], { strictDi: true });
+//   });
+
+// platformBrowserDynamic()
+//   .bootstrapModule(AppModule)
+//   .then(platformRef => {
+//     // const url: UrlService = getUIRouter(injector).urlService;
+//     // const upgrade = platformRef.injector.get(UpgradeModule) as UpgradeModule;
+//     // upgrade.bootstrap(document.body, ['myApp'], { strictDi: true });
+
+//     // Intialize the Angular Module
+//     // get() the UIRouter instance from DI to initialize the router
+//     const urlService: UrlService = getUIRouter(platformRef.injector).urlService;
+//     // Instruct UIRouter to listen to URL changes
+//     const startUIRouter = (): void => {
+//       urlService.listen();
+//       urlService.sync();
+//     };
+
+//     platformRef.injector.get<NgZone>(NgZone).run(startUIRouter);
+
+//   });
