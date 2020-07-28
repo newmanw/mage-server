@@ -4,22 +4,29 @@ const  api = require('../api')
   , fileType = require('file-type')
   , userTransformer = require('../transformers/user');
 
-import EventModel, { Style, MageEventDocument, FormDocument } from '../models/event'
+import EventModel, { MageEventDocument, FormDocument } from '../models/event'
 import access from '../access'
 import express from 'express'
-import { AnyPermission } from '../models/permission'
+import { AnyPermission, allPermissions } from '../models/permission'
 import { JsonObject } from '../entities/entities.global.json'
 import authentication from '../authentication'
 import fs from 'fs-extra'
-import { MageEventRepository } from '../entities/events/entities.events'
-import { FeedRepository } from '../entities/feeds/entities.feeds'
+import { EventPermission, Style, MageEventRepository } from '../entities/events/entities.events'
 import { defaultHandler as upload } from '../upload'
+import { AddFeedToEvent, ListEventFeeds, AddFeedToEventRequest, ListEventFeedsRequest } from '../app.api/events/app.api.events'
+import { AppRequestContext } from '../app.api/app.api.global'
+import { UserDocument } from '../models/user'
+import { WebAppRequestFactory } from '../adapters/adapters.controllers.web'
+import { FeedsPermissionService } from '../app.api/feeds/app.api.feeds'
+import { PermissionDeniedError, permissionDenied, MageError, ErrPermissionDenied, ErrEntityNotFound, EntityNotFoundError } from '../app.api/app.api.global.errors'
+import { ErrorRequestHandler } from 'express-serve-static-core'
+import { FeedId } from '../entities/feeds/entities.feeds'
 
 declare module 'express-serve-static-core' {
   export interface Request {
-    access: { user: express.Request['user'], permission: EventModel.EventPermission }
     event: EventModel.MageEventDocument
-    parameters: EventQueryParams
+    access?: { user: express.Request['user'], permission: EventPermission }
+    parameters?: EventQueryParams
     form?: FormJson
     team?: any
   }
@@ -32,7 +39,7 @@ function determineReadAccess(req: express.Request, res: express.Response, next: 
   next();
 }
 
-function authorizeAccess(collectionPermission: AnyPermission, aclPermission: EventModel.EventPermission): express.RequestHandler {
+function authorizeAccess(collectionPermission: AnyPermission, aclPermission: EventPermission): express.RequestHandler {
   return function(req, res, next) {
     if (access.userHasPermission(req.user, collectionPermission)) {
       next();
@@ -44,7 +51,6 @@ function authorizeAccess(collectionPermission: AnyPermission, aclPermission: Eve
     }
   };
 }
-
 
 interface FormFieldChoiceJson {
   title: string
@@ -163,13 +169,100 @@ function reduceStyle(style: any): Style {
   }, {})
 }
 
-type EventFeedsApp = {
-  eventRepo: MageEventRepository
-  feedRepo: FeedRepository
+class EventRequestContext implements AppRequestContext<UserDocument> {
+
+  readonly requestToken = null
+  readonly user: UserDocument
+  readonly event: MageEventDocument
+
+  constructor(req: express.Request) {
+    this.user = req.user
+    this.event = req.event
+  }
+
+  requestingPrincipal() {
+    return this.user
+  }
 }
 
-function FeedsRoutes(eventFeeds: EventFeedsApp) {
+class EventFeedsPermissionService implements FeedsPermissionService {
+  async ensureListServiceTypesPermissionFor(context: EventRequestContext): Promise<PermissionDeniedError | null> {
+    return permissionDenied(allPermissions.FEEDS_LIST_SERVICE_TYPES, context.requestingPrincipal().username)
+  }
+  async ensureCreateServicePermissionFor(context: EventRequestContext): Promise<PermissionDeniedError | null> {
+    return permissionDenied(allPermissions.FEEDS_CREATE_SERVICE, context.requestingPrincipal().username)
+  }
+  async ensureListServicesPermissionFor(context: EventRequestContext): Promise<PermissionDeniedError | null> {
+    return permissionDenied(allPermissions.FEEDS_LIST_SERVICES, context.requestingPrincipal().username)
+  }
+  async ensureListTopicsPermissionFor(context: EventRequestContext, service: string): Promise<PermissionDeniedError | null> {
+    return permissionDenied(allPermissions.FEEDS_LIST_TOPICS, context.requestingPrincipal().username)
+  }
+  async ensureCreateFeedPermissionFor(context: EventRequestContext, service: string): Promise<PermissionDeniedError | null> {
+    return permissionDenied(allPermissions.FEEDS_CREATE_FEED, context.requestingPrincipal().username)
+  }
+  async ensureListAllFeedsPermissionFor(context: EventRequestContext): Promise<PermissionDeniedError | null> {
+    return permissionDenied(allPermissions.FEEDS_LIST_ALL, context.requestingPrincipal().username)
+  }
+  async ensureFetchFeedContentPermissionFor(context: EventRequestContext, feed: FeedId): Promise<PermissionDeniedError | null> {
+    const event = context.event
+    throw new Error('todo')
+  }
+}
 
+function EventFeedsRoutes(eventFeeds: EventRoutes.EventFeedsApp, createAppRequest: WebAppRequestFactory): express.Router {
+
+  const routes = express.Router()
+
+  routes.param('eventId', async (req, res, next, value) => {
+    const event = await eventFeeds.eventRepo.findById(value)
+    if (!event) {
+      return res.status(404).json('event not found')
+    }
+    return next()
+  })
+
+  routes.route('/api/events/:eventId/feeds')
+    .post(async (req, res, next) => {
+      if (typeof req.body !== 'string') {
+        return res.status(400).json('post a json feed id string')
+      }
+      const feedId = req.body
+      const appReq: AddFeedToEventRequest = createAppRequest(req, { event: req.event.id, feed: feedId })
+      const appRes = await eventFeeds.addFeedToEvent(appReq)
+      if (appRes.success) {
+        return res.json(appRes.success)
+      }
+      return next(appRes.error)
+    })
+    .get(async (req, res, next) => {
+      const appReq: ListEventFeedsRequest = createAppRequest(req, {
+        event: req.event.id
+      })
+      const appRes = await eventFeeds.listEventFeeds(appReq)
+      if (appRes.success) {
+        return res.json(appRes.success)
+      }
+      return next(appRes.error)
+    })
+
+    const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
+      if (!(err instanceof MageError)) {
+        next(err)
+      }
+      const mageErr = err as MageError<symbol, any>
+      if (mageErr.code === ErrPermissionDenied) {
+        return res.status(403)
+      }
+      if (mageErr.code === ErrEntityNotFound) {
+        const enf = mageErr as EntityNotFoundError
+        return res.status(400).json(`invalid ${enf.data.entityType} id: ${enf.data.entityId}`)
+      }
+      return next(err)
+    }
+    routes.use(errorHandler)
+
+    return routes
 }
 
 function EventRoutes(app: express.Application, security: { authentication: authentication.AuthLayer }) {
@@ -197,17 +290,17 @@ function EventRoutes(app: express.Application, security: { authentication: authe
     parseEventQueryParams,
     function (req, res, next) {
       const filter = {
-        complete: req.parameters.complete,
+        complete: req.parameters!.complete,
       } as any
-      if (req.parameters.userId) {
-        filter.userId = req.parameters.userId
+      if (req.parameters!.userId) {
+        filter.userId = req.parameters!.userId
       }
-      EventModel.getEvents({access: req.access, filter: filter, populate: req.parameters.populate, projection: req.parameters.projection}, function(err, events) {
+      EventModel.getEvents({access: req.access, filter: filter, populate: req.parameters!.populate, projection: req.parameters!.projection}, function(err, events) {
         if (err) {
           return next(err);
         }
         res.json(events!.map(function(event) {
-          return event.toObject({access: req.access, projection: req.parameters.projection});
+          return event.toObject({access: req.access!, projection: req.parameters!.projection});
         }));
       });
     }
@@ -235,11 +328,11 @@ function EventRoutes(app: express.Application, security: { authentication: authe
     function (req, res, next) {
       // TODO already queried event to check access, don't need to get it again.  Just need to populate the
       // correct fields based on query params
-      EventModel.getById(req.event._id, {access: req.access, populate: req.parameters.populate}, function(err, event) {
+      EventModel.getById(req.event!._id, {access: req.access, populate: req.parameters!.populate}, function(err, event) {
         if (err) return next(err);
         if (!event) return res.sendStatus(404);
 
-        res.json(event.toObject({access: req.access, projection: req.parameters.projection}));
+        res.json(event.toObject({access: req.access!, projection: req.parameters!.projection}));
       });
     }
   );
@@ -638,7 +731,13 @@ function EventRoutes(app: express.Application, security: { authentication: authe
 };
 
 namespace EventRoutes {
-  export const addFeedsRoutes = FeedsRoutes
+  export const FeedRoutes = EventFeedsRoutes
+  export type EventFeedsApp = {
+    eventRepo: MageEventRepository
+    addFeedToEvent: AddFeedToEvent
+    listEventFeeds: ListEventFeeds
+  }
+  export const EventAclFeedsPermissionService = EventFeedsPermissionService
 }
 
 export = EventRoutes

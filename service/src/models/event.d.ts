@@ -1,79 +1,30 @@
 import mongoose, { DocumentToObjectOptions } from 'mongoose'
-import { FeedId } from '../entities/feeds/entities.feeds'
 import { UserDocument } from './user'
-
-
-export type MageEventId = number
-
-export interface MageEventDocumentAttrs {
-  _id: MageEventId
-  id: MageEventId
-  name: string
-  description?: string
-  complete?: boolean
-  collectionName: string
-  teamIds: mongoose.Types.ObjectId[]
-  layerIds: mongoose.Types.ObjectId[]
-  feedIds: FeedId[]
-  forms: FormDocument[]
-  style: Style
-  acl: Acl
-}
-
-export type MageEventCreateAttrs = Pick<MageEventDocumentAttrs, 'name' | 'description'>
+import { MageEventId, MageEvent, MageEventCreateAttrs, EventPermission, Form, MageEventJson, FormFieldChoice, FormField } from '../entities/events/entities.events'
 
 export interface MageEventDocumentToObjectOptions extends DocumentToObjectOptions {
   access: { user: UserDocument, permission: EventPermission }
   projection: any
 }
-export type MageEventDocument = MageEventDocumentAttrs & mongoose.Document & {
+
+export type MageEventDocument = Omit<MageEvent, 'teamIds' | 'layerIds'> & mongoose.Document & {
+  teamIds: mongoose.Types.ObjectId[]
+  layerIds: mongoose.Types.ObjectId[]
   toObject(options?: MageEventDocumentToObjectOptions): any
+  toJSON(options: DocumentToObjectOptions): MageEventJson
 }
 
-export interface FormDocument extends mongoose.Document {
+export type FormDocument = Form & mongoose.Document & {
   _id: number,
-  name: string,
-  color: string,
 }
-
-export interface Style {
-  /**
-   * Hex RGB string beginning with '#'
-   */
-  fill?: string,
-  /**
-   * Hex RGB string beginning with '#'
-   */
-  stroke?: string,
-  /**
-   * Number between 0 and 1
-   */
-  fillOpacity?: number,
-  strokeOpacity?: number,
-  strokeWidth?: number,
+export type FormFieldDocument = FormField & mongoose.Document & {
+  _id: never
 }
-
-export type RoleName = string
-
-/**
- * The ACL (access control list) structure is a dictionary whose keys are
- * user IDs, and corresponding values are the role names that define the
- * permissions the user ID has on the event.
- */
-export interface Acl {
-  [userId: string]: RoleName
+export type FormFieldChoiceDocument = FormFieldChoice & mongoose.Document & {
+  _id: never
 }
-
-export type EventPermission = 'read' | 'update' | 'delete'
-export type EventRolePermissions = {
-  OWNER: EventPermission[],
-  MANAGER: EventPermission[],
-  GUEST: EventPermission[]
-}
-export type EventRole = keyof EventRolePermissions
 
 export type TODO = any
-export type Permission = 'read' | 'update' | 'delete'
 export type Callback<Result = unknown> = (err: Error | null, result?: Result) => void
 
 export declare function count(options: TODO, callback: Callback<number>): void

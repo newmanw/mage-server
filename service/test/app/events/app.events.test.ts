@@ -36,7 +36,17 @@ describe('events use case interactions', function() {
         feed: uniqid(),
         event: 123
       })
-      const event: MageEvent = { id: 123, feedIds: [ req.feed ] }
+      const event: MageEvent = {
+        id: 123,
+        name: 'Maintenance Issues',
+        collectionName: 'observations123',
+        teamIds: [],
+        layerIds: [],
+        style: {},
+        forms: [],
+        acl: {},
+        feedIds: [ req.feed ]
+      }
       app.eventRepo.addFeedsToEvent(req.event, req.feed).resolves(event)
 
       const res = await app.addFeedToEvent(req)
@@ -82,6 +92,13 @@ describe('events use case interactions', function() {
       eventId = new Date().getMilliseconds()
       event = {
         id: eventId,
+        name: 'List Event Feeds',
+        collectionName: 'observations' + eventId,
+        teamIds: [],
+        layerIds: [],
+        forms: [],
+        style: {},
+        acl: {},
         feedIds: [ uniqid(), uniqid() ]
       }
       app.eventRepo.findById(eventId).resolves(event)
