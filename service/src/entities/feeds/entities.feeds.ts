@@ -1,5 +1,5 @@
 
-import { Json, JsonObject } from '../entities.global.json'
+import { Json, JsonObject } from '../entities.json'
 import { FeatureCollection } from 'geojson'
 import { JSONSchema4 } from 'json-schema'
 

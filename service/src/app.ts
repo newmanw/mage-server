@@ -16,7 +16,7 @@ import { WebAppRequestFactory } from './adapters/adapters.controllers.web'
 import { AppRequest } from './app.api/app.api.global'
 import { UserDocument } from './models/user'
 import SimpleIdFactory from './adapters/adapters.simple_id_factory'
-import { JsonSchemaService, JsonValidator, JSONSchema4 } from './entities/entities.global.json'
+import { JsonSchemaService, JsonValidator, JSONSchema4 } from './entities/entities.json'
 
 
 export interface MageService {

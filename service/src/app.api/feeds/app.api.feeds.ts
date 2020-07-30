@@ -1,6 +1,6 @@
 import { AppRequest, AppResponse, Descriptor, AppRequestContext, KnownErrorsOf } from '../app.api.global'
 import { FeedService, FeedTopic, FeedContent, FeedId, FeedServiceTypeId, FeedServiceId, Feed, FeedTopicId, FeedServiceType, FeedCreateAttrs, FeedContentParams, FeedMinimalAttrs } from '../../entities/feeds/entities.feeds'
-import { Json, JsonObject } from '../../entities/entities.global.json'
+import { Json, JsonObject } from '../../entities/entities.json'
 import { PermissionDeniedError, EntityNotFoundError, InvalidInputError } from '../app.api.errors'
 
 
