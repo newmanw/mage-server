@@ -5,7 +5,7 @@ import { Substitute as Sub, Arg } from '@fluffy-spoon/substitute'
 import { MageEvent, MageEventId, MageEventRepository } from '../../../lib/entities/events/entities.events'
 import { AddFeedToEventRequest, ListEventFeedsRequest } from '../../../lib/app.api/events/app.api.events'
 import { AddFeedToEvent, ListEventFeeds } from '../../../lib/app.impl/events/app.impl.events'
-import { MageError, ErrEntityNotFound } from '../../../lib/app.api/app.api.global.errors'
+import { MageError, ErrEntityNotFound } from '../../../lib/app.api/app.api.errors'
 import { AppRequest } from '../../../lib/app.api/app.api.global'
 import { Feed, FeedRepository, FeedServiceRepository, FeedServiceTypeRepository } from '../../../lib/entities/feeds/entities.feeds'
 

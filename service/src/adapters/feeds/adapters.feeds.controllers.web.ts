@@ -10,7 +10,7 @@ declare global {
 import express from 'express'
 import bodyParser from 'body-parser'
 import { ListFeedServiceTypes, ListServiceTopics, CreateFeedService, ListFeedServices, PreviewTopics, PreviewTopicsRequest, CreateFeed, CreateFeedRequest } from '../../app.api/feeds/app.api.feeds'
-import { ErrPermissionDenied, MageError, PermissionDeniedError, ErrInvalidInput, invalidInput, ErrEntityNotFound } from '../../app.api/app.api.global.errors'
+import { ErrPermissionDenied, MageError, PermissionDeniedError, ErrInvalidInput, invalidInput, ErrEntityNotFound } from '../../app.api/app.api.errors'
 import { WebAppRequestFactory } from '../adapters.controllers.web'
 
 export interface FeedsAppLayer {

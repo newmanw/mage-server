@@ -1,7 +1,7 @@
 import { UserDocument } from '../models/user'
 import { MageEventDocument, TeamDocument } from '../models/event'
 import { AppRequestContext } from '../app.api/app.api.global'
-import { PermissionDeniedError, permissionDenied } from '../app.api/app.api.global.errors'
+import { PermissionDeniedError, permissionDenied } from '../app.api/app.api.errors'
 import { FeedId } from '../entities/feeds/entities.feeds'
 import { allPermissions, AnyPermission } from '../models/permission'
 import { FeedsPermissionService } from '../app.api/feeds/app.api.feeds'

@@ -1,5 +1,5 @@
 import { FeedsPermissionService } from '../app.api/feeds/app.api.feeds'
-import { PermissionDeniedError, permissionDenied } from '../app.api/app.api.global.errors'
+import { PermissionDeniedError, permissionDenied } from '../app.api/app.api.errors'
 import { AppRequestContext } from '../app.api/app.api.global'
 import { UserDocument } from '../models/user'
 import { RoleDocument } from '../models/role'

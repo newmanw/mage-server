@@ -1,7 +1,7 @@
 import { FeedServiceTypeRepository, FeedServiceRepository, FeedTopic, FeedService, InvalidServiceConfigError, FeedContent, Feed, FeedTopicId, FeedServiceConnection, FeedRepository, FeedCreateAttrs, FeedMinimalAttrs, FeedServiceType } from '../../entities/feeds/entities.feeds';
 import * as api from '../../app.api/feeds/app.api.feeds'
 import { AppRequest, KnownErrorsOf, withPermission, AppResponse } from '../../app.api/app.api.global'
-import { PermissionDeniedError, EntityNotFoundError, InvalidInputError, entityNotFound, invalidInput, MageError, ErrInvalidInput, KeyPathError } from '../../app.api/app.api.global.errors'
+import { PermissionDeniedError, EntityNotFoundError, InvalidInputError, entityNotFound, invalidInput, MageError, ErrInvalidInput, KeyPathError } from '../../app.api/app.api.errors'
 import { FeedServiceTypeDescriptor } from '../../app.api/feeds/app.api.feeds'
 import { JsonSchemaService, JsonValidator } from '../../entities/entities.global.json'
 

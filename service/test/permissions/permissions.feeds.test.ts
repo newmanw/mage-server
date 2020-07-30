@@ -6,7 +6,7 @@ import uniqid from 'uniqid'
 import { PreFetchedUserRoleFeedsPermissionService, UserWithRole } from '../../lib/permissions/permissions.feeds'
 import { AppRequestContext } from '../../lib/app.api/app.api.global'
 import { RoleDocument } from '../../src/models/role'
-import { MageError, ErrPermissionDenied } from '../../lib/app.api/app.api.global.errors'
+import { MageError, ErrPermissionDenied } from '../../lib/app.api/app.api.errors'
 import { AnyPermission } from '../../lib/models/permission'
 
 describe('feeds permission service', function() {

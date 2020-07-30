@@ -1,7 +1,7 @@
 import { AppRequest, AppResponse } from '../app.api.global'
 import { FeedId, Feed, FeedContent } from '../../entities/feeds/entities.feeds'
 import { MageEventId, MageEvent } from '../../entities/events/entities.events'
-import { EntityNotFoundError } from '../app.api.global.errors'
+import { EntityNotFoundError } from '../app.api.errors'
 
 export interface AddFeedToEventRequest extends AppRequest {
   feed: FeedId,

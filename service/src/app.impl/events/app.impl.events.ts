@@ -1,6 +1,6 @@
 import { AddFeedToEvent, AddFeedToEventRequest, ListEventFeeds, ListEventFeedsRequest, UserFeed } from '../../app.api/events/app.api.events'
 import { MageEventRepository, MageEvent } from '../../entities/events/entities.events'
-import { entityNotFound, EntityNotFoundError } from '../../app.api/app.api.global.errors'
+import { entityNotFound, EntityNotFoundError } from '../../app.api/app.api.errors'
 import { AppResponse } from '../../app.api/app.api.global'
 import { FeedRepository } from '../../entities/feeds/entities.feeds'
 

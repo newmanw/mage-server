@@ -10,7 +10,7 @@ import { AppResponse, AppRequestContext, AppRequest } from '../../../lib/app.api
 import { FeedsRoutes, FeedsAppLayer } from '../../../lib/adapters/feeds/adapters.feeds.controllers.web'
 import { CreateFeedServiceRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, CreateFeedRequest } from '../../../lib/app.api/feeds/app.api.feeds'
 import { FeedService, Feed, FeedTopic } from '../../../lib/entities/feeds/entities.feeds'
-import { permissionDenied, PermissionDeniedError, InvalidInputError, invalidInput, EntityNotFoundError, entityNotFound } from '../../../lib/app.api/app.api.global.errors'
+import { permissionDenied, PermissionDeniedError, InvalidInputError, invalidInput, EntityNotFoundError, entityNotFound } from '../../../lib/app.api/app.api.errors'
 import { WebAppRequestFactory } from '../../../lib/adapters/adapters.controllers.web'
 import { JSONSchema4 } from 'json-schema'
 
