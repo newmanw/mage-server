@@ -8,7 +8,7 @@ import { MongooseMageEventRepository, MageEventModel } from '../../../lib/adapte
 import * as legacy from '../../../lib/models/event'
 import { MageEventDocument } from '../../../src/models/event'
 import TeamModelModule = require('../../../lib/models/team')
-import { Team, TeamMemberRole, TeamMemberRolePermission } from '../../../lib/entities/teams/entities.teams'
+import { Team } from '../../../lib/entities/teams/entities.teams'
 
 const TeamModel = TeamModelModule.TeamModel
 
@@ -37,7 +37,7 @@ describe('event mongoose repository', function() {
   beforeEach('initialize model', async function() {
     model = legacy.Model
     repo = new MongooseMageEventRepository(model)
-    eventDoc = await new Promise<legacy.MageEventDocument>((resolve, reject) => {
+    eventDoc = await new Promise<legacy.MageEventDocument>((resolve) => {
       legacy.create(
         {
           name: 'Test Event',

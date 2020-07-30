@@ -12,12 +12,13 @@ import { MageEvent, MageEventRepository } from '../../../lib/entities/events/ent
 import { AddFeedToEventRequest, ListEventFeedsRequest, UserFeed } from '../../../lib/app.api/events/app.api.events'
 import { FeedId, FeedContent } from '../../../lib/entities/feeds/entities.feeds'
 import { FetchFeedContentRequest } from '../../../lib/app.api/feeds/app.api.feeds'
+import { EventFeedsApp, EventFeedsRoutes } from '../../../lib/adapters/events/adapters.events.controllers.web'
 
 const rootPath = '/test/events'
 const jsonMimeType = /^application\/json/
 const testUser = 'lummytin'
 
-describe('event feeds web controller', function() {
+describe.only('event feeds web controller', function() {
 
   let createAppRequest: WebAppRequestFactory = <P>(webReq: express.Request, params?: P): AppRequest<typeof testUser> & P => {
     return {
@@ -33,7 +34,7 @@ describe('event feeds web controller', function() {
   let eventFeedsRoutes: express.Router
   let app: express.Application
   let eventRepo: SubstituteOf<MageEventRepository>
-  let eventFeedsApp: SubstituteOf<EventRoutes.EventFeedsApp>
+  let eventFeedsApp: SubstituteOf<EventFeedsApp>
   let client: supertest.SuperTest<supertest.Test>
   let event: MageEvent
 
@@ -58,9 +59,9 @@ describe('event feeds web controller', function() {
     }
     eventRepo = Sub.for<MageEventRepository>()
     eventRepo.findById(eventId).resolves(event)
-    eventFeedsApp = Sub.for<EventRoutes.EventFeedsApp>()
+    eventFeedsApp = Sub.for<EventFeedsApp>()
     eventFeedsApp.eventRepo.returns!(eventRepo)
-    eventFeedsRoutes = EventRoutes.FeedRoutes(eventFeedsApp, createAppRequest)
+    eventFeedsRoutes = EventFeedsRoutes(eventFeedsApp, createAppRequest)
     app = express()
     app.use(rootPath, eventFeedsRoutes)
     client = supertest(app)
