@@ -24,7 +24,7 @@ function requestBy<P extends object>(user: string, params: P): AppRequest<Substi
   }
 }
 
-describe.only('event feeds use case interactions', function() {
+describe('event feeds use case interactions', function() {
 
   let app: EventsUseCaseInteractions
   let event: MageEvent
