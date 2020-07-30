@@ -7,31 +7,31 @@ import express from 'express'
 import { RoleDocument } from '../models/role'
 import { UserDocument } from '../models/user'
 
-class Access {
+export = Object.freeze({
 
-  authorize = function(permission: AnyPermission): express.RequestHandler {
+  authorize(permission: AnyPermission): express.RequestHandler {
     return function(req, res, next): any {
       if (!req.user) {
-        return next();
+        return next()
       }
-      const role = req.user.roleId as RoleDocument;
+      const role = req.user.roleId as RoleDocument
       if (!role) {
-        return res.sendStatus(403);
+        return res.sendStatus(403)
       }
-      const userPermissions = role.permissions;
-      const ok = userPermissions.indexOf(permission) !== -1;
+      const userPermissions = role.permissions
+      const ok = userPermissions.indexOf(permission) !== -1
       if (!ok) {
-        return res.sendStatus(403);
+        return res.sendStatus(403)
       }
-      next();
+      next()
     }
-  }
+  },
 
-  userHasPermission = function(user: UserDocument, permission: AnyPermission) {
-    if (!user || !user.roleId) return false;
+  userHasPermission(user: UserDocument, permission: AnyPermission) {
+    if (!user || !user.roleId) {
+      return false
+    }
     const role = user.roleId as RoleDocument
-    return role.permissions.indexOf(permission) !== -1;
+    return role.permissions.indexOf(permission) !== -1
   }
-}
-
-export = new Access();
+})

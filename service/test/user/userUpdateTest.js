@@ -1074,7 +1074,7 @@ describe("user update tests", function() {
       .onFirstCall()
       .yields(null, mockEvent1);
 
-    sinon.mock(EventModel)
+      sinon.mock(EventModel)
       .expects('populate')
       .yields(null, {
         teamIds: [{

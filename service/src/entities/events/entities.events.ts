@@ -1,4 +1,5 @@
 import { FeedId } from '../feeds/entities.feeds'
+import { Team, TeamId } from '../entities.teams'
 
 export type MageEventId = number
 
@@ -7,7 +8,8 @@ export interface MageEvent {
   name: string
   description?: string
   complete?: boolean
-  teamIds: string[]
+  teamIds?: TeamId[]
+  teams?: Team[]
   layerIds: string[]
   feedIds: FeedId[]
   forms: Form[]
@@ -89,12 +91,24 @@ export interface Style {
 }
 
 export type EventPermission = 'read' | 'update' | 'delete'
-export type EventRolePermissions = {
-  OWNER: EventPermission[],
-  MANAGER: EventPermission[],
-  GUEST: EventPermission[]
+export type EventRolePermissions = { [role in EventRole]: EventPermission[] }
+export type EventRole =  'OWNER' | 'MANAGER' | 'GUEST'
+
+export const EventRolePermissions: EventRolePermissions = {
+  OWNER: ['read', 'update', 'delete'],
+  MANAGER: ['read', 'update'],
+  GUEST: ['read'],
+};
+
+export function rolesWithPermission(permission: EventPermission): EventRole[] {
+  const roles: EventRole[] = []
+  for (const key in EventRolePermissions) {
+    if (EventRolePermissions[key as EventRole].indexOf(permission) !== -1) {
+      roles.push(key as EventRole)
+    }
+  }
+  return roles
 }
-export type EventRole = keyof EventRolePermissions
 
 /**
  * The ACL (access control list) structure is a dictionary whose keys are
@@ -118,4 +132,5 @@ export interface MageEventRepository {
    * @param feed a Feed ID
    */
   addFeedsToEvent(event: MageEventId, feed: FeedId): Promise<MageEvent | null>
+  findTeamsInEvent(event: MageEventId): Promise<Team[] | null>
 }

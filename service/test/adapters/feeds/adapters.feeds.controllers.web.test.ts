@@ -442,7 +442,7 @@ invalid request
         variableParamsSchema: appReq.feed.variableParamsSchema
       }
       appRequestFactory.createRequest(Arg.any(), Arg.deepEquals({ feed: appReq.feed })).returns(appReq)
-      appLayer.createFeed(Arg.is((x: AppRequest) => x.context?.requestToken === appReq.context.requestToken)).resolves(AppResponse.success<Feed, unknown>(feed))
+      appLayer.createFeed(Arg.is((x: AppRequest) => x.context?.requestToken === appReq.context.requestToken) as any).resolves(AppResponse.success<Feed, unknown>(feed))
 
       const res = await client
         .post(`${rootPath}/services/${service}/topics/${topic}/feeds`)

@@ -5,8 +5,8 @@ const mongoose = require('mongoose')
   , Team = require('./team')
   , api = require('../api')
   , whitelist = require('../utilities/whitelist')
-  , log = require('winston');
-const { FeedsModels } = require('../adapters/feeds/adapters.feeds.db.mongoose');
+  , log = require('winston')
+const { rolesWithPermission, EventRolePermissions } = require('../entities/events/entities.events');
 
 // Creates a new Mongoose Schema object
 const Schema = mongoose.Schema;
@@ -40,34 +40,15 @@ function hasAtLeastOneField(fields) {
 }
 
 function fieldNamesAreUnique(fields) {
-  let names = new Set();
-  var hasDuplicates = fields.some(function(field) {
+  const names = new Set();
+  const hasDuplicates = fields.some(function(field) {
     return names.size === names.add(field.name).size;
   });
-
   return !hasDuplicates;
 }
 
 function validateColor(color) {
   return /^#[0-9A-F]{6}$/i.test(color);
-}
-
-var permissions = {
-  OWNER: ['read', 'update', 'delete'],
-  MANAGER: ['read', 'update'],
-  GUEST: ['read']
-};
-
-function rolesWithPermission(permission) {
-  var roles = [];
-
-  for (var key in permissions) {
-    if (permissions[key].indexOf(permission) !== -1) {
-      roles.push(key);
-    }
-  }
-
-  return roles;
 }
 
 var FormSchema = new Schema({
@@ -127,11 +108,11 @@ function validateTeamIds(eventId, teamIds, next) {
   Team.getTeams({teamIds: teamIds}, function(err, teams) {
     if (err) return next(err);
 
-    var containsInvalidTeam = teams.some(function(team) {
+    const containsInvalidTeam = teams.some(function(team) {
       return team.teamEventId && team.teamEventId !== eventId;
     });
     if (containsInvalidTeam) {
-      var error = new Error("Cannot add a team that belongs specifically to another event");
+      const error = new Error("Cannot add a team that belongs specifically to another event");
       error.status = 405;
       return next(error);
     }
@@ -226,26 +207,26 @@ function transform(event, ret, options) {
 
     // if read only permissions in event acl, only return users acl
     if (options.access) {
-      var userAccess = ret.acl[options.access.user._id];
-      var roles = rolesWithPermission('update').concat(rolesWithPermission('delete'));
-      if (!userAccess || roles.indexOf(userAccess) === -1) {
-        var acl = {};
+      const roleOfUserOnEvent = ret.acl[options.access.user._id];
+      const rolesThatCanModify = rolesWithPermission('update').concat(rolesWithPermission('delete'));
+      if (!roleOfUserOnEvent || rolesThatCanModify.indexOf(roleOfUserOnEvent) === -1) {
+        const acl = {};
         acl[options.access.user._id] = ret.acl[options.access.user._id];
         ret.acl = acl;
       }
     }
 
-    for (var userId in ret.acl) {
+    for (const userId in ret.acl) {
       ret.acl[userId] = {
         role: ret.acl[userId],
-        permissions: permissions[ret.acl[userId]]
+        permissions: EventRolePermissions[ret.acl[userId]]
       };
     }
 
     // TODO: this should be done at query time
     // make sure only projected fields are returned
     if (options.projection) {
-      var projection = convertProjection(options.projection);
+      const projection = convertProjection(options.projection);
       projection.id = true; // always keep id
       whitelist.project(ret, projection);
     }
@@ -316,52 +297,20 @@ function filterEventsByUserId(events, userId, callback) {
   });
 }
 
-function userHasEventPermission(event, userId, permission, callback) {
-  getTeamsForEvent(event, function(err, teams) {
-    if (err) return callback(err);
-
-    // If asking for event read permission and user is part of a team in this event
-    if (permission === 'read' && teams.some(function(team) { return team.userIds.indexOf(userId) !== -1; })) {
-      return callback(null, true);
-    }
-
-    // Check if user has permission in event acl
-    if (event.acl[userId] && rolesWithPermission(permission).some(function(role) { return role === event.acl[userId]; })) {
-      return callback(null, true);
-    }
-
-    callback(null, false);
-  });
-}
-
-function getTeamsForEvent(event, callback) {
-
-  if (event.populated('teamIds')) {
-    callback(null, event.teamIds);
-  } else {
-    Event.populate(event, 'teamIds', function(err, event) {
-      if (err) return callback(err);
-
-      callback(null, event.teamIds);
-    });
-  }
-}
-
 exports.count = function(options, callback) {
   if (typeof options === 'function') {
     callback = options;
     options = {};
   }
 
-  var conditions = {};
+  const conditions = {};
   if (options.access) {
-    var accesses = [];
+    const accesses = [];
     rolesWithPermission(options.access.permission).forEach(function(role) {
-      var access = {};
+      const access = {};
       access['acl.' + options.access.user._id.toString()] = role;
       accesses.push(access);
     });
-
     conditions['$or'] = accesses;
   }
 
@@ -474,7 +423,6 @@ exports.getById = function(id, options, callback) {
 
 // TODO probably should live in event api
 exports.filterEventsByUserId = filterEventsByUserId;
-exports.userHasEventPermission = userHasEventPermission;
 
 function createObservationCollection(event) {
   log.info("Creating observation collection: " + event.collectionName + ' for event ' + event.name);
@@ -694,16 +642,15 @@ exports.removeTeamFromEvents = function(team, callback) {
 
 exports.updateUserInAcl = function(eventId, userId, role, callback) {
   // validate userId
-  var err;
   if (!mongoose.Types.ObjectId.isValid(userId)) {
-    err = new Error('Invalid userId');
+    const err = new Error('Invalid userId');
     err.status = 400;
     return callback(err);
   }
 
   // validate role
-  if (Object.keys(permissions).indexOf(role) === -1) {
-    err = new Error('Invalid role');
+  if (Object.keys(EventRolePermissions).indexOf(role) === -1) {
+    const err = new Error('Invalid role');
     err.status = 400;
     return callback(err);
   }
@@ -723,7 +670,7 @@ exports.updateUserInAcl = function(eventId, userId, role, callback) {
 
 
 exports.removeUserFromAcl = function(eventId, userId, callback) {
-  var update = {
+  const update = {
     $unset: {}
   };
   update.$unset['acl.' + userId] = true;
@@ -739,7 +686,7 @@ exports.removeUserFromAcl = function(eventId, userId, callback) {
 };
 
 exports.removeUserFromAllAcls = function(user, callback) {
-  var update = {
+  const update = {
     $unset: {}
   };
   update.$unset['acl.' + user._id.toString()] = true;

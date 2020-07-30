@@ -3,6 +3,7 @@ import { MageEventRepository, MageEvent, MageEventId } from '../../entities/even
 import mongoose from 'mongoose'
 import { FeedId } from '../../entities/feeds/entities.feeds'
 import * as legacy from '../../models/event'
+import { Team } from '../../entities/entities.teams'
 
 
 export const MageEventModelName = 'Event'
@@ -31,5 +32,19 @@ export class MongooseMageEventRepository extends BaseMongooseRepository<MageEven
       },
       { new: true })
     return updated?.toJSON()
+  }
+
+  async findTeamsInEvent(event: MageEventId): Promise<Team[] | null> {
+    const eventDoc = await this.model.findById(event).populate('teamIds')
+    if (!eventDoc) {
+      return null
+    }
+    const teamDocs = eventDoc.teamIds as mongoose.Document[]
+    return teamDocs.map((x: mongoose.Document) => {
+      const team = x.toJSON()
+      team.id = team.id.toHexString()
+      delete team.__v
+      return team
+    })
   }
 }

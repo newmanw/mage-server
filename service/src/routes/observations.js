@@ -15,7 +15,8 @@ module.exports = function(app, security) {
     , geometryFormat = require('../format/geoJsonFormat')
     , observationXform = require('../transformers/observation')
     , {defaultHandler: upload} = require('../upload')
-    , passport = security.authentication.passport;
+    , passport = security.authentication.passport
+    , { defaultEventPermissionsSevice: eventPermissions } = require('../permissions/permissions.events');
 
   var sortColumnWhitelist = ["lastModified"];
 
@@ -26,21 +27,18 @@ module.exports = function(app, security) {
     };
   }
 
-  function validateObservationReadAccess(req, res, next) {
+  async function validateObservationReadAccess(req, res, next) {
     if (access.userHasPermission(req.user, 'READ_OBSERVATION_ALL')) {
-      next();
-    } else if (access.userHasPermission(req.user, 'READ_OBSERVATION_EVENT')) {
-      // Make sure I am part of this event
-      Event.userHasEventPermission(req.event, req.user._id, 'read', function(err, hasPermission) {
-        if (hasPermission) {
-          return next();
-        } else {
-          return res.sendStatus(403);
-        }
-      });
-    } else {
-      res.sendStatus(403);
+      return next();
     }
+    if (access.userHasPermission(req.user, 'READ_OBSERVATION_EVENT')) {
+      // Make sure I am part of this event
+      const hasPermission = await eventPermissions.userHasEventPermission(req.event, req.user.id, 'read')
+      if (hasPermission) {
+        return next();
+      }
+    }
+    res.sendStatus(403);
   }
 
   function validateObservationCreateAccess(validateObservationId) {
@@ -73,21 +71,18 @@ module.exports = function(app, security) {
     };
   }
 
-  function validateObservationUpdateAccess(req, res, next) {
+  async function validateObservationUpdateAccess(req, res, next) {
     if (access.userHasPermission(req.user, 'UPDATE_OBSERVATION_ALL')) {
-      next();
-    } else if (access.userHasPermission(req.user, 'UPDATE_OBSERVATION_EVENT')) {
-      // Make sure I am part of this event
-      Event.userHasEventPermission(req.event, req.user._id, 'read', function(err, hasPermission) {
-        if (hasPermission) {
-          return next();
-        } else {
-          return res.sendStatus(403);
-        }
-      });
-    } else {
-      res.sendStatus(403);
+      return next();
     }
+    if (access.userHasPermission(req.user, 'UPDATE_OBSERVATION_EVENT')) {
+      // Make sure I am part of this event
+      const hasPermission = await eventPermissions.userHasEventPermission(req.event, req.user.id, 'read')
+      if (hasPermission) {
+        return next();
+      }
+    }
+    res.sendStatus(403);
   }
 
   function validateCreateOrUpdateAccess(req, res, next) {
@@ -97,27 +92,30 @@ module.exports = function(app, security) {
   }
 
   function authorizeEventAccess(collectionPermission, aclPermission) {
-    return function(req, res, next) {
+    return async function(req, res, next) {
       if (access.userHasPermission(req.user, collectionPermission)) {
-        next();
-      } else {
-        Event.userHasEventPermission(req.event, req.user._id, aclPermission, function(err, hasPermission) {
-          hasPermission ? next() : res.sendStatus(403);
-        });
+        return next();
       }
+      const hasPermission = await eventPermissions.userHasEventPermission(req.event, req.user.id, aclPermission)
+      if (hasPermission) {
+        return next();
+      }
+      res.sendStatus(403);
     };
   }
 
-  function authorizeDeleteAccess(req, res, next) {
+  async function authorizeDeleteAccess(req, res, next) {
     if (access.userHasPermission(req.user, 'UPDATE_EVENT')) {
-      next();
-    } else if (req.user._id.toString() === req.observation.userId.toString()) {
-      next();
-    } else {
-      Event.userHasEventPermission(req.event, req.user._id, 'update', function(err, hasPermission) {
-        hasPermission ? next() : res.sendStatus(403);
-      });
+      return next();
     }
+    if (req.user._id.toString() === req.observation.userId.toString()) {
+      return next();
+    }
+    const hasPermission = await eventPermissions.userHasEventPermission(req.event, req.user.id, 'update')
+    if (hasPermission) {
+      return next();
+    }
+    res.sendStatus(403);
   }
 
   function populateUserFields(req, res, next) {

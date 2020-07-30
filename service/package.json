@@ -80,7 +80,7 @@
     "yaml": "^1.8.2"
   },
   "devDependencies": {
-    "@fluffy-spoon/substitute": "^1.130.0",
+    "@fluffy-spoon/substitute": "^1.145.0",
     "@types/async": "^3.0.5",
     "@types/chai": "^4.2.7",
     "@types/chai-as-promised": "^7.1.2",
@@ -133,7 +133,7 @@
     "supertest": "4.0.2",
     "ts-mockito": "^2.5.0",
     "ts-node": "^8.0.0",
-    "typescript": "~3.8.0",
+    "typescript": "^3.9.7",
     "wtfnode": "^0.8.1"
   },
   "nyc": {

@@ -10,7 +10,8 @@ module.exports = function(app, security) {
     environment = require('../environment/env'),
     layerXform = require('../transformers/layer'),
     geopackage = require('../utilities/geopackage'),
-    { defaultHandler: upload } = require('../upload');
+    { defaultHandler: upload } = require('../upload'),
+    { defaultEventPermissionsSevice: eventPermissions } = require('../permissions/permissions.events');
 
   const passport = security.authentication.passport;
   app.all('/api/layers*', passport.authenticate('bearer'));
@@ -168,21 +169,18 @@ module.exports = function(app, security) {
       });
   }
 
-  function validateEventAccess(req, res, next) {
+  async function validateEventAccess(req, res, next) {
     if (access.userHasPermission(req.user, 'READ_LAYER_ALL')) {
-      next();
-    } else if (access.userHasPermission(req.user, 'READ_LAYER_EVENT')) {
-      // Make sure I am part of this event
-      Event.userHasEventPermission(req.event, req.user._id, 'read', function(err, hasPermission) {
-        if (hasPermission) {
-          return next();
-        } else {
-          return res.sendStatus(403);
-        }
-      });
-    } else {
-      res.sendStatus(403);
+      return next();
     }
+    if (access.userHasPermission(req.user, 'READ_LAYER_EVENT')) {
+      // Make sure I am part of this event
+      const hasPermission = await eventPermissions.userHasEventPermission(req.event, req.user._id, 'read')
+      if (hasPermission) {
+        return next();
+      }
+    }
+    res.sendStatus(403);
   }
 
   function parseQueryParams(req, res, next) {

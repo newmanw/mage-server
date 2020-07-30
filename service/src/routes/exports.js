@@ -3,7 +3,8 @@ var moment = require('moment')
   , User = require('../models/user')
   , Device = require('../models/device')
   , access = require('../access')
-  , exporterFactory = require('../export/exporterFactory');
+  , exporterFactory = require('../export/exporterFactory')
+  , { defaultEventPermissionsSevice: eventPermissions } = require('../permissions/permissions.events');
 
 module.exports = function(app, security) {
   app.get(
@@ -73,21 +74,18 @@ function parseQueryParams(req, res, next) {
   next();
 }
 
-function validateEventAccess(req, res, next) {
+async function validateEventAccess(req, res, next) {
   if (access.userHasPermission(req.user, 'READ_OBSERVATION_ALL')) {
-    next();
-  } else if (access.userHasPermission(req.user, 'READ_OBSERVATION_EVENT')) {
-    // Make sure I am part of this event
-    Event.userHasEventPermission(req.event, req.user._id, 'read', function(err, hasPermission) {
-      if (hasPermission) {
-        return next();
-      } else {
-        return res.sendStatus(403);
-      }
-    });
-  } else {
-    res.sendStatus(403);
+    return next();
   }
+  if (access.userHasPermission(req.user, 'READ_OBSERVATION_EVENT')) {
+    // Make sure I am part of this event
+    const hasPermission = await eventPermissions.userHasEventPermission(req.event, req.user._id, 'read')
+    if (hasPermission) {
+      return next();
+    }
+  }
+  res.sendStatus(403);
 }
 
 function getEvent(req, res, next) {

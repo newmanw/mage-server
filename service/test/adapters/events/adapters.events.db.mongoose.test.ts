@@ -2,10 +2,15 @@ import { describe, it, before } from 'mocha'
 import { expect } from 'chai'
 import mongoose from 'mongoose'
 import uniqid from 'uniqid'
+import _ from 'lodash'
 import { MongoMemoryServer } from 'mongodb-memory-server'
 import { MongooseMageEventRepository, MageEventModel } from '../../../lib/adapters/events/adapters.events.db.mongoose'
 import * as legacy from '../../../lib/models/event'
 import { MageEventDocument } from '../../../src/models/event'
+import TeamModelModule = require('../../../lib/models/team')
+import { Team, TeamMemberRole, TeamMemberRolePermission } from '../../../lib/entities/entities.teams'
+
+const TeamModel = TeamModelModule.TeamModel
 
 describe('event mongoose repository', function() {
 
@@ -27,12 +32,12 @@ describe('event mongoose repository', function() {
 
   let model: MageEventModel
   let repo: MongooseMageEventRepository
-  let event: legacy.MageEventDocument
+  let eventDoc: legacy.MageEventDocument
 
   beforeEach('initialize model', async function() {
     model = legacy.Model
     repo = new MongooseMageEventRepository(model)
-    event = await new Promise<legacy.MageEventDocument>((resolve, reject) => {
+    eventDoc = await new Promise<legacy.MageEventDocument>((resolve, reject) => {
       legacy.create(
         {
           name: 'Test Event',
@@ -46,8 +51,8 @@ describe('event mongoose repository', function() {
     // fetch again, because the create method does return the event with the
     // implicitly created team id in the teamIds list
     // TODO: fix the above
-    event = await model.findById(event._id) as MageEventDocument
-    expect(event._id).to.be.a('number')
+    eventDoc = await model.findById(eventDoc._id) as MageEventDocument
+    expect(eventDoc._id).to.be.a('number')
   })
 
   afterEach(async function() {
@@ -64,8 +69,8 @@ describe('event mongoose repository', function() {
 
     it('looks up a feed by id', async function() {
 
-      const fetched = await repo.findById(event._id)
-      expect(fetched).to.deep.equal(event.toJSON())
+      const fetched = await repo.findById(eventDoc._id)
+      expect(fetched).to.deep.equal(eventDoc.toJSON())
     })
   })
 
@@ -75,8 +80,8 @@ describe('event mongoose repository', function() {
 
       const repo = new MongooseMageEventRepository(model)
       const feedId = uniqid()
-      const updated = await repo.addFeedsToEvent(event?._id, feedId)
-      const fetched = await repo.findById(event?._id)
+      const updated = await repo.addFeedsToEvent(eventDoc?._id, feedId)
+      const fetched = await repo.findById(eventDoc?._id)
 
       expect(updated?.feedIds).to.deep.equal([ feedId ])
       expect(fetched).to.deep.equal(updated)
@@ -86,14 +91,14 @@ describe('event mongoose repository', function() {
 
       const repo = new MongooseMageEventRepository(model)
       const feedIds = [ uniqid(), uniqid() ]
-      let updated = await repo.addFeedsToEvent(event?._id, feedIds[0])
-      let fetched = await repo.findById(event?._id)
+      let updated = await repo.addFeedsToEvent(eventDoc?._id, feedIds[0])
+      let fetched = await repo.findById(eventDoc?._id)
 
       expect(updated?.feedIds).to.deep.equal([ feedIds[0] ])
       expect(fetched).to.deep.equal(updated)
 
-      updated = await repo.addFeedsToEvent(event?._id, feedIds[1])
-      fetched = await repo.findById(event?._id)
+      updated = await repo.addFeedsToEvent(eventDoc?._id, feedIds[1])
+      fetched = await repo.findById(eventDoc?._id)
 
       expect(updated?.feedIds).to.deep.equal(feedIds)
       expect(fetched).to.deep.equal(updated)
@@ -103,8 +108,8 @@ describe('event mongoose repository', function() {
 
       const repo = new MongooseMageEventRepository(model)
       const feedIds = [ uniqid(), uniqid() ]
-      let updated = await repo.addFeedsToEvent(event?._id, ...feedIds)
-      let fetched = await repo.findById(event?._id)
+      let updated = await repo.addFeedsToEvent(eventDoc?._id, ...feedIds)
+      let fetched = await repo.findById(eventDoc?._id)
 
       expect(updated?.feedIds).to.deep.equal(feedIds)
       expect(fetched).to.deep.equal(updated)
@@ -114,26 +119,74 @@ describe('event mongoose repository', function() {
 
       const repo = new MongooseMageEventRepository(model)
       const feedIds = [ uniqid(), uniqid() ]
-      let updated = await repo.addFeedsToEvent(event?._id, ...feedIds)
-      let fetched = await repo.findById(event?._id)
+      let updated = await repo.addFeedsToEvent(eventDoc?._id, ...feedIds)
+      let fetched = await repo.findById(eventDoc?._id)
 
       expect(updated?.feedIds).to.deep.equal(feedIds)
       expect(fetched).to.deep.equal(updated)
 
-      updated = await repo.addFeedsToEvent(event?._id, feedIds[0])
-      fetched = await repo.findById(event?._id)
+      updated = await repo.addFeedsToEvent(eventDoc?._id, feedIds[0])
+      fetched = await repo.findById(eventDoc?._id)
 
       expect(updated?.feedIds).to.deep.equal(feedIds)
       expect(fetched).to.deep.equal(updated)
     })
   })
 
+  describe('getting teams in an event', function() {
+
+    it('gets the teams', async function() {
+
+      const user = mongoose.Types.ObjectId().toHexString()
+      const teams: Partial<Team>[] = [
+        {
+          id: mongoose.Types.ObjectId().toHexString(),
+          name: 'Team 1',
+          acl: {
+            [user]: {
+              role: 'OWNER',
+              permissions: [ 'read', 'update', 'delete' ]
+            }
+          },
+          userIds: [ user, mongoose.Types.ObjectId().toHexString(), mongoose.Types.ObjectId().toHexString() ]
+        },
+        {
+          id: mongoose.Types.ObjectId().toHexString(),
+          name: 'Team 2',
+          acl: {
+            [user]: {
+              role: 'GUEST',
+              permissions: [ 'read' ]
+            }
+          },
+          userIds: [ user, mongoose.Types.ObjectId().toHexString() ]
+        }
+      ]
+      const teamDocs = await Promise.all(teams.map(async (x) => {
+        return await TeamModel.create(Object.assign({ ...x },
+          {
+            _id: mongoose.Types.ObjectId(x.id),
+            acl: _.mapValues(x.acl, x => x.role)
+          }))
+      }))
+      eventDoc.teamIds = teamDocs.map(x => x._id)
+      eventDoc = await eventDoc.save()
+      const fetchedTeams = await repo.findTeamsInEvent(eventDoc.id)
+
+      expect(fetchedTeams).to.deep.equal(teams)
+    })
+
+    it('returns null when the event does not exist', async function() {
+      const oops = await repo.findTeamsInEvent(eventDoc.id - 1)
+      expect(oops).to.be.null
+    })
+  })
 
   it('does not allow creating events', async function() {
     await expect(repo.create()).to.eventually.rejectWith(Error)
   })
 
   it('does not allow updating events', async function() {
-    await expect(repo.update({ id: event._id, feedIds: [ 'not_allowed' ] })).to.eventually.rejectWith(Error)
+    await expect(repo.update({ id: eventDoc._id, feedIds: [ 'not_allowed' ] })).to.eventually.rejectWith(Error)
   })
 })

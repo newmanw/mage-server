@@ -122,4 +122,10 @@ describe('feeds permission service', function() {
       expect.fail('todo')
     })
   })
+
+  describe('ensuring fetch feed content permission', function() {
+    it('always denies', async function() {
+      expect.fail('todo')
+    })
+  })
 })

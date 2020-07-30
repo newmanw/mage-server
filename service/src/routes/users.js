@@ -9,7 +9,8 @@ module.exports = function (app, security) {
     , userTransformer = require('../transformers/user')
     , pageInfoTransformer = require('../transformers/pageinfo.js')
     , { defaultHandler: upload } = require('../upload')
-    , passport = security.authentication.passport;
+    , passport = security.authentication.passport
+    , { defaultEventPermissionsSevice: eventPermissions } = require('../permissions/permissions.events');
 
   // TODO: smells
   const passwordLength = Object.keys(security.authentication.strategies).reduce((prev, authName) => {
@@ -515,14 +516,17 @@ module.exports = function (app, security) {
   app.post(
     '/api/users/:userId/events/:eventId/recent',
     passport.authenticate('bearer'),
-    function (req, res, next) {
+    async function (req, res, next) {
       if (access.userHasPermission(req.user, 'UPDATE_EVENT')) {
-        next();
-      } else {
-        Event.userHasEventPermission(req.event, req.user._id, 'read', function (err, hasPermission) {
-          hasPermission ? next() : res.sendStatus(403);
-        });
+        return next();
       }
+      else {
+        const hasPermission = await eventPermissions.userHasEventPermission(req.event, req.user.id, 'read');
+        if (hasPermission) {
+          return next()
+        }
+      }
+      return res.sendStatus(403)
     },
     function (req, res, next) {
       new api.User().addRecentEvent(req.user, req.event, function (err, user) {

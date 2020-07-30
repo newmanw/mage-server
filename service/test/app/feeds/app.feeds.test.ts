@@ -9,7 +9,7 @@ import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescri
 import uniqid from 'uniqid'
 import { AppRequestContext, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeatureCollection } from 'geojson'
-import { JsonObject, JsonSchemaService, JsonValidator } from '../../../lib/entities/entities.global.json'
+import { JsonObject, JsonSchemaService, JsonValidator, Json } from '../../../lib/entities/entities.global.json'
 import { Argument } from '@fluffy-spoon/substitute/dist/src/Arguments'
 
 
@@ -169,7 +169,7 @@ describe('feeds use case interactions', function() {
         expect(err.code).to.equal(ErrInvalidInput)
         expect(err.data).to.deep.equal([[ 'url is invalid', 'config', 'url' ]])
         expect(app.serviceRepo.db).to.be.empty
-        serviceType.received(1).validateServiceConfig(Arg.deepEquals(invalidConfig))
+        serviceType.received(1).validateServiceConfig(Arg.deepEquals(invalidConfig) as any)
       })
 
       it('fails if the feed service type does not exist', async function() {
@@ -195,7 +195,7 @@ describe('feeds use case interactions', function() {
 
         const serviceType = someServiceTypes[0]
         const config = { url: 'https://some.service/somewhere' }
-        serviceType.validateServiceConfig(Arg.deepEquals(config)).resolves(null)
+        serviceType.validateServiceConfig(Arg.deepEquals(config) as any).resolves(null)
 
         const created = await app
           .createService(requestBy(adminPrincipal, { serviceType: serviceType.id, title: 'Test Service', config }))
@@ -914,7 +914,7 @@ describe('feeds use case interactions', function() {
           const paramsValidator = Sub.for<JsonValidator>()
           const validationError = new Error('bad parameters')
           serviceConn.fetchAvailableTopics().resolves([ topic ])
-          paramsValidator.validate(Arg.deepEquals(variableParams)).resolves(null)
+          paramsValidator.validate(Arg.deepEquals(variableParams) as any).resolves(null)
           paramsValidator.validate(Arg.deepEquals(mergedParams)).resolves(validationError)
           app.jsonSchemaService.validateSchema(Arg.deepEquals(feed.variableParamsSchema)).resolves(paramsValidator)
           app.jsonSchemaService.validateSchema(Arg.deepEquals(topic.paramsSchema)).resolves(paramsValidator)
@@ -949,7 +949,7 @@ describe('feeds use case interactions', function() {
           const validator = Sub.for<JsonValidator>()
           serviceConn.fetchAvailableTopics().resolves(topics)
           app.jsonSchemaService.validateSchema(Arg.deepEquals(feed.variableParamsSchema)).resolves(validator)
-          validator.validate(Arg.deepEquals(variableParams)).resolves(null)
+          validator.validate(Arg.deepEquals(variableParams) as any).resolves(null)
 
           const req = requestBy(adminPrincipal, { feed, variableParams })
           const res = await app.previewFeed(req)
@@ -994,7 +994,7 @@ describe('feeds use case interactions', function() {
           expect(res.error).to.be.null
           expect(res.success).to.be.an('object')
           mergedValidator.received(1).validate(Arg.all())
-          mergedValidator.received(1).validate(Arg.deepEquals(constantParams))
+          mergedValidator.received(1).validate(Arg.deepEquals(constantParams) as any)
         })
 
         it('does not save the preview feed', async function() {

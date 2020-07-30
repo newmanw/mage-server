@@ -1,10 +1,22 @@
 import mongoose, { DocumentToObjectOptions } from 'mongoose'
 import { UserDocument } from './user'
 import { MageEventId, MageEvent, MageEventCreateAttrs, EventPermission, Form, FormFieldChoice, FormField, EventRole } from '../entities/events/entities.events'
+import { Team, TeamMemberRole } from '../entities/entities.teams'
 
 export interface MageEventDocumentToObjectOptions extends DocumentToObjectOptions {
   access: { user: UserDocument, permission: EventPermission }
   projection: any
+}
+
+/**
+ * TODO: This needs to go into a more complete defintion file for the team
+ * model module (or convert it to typescript), but this will suffice for now.
+ */
+export type TeamDocument = Omit<Team, 'acl' | 'userIds'> & mongoose.Document & {
+  userIds: mongoose.Types.ObjectId[]
+  acl: {
+    [userId: string]: TeamMemberRole
+  }
 }
 
 export type MageEventDocument = Omit<MageEvent, 'teamIds' | 'layerIds' | 'acl'> & mongoose.Document & {
@@ -13,7 +25,7 @@ export type MageEventDocument = Omit<MageEvent, 'teamIds' | 'layerIds' | 'acl'> 
    * stores observations for the event.
    */
   collectionName: string
-  teamIds: mongoose.Types.ObjectId[]
+  teamIds: mongoose.Types.ObjectId[] | TeamDocument[]
   layerIds: mongoose.Types.ObjectId[]
   acl: MageEventDocumentAcl
   toObject(options?: MageEventDocumentToObjectOptions): any

@@ -10,14 +10,14 @@ import EventRoutes from '../../../lib/routes/events'
 import { WebAppRequestFactory } from '../../../lib/adapters/adapters.controllers.web'
 import { MageEvent, MageEventRepository } from '../../../lib/entities/events/entities.events'
 import { AddFeedToEventRequest, ListEventFeedsRequest, UserFeed } from '../../../lib/app.api/events/app.api.events'
-import { FeedId, FeedContent, Feed } from '../../../lib/entities/feeds/entities.feeds'
+import { FeedId, FeedContent } from '../../../lib/entities/feeds/entities.feeds'
 import { FetchFeedContentRequest } from '../../../lib/app.api/feeds/app.api.feeds'
 
 const rootPath = '/test/events'
 const jsonMimeType = /^application\/json/
 const testUser = 'lummytin'
 
-describe.only('event feeds web controller', function() {
+describe('event feeds web controller', function() {
 
   let createAppRequest: WebAppRequestFactory = <P>(webReq: express.Request, params?: P): AppRequest<typeof testUser> & P => {
     return {
