@@ -3,12 +3,11 @@ import { expect } from 'chai'
 import uniqid from 'uniqid'
 import { AppRequestContext } from '../../lib/app.api/app.api.global'
 import { FeedServiceId, FeedId } from '../../lib/entities/feeds/entities.feeds'
-import { MageError, ErrPermissionDenied, permissionDenied } from '../../lib/app.api/app.api.errors'
+import { ErrPermissionDenied, permissionDenied } from '../../lib/app.api/app.api.errors'
 import { EventFeedsPermissionService, EventRequestContext, EventPermissionServiceImpl } from '../../lib/permissions/permissions.events'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
 import { MageEventRepository, MageEvent } from '../../lib/entities/events/entities.events'
 import { UserDocument } from '../../src/models/user'
-import { uniq } from 'lodash'
 import { MongooseMageEventRepository } from '../../lib/adapters/events/adapters.events.db.mongoose'
 
 

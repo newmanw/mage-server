@@ -1,7 +1,7 @@
 import { AddFeedToEvent, AddFeedToEventRequest, ListEventFeeds, ListEventFeedsRequest, UserFeed } from '../../app.api/events/app.api.events'
 import { MageEventRepository, MageEvent } from '../../entities/events/entities.events'
 import { entityNotFound, EntityNotFoundError, PermissionDeniedError } from '../../app.api/app.api.errors'
-import { AppResponse, withPermission } from '../../app.api/app.api.global'
+import { AppResponse } from '../../app.api/app.api.global'
 import { FeedRepository } from '../../entities/feeds/entities.feeds'
 import { EventPermissionServiceImpl } from '../../permissions/permissions.events'
 

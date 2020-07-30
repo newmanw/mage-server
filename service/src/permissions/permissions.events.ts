@@ -5,14 +5,12 @@ import { PermissionDeniedError, permissionDenied } from '../app.api/app.api.erro
 import { FeedId } from '../entities/feeds/entities.feeds'
 import { allPermissions, AnyPermission } from '../models/permission'
 import { FeedsPermissionService } from '../app.api/feeds/app.api.feeds'
-import { MageEvent, MageEventRepository, EventPermission, rolesWithPermission, MageEventId } from '../entities/events/entities.events'
+import { MageEvent, MageEventRepository, EventPermission, rolesWithPermission } from '../entities/events/entities.events'
 import EventModel from '../models/event'
 import access from '../access'
-import { Team } from '../entities/teams/entities.teams'
 import mongoose from 'mongoose'
 import { UserId } from '../entities/authn/entities.authn'
 import { MongooseMageEventRepository } from '../adapters/events/adapters.events.db.mongoose'
-import { report } from 'superagent'
 
 export interface EventRequestContext extends AppRequestContext<UserDocument> {
   readonly event: MageEvent | MageEventDocument
