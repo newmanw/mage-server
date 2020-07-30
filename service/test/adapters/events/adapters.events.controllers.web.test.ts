@@ -6,7 +6,6 @@ import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
 import uniqid from 'uniqid'
 import _ from 'lodash'
 import { AppResponse, AppRequest } from '../../../lib/app.api/app.api.global'
-import EventRoutes from '../../../lib/routes/events'
 import { WebAppRequestFactory } from '../../../lib/adapters/adapters.controllers.web'
 import { MageEvent, MageEventRepository } from '../../../lib/entities/events/entities.events'
 import { AddFeedToEventRequest, ListEventFeedsRequest, UserFeed } from '../../../lib/app.api/events/app.api.events'
@@ -18,7 +17,7 @@ const rootPath = '/test/events'
 const jsonMimeType = /^application\/json/
 const testUser = 'lummytin'
 
-describe.only('event feeds web controller', function() {
+describe('event feeds web controller', function() {
 
   let createAppRequest: WebAppRequestFactory = <P>(webReq: express.Request, params?: P): AppRequest<typeof testUser> & P => {
     return {
