@@ -8,7 +8,6 @@ declare global {
 }
 
 import express from 'express'
-import bodyParser from 'body-parser'
 import { ListFeedServiceTypes, ListServiceTopics, CreateFeedService, ListFeedServices, PreviewTopics, PreviewTopicsRequest, CreateFeed, CreateFeedRequest } from '../../app.api/feeds/app.api.feeds'
 import { ErrPermissionDenied, MageError, PermissionDeniedError, ErrInvalidInput, invalidInput, ErrEntityNotFound } from '../../app.api/app.api.errors'
 import { WebAppRequestFactory } from '../adapters.controllers.web'
@@ -24,7 +23,7 @@ export interface FeedsAppLayer {
 
 export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppRequestFactory): express.Router {
   const routes = express.Router()
-  routes.use(bodyParser.json())
+  routes.use(express.json())
 
   function errorHandler(err: PermissionDeniedError | any, req: express.Request, res: express.Response, next: express.NextFunction): any {
     if (!(err instanceof MageError)) {
