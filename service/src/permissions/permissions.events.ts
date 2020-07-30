@@ -5,13 +5,14 @@ import { PermissionDeniedError, permissionDenied } from '../app.api/app.api.erro
 import { FeedId } from '../entities/feeds/entities.feeds'
 import { allPermissions, AnyPermission } from '../models/permission'
 import { FeedsPermissionService } from '../app.api/feeds/app.api.feeds'
-import { MageEvent, MageEventRepository, EventPermission, rolesWithPermission } from '../entities/events/entities.events'
+import { MageEvent, MageEventRepository, EventPermission, rolesWithPermission, MageEventId } from '../entities/events/entities.events'
 import EventModel from '../models/event'
 import access from '../access'
 import { Team } from '../entities/teams/entities.teams'
 import mongoose from 'mongoose'
 import { UserId } from '../entities/authn/entities.authn'
 import { MongooseMageEventRepository } from '../adapters/events/adapters.events.db.mongoose'
+import { report } from 'superagent'
 
 export interface EventRequestContext extends AppRequestContext<UserDocument> {
   readonly event: MageEvent | MageEventDocument
@@ -36,6 +37,22 @@ export class EventPermissionServiceImpl {
 
   constructor(readonly eventRepo: MongooseMageEventRepository) {}
 
+  async ensureEventUpdatePermission(context: AppRequestContext): Promise<PermissionDeniedError | null> {
+    const eventContext = context as EventRequestContext
+    if (eventContext.event) {
+      return await this.authorizeEventAccess(eventContext.event, eventContext.requestingPrincipal(), 'UPDATE_EVENT', 'update')
+    }
+    return permissionDenied('UPDATE_EVENT', String(context.requestingPrincipal()))
+  }
+
+  async ensureEventReadPermission(context: AppRequestContext): Promise<PermissionDeniedError | null> {
+    const eventContext = context as EventRequestContext
+    if (eventContext.event) {
+      return await this.authorizeEventAccess(eventContext.event, eventContext.requestingPrincipal(), 'READ_EVENT_USER', 'read')
+    }
+    return permissionDenied('UPDATE_EVENT', String(context.requestingPrincipal()))
+  }
+
   async authorizeEventAccess(event: MageEvent | MageEventDocument, user: UserDocument, appPermission: AnyPermission, eventPermission: EventPermission): Promise<PermissionDeniedError | null> {
     if (access.userHasPermission(user, appPermission)) {
       return null
@@ -44,7 +61,7 @@ export class EventPermissionServiceImpl {
     if (hasEventAclPermission) {
       return null
     }
-    return permissionDenied(appPermission, user.username)
+    return permissionDenied(appPermission, user.username, event.id)
   }
 
   async userHasEventPermission(event: MageEvent | MageEventDocument, userId: UserId, eventPermission: EventPermission): Promise<boolean> {
@@ -93,11 +110,10 @@ export const defaultEventPermissionsSevice = new EventPermissionServiceImpl(new 
 
 export class EventFeedsPermissionService implements FeedsPermissionService {
 
-  constructor(readonly eventRepo: MageEventRepository) {}
+  constructor(readonly eventRepo: MageEventRepository, readonly eventPermissions: EventPermissionServiceImpl) {}
 
   async ensureFetchFeedContentPermissionFor(context: EventRequestContext, feed: FeedId): Promise<PermissionDeniedError | null> {
-    const event = context.event
-    throw new Error('todo')
+    return await this.eventPermissions.authorizeEventAccess(context.event, context.requestingPrincipal(), 'READ_EVENT_USER', 'read')
   }
   async ensureListServiceTypesPermissionFor(context: EventRequestContext): Promise<PermissionDeniedError | null> {
     return permissionDenied(allPermissions.FEEDS_LIST_SERVICE_TYPES, context.requestingPrincipal().username)

@@ -1,7 +1,7 @@
 import { AppRequest, AppResponse } from '../app.api.global'
 import { FeedId, Feed, FeedContent } from '../../entities/feeds/entities.feeds'
 import { MageEventId, MageEvent } from '../../entities/events/entities.events'
-import { EntityNotFoundError } from '../app.api.errors'
+import { EntityNotFoundError, PermissionDeniedError } from '../app.api.errors'
 
 export interface AddFeedToEventRequest extends AppRequest {
   feed: FeedId,
@@ -9,7 +9,7 @@ export interface AddFeedToEventRequest extends AppRequest {
 }
 
 export interface AddFeedToEvent {
-  (req: AddFeedToEventRequest): Promise<AppResponse<MageEvent, EntityNotFoundError>>
+  (req: AddFeedToEventRequest): Promise<AppResponse<MageEvent, PermissionDeniedError | EntityNotFoundError>>
 }
 
 export interface ListEventFeedsRequest extends AppRequest {
@@ -23,5 +23,5 @@ export interface ListEventFeedsRequest extends AppRequest {
 export type UserFeed = Omit<Feed, 'constantParams'>
 
 export interface ListEventFeeds {
-  (req: ListEventFeedsRequest): Promise<AppResponse<UserFeed[], EntityNotFoundError>>
+  (req: ListEventFeedsRequest): Promise<AppResponse<UserFeed[], PermissionDeniedError | EntityNotFoundError>>
 }

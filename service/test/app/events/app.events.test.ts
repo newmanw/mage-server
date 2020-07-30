@@ -1,31 +1,46 @@
 import _ from 'lodash'
 import uniqid from 'uniqid'
 import { expect } from 'chai'
-import { Substitute as Sub, Arg } from '@fluffy-spoon/substitute'
+import { Substitute as Sub, Arg, SubstituteOf } from '@fluffy-spoon/substitute'
 import { MageEvent, MageEventId, MageEventRepository } from '../../../lib/entities/events/entities.events'
 import { AddFeedToEventRequest, ListEventFeedsRequest } from '../../../lib/app.api/events/app.api.events'
 import { AddFeedToEvent, ListEventFeeds } from '../../../lib/app.impl/events/app.impl.events'
-import { MageError, ErrEntityNotFound } from '../../../lib/app.api/app.api.errors'
+import { MageError, ErrEntityNotFound, permissionDenied, ErrPermissionDenied, EntityNotFoundError } from '../../../lib/app.api/app.api.errors'
 import { AppRequest } from '../../../lib/app.api/app.api.global'
 import { Feed, FeedRepository, FeedServiceRepository, FeedServiceTypeRepository } from '../../../lib/entities/feeds/entities.feeds'
+import { EventPermissionServiceImpl } from '../../../lib/permissions/permissions.events'
+import { UserDocument } from '../../../src/models/user'
 
 
-function requestBy<P extends object>(user: string, params: P): AppRequest<string> & P {
+function requestBy<P extends object>(user: string, params: P): AppRequest<SubstituteOf<UserDocument>> & P {
+  const userDoc = Sub.for<UserDocument>()
+  userDoc.id.returns!(uniqid())
   return {
     context: {
       requestToken: Symbol(),
-      requestingPrincipal: () => user
+      requestingPrincipal: () => userDoc
     },
     ...params
   }
 }
 
-describe('events use case interactions', function() {
+describe.only('event feeds use case interactions', function() {
 
   let app: EventsUseCaseInteractions
+  let event: MageEvent
 
   beforeEach(function() {
     app = new EventsUseCaseInteractions()
+    event = {
+      id: 123,
+      name: 'Maintenance Issues',
+      teamIds: [],
+      layerIds: [],
+      style: {},
+      forms: [],
+      acl: {},
+      feedIds: []
+    }
   })
 
   describe('assigning a feed to an event', function() {
@@ -34,19 +49,13 @@ describe('events use case interactions', function() {
 
       const req: AddFeedToEventRequest = requestBy('admin', {
         feed: uniqid(),
-        event: 123
+        event: event.id
       })
-      const event: MageEvent = {
-        id: 123,
-        name: 'Maintenance Issues',
-        teamIds: [],
-        layerIds: [],
-        style: {},
-        forms: [],
-        acl: {},
-        feedIds: [ req.feed ]
-      }
-      app.eventRepo.addFeedsToEvent(req.event, req.feed).resolves(event)
+      const updatedEvent = { ...event }
+      updatedEvent.feedIds = [ req.feed ]
+      app.eventRepo.findById(event.id).resolves(event)
+      app.eventRepo.addFeedsToEvent(req.event, req.feed).resolves(updatedEvent)
+      app.permissionService.ensureEventUpdatePermission(Arg.all()).resolves(null)
 
       const res = await app.addFeedToEvent(req)
 
@@ -60,25 +69,40 @@ describe('events use case interactions', function() {
 
       const req: AddFeedToEventRequest = requestBy('admin', {
         feed: uniqid(),
-        event: 123
+        event: event.id
       })
+      app.eventRepo.findById(Arg.all()).resolves(null)
       app.eventRepo.addFeedsToEvent(Arg.all()).resolves(null)
+      app.permissionService.ensureEventUpdatePermission(Arg.all()).resolves(null)
 
       const res = await app.addFeedToEvent(req)
 
       expect(res.success).to.be.null
       expect(res.error).to.be.instanceOf(MageError)
       expect(res.error?.code).to.equal(ErrEntityNotFound)
-      expect(res.error?.data.entityId).to.equal(req.event)
-      expect(res.error?.data.entityType).to.equal('MageEvent')
-      app.eventRepo.received(1).addFeedsToEvent(req.event, req.feed)
+      const err = res.error as EntityNotFoundError
+      expect(err.data.entityId).to.equal(req.event)
+      expect(err.data.entityType).to.equal('MageEvent')
+      app.eventRepo.didNotReceive().addFeedsToEvent(Arg.all())
     })
 
-    xit('checks permission for assigning a feed to the event', async function() {
-      // for now, because event logic is mostly legacy that will transition to,
-      // the new architecture, permission handling for events will remain in
-      // the express routing middleware.
-      expect.fail('todo')
+    it('checks permission for assigning a feed to the event', async function() {
+
+      const req: AddFeedToEventRequest = requestBy('admin', {
+        feed: uniqid(),
+        event: event.id
+      })
+      app.eventRepo.findById(req.event).resolves(event)
+      app.eventRepo.addFeedsToEvent(Arg.all()).resolves(event)
+      app.permissionService.ensureEventUpdatePermission(Arg.all()).resolves(permissionDenied('update_event', 'admin'))
+
+      const res = await app.addFeedToEvent(req)
+
+      expect(res.success).to.be.null
+      expect(res.error).to.be.instanceOf(MageError)
+      expect(res.error?.code).to.equal(ErrPermissionDenied)
+      app.eventRepo.received(0).addFeedsToEvent(Arg.all())
+      app.permissionService.received(1).ensureEventUpdatePermission(req.context)
     })
   })
 
@@ -122,7 +146,9 @@ describe('events use case interactions', function() {
           itemsHaveSpatialDimension: true,
         }
       ]
+      event.feedIds = feeds.map(x => x.id)
       app.feedRepo.findFeedsByIds(...event.feedIds).resolves(feeds)
+      app.permissionService.ensureEventReadPermission(Arg.all()).resolves(null)
       const req: ListEventFeedsRequest = requestBy('admin', { event: eventId })
       const res = await app.listEventFeeds(req)
 
@@ -160,8 +186,10 @@ describe('events use case interactions', function() {
           apiKey: 'abc123'
         }
       }
-      const req: ListEventFeedsRequest = requestBy('admin', { event: eventId })
+      event.feedIds.push(feed.id)
       app.feedRepo.findFeedsByIds(...event.feedIds).resolves([ feed ])
+      app.permissionService.ensureEventReadPermission(Arg.all()).resolves(null)
+      const req: ListEventFeedsRequest = requestBy('admin', { event: eventId })
       const res = await app.listEventFeeds(req)
 
       expect(res.error).to.be.null
@@ -182,12 +210,23 @@ describe('events use case interactions', function() {
       expect(res.success).to.be.null
       expect(res.error).to.be.instanceOf(MageError)
       expect(res.error?.code).to.equal(ErrEntityNotFound)
-      expect(res.error?.data.entityId).to.equal(req.event)
-      expect(res.error?.data.entityType).to.equal('MageEvent')
+      const err = res.error as EntityNotFoundError
+      expect(err.data.entityId).to.equal(req.event)
+      expect(err.data.entityType).to.equal('MageEvent')
     })
 
-    xit('checks permission for listing event feeds', async function() {
-      expect.fail('todo: legacy express middleware handles this for now')
+    it('checks permission for listing event feeds', async function() {
+
+      const req: ListEventFeedsRequest = requestBy('admin', { event: event.id })
+      app.feedRepo.findFeedsByIds(...event.feedIds).resolves([])
+      app.permissionService.ensureEventReadPermission(Arg.all()).resolves(permissionDenied('read_event_user', 'admin'))
+      const res = await app.listEventFeeds(req)
+
+      expect(res.success).to.be.null
+      expect(res.error).to.be.instanceOf(MageError)
+      expect(res.error?.code).to.equal(ErrPermissionDenied)
+      app.feedRepo.didNotReceive().findFeedsByIds(Arg.all())
+      app.permissionService.received(1).ensureEventReadPermission(req.context)
     })
   })
 })
@@ -198,7 +237,8 @@ class EventsUseCaseInteractions {
   readonly feedRepo = Sub.for<FeedRepository>()
   readonly feedServiceRepo = Sub.for<FeedServiceRepository>()
   readonly feedServiceTypeRepo = Sub.for<FeedServiceTypeRepository>()
+  readonly permissionService = Sub.for<EventPermissionServiceImpl>()
 
-  readonly addFeedToEvent = AddFeedToEvent(this.eventRepo)
-  readonly listEventFeeds = ListEventFeeds(this.eventRepo, this.feedRepo)
+  readonly addFeedToEvent = AddFeedToEvent(this.permissionService, this.eventRepo)
+  readonly listEventFeeds = ListEventFeeds(this.permissionService, this.eventRepo, this.feedRepo)
 }

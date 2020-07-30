@@ -4,21 +4,38 @@ import uniqid from 'uniqid'
 import { AppRequestContext } from '../../lib/app.api/app.api.global'
 import { FeedServiceId, FeedId } from '../../lib/entities/feeds/entities.feeds'
 import { MageError, ErrPermissionDenied } from '../../lib/app.api/app.api.errors'
-import { EventFeedsPermissionService, EventRequestContext } from '../../lib/permissions/permissions.events'
+import { EventFeedsPermissionService, EventRequestContext, EventPermissionServiceImpl } from '../../lib/permissions/permissions.events'
 import { Substitute as Sub, SubstituteOf } from '@fluffy-spoon/substitute'
 import { MageEventRepository } from '../../lib/entities/events/entities.events'
 
+
+describe('event permission service', function() {
+
+  describe('enforcing permissions with context event', function() {
+
+    it('ensures event read permission', async function() {
+      expect.fail('todo')
+    })
+
+    it('ensures event update permission', async function() {
+      expect.fail('todo')
+    })
+  })
+})
+
 describe('event feeds permission service', function() {
 
-  let permissions: EventFeedsPermissionService
   let context: EventRequestContext
   let service: FeedServiceId
+  let eventPermissions: SubstituteOf<EventPermissionServiceImpl>
   let eventRepo: SubstituteOf<MageEventRepository>
+  let permissions: EventFeedsPermissionService
 
   beforeEach(function() {
-    eventRepo = Sub.for<MageEventRepository>()
-    permissions = new EventFeedsPermissionService(eventRepo)
     service = uniqid()
+    eventRepo = Sub.for<MageEventRepository>()
+    eventPermissions = Sub.for<EventPermissionServiceImpl>()
+    permissions = new EventFeedsPermissionService(eventRepo, eventPermissions)
   })
 
   it('denies all except fetch', async function() {
@@ -40,6 +57,4 @@ describe('event feeds permission service', function() {
     denied = await permissions.ensureFetchFeedContentPermissionFor(context, feedId)
     expect.fail('todo')
   })
-
-
 })
