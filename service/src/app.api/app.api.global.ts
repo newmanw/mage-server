@@ -1,5 +1,5 @@
 import { MageError, PermissionDeniedError } from './app.api.errors'
-import { JsonObject } from '../entities/entities.json'
+import { JsonObject } from '../entities/entities.json_types'
 
 export interface AppRequestContext<Principal = unknown> {
   /**

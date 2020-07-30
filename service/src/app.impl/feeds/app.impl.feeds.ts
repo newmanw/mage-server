@@ -3,7 +3,7 @@ import * as api from '../../app.api/feeds/app.api.feeds'
 import { AppRequest, KnownErrorsOf, withPermission, AppResponse } from '../../app.api/app.api.global'
 import { PermissionDeniedError, EntityNotFoundError, InvalidInputError, entityNotFound, invalidInput, MageError, ErrInvalidInput, KeyPathError } from '../../app.api/app.api.errors'
 import { FeedServiceTypeDescriptor } from '../../app.api/feeds/app.api.feeds'
-import { JsonSchemaService, JsonValidator } from '../../entities/entities.json'
+import { JsonSchemaService, JsonValidator } from '../../entities/entities.json_types'
 
 
 export function ListFeedServiceTypes(permissionService: api.FeedsPermissionService, repo: FeedServiceTypeRepository): api.ListFeedServiceTypes {

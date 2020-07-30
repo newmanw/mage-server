@@ -10,7 +10,7 @@ import { BaseMongooseRepository } from '../../../lib/adapters/base/adapters.base
 import { FeedServiceRepository, FeedServiceTypeUnregistered, InvalidServiceConfigError, FeedServiceConnection, FeedServiceInfo, FeedTopic, FeedTopicId, FeedRepository, Feed } from '../../../lib/entities/feeds/entities.feeds'
 import { FeedServiceTypeIdentityModel, FeedsModels, FeedServiceTypeIdentitySchema, FeedServiceModel, FeedServiceSchema, MongooseFeedServiceTypeRepository, MongooseFeedServiceRepository, FeedServiceTypeIdentity, FeedServiceTypeIdentityDocument, FeedModel, FeedSchema, MongooseFeedRepository } from '../../../lib/adapters/feeds/adapters.feeds.db.mongoose'
 import { FeedServiceType } from '../../../lib/entities/feeds/entities.feeds'
-import { Json, JsonObject } from '../../../src/entities/entities.json'
+import { Json, JsonObject } from '../../../src/entities/entities.json_types'
 import { EntityIdFactory } from '../../../lib/entities/entities.global'
 
 describe('feeds repositories', function() {

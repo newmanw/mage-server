@@ -9,7 +9,7 @@ import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescri
 import uniqid from 'uniqid'
 import { AppRequestContext, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeatureCollection } from 'geojson'
-import { JsonObject, JsonSchemaService, JsonValidator, Json } from '../../../lib/entities/entities.json'
+import { JsonObject, JsonSchemaService, JsonValidator, Json } from '../../../lib/entities/entities.json_types'
 import { Argument } from '@fluffy-spoon/substitute/dist/src/Arguments'
 
 
