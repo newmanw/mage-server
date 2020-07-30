@@ -1,5 +1,5 @@
 import { FeedId } from '../feeds/entities.feeds'
-import { Team, TeamId } from '../entities.teams'
+import { Team, TeamId } from '../teams/entities.teams'
 
 export type MageEventId = number
 

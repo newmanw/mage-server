@@ -1,7 +1,7 @@
 import mongoose, { DocumentToObjectOptions } from 'mongoose'
 import { UserDocument } from './user'
 import { MageEventId, MageEvent, MageEventCreateAttrs, EventPermission, Form, FormFieldChoice, FormField, EventRole } from '../entities/events/entities.events'
-import { Team, TeamMemberRole } from '../entities/entities.teams'
+import { Team, TeamMemberRole } from '../entities/teams/entities.teams'
 
 export interface MageEventDocumentToObjectOptions extends DocumentToObjectOptions {
   access: { user: UserDocument, permission: EventPermission }

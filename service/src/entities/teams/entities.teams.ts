@@ -1,5 +1,5 @@
-import { UserId } from './authn/entities.authn'
-import { MageEventId } from './events/entities.events'
+import { UserId } from '../authn/entities.authn'
+import { MageEventId } from '../events/entities.events'
 
 export type TeamId = string
 
