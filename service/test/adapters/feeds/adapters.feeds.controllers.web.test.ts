@@ -5,8 +5,8 @@ import { expect } from 'chai'
 import supertest from 'supertest'
 import Substitute, { SubstituteOf, Arg } from '@fluffy-spoon/substitute'
 import uniqid from 'uniqid'
-import _, { functionsIn } from 'lodash'
-import { AppResponse, AppRequestContext, AppRequest } from '../../../lib/app.api/app.api.global'
+import _ from 'lodash'
+import { AppResponse, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeedsRoutes, FeedsAppLayer } from '../../../lib/adapters/feeds/adapters.feeds.controllers.web'
 import { CreateFeedServiceRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, CreateFeedRequest, ListServiceTopicsRequest } from '../../../lib/app.api/feeds/app.api.feeds'
 import { FeedService, Feed, FeedTopic } from '../../../lib/entities/feeds/entities.feeds'
@@ -540,8 +540,39 @@ invalid request
   })
 
   describe('GET /all_feeds', function() {
-    it('has tests', async function() {
-      expect.fail('todo')
+
+    it('returns all the feeds', async function() {
+
+      const feeds: Feed[] = [
+        {
+          id: uniqid(),
+          service: uniqid(),
+          topic: 'tornadoes',
+          title: 'Tornadoes',
+          itemsHaveIdentity: false,
+          itemsHaveSpatialDimension: true
+        },
+        {
+          id: uniqid(),
+          service: uniqid(),
+          topic: 'bears',
+          title: 'Grizzly Bears',
+          itemsHaveIdentity: true,
+          itemsHaveSpatialDimension: true,
+          itemTemporalProperty: 'when',
+          constantParams: {
+            type: 'grizzly'
+          }
+        }
+      ]
+      const appReq = createAdminRequest()
+      appRequestFactory.createRequest(Arg.any()).returns(appReq)
+      appLayer.listAllFeeds(appReq).resolves(AppResponse.success<Feed[], unknown>(feeds))
+
+      const res = await client.get(`${rootPath}/all_feeds`)
+      expect(res.status).to.equal(200)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.deep.equal(feeds)
     })
   })
 

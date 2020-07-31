@@ -8,7 +8,7 @@ declare global {
 }
 
 import express from 'express'
-import { ListFeedServiceTypes, ListServiceTopics, CreateFeedService, ListFeedServices, PreviewTopics, PreviewTopicsRequest, CreateFeed, CreateFeedRequest, ListServiceTopicsRequest } from '../../app.api/feeds/app.api.feeds'
+import { ListFeedServiceTypes, ListServiceTopics, CreateFeedService, ListFeedServices, PreviewTopics, PreviewTopicsRequest, CreateFeed, CreateFeedRequest, ListServiceTopicsRequest, ListAllFeeds, FetchFeedContent } from '../../app.api/feeds/app.api.feeds'
 import { ErrPermissionDenied, MageError, PermissionDeniedError, ErrInvalidInput, invalidInput, ErrEntityNotFound } from '../../app.api/app.api.errors'
 import { WebAppRequestFactory } from '../adapters.controllers.web'
 
@@ -19,6 +19,7 @@ export interface FeedsAppLayer {
   previewTopics: PreviewTopics
   listTopics: ListServiceTopics
   createFeed: CreateFeed
+  listAllFeeds: ListAllFeeds
 }
 
 export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppRequestFactory): express.Router {
@@ -136,6 +137,16 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
           .status(201)
           .header('location', `${req.baseUrl}/all_feeds/${appRes.success.id}`)
           .json(appRes.success)
+      }
+      return next(appRes.error)
+    })
+
+  routes.route('/all_feeds')
+    .get(async (req, res, next) => {
+      const appReq = createAppRequest(req)
+      const appRes = await appLayer.listAllFeeds(appReq)
+      if (appRes.success) {
+        return res.json(appRes.success)
       }
       return next(appRes.error)
     })
