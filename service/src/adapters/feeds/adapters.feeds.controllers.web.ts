@@ -8,7 +8,7 @@ declare global {
 }
 
 import express from 'express'
-import { ListFeedServiceTypes, ListServiceTopics, CreateFeedService, ListFeedServices, PreviewTopics, PreviewTopicsRequest, CreateFeed, CreateFeedRequest } from '../../app.api/feeds/app.api.feeds'
+import { ListFeedServiceTypes, ListServiceTopics, CreateFeedService, ListFeedServices, PreviewTopics, PreviewTopicsRequest, CreateFeed, CreateFeedRequest, ListServiceTopicsRequest } from '../../app.api/feeds/app.api.feeds'
 import { ErrPermissionDenied, MageError, PermissionDeniedError, ErrInvalidInput, invalidInput, ErrEntityNotFound } from '../../app.api/app.api.errors'
 import { WebAppRequestFactory } from '../adapters.controllers.web'
 
@@ -99,6 +99,16 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
     })
 
   routes.route('/services/:serviceId/topics')
+    .get(async (req, res, next) => {
+      const appReq: ListServiceTopicsRequest = createAppRequest(req, {
+        service: req.params.serviceId
+      })
+      const appRes = await appLayer.listTopics(appReq)
+      if (appRes.success) {
+        return res.json(appRes.success)
+      }
+      next(appRes.error)
+    })
 
   routes.route('/services/:serviceId/topics/:topicId/feeds')
     .post(async (req, res, next) => {

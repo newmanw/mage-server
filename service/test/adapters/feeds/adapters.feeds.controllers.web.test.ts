@@ -8,7 +8,7 @@ import uniqid from 'uniqid'
 import _, { functionsIn } from 'lodash'
 import { AppResponse, AppRequestContext, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeedsRoutes, FeedsAppLayer } from '../../../lib/adapters/feeds/adapters.feeds.controllers.web'
-import { CreateFeedServiceRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, CreateFeedRequest } from '../../../lib/app.api/feeds/app.api.feeds'
+import { CreateFeedServiceRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, CreateFeedRequest, ListServiceTopicsRequest } from '../../../lib/app.api/feeds/app.api.feeds'
 import { FeedService, Feed, FeedTopic } from '../../../lib/entities/feeds/entities.feeds'
 import { permissionDenied, PermissionDeniedError, InvalidInputError, invalidInput, EntityNotFoundError, entityNotFound } from '../../../lib/app.api/app.api.errors'
 import { WebAppRequestFactory } from '../../../lib/adapters/adapters.controllers.web'
@@ -390,6 +390,74 @@ invalid request
       expect(res.status).to.equal(403)
       expect(res.type).to.match(jsonMimeType)
       expect(res.body).to.equal('permission denied: list services')
+    })
+  })
+
+  describe.only('GET /services/{serviceId}/topics', async function() {
+
+    it('lists the service topcis', async function() {
+
+      const service = uniqid()
+      const topics: FeedTopic[] = [
+        {
+          id: uniqid(),
+          title: 'Fossil Discoveries',
+          itemsHaveIdentity: true,
+          itemsHaveSpatialDimension: true,
+          itemPrimaryProperty: 'summary',
+        },
+        {
+          id: uniqid(),
+          title: 'Potential Fossil Sites',
+          itemsHaveIdentity: true,
+          itemsHaveSpatialDimension: true,
+          itemPrimaryProperty: 'locationName',
+          itemSecondaryProperty: 'summary',
+          paramsSchema: {
+            type: 'object',
+            properties: {
+              bbox: { type: 'array' },
+            }
+          }
+        }
+      ]
+      const appReq: ListServiceTopicsRequest = createAdminRequest({ service })
+      appRequestFactory.createRequest(Arg.any(), Arg.deepEquals({ service })).returns(appReq)
+      appLayer.listTopics(Arg.requestTokenMatches(appReq))
+        .resolves(AppResponse.success(topics))
+
+      const res = await client.get(`${rootPath}/services/${service}/topics`)
+      expect(res.status).to.equal(200)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.deep.equal(topics)
+    })
+
+    it('fails with 404 if the service does not exist', async function() {
+
+      const service = uniqid()
+      const appReq: ListServiceTopicsRequest = createAdminRequest({ service })
+      appRequestFactory.createRequest(Arg.any(), Arg.deepEquals({ service })).returns(appReq)
+      appLayer.listTopics(Arg.requestTokenMatches(appReq))
+        .resolves(AppResponse.error<FeedTopic[], EntityNotFoundError>(entityNotFound(service, 'FeedService')))
+
+      const res = await client.get(`${rootPath}/services/${service}/topics`)
+      expect(res.status).to.equal(404)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.equal(`FeedService not found: ${service}`)
+    })
+
+    it('fails with 403 without permission', async function() {
+
+      const service = uniqid()
+      const appReq: ListServiceTopicsRequest = createAdminRequest({ service })
+      appRequestFactory.createRequest(Arg.any(), Arg.deepEquals({ service })).returns(appReq)
+      appLayer.listTopics(Arg.requestTokenMatches(appReq))
+        .resolves(AppResponse.error<FeedTopic[], PermissionDeniedError>(permissionDenied('list topics', adminPrincipal.user)))
+
+      const res = await client.get(`${rootPath}/services/${service}/topics`)
+      expect(res.status).to.equal(403)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.equal(`permission denied: list topics`)
     })
   })
 
