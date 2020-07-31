@@ -226,6 +226,23 @@ describe('feeds repositories', function() {
       expect(created.serviceType).to.equal(rawFetched.serviceType.toHexString())
       expect(fetched?.serviceType).to.equal(created.serviceType)
     })
+
+    it.only('omits version key from json', async function() {
+
+      const stub: FeedServiceCreateAttrs = {
+        serviceType: mongoose.Types.ObjectId().toHexString(),
+        title: 'No Version Keys',
+        summary: 'Testing',
+        config: { url: 'https://some.api.com' }
+      }
+      const created = await repo.create(stub)
+      const fetched = await repo.findById(created.id)
+      const rawFetched = await model.findOne({ _id: created.id }) as FeedServiceDocument
+
+      expect(created).to.not.have.property('__v')
+      expect(fetched).to.not.have.property('__v')
+      expect(rawFetched).to.have.property('__v')
+    })
   })
 
   describe('feed repository', function() {
@@ -317,6 +334,25 @@ describe('feeds repositories', function() {
       expect(fetched?.service).to.be.a('string')
       expect(created.service).to.equal(rawFetched.service.toHexString())
       expect(fetched?.service).to.equal(created.service)
+    })
+
+    it.only('omits version key from json', async function() {
+
+      const stub: FeedCreateAttrs = {
+        service: mongoose.Types.ObjectId().toHexString(),
+        topic: uniqid(),
+        title: 'No Version Keys',
+        summary: 'Testing',
+        itemsHaveIdentity: true,
+        itemsHaveSpatialDimension: true
+      }
+      const created = await repo.create(stub)
+      const fetched = await repo.findById(created.id)
+      const rawFetched = await model.findOne({ _id: created.id }) as FeedDocument
+
+      expect(created).to.not.have.property('__v')
+      expect(fetched).to.not.have.property('__v')
+      expect(rawFetched).to.have.property('__v')
     })
   })
 })

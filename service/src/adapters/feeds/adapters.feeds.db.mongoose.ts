@@ -42,6 +42,7 @@ export const FeedServiceSchema = new mongoose.Schema(
   {
     toJSON: {
       getters: true,
+      versionKey: false,
       transform: (doc: FeedServiceDocument, json: any & FeedService, options: SchemaOptions): void => {
         delete json._id
         json.serviceType = doc.serviceType.toHexString()
@@ -75,6 +76,7 @@ export const FeedSchema = new mongoose.Schema(
   {
     toJSON: {
       getters: true,
+      versionKey: false,
       transform: (doc: FeedDocument, json: any & Feed, options: SchemaOptions): void => {
         delete json._id
         json.service = doc.service.toHexString()
