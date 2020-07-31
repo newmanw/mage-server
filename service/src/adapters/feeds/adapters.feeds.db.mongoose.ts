@@ -28,7 +28,9 @@ export function FeedServiceTypeIdentityModel(conn: mongoose.Connection, collecti
   return conn.model(FeedsModels.FeedServiceTypeIdentity, FeedServiceTypeIdentitySchema, collection || 'feed_service_types')
 }
 
-export type FeedServiceDocument = FeedServiceDescriptor & mongoose.Document
+export type FeedServiceDocument = Omit<FeedServiceDescriptor, 'serviceType'> & mongoose.Document & {
+  serviceType: mongoose.Types.ObjectId
+}
 export type FeedServiceModel = Model<FeedServiceDocument>
 export const FeedServiceSchema = new mongoose.Schema(
   {
@@ -42,6 +44,7 @@ export const FeedServiceSchema = new mongoose.Schema(
       getters: true,
       transform: (doc: FeedServiceDocument, json: any & FeedService, options: SchemaOptions): void => {
         delete json._id
+        json.serviceType = doc.serviceType.toHexString()
       }
     }
   })
@@ -49,7 +52,9 @@ export function FeedServiceModel(conn: mongoose.Connection, collection?: string)
   return conn.model(FeedsModels.FeedService, FeedServiceSchema, collection || 'feed_services')
 }
 
-export type FeedDocument = Feed & mongoose.Document
+export type FeedDocument = Omit<Feed, 'service'> & mongoose.Document & {
+  service: mongoose.Types.ObjectId
+}
 export type FeedModel = Model<FeedDocument>
 export const FeedSchema = new mongoose.Schema(
   {
@@ -72,6 +77,7 @@ export const FeedSchema = new mongoose.Schema(
       getters: true,
       transform: (doc: FeedDocument, json: any & Feed, options: SchemaOptions): void => {
         delete json._id
+        json.service = doc.service.toHexString()
       }
     }
   })

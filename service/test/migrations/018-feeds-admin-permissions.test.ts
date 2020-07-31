@@ -12,6 +12,8 @@ describe('feeds admin permissions migration', function() {
     'FEEDS_LIST_SERVICES',
     'FEEDS_LIST_TOPICS',
     'FEEDS_CREATE_FEED',
+    'FEEDS_LIST_ALL',
+    'FEEDS_FETCH_CONTENT'
   ]
 
   before(mongoTest.mongoTestBeforeAllHook())

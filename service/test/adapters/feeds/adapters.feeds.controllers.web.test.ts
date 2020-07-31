@@ -393,7 +393,7 @@ invalid request
     })
   })
 
-  describe.only('GET /services/{serviceId}/topics', async function() {
+  describe('GET /services/{serviceId}/topics', async function() {
 
     it('lists the service topcis', async function() {
 

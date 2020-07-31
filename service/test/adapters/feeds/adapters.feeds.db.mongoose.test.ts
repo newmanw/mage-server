@@ -7,8 +7,8 @@ import { expect } from 'chai'
 import { MongoMemoryServer } from 'mongodb-memory-server'
 import { Substitute as Sub, SubstituteOf } from '@fluffy-spoon/substitute'
 import { BaseMongooseRepository } from '../../../lib/adapters/base/adapters.base.db.mongoose'
-import { FeedServiceRepository, FeedServiceTypeUnregistered, InvalidServiceConfigError, FeedServiceConnection, FeedServiceInfo, FeedTopic, FeedTopicId, FeedRepository, Feed } from '../../../lib/entities/feeds/entities.feeds'
-import { FeedServiceTypeIdentityModel, FeedsModels, FeedServiceTypeIdentitySchema, FeedServiceModel, FeedServiceSchema, MongooseFeedServiceTypeRepository, MongooseFeedServiceRepository, FeedServiceTypeIdentity, FeedServiceTypeIdentityDocument, FeedModel, FeedSchema, MongooseFeedRepository } from '../../../lib/adapters/feeds/adapters.feeds.db.mongoose'
+import { FeedServiceRepository, FeedServiceTypeUnregistered, InvalidServiceConfigError, FeedServiceConnection, FeedServiceInfo, FeedTopic, FeedTopicId, FeedRepository, Feed, FeedServiceCreateAttrs, FeedCreateAttrs } from '../../../lib/entities/feeds/entities.feeds'
+import { FeedServiceTypeIdentityModel, FeedsModels, FeedServiceTypeIdentitySchema, FeedServiceModel, FeedServiceSchema, MongooseFeedServiceTypeRepository, MongooseFeedServiceRepository, FeedServiceTypeIdentity, FeedServiceTypeIdentityDocument, FeedModel, FeedSchema, MongooseFeedRepository, FeedServiceDocument, FeedDocument } from '../../../lib/adapters/feeds/adapters.feeds.db.mongoose'
 import { FeedServiceType } from '../../../lib/entities/feeds/entities.feeds'
 import { Json, JsonObject } from '../../../src/entities/entities.json_types'
 import { EntityIdFactory } from '../../../lib/entities/entities.global'
@@ -201,8 +201,30 @@ describe('feeds repositories', function() {
       repo = new MongooseFeedServiceRepository(model)
     })
 
+    afterEach(async function() {
+      await model.remove({})
+    })
+
     it('does what base repository can do', async function() {
       expect(repo).to.be.instanceOf(BaseMongooseRepository)
+    })
+
+    it('returns service type id as string', async function() {
+      const stub: FeedServiceCreateAttrs = {
+        serviceType: mongoose.Types.ObjectId().toHexString(),
+        title: 'No Object IDs',
+        summary: 'Testing',
+        config: { url: 'https://some.api.com' }
+      }
+      const created = await repo.create(stub)
+      const fetched = await repo.findById(created.id)
+      const rawFetched = await model.findOne({ _id: created.id }) as FeedServiceDocument
+
+      expect(rawFetched.serviceType).to.be.instanceOf(mongoose.Types.ObjectId)
+      expect(created.serviceType).to.be.a('string')
+      expect(fetched?.serviceType).to.be.a('string')
+      expect(created.serviceType).to.equal(rawFetched.serviceType.toHexString())
+      expect(fetched?.serviceType).to.equal(created.serviceType)
     })
   })
 
@@ -274,6 +296,27 @@ describe('feeds repositories', function() {
         expect(fetched).to.have.length(2)
         expect(fetched).to.include.deep.members([ feeds[0], feeds[2] ])
       })
+    })
+
+    it('returns feed with object ids as strings', async function() {
+
+      const stub: FeedCreateAttrs = {
+        service: mongoose.Types.ObjectId().toHexString(),
+        topic: uniqid(),
+        title: 'No Object IDs',
+        summary: 'Testing',
+        itemsHaveIdentity: true,
+        itemsHaveSpatialDimension: true
+      }
+      const created = await repo.create(stub)
+      const fetched = await repo.findById(created.id)
+      const rawFetched = await model.findOne({ _id: created.id }) as FeedDocument
+
+      expect(rawFetched.service).to.be.instanceOf(mongoose.Types.ObjectId)
+      expect(created.service).to.be.a('string')
+      expect(fetched?.service).to.be.a('string')
+      expect(created.service).to.equal(rawFetched.service.toHexString())
+      expect(fetched?.service).to.equal(created.service)
     })
   })
 })
