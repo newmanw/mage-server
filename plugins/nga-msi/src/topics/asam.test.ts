@@ -165,5 +165,4 @@ describe('asam topic module', function() {
       })
     })
   })
-
 })

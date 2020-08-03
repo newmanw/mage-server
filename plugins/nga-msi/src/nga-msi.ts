@@ -21,12 +21,14 @@ export class MsiServiceType implements FeedServiceType {
     default: 'https://msi.gs.mil/'
   }
 
+  constructor(readonly transport: MsiTransport) { }
+
   async validateServiceConfig(config: Json): Promise<null | InvalidServiceConfigError> {
     if (typeof config !== 'string') {
       return new FeedsError(ErrInvalidServiceConfig, { invalidKeys: [], config }, 'config must be a url string')
     }
     try {
-      const url = new URL(config)
+      new URL(config)
     }
     catch (err) {
       return new FeedsError(ErrInvalidServiceConfig, { invalidKeys: [], config }, 'invalid service url')
@@ -35,13 +37,7 @@ export class MsiServiceType implements FeedServiceType {
   }
 
   createConnection(config: Json): FeedServiceConnection {
-    return new MsiConnection(config as string, topics, transport)
-  }
-}
-
-const transport: MsiTransport = {
-  async send() {
-    throw new Error('todo')
+    return new MsiConnection(topics, config as string, this.transport)
   }
 }
 
@@ -51,7 +47,7 @@ const topics: Map<string, MsiTopicModule> = new Map<FeedTopicId, MsiTopicModule>
 
 export class MsiConnection implements FeedServiceConnection {
 
-  constructor(readonly url: string, readonly topics: Map<FeedTopicId, MsiTopicModule>, readonly transport: MsiTransport) {}
+  constructor(readonly topics: Map<FeedTopicId, MsiTopicModule>, readonly baseUrl: string, readonly transport: MsiTransport) {}
 
   async fetchServiceInfo(): Promise<FeedServiceInfo> {
     return {
@@ -70,7 +66,7 @@ export class MsiConnection implements FeedServiceConnection {
       throw new Error(`unknown topic: ${topic}`)
     }
     const req = topicModule.createContentRequest(params)
-    const res = await this.transport.send(req)
+    const res = await this.transport.send(req, new URL(req.path, this.baseUrl))
     return topicModule.transformResponse(res, req)
   }
 }
@@ -88,7 +84,7 @@ export interface MsiResponse {
 }
 
 export interface MsiTransport {
-  send(req: MsiRequest): Promise<MsiResponse>
+  send(req: MsiRequest, baseUrl: URL): Promise<MsiResponse>
 }
 
 export interface MsiTopicModule {

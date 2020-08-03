@@ -1,19 +1,19 @@
-import nock from 'nock'
+import { URL } from 'url'
 import * as MSI from './nga-msi'
-import * as ASAM from './topics/asam'
-import { FeedsError, ErrInvalidServiceConfig, FeedTopic, FeedTopicContent } from '@ngageoint/mage.service/lib/entities/feeds/entities.feeds'
+import { FeedsError, ErrInvalidServiceConfig, FeedTopicContent } from '@ngageoint/mage.service/lib/entities/feeds/entities.feeds'
 
-
-describe('msi feeds plugin hooks', function() {
-
-  it('provides the service type', async function() {
-    fail('todo')
-  })
-})
 
 describe('msi service type', function() {
 
-  const msi = new MSI.MsiServiceType()
+  let transport: jest.Mocked<MSI.MsiTransport>
+  let msi: MSI.MsiServiceType
+
+  beforeEach(function() {
+    transport = {
+      send: jest.fn()
+    }
+    msi = new MSI.MsiServiceType(transport)
+  })
 
   it('validates the service config is a string', async function() {
 
@@ -33,12 +33,13 @@ describe('msi service type', function() {
     expect(err?.code).toEqual(ErrInvalidServiceConfig)
   })
 
-  it('creates a service connection with a url string', async function() {
+  it('creates a service connection with a url string and transport', async function() {
 
     const conn = msi.createConnection('http://test.msi') as MSI.MsiConnection
 
     expect(conn).toBeInstanceOf(MSI.MsiConnection)
-    expect(conn.url).toEqual('http://test.msi')
+    expect(conn.baseUrl).toEqual('http://test.msi')
+    expect(conn.transport).toBe(msi.transport)
   })
 })
 
@@ -75,7 +76,7 @@ describe('msi connection', function() {
   it('returns the configured topics', async function() {
 
     const url = 'https://test.msi'
-    const conn = new MSI.MsiConnection(url, new Map(topicModules.map(x => [ x.topicDescriptor.id, x ])), transport)
+    const conn = new MSI.MsiConnection(new Map(topicModules.map(x => [ x.topicDescriptor.id, x ])), url, transport)
     const topics = await conn.fetchAvailableTopics()
 
     expect(topics).toHaveLength(2)
@@ -85,7 +86,7 @@ describe('msi connection', function() {
 
   it('fetches topic content with the topic request', async function() {
 
-    const conn = new MSI.MsiConnection('http://test.fetch', new Map(topicModules.map(x => [ x.topicDescriptor.id, x ])), transport)
+    const conn = new MSI.MsiConnection(new Map(topicModules.map(x => [ x.topicDescriptor.id, x ])), 'http://test.fetch', transport)
     const contentReq: MSI.MsiRequest = {
       method: 'get',
       path: 'stuff',
@@ -127,7 +128,7 @@ describe('msi connection', function() {
 
     expect(content).toEqual(topicContent)
     expect(transport.send).toBeCalledTimes(1)
-    expect(transport.send).toBeCalledWith(contentReq)
+    expect(transport.send).toBeCalledWith(contentReq, new URL(conn.baseUrl))
     expect(topicModules[0].createContentRequest).toBeCalledWith(topicParams)
     expect(topicModules[0].transformResponse).toBeCalledWith(contentRes, contentReq)
   })
