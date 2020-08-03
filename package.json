@@ -3,10 +3,12 @@
   "description": "This is the root package definition for the Yarn-based mage-server monorepo.",
   "private": true,
   "scripts": {
-    "service:build": "cd service && npm install",
-    "instance:build": "cd instance && npm install",
-    "instance:start": "cd instance && npm start",
-    "web-app:start": "cd web-app && npm start"
+    "start": "npm run service:build && npm run instance:build && npm run instance:start",
+    "start-web": "npm run web-app:start",
+    "service:build": "npm install --prefix service",
+    "instance:build": "npm install --prefix instance",
+    "instance:start": "npm start --prefix instance",
+    "web-app:start": "npm start --prefix web-app"
   },
   "workspaces": [
     "service",
