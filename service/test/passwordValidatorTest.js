@@ -1,7 +1,7 @@
 "use strict";
 
-var PasswordValidator = require('../utilities/passwordValidator.js'),
-    Setting = require('../models/setting'),
+var PasswordValidator = require('../lib/utilities/passwordValidator.js'),
+    Setting = require('../lib/models/setting'),
     chai = require('chai'),
     sinon = require('sinon'),
     sinonChai = require('sinon-chai'),

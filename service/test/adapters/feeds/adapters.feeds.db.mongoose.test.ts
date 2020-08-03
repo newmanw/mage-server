@@ -227,7 +227,7 @@ describe('feeds repositories', function() {
       expect(fetched?.serviceType).to.equal(created.serviceType)
     })
 
-    it.only('omits version key from json', async function() {
+    it('omits version key from json', async function() {
 
       const stub: FeedServiceCreateAttrs = {
         serviceType: mongoose.Types.ObjectId().toHexString(),
@@ -256,6 +256,10 @@ describe('feeds repositories', function() {
       model = conn.model(FeedsModels.Feed, FeedSchema, collection)
       idFactory = Sub.for<EntityIdFactory>()
       repo = new MongooseFeedRepository(model, idFactory)
+    })
+
+    afterEach(async function() {
+      await model.remove({})
     })
 
     describe('creating a feed', function() {
@@ -336,7 +340,7 @@ describe('feeds repositories', function() {
       expect(fetched?.service).to.equal(created.service)
     })
 
-    it.only('omits version key from json', async function() {
+    it('omits version key from json', async function() {
 
       const stub: FeedCreateAttrs = {
         service: mongoose.Types.ObjectId().toHexString(),

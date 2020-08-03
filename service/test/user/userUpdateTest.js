@@ -15,7 +15,7 @@ var UserModel = mongoose.model('User');
 require('../../lib/models/event');
 var EventModel = mongoose.model('Event');
 
-const Setting = require('../../models/setting');
+const Setting = require('../../lib/models/setting');
 
 require('sinon-mongoose');
 
