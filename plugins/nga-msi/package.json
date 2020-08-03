@@ -1,0 +1,54 @@
+{
+  "name": "@ngageoint/mage.nga-msi",
+  "version": "1.0.0",
+  "description": "The NGA-MSI package is a MAGE server plugin that provides feeds from National Geospatial-Intelligence Agency's Maritime Safety Information API.",
+  "main": "lib/index.js",
+  "files": [
+    "lib",
+    "!**/*.test.*"
+  ],
+  "directories": {
+    "test": "test"
+  },
+  "scripts": {
+    "build": "tsc -b src",
+    "test:run": "jest",
+    "test": "npm-run-all build test:run",
+    "prepare": "npm run build",
+    "clean": "rm -rf lib"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ngageoint/mage-server.git"
+  },
+  "keywords": [
+    "mage",
+    "plugin",
+    "feeds",
+    "nga",
+    "maritime",
+    "safety",
+    "api"
+  ],
+  "author": "National Geospatial-Intelligence Agency",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/ngageoint/mage-server/issues"
+  },
+  "homepage": "https://github.com/ngageoint/mage-server#readme",
+  "dependencies": {
+    "@types/geojson": "^7946.0.7"
+  },
+  "peerDependencies": {
+    "@ngageoint/mage.service": "^5.4.0"
+  },
+  "devDependencies": {
+    "@ngageoint/mage.service": "file:../../service",
+    "@types/jest": "^26.0.3",
+    "jest": "^26.1.0",
+    "nock": "^12.0.3",
+    "npm-run-all": "^4.1.5",
+    "ts-jest": "^26.1.1",
+    "typescript": "^3.9.5"
+  }
+}

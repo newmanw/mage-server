@@ -1,0 +1,270 @@
+
+import { Json, JsonObject } from '../entities.json_types'
+import { FeatureCollection } from 'geojson'
+import { JSONSchema4 } from 'json-schema'
+
+interface LoadFeedServiceTypes {
+  (): Promise<FeedServiceType[]>
+}
+
+/**
+ * A plugin package that wishes to provide one or more [FeedServiceType]
+ * implementations must implement include this interface in the top-level
+ * export of the package.  For example,
+ * ```
+ * export = {
+ *   // ... other plugin hooks
+ *   feeds: {
+ *     loadServiceTypes: () => Promise<FeedServiceType[]> {
+ *       // resolve the service types
+ *     }
+ *   }
+ * }
+ */
+export interface FeedsPluginHooks {
+  feeds: {
+    readonly loadServiceTypes:  LoadFeedServiceTypes
+  }
+}
+
+export const ErrInvalidServiceConfig = Symbol.for('err.feeds.invalid_service_config')
+
+export class FeedsError<Code extends symbol, Data> extends Error {
+  constructor(readonly code: Code, readonly data?: Data, message?: string) {
+    super(message ? message : Symbol.keyFor(code))
+  }
+}
+
+export interface InvalidServiceConfigErrorData {
+  readonly invalidKeys: string[]
+  readonly config: Json
+}
+
+export type InvalidServiceConfigError = FeedsError<typeof ErrInvalidServiceConfig, InvalidServiceConfigErrorData>
+
+export const FeedServiceTypeUnregistered = Symbol.for('FeedServiceTypeUnregistered')
+export type FeedServiceTypeId = string | typeof FeedServiceTypeUnregistered
+
+export interface FeedServiceType {
+  readonly id: FeedServiceTypeId
+  readonly pluginServiceTypeId: string
+  readonly title: string
+  readonly summary: string | null
+  readonly configSchema: JSONSchema4 | null
+
+  validateServiceConfig(config: Json): Promise<null | InvalidServiceConfigError>
+  createConnection(config: Json): FeedServiceConnection
+}
+
+export type RegisteredFeedServiceType = FeedServiceType & { id: string }
+
+/**
+ * A feed service ID is globally unique.
+ */
+export type FeedServiceId = string
+
+export interface FeedServiceInfo {
+  readonly title: string
+  readonly summary: string
+}
+
+export interface FeedService {
+  id: FeedServiceId
+  serviceType: FeedServiceTypeId
+  title: string
+  summary: string | null
+  config: Json
+}
+
+export interface FeedServiceConnection {
+  fetchServiceInfo(): Promise<FeedServiceInfo | null>
+  fetchAvailableTopics(): Promise<FeedTopic[]>
+  // TODO: maybe would be valuable to implement some caching of topics or
+  // require the client to pass a populated topic in case the connection needs
+  // extra information to fetch topic content and avoid fetching the topic
+  // information for every content fetch.  caching could also be left to the
+  // plugin to implement, but mage could provide hooks for caching.
+  fetchTopicContent(topic: FeedTopicId, params?: JsonObject): Promise<FeedTopicContent>
+}
+
+export interface FeedServiceTypeRepository {
+  register(moduleName: string, serviceType: FeedServiceType): Promise<RegisteredFeedServiceType>
+  findAll(): Promise<FeedServiceType[]>
+  findById(serviceTypeId: FeedServiceTypeId): Promise<FeedServiceType | null>
+}
+
+export type FeedServiceCreateAttrs = Pick<FeedService,
+  | 'serviceType'
+  | 'title'
+  | 'summary'
+  | 'config'
+  >
+
+export interface FeedServiceRepository {
+  create(feedAttrs: FeedServiceCreateAttrs): Promise<FeedService>
+  findAll(): Promise<FeedService[]>
+  findById(serviceId: FeedServiceId): Promise<FeedService | null>
+}
+
+/**
+ * A topic ID is unique in the context the providing {@linkcode FeedService}.
+ */
+export type FeedTopicId = string
+
+export class FeedUpdateFrequency {
+  constructor(readonly seconds: number) {}
+}
+
+export interface FeedTopic {
+  readonly id: FeedTopicId
+  readonly title: string
+  readonly summary?: string
+  /**
+   * The paramters schema defines the parameters MAGE can use to fetch and
+   * filter content from the topic.
+   */
+  readonly paramsSchema?: JSONSchema4
+  /**
+   * A topic's update frequency is a hint about how often a service might
+   * publish new data to a topic.  A value of `undefined` indicates a topic's
+   * update frequency is unknown and requires configuration in a derived
+   * {@linkcode Feed}.
+   */
+  readonly updateFrequency?: FeedUpdateFrequency
+  /**
+   * When feed items have identity, the `id` property of the GeoJSON feature
+   * items fetched from a feed will contain a persistent unique identifier for
+   * the items.  The same item across mulutiple fetches will have the same
+   * `id` property value.  Consumers of feed content can then present changes as
+   * updates to previously fetched items, for example updating the location of
+   * a moving vehicle.  A value of `undefined` indicates a topic's item identity
+   * is unknown and requires configuration in a derived {@linkcode Feed}.
+   */
+  readonly itemsHaveIdentity?: boolean
+  /**
+   * Feed items with a spatial dimension will translate to GeoJSON features with
+   * non-null geometries.  A value of `undefined` indicates a topic's spatial
+   * dimension is unknown and requires configuration in a derived
+   * {@linkcode Feed}.
+   */
+  readonly itemsHaveSpatialDimension?: boolean
+  /**
+   * Feed items with a temporal property will translate to GeoJSON features
+   * that have a temporal property whose value is a numeric epoch timestamp.  A
+   * value of `undefined` indicates a topic's temporal property is unknown and
+   * requires configuration in a derived {@linkcode Feed}.
+   */
+  readonly itemTemporalProperty?: string
+  /**
+   * The primary property of a GeoJSON feature feed item is the main value that
+   * should represent the item in a list view to the end user, as well as in
+   * a popup on a map view.  A value of `undefined` indicates a topic's primary
+   * property is unknown and requires configuration in a derived
+   * {@linkcode Feed}.
+   */
+  readonly itemPrimaryProperty?: string
+  /**
+   * Simimlar to {@linkcode FeedTopic.itemPrimaryProperty}, the intent of the
+   * secondary of a GeoJSON feature feed item is to indicate a value that
+   * represents the item in a list or map view to the end user.  The secondary
+   * property can add a bit of enhancing detail about the item to the primary
+   * property.  A value of `undefined` indicates a topic's secondary property is
+   * unknown and requires configuration in a derived {@linkcode Feed}.
+   */
+  readonly itemSecondaryProperty?: string
+}
+
+export interface FeedTopicContent {
+  topic: FeedTopicId
+  items: FeatureCollection
+  pageCursor?: Json
+}
+
+/** A feed ID is globally unique. */
+export type FeedId = string
+
+export interface Feed {
+  readonly id: FeedId
+  readonly service: FeedServiceId
+  readonly topic: FeedTopicId
+  readonly title: string
+  readonly summary?: string
+  /**
+   * The constant paramters are a subset of a topic's parameters that an
+   * administrative user defines and that MAGE will apply to every fetch
+   * request to the feed's source topic.  An example of a constant parameter
+   * might be `apiKey`.  MAGE does not expose constant parameters to the end-
+   * user consumer of the feed.
+   */
+  readonly constantParams?: FeedContentParams
+  /**
+   * The variable parameters schema of a feed is a schema an administrative user
+   * can define to advertise the parameters feed consumers can pass when
+   * fetching content from a feed.  This schema could be the same as that of the
+   * source  {@linkcode FeedTopic} or could be a more restrictive subset of the
+   * topic schema.
+   */
+  readonly variableParamsSchema?: JSONSchema4
+  /**
+   * A feed's update frequency is similar to the like-named property on its
+   * underlying topic.  While a topic's update frequency would come from the
+   * implementing plugin, a feed's update frequency would likely come from user
+   * configuration based on the parameters of the feed as well as the update
+   * frequency of the underlying topic.  This allows for feed service type
+   * plugins that are too generic to know what an appropriate update interval
+   * would be for particular service's topics.
+   */
+  readonly updateFrequency?: FeedUpdateFrequency
+  /**
+   * This flag is similar to the like-named property on its source
+   * {@linkcode FeedTopic}, but as with {@linkcode Feed.updateFrequency}, allows
+   * configuration by an administrative user.
+   */
+  readonly itemsHaveIdentity: boolean
+  readonly itemsHaveSpatialDimension: boolean
+  readonly itemTemporalProperty?: string
+  /**
+   * A feed that does not have a primary property (implying there is no
+   * secondary as well) covers the case that a data set might provide only
+   * spatial geometries, and the feed/topic context provides the implicit
+   * meaning of the geometry data.
+   */
+  readonly itemPrimaryProperty?: string
+  readonly itemSecondaryProperty?: string
+}
+
+export type FeedCreateAttrs = Omit<Feed, 'id'> & { id?: FeedId }
+
+export interface FeedRepository {
+  create(attrs: FeedCreateAttrs): Promise<Feed>
+  findById(id: FeedId): Promise<Feed | null>
+  findFeedsByIds(...feedIds: FeedId[]): Promise<Feed[]>
+  findAll(): Promise<Feed[]>
+}
+
+export type FeedMinimalAttrs = Partial<Feed> & Pick<Feed, 'topic' | 'service'>
+
+export const FeedCreateAttrs = (topic: FeedTopic, feedAttrs: FeedMinimalAttrs): FeedCreateAttrs => {
+  const createAttrs: FeedCreateAttrs = {
+    service: feedAttrs.service,
+    topic: topic.id,
+    title: feedAttrs.title || topic.title,
+    summary: feedAttrs.summary || topic.summary,
+    constantParams: feedAttrs.constantParams,
+    variableParamsSchema: feedAttrs.variableParamsSchema || undefined,
+    itemsHaveIdentity: feedAttrs.itemsHaveIdentity || false,
+    itemsHaveSpatialDimension: feedAttrs.itemsHaveSpatialDimension || false,
+    itemPrimaryProperty: feedAttrs.itemPrimaryProperty,
+    itemSecondaryProperty: feedAttrs.itemSecondaryProperty,
+    itemTemporalProperty: feedAttrs.itemTemporalProperty,
+    updateFrequency: feedAttrs.updateFrequency || undefined
+  }
+  return createAttrs
+}
+
+export type FeedContentParams = JsonObject
+
+export interface FeedContent extends FeedTopicContent {
+  readonly feed: FeedId
+  readonly variableParams?: FeedContentParams
+}
