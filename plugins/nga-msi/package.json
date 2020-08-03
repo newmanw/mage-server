@@ -11,17 +11,11 @@
     "test": "test"
   },
   "scripts": {
-    "build:compile": "tsc -b src",
-    "build": "npm-run-all build:compile",
+    "build": "tsc -b src",
     "test:run": "jest",
     "test": "npm-run-all build test:run",
-    "dist-test:compile": "tsc -b test",
-    "dist-test:build": "npm-run-all build dist-test:compile",
-    "dist-test:copy_resources": "cpy \"test/environment/*.pem\" test-lib/environment",
-    "dist-test:test": "mocha --config .mocharc.dist.js",
-    "dist-test": "npm-run-all dist-test:build dist-test:copy_resources dist-test:test",
     "prepare": "npm run build",
-    "clean": "rm -rf lib test-lib"
+    "clean": "rm -rf lib"
   },
   "repository": {
     "type": "git",

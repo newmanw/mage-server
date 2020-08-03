@@ -1,27 +1,45 @@
-import { FeedTopic } from '@ngageoint/mage.service/lib/entities/feeds/entities.feeds'
 import { Feature } from 'geojson'
+import { FeedTopic, FeedTopicContent } from '@ngageoint/mage.service/lib/entities/feeds/entities.feeds'
+import { ParsedUrlQuery } from 'querystring'
+import { MsiRequest, MsiResponse } from '../nga-msi'
+import { JsonObject } from '@ngageoint/mage.service/lib/entities/entities.json_types'
 
-export const topic: FeedTopic = {
+export const topicDescriptor: FeedTopic = {
   id: 'asam',
   title: 'ASAMs',
   summary: 'Anti-Shipping Acitivty Messages (ASAMs) include the locations and descriptive accounts of specific hostile acts against ships and mariners and may be useful for recognition, prevention and avoidance of potential hostile activity.',
-  constantParamsSchema: null,
-  variableParamsSchema: null,
+  paramsSchema: {
+    type: 'object',
+    properties: {
+      newerThanDays: {
+        type: 'number',
+        default: 56
+      }
+    }
+  },
   itemsHaveIdentity: true,
+  itemsHaveSpatialDimension: true,
+  itemPrimaryProperty: 'description',
+  itemSecondaryProperty: 'hostilityVictim',
+  itemTemporalProperty: 'timestamp',
   updateFrequency: { seconds: 60 * 15 }
 }
 
-export enum AsamQueryParams {
-  dateMin = 'minOccurDate',
-  dateMax = 'maxOccurDate',
-  id = 'reference',
-  navArea = 'navArea',
-  subregion = 'subreg',
-  orderBy = 'sort',
-  responseType = 'output',
+export interface AsamTopicParams {
+  newerThanDays?: number
 }
 
-export type AsamResponse = {
+export interface AsamQueryParams extends ParsedUrlQuery {
+  minOccurDate: string
+  maxOccurDate: string
+  reference?: string
+  navArea?: string
+  subreg?: string
+  sort: 'date' | 'ref'
+  output: 'json'
+}
+
+export interface AsamResponse extends JsonObject {
   asam: Asam[]
 }
 
@@ -42,7 +60,7 @@ export type AsamResponse = {
  *     "description": "3 robbers boarded an anchored bulk carrier anchored in Callao. Robbers tied up a crewman and entered the forecastle storeroom. The crewman managed to escape and raised the alarm. Upon hearing the alarm, the robbers fled."
  * }
  */
-type Asam = {
+interface Asam extends JsonObject {
   /**
    * This appears to be the unique identifier for ASAM records.
    */
@@ -61,15 +79,54 @@ type Asam = {
   description: string
 }
 
-function geoJsonFromAsam(x: Asam): Feature {
+const geoJsonFromAsam = (x: Asam): Feature => {
+  const hostility = x.hostility || ''
+  const victim = x.victim || ''
+  const hostilityVictim = hostility && victim ? `${hostility} - ${victim}` : (hostility || victim)
   const feature: Feature = {
     type: 'Feature',
     id: x.reference,
-    properties: x,
+    properties: { ...x },
     geometry: {
       type: 'Point',
       coordinates: [ x.longitude, x.latitude ]
     }
   }
+  if (hostilityVictim) {
+    feature.properties!.hostilityVictim = hostilityVictim
+  }
   return feature;
+}
+
+const formatDateQueryParam = (x: Date): string => {
+  return `${x.getUTCFullYear()}-${x.getUTCMonth() + 1}-${x.getUTCDay()}`
+}
+
+export const createContentRequest = (params?: AsamTopicParams): MsiRequest => {
+  const newerThanDays = params?.newerThanDays ||
+    topicDescriptor.paramsSchema?.properties?.newerThanDays.default as number
+  const maxOccur = new Date()
+  const minOccur = new Date(maxOccur.getTime() - newerThanDays * 24 * 60 * 60 * 1000)
+  const queryParams: AsamQueryParams = {
+    minOccurDate: formatDateQueryParam(minOccur),
+    maxOccurDate: formatDateQueryParam(maxOccur),
+    sort: 'date',
+    output: 'json'
+  }
+  return {
+    method: 'get',
+    path: '/api/publications/asam',
+    queryParams
+  }
+}
+
+export const transformResponse = (res: MsiResponse, req: MsiRequest): FeedTopicContent => {
+  const asamResponse = res.body as AsamResponse
+  return {
+    topic: topicDescriptor.id,
+    items: {
+      type: 'FeatureCollection',
+      features: asamResponse.asam.map(geoJsonFromAsam)
+    }
+  }
 }
