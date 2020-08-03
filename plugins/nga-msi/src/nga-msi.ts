@@ -66,7 +66,7 @@ export class MsiConnection implements FeedServiceConnection {
       throw new Error(`unknown topic: ${topic}`)
     }
     const req = topicModule.createContentRequest(params)
-    const res = await this.transport.send(req, new URL(req.path, this.baseUrl))
+    const res = await this.transport.send(req, new URL(this.baseUrl))
     return topicModule.transformResponse(res, req)
   }
 }

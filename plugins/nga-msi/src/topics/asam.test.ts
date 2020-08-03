@@ -18,8 +18,28 @@ describe('asam topic module', function() {
 
   describe('creating requests', function() {
 
+    let RealDate: DateConstructor
+    let dateSpy: jest.SpyInstance
+
+    beforeEach(function() {
+      RealDate = global.Date
+      dateSpy = jest.spyOn(global, 'Date')
+    })
+
+    afterEach(function() {
+      dateSpy.mockRestore()
+    })
+
     it('creates a request', async function() {
 
+      const dateNow = new RealDate()
+      dateNow.setUTCFullYear(2020, 6, 14)
+      dateSpy.mockImplementation((time?: number): any => {
+        if (typeof time === 'number') {
+          return new RealDate(time)
+        }
+        return dateNow
+      })
       const params: asam.AsamTopicParams = {
         newerThanDays: 12
       }
@@ -28,10 +48,9 @@ describe('asam topic module', function() {
       expect(req.method).toEqual('get')
       expect(req.path).toEqual('/api/publications/asam')
       expect(req.body).toBeUndefined()
-      const minOccur = new Date(Date.now() - 1000 * 60 * 60 * 24 * params.newerThanDays!)
-      const maxOccur = new Date()
-      expect(req.queryParams?.minOccurDate).toEqual(`${minOccur.getUTCFullYear()}-${minOccur.getUTCMonth() + 1}-${minOccur.getUTCDay()}`)
-      expect(req.queryParams?.maxOccurDate).toEqual(`${maxOccur.getUTCFullYear()}-${maxOccur.getUTCMonth() + 1}-${maxOccur.getUTCDay()}`)
+      expect(req.queryParams?.minOccurDate).toEqual('2020-07-02')
+      expect(req.queryParams?.maxOccurDate).toEqual('2020-07-14')
+      expect(dateSpy).toBeCalledWith(dateNow.getTime() - params.newerThanDays! * 24 * 60 * 60 * 1000)
       expect(req.queryParams?.sort).toEqual('date')
       expect(req.queryParams?.output).toEqual('json')
     })

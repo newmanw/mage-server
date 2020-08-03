@@ -99,7 +99,9 @@ const geoJsonFromAsam = (x: Asam): Feature => {
 }
 
 const formatDateQueryParam = (x: Date): string => {
-  return `${x.getUTCFullYear()}-${x.getUTCMonth() + 1}-${x.getUTCDay()}`
+  const month = `${x.getUTCMonth() + 1}`.padStart(2, '0')
+  const day = `${x.getUTCDate()}`.padStart(2, '0')
+  return `${x.getUTCFullYear()}-${month}-${day}`
 }
 
 export const createContentRequest = (params?: AsamTopicParams): MsiRequest => {
