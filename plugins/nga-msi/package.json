@@ -12,7 +12,7 @@
   },
   "scripts": {
     "build": "tsc -b src",
-    "test:run": "jest",
+    "test:run": "jest lib",
     "test": "npm-run-all build test:run",
     "prepare": "npm run build",
     "clean": "rm -rf lib"
