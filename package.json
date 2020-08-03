@@ -2,9 +2,16 @@
   "name": "@ngageoint/mage.project",
   "description": "This is the root package definition for the Yarn-based mage-server monorepo.",
   "private": true,
+  "scripts": {
+    "service:build": "cd service && npm install",
+    "instance:build": "cd instance && npm install",
+    "instance:start": "cd instance && npm start",
+    "web-app:start": "cd web-app && npm start"
+  },
   "workspaces": [
     "service",
     "web-app"
   ],
-  "devDependencies": {}
+  "devDependencies": {
+  }
 }
