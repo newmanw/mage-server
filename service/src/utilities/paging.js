@@ -117,8 +117,6 @@ async function queryUsersAndDevicesThenPage(options, conditions) {
   });
 }
 
-module.exports = {
-  pageUsers,
-  pageDevices,
-  pageTeams
-};
+module.exports.pageUsers = pageUsers
+module.exports.pageDevices = pageDevices
+module.exports.pageTeams = pageTeams
