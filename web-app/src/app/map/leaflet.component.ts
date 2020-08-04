@@ -78,7 +78,6 @@ export class LeafletComponent {
   }
 
   removeLayer($event: any): void {
-    console.log(`********************** remove layer ${$event.layer.name}`);
     Object.values(this.groups).forEach((group: any) => {
       group.layers = group.layers.filter(layer => {
         return layer.layer !== $event.layer.layer;

@@ -10,12 +10,12 @@ function MapService(EventService, LocationService, FeatureService, FeedItemPopup
   // Map Service should delegate to some map provider that implements delegate interface
   // In this case should delegate to leaflet directive.  See if this is possible
 
-  var followedFeature = {
+  const followedFeature = {
     id: undefined,
     layer: undefined
   };
 
-  var service = {
+   const service = {
     setDelegate: setDelegate,
     addListener: addListener,
     removeListener: removeListener,
@@ -261,10 +261,10 @@ function MapService(EventService, LocationService, FeatureService, FeedItemPopup
 
     changed.removed.filter(({feed}) => {
       return feed.itemsHaveSpatialDimension;
-    }).forEach(change => {
-      const feed = feedLayers[`feed-${change.id}`];
-      if (feed) {
-        service.removeFeed(feed);
+    }).forEach(({feed}) => {
+      const layer = feedLayers[`feed-${feed.id}`];
+      if (layer) {
+        service.removeFeed(layer);
       }
     });
   }
@@ -544,6 +544,7 @@ function MapService(EventService, LocationService, FeatureService, FeedItemPopup
     EventService.removeLayersChangedListener(layersChangedListener);
     EventService.removeObservationsChangedListener(observationsChangedListener);
     EventService.removeUsersChangedListener(usersChangedListener);
+    EventService.removeFeedItemsChangedListener(feedItemsChangedListenner);
   }
 
   function removeLayer(layer) {

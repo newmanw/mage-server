@@ -518,7 +518,6 @@ class LeafletController {
   }
 
   onFeedRemoved(feed) {
-    console.log('leaflet remove feed', feed);
     const layerInfo = this.layers[feed.id];
     if (layerInfo) {
       this.map.removeLayer(layerInfo.layer);
@@ -526,9 +525,6 @@ class LeafletController {
       this.onRemoveLayer({
         layer: layerInfo
       })
-    } else {
-      console.log('cannot remove layer, leaflet no workie', feed);
-
     }
   }
 
