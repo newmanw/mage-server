@@ -160,6 +160,7 @@ function EventService($rootScope, $q, $timeout, $http, ObservationService, Locat
     addPollListener: addPollListener,
     removePollListener: removePollListener,
     removeLayersChangedListener: removeLayersChangedListener,
+    removeFeedItemsChangedListener: removeFeedItemsChangedListener,
     getEventById: getEventById,
     saveObservation: saveObservation,
     addObservationFavorite: addObservationFavorite,
@@ -259,7 +260,7 @@ function EventService($rootScope, $q, $timeout, $http, ObservationService, Locat
     });
   }
 
-  function removFeedItemsChangedListener(listener) {
+  function removeFeedItemsChangedListener(listener) {
     feedItemsChangedListeners = _.reject(feedItemsChangedListeners, function (l) {
       return listener === l;
     });
