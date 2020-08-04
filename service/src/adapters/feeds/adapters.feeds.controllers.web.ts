@@ -8,7 +8,7 @@ declare global {
 }
 
 import express from 'express'
-import { ListFeedServiceTypes, ListServiceTopics, CreateFeedService, ListFeedServices, PreviewTopics, PreviewTopicsRequest, CreateFeed, CreateFeedRequest, ListServiceTopicsRequest, ListAllFeeds, FetchFeedContent } from '../../app.api/feeds/app.api.feeds'
+import { ListFeedServiceTypes, ListServiceTopics, CreateFeedService, ListFeedServices, PreviewTopics, PreviewTopicsRequest, CreateFeed, CreateFeedRequest, ListServiceTopicsRequest, ListAllFeeds, FetchFeedContent, PreviewFeedRequest, PreviewFeed } from '../../app.api/feeds/app.api.feeds'
 import { ErrPermissionDenied, MageError, PermissionDeniedError, ErrInvalidInput, invalidInput, ErrEntityNotFound } from '../../app.api/app.api.errors'
 import { WebAppRequestFactory } from '../adapters.controllers.web'
 
@@ -18,6 +18,7 @@ export interface FeedsAppLayer {
   listServices: ListFeedServices
   previewTopics: PreviewTopics
   listTopics: ListServiceTopics
+  previewFeed: PreviewFeed
   createFeed: CreateFeed
   listAllFeeds: ListAllFeeds
 }
@@ -111,25 +112,42 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
       next(appRes.error)
     })
 
+
+  const feedCreateParamsFromRequest = (req: express.Request): Pick<CreateFeedRequest, 'feed'> => {
+    const body = req.body
+    return {
+      feed: {
+        service: req.params.serviceId,
+        topic: req.params.topicId,
+        title: body.title,
+        summary: body.summary,
+        constantParams: body.constantParams,
+        variableParamsSchema: body.variableParamsSchema,
+        itemsHaveIdentity: body.itemsHaveIdentity,
+        itemsHaveSpatialDimension: body.itemsHaveSpatialDimension,
+        itemTemporalProperty: body.itemTemporalProperty,
+        itemPrimaryProperty: body.itemPrimaryProperty,
+        itemSecondaryProperty: body.itemSecondaryProperty,
+        updateFrequency: body.updateFrequency
+      }
+    }
+  }
+
+  routes.route('/services/:serviceId/topics/:topicId/feed_preview')
+    .post(async (req, res, next) => {
+      const params = feedCreateParamsFromRequest(req) as Omit<PreviewFeedRequest, 'context'>
+      params.variableParams = req.body.variableParams
+      const appReq = createAppRequest(req, params)
+      const appRes = await appLayer.previewFeed(appReq)
+      if (appRes.success) {
+        return res.status(200).json(appRes.success)
+      }
+      return next(appRes.error)
+    })
+
   routes.route('/services/:serviceId/topics/:topicId/feeds')
     .post(async (req, res, next) => {
-      const body = req.body
-      const params: Omit<CreateFeedRequest, 'context'> = {
-        feed: {
-          service: req.params.serviceId,
-          topic: req.params.topicId,
-          title: body.title,
-          summary: body.summary,
-          constantParams: body.constantParams,
-          variableParamsSchema: body.variableParamsSchema,
-          itemsHaveIdentity: body.itemsHaveIdentity,
-          itemsHaveSpatialDimension: body.itemsHaveSpatialDimension,
-          itemTemporalProperty: body.itemTemporalProperty,
-          itemPrimaryProperty: body.itemPrimaryProperty,
-          itemSecondaryProperty: body.itemSecondaryProperty,
-          updateFrequency: body.updateFrequency
-        }
-      }
+      const params: Omit<CreateFeedRequest, 'context'> = feedCreateParamsFromRequest(req)
       const appReq = createAppRequest(req, params)
       const appRes = await appLayer.createFeed(appReq)
       if (appRes.success) {

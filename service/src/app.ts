@@ -125,6 +125,7 @@ type AppLayer = {
     createService: feedsApi.CreateFeedService
     listServices: feedsApi.ListFeedServices
     listTopics: feedsApi.ListServiceTopics
+    previewFeed: feedsApi.PreviewFeed
     createFeed: feedsApi.CreateFeed
     listAllFeeds: feedsApi.ListAllFeeds
   },
@@ -199,6 +200,7 @@ function intializeFeedsAppLayer(dbModels: DatabaseModels): AppLayer['feeds'] {
   const createService = feedsImpl.CreateFeedService(permissionService, serviceTypeRepo, serviceRepo)
   const listServices = feedsImpl.ListFeedServices(permissionService, serviceRepo)
   const listTopics = feedsImpl.ListServiceTopics(permissionService, serviceTypeRepo, serviceRepo)
+  const previewFeed = feedsImpl.PreviewFeed(permissionService, serviceTypeRepo, serviceRepo, jsonSchemaService)
   const createFeed = feedsImpl.CreateFeed(permissionService, serviceTypeRepo, serviceRepo, feedRepo, jsonSchemaService)
   const listAllFeeds = feedsImpl.ListAllFeeds(permissionService, feedRepo)
   return {
@@ -212,6 +214,7 @@ function intializeFeedsAppLayer(dbModels: DatabaseModels): AppLayer['feeds'] {
     createService,
     listServices,
     listTopics,
+    previewFeed,
     createFeed,
     listAllFeeds,
   }

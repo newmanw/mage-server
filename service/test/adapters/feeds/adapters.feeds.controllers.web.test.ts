@@ -461,6 +461,13 @@ invalid request
     })
   })
 
+  describe('POST /services/{serviceId}/topics/{topicId}/feed_preview', function() {
+
+    it('has tests', async function() {
+      expect.fail('todo')
+    })
+  })
+
   describe('POST /services/{serviceId}/topics/{topicId}/feeds', function() {
 
     it('creates a feed for service and topic', async function() {
