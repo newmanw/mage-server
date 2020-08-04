@@ -49,10 +49,10 @@ app.enable('trust proxy');
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'pug');
 
-const bodyLimit = { limit: '16mb' };
+const jsonOptions = { limit: '16mb', strict: false };
 app.use(
-    express.json(bodyLimit),
-    express.urlencoded( { ...bodyLimit, extended: true }));
+    express.json(jsonOptions),
+    express.urlencoded( { ...jsonOptions, extended: true }));
 
 app.use(passport.initialize());
 app.use(passport.session());
