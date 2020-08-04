@@ -65,7 +65,7 @@ import { LayerHeaderComponent } from './map/layers/layer-header.component';
 import { LayerContentComponent } from './map/layers/layer-content.component';
 import { ColorPickerComponent } from './color-picker/color-picker.component';
 
-import { mapServiceProvider, localStorageServiceProvider, userServiceProvider } from './upgrade/ajs-upgraded-providers';
+import { mapServiceProvider, localStorageServiceProvider, userServiceProvider, eventResourceProvider } from './upgrade/ajs-upgraded-providers';
 import { BootstrapComponent } from './bootstrap/bootstrap.component';
 import { FeedComponent } from './feed/feed.component';
 import { FeedListItemComponent } from './feed/item/list-item.component';
@@ -148,6 +148,7 @@ import { FeedTabComponent } from './feed/tab.component';
     mapServiceProvider,
     localStorageServiceProvider,
     userServiceProvider,
+    eventResourceProvider,
     { provide: HTTP_INTERCEPTORS, useClass: TokenInterceptorService, multi: true }
   ],
   bootstrap: [],

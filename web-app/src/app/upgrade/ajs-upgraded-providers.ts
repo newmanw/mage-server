@@ -2,6 +2,7 @@ import { InjectionToken } from "@angular/core";
 export const MapService = new InjectionToken<any>('MapService');
 export const LocalStorageService = new InjectionToken<any>('LocalStorageService');
 export const UserService = new InjectionToken<any>('UserService');
+export const Event = new InjectionToken<any>('Event');
 
 export function mapServiceFactory(i: any): any {
   return i.get('MapService');
@@ -29,5 +30,15 @@ export function userServiceFactory(i: any): any {
 export const userServiceProvider = {
   provide: UserService,
   useFactory: userServiceFactory,
+  deps: ['$injector']
+};
+
+export function eventResourceFactory(i: any): any {
+  return i.get('Event');
+}
+
+export const eventResourceProvider = {
+  provide: Event,
+  useFactory: eventResourceFactory,
   deps: ['$injector']
 };

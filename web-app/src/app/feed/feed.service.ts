@@ -36,6 +36,29 @@ export class FeedService {
     return subject;
   }
 
+  fetchFeed(feedId: number): Observable<Feed> {
+    const subject = new Subject<Feed>();
+    this.http.get<Feed>(`/api/feeds/${feedId}`).subscribe(feed => {
+      // feeds.map(feed => {
+      //   feed.id = feed.id.toString();
+      //   return feed;
+      // });
+
+      // feeds.forEach(feed => {
+      //   let feedItems = this._feedItems.get(feed.id);
+      //   if (!feedItems) {
+      //     feedItems = new BehaviorSubject<Array<FeedItem>>([]);
+      //     this._feedItems.set(feed.id, feedItems);
+      //   }
+      // })
+
+      subject.next(feed);
+      // this._feeds.next(feeds);
+    });
+
+    return subject;
+  }
+
   fetchFeeds(eventId: number): Observable<Array<Feed>> {
     const subject = new Subject<Array<Feed>>();
     this.http.get<Array<Feed>>(`/api/events/${eventId}/feeds`).subscribe(feeds => {

@@ -1,8 +1,9 @@
 import _ from 'underscore';
-import { Component, OnInit, SimpleChanges, Inject } from '@angular/core';
+import { Component, OnInit, Inject } from '@angular/core';
 import { UserService } from '../../../upgrade/ajs-upgraded-providers';
 import { FeedService } from '../../../feed/feed.service';
 import { Feed } from 'src/app/feed/feed.model';
+import { StateService } from '@uirouter/angular';
 
 @Component({
   selector: 'app-feeds',
@@ -23,6 +24,7 @@ export class FeedsComponent implements OnInit {
 
   constructor(
     private feedService: FeedService,
+    private stateService: StateService,
     @Inject(UserService) private userService: { myself: { role: {permissions: Array<string>}}}
   ) {
     this.hasFeedCreatePermission = _.contains(userService.myself.role.permissions, 'CREATE_LAYER');
@@ -60,7 +62,7 @@ export class FeedsComponent implements OnInit {
   }
 
   goToFeed(feed: Feed): void {
-    console.log('feed', feed);
+    this.stateService.go('admin.feed', { feedId: feed.id });
   }
 
 }
