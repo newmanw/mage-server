@@ -274,8 +274,11 @@ export const FeedCreateAttrs = (topic: FeedTopic, feedAttrs: FeedMinimalAttrs): 
   }
   for (const explicitNullKey in explicitNullKeys) {
     const override = (feedAttrs as any)[explicitNullKey]
+    const topicDefault = (topic as any)[explicitNullKey]
     if (override !== null) {
-      (createAttrs as any)[explicitNullKey] = override || (topic as any)[explicitNullKey]
+      if (topicDefault) {
+        (createAttrs as any)[explicitNullKey] = override || (topic as any)[explicitNullKey]
+      }
     }
   }
   return createAttrs

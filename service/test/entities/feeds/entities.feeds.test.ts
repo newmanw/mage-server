@@ -2,7 +2,7 @@ import uniqid from 'uniqid'
 import { FeedCreateAttrs, FeedTopic, FeedMinimalAttrs } from '../../../lib/entities/feeds/entities.feeds'
 import { expect } from 'chai'
 
-describe.only('feed-create attribute factory', function() {
+describe('feed-create attribute factory', function() {
 
   it('applies the feed attribute when present', function() {
 

@@ -744,14 +744,8 @@ describe('feeds use case interactions', function() {
             topic: topics[0].id,
             title: topics[0].title,
             summary: topics[0].summary,
-            constantParams: undefined,
-            variableParamsSchema: undefined,
-            updateFrequency: undefined,
             itemsHaveIdentity: false,
-            itemsHaveSpatialDimension: false,
-            itemPrimaryProperty: undefined,
-            itemSecondaryProperty: undefined,
-            itemTemporalProperty: undefined,
+            itemsHaveSpatialDimension: true,
           }
           const previewItems: FeatureCollection = {
             type: 'FeatureCollection',
@@ -1047,12 +1041,8 @@ describe('feeds use case interactions', function() {
             service: service.id,
             title: topics[1].title,
             summary: topics[1].summary,
-            constantParams: undefined,
-            variableParamsSchema: undefined,
             itemsHaveIdentity: false,
-            itemPrimaryProperty: undefined,
-            itemSecondaryProperty: undefined,
-            itemTemporalProperty: undefined,
+            itemsHaveSpatialDimension: true,
           })
           const inDb = app.feedRepo.db.get(created.id)
           expect(inDb).to.deep.include(created)
