@@ -4,7 +4,7 @@
   "description": "Assemble a MAGE Server deployment from the core service, the web-app, and selected plugins.",
   "main": "lib/main.js",
   "scripts": {
-    "start": "NODE_PATH=$PWD/node_modules node main.js"
+    "start": "node --preserve-symlinks main.js"
   },
   "repository": {
     "type": "git",
