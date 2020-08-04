@@ -231,7 +231,7 @@ module.exports = function(app, security) {
      itemSecondaryProperty: "Property 2"
    };
 
- 
+
    const feed4 = {
      id: "3",
      title: 'Feed 4',
@@ -247,134 +247,134 @@ module.exports = function(app, security) {
      itemSecondaryProperty: "Property 2"
    };
 
-   app.get(
-    '/api/feeds',
-    passport.authenticate('bearer'),
-    validateObservationReadAccess,
-    parseQueryParams,
-    function (req, res, next) {
-      res.json([ feed1, feed2, feed3, feed4 ]);
-    }
-  );
-  
-  app.get(
-    '/api/events/:eventId/feeds',
-    passport.authenticate('bearer'),
-    validateObservationReadAccess,
-    parseQueryParams,
-    function (req, res, next) {
-      if (req.params.eventId === "15") {
-        res.json([ feed1, feed2, feed3, feed4 ]);
-      } else {
-        res.json([]);
-      }
-    }
-  );
+  //  app.get(
+  //   '/api/feeds',
+  //   passport.authenticate('bearer'),
+  //   validateObservationReadAccess,
+  //   parseQueryParams,
+  //   function (req, res, next) {
+  //     res.json([ feed1, feed2, feed3, feed4 ]);
+  //   }
+  // );
 
-  app.get(
-    '/api/events/:eventId/feeds/:feedId',
-    passport.authenticate('bearer'),
-    validateObservationReadAccess,
-    parseQueryParams,
-    function (req, res, next) {
-      const feedId = parseInt(req.params.feedId);
-      if (feedId < 0 || feedId > 3) {
-         return res.sendStatus(404);                                                                                                                                                                 
-      } 
+  // app.get(
+  //   '/api/events/:eventId/feeds',
+  //   passport.authenticate('bearer'),
+  //   validateObservationReadAccess,
+  //   parseQueryParams,
+  //   function (req, res, next) {
+  //     if (req.params.eventId === "15") {
+  //       res.json([ feed1, feed2, feed3, feed4 ]);
+  //     } else {
+  //       res.json([]);
+  //     }
+  //   }
+  // );
 
-      res.json({
-	id: req.params.feedId,
-        title: `Feed ${req.params.feedId}`,
-        summary: `Feed ${req.params.feedId} Summary`,
-	style: {
-	  iconUrl: 'https://developers.google.com/maps/documentation/javascript/examples/full/images/parking_lot_maps.png'
-        }
-      });
-    }
-  );
+  // app.get(
+  //   '/api/events/:eventId/feeds/:feedId',
+  //   passport.authenticate('bearer'),
+  //   validateObservationReadAccess,
+  //   parseQueryParams,
+  //   function (req, res, next) {
+  //     const feedId = parseInt(req.params.feedId);
+  //     if (feedId < 0 || feedId > 3) {
+  //        return res.sendStatus(404);
+  //     }
 
-  app.get(
-    '/api/events/:eventId/feeds/:feedId/items',
-    passport.authenticate('bearer'),
-    validateObservationReadAccess,
-    parseQueryParams,
-    function (req, res, next) {
-      const feedId = parseInt(req.params.feedId);
-      if (feedId < 0 || feedId > 3) {
-        return res.sendStatus(404);
-      }
+  //     res.json({
+	// id: req.params.feedId,
+  //       title: `Feed ${req.params.feedId}`,
+  //       summary: `Feed ${req.params.feedId} Summary`,
+	// style: {
+	//   iconUrl: 'https://developers.google.com/maps/documentation/javascript/examples/full/images/parking_lot_maps.png'
+  //       }
+  //     });
+  //   }
+  // );
 
-      res.json([{
-        id: 0,
-        type: 'Feature',
-        geometry: {
-          type: 'Point',
-          coordinates: [-105.2678 + feedId, 40.0085]
-	      },
-        properties: {
-          'Property 1': 'Property 1 Value',
-          'Property 2': 'Property 2 Value',
-	  'timestamp': 1593440445
-        }
-      },{
-        id: "2",
-        type: 'Feature',
-        geometry: null,
-        properties: {
-          'Property 1': 'Property 1 Value',
-          'Property 2': 'Property 2 Value',
-	  'timestamp': 1593450445
-        }
-      },{
-        id: "3",
-        type: 'Feature',
-        geometry: {
-          type: 'Point',
-          coordinates: [-105.3678 + feedId, 40.1085]
-	      },
-        properties: {
-	  'timestamp': 1593460445
-	      }
-      },{
-        id: "4",
-        type: 'Feature',
-        geometry: null,
-        properties: {
-	  'timestamp': 1593470445
-	      }
-      },{                                                                                                                                                                                   
-        id: 5,
-        type: 'Feature',                                                                                                                                                                    
-        geometry: {                                                                                                                                                                                 
-          type: 'Point',                                                                                                                                                                            
-          coordinates: [-105.4678 + feedId, 40.2085]                                                                                                                                                                
-        },                                                                                                                                                                                          
-        properties: {                                                                                                                                                                               
-          'Property 1': 'Property 1 Value',                                                                                                                                                         
-          'Property 2': 'Property 2 Value'                                                                                                                                                         
-        }                                                                                                                                                                                           
-     },{                                                                                                                                                                                           
-        id: 6,
-        type: 'Feature',                                                                                                                                                                                  
-        geometry: null,                                                                                                                                                                             
-        properties: {                                                                                                                                                                               
-          'Property 1': 'Property 1 Value',                                                                                                                                                         
-          'Property 2': 'Property 2 Value'                                                                                                                                                         
-        }                                                                                                                                                                                           
-      },{                                                                                                                                                                                           
-        id: 7,       
-        type: 'Feature',                                                                                                                                                                             
-        geometry: {                                                                                                                                                                                 
-          type: 'Point',                                                                                                                                                                            
-          coordinates: [-105.5678 + feedId, 40.3085]                                                                                                                                                                
-        },                                                                                                                                                                                          
-        properties: null                                                                                                                                                                            
-      },{                                                                                                                                                                                           
-        id: 8,
-        type: 'Feature',                                                                                                                                                                                  
-        geometry: null,                                                                                                                                                                             
-        properties: null                                                                                                                                                                            
-      }]);
-    }
-  );
+  // app.get(
+  //   '/api/events/:eventId/feeds/:feedId/items',
+  //   passport.authenticate('bearer'),
+  //   validateObservationReadAccess,
+  //   parseQueryParams,
+  //   function (req, res, next) {
+  //     const feedId = parseInt(req.params.feedId);
+  //     if (feedId < 0 || feedId > 3) {
+  //       return res.sendStatus(404);
+  //     }
+
+  //     res.json([{
+  //       id: 0,
+  //       type: 'Feature',
+  //       geometry: {
+  //         type: 'Point',
+  //         coordinates: [-105.2678 + feedId, 40.0085]
+	//       },
+  //       properties: {
+  //         'Property 1': 'Property 1 Value',
+  //         'Property 2': 'Property 2 Value',
+	//   'timestamp': 1593440445
+  //       }
+  //     },{
+  //       id: "2",
+  //       type: 'Feature',
+  //       geometry: null,
+  //       properties: {
+  //         'Property 1': 'Property 1 Value',
+  //         'Property 2': 'Property 2 Value',
+	//   'timestamp': 1593450445
+  //       }
+  //     },{
+  //       id: "3",
+  //       type: 'Feature',
+  //       geometry: {
+  //         type: 'Point',
+  //         coordinates: [-105.3678 + feedId, 40.1085]
+	//       },
+  //       properties: {
+	//   'timestamp': 1593460445
+	//       }
+  //     },{
+  //       id: "4",
+  //       type: 'Feature',
+  //       geometry: null,
+  //       properties: {
+	//   'timestamp': 1593470445
+	//       }
+  //     },{
+  //       id: 5,
+  //       type: 'Feature',
+  //       geometry: {
+  //         type: 'Point',
+  //         coordinates: [-105.4678 + feedId, 40.2085]
+  //       },
+  //       properties: {
+  //         'Property 1': 'Property 1 Value',
+  //         'Property 2': 'Property 2 Value'
+  //       }
+  //    },{
+  //       id: 6,
+  //       type: 'Feature',
+  //       geometry: null,
+  //       properties: {
+  //         'Property 1': 'Property 1 Value',
+  //         'Property 2': 'Property 2 Value'
+  //       }
+  //     },{
+  //       id: 7,
+  //       type: 'Feature',
+  //       geometry: {
+  //         type: 'Point',
+  //         coordinates: [-105.5678 + feedId, 40.3085]
+  //       },
+  //       properties: null
+  //     },{
+  //       id: 8,
+  //       type: 'Feature',
+  //       geometry: null,
+  //       properties: null
+  //     }]);
+  //   }
+  // );
 };
