@@ -233,6 +233,7 @@ export interface Feed {
   readonly itemSecondaryProperty?: string
 }
 
+
 export type FeedCreateAttrs = Omit<Feed, 'id'> & { id?: FeedId }
 
 export interface FeedRepository {
@@ -242,22 +243,40 @@ export interface FeedRepository {
   findAll(): Promise<Feed[]>
 }
 
-export type FeedMinimalAttrs = Partial<Feed> & Pick<Feed, 'topic' | 'service'>
+type FeedCreateExcplicitNullKeys = 'itemTemporalProperty' | 'itemPrimaryProperty' | 'itemSecondaryProperty' | 'updateFrequency'
+
+export type FeedMinimalAttrs = Partial<Omit<Feed, FeedCreateExcplicitNullKeys>> & Pick<Feed, 'topic' | 'service'> & {
+  readonly [nullable in keyof Pick<Feed, FeedCreateExcplicitNullKeys>]: Feed[nullable] | null
+}
 
 export const FeedCreateAttrs = (topic: FeedTopic, feedAttrs: FeedMinimalAttrs): FeedCreateAttrs => {
-  const createAttrs: FeedCreateAttrs = {
+  const createAttrs: { -readonly [mutable in keyof FeedCreateAttrs]: FeedCreateAttrs[mutable] } = {
     service: feedAttrs.service,
     topic: topic.id,
     title: feedAttrs.title || topic.title,
     summary: feedAttrs.summary || topic.summary,
     constantParams: feedAttrs.constantParams,
-    variableParamsSchema: feedAttrs.variableParamsSchema || undefined,
-    itemsHaveIdentity: feedAttrs.itemsHaveIdentity || false,
-    itemsHaveSpatialDimension: feedAttrs.itemsHaveSpatialDimension || false,
-    itemPrimaryProperty: feedAttrs.itemPrimaryProperty,
-    itemSecondaryProperty: feedAttrs.itemSecondaryProperty,
-    itemTemporalProperty: feedAttrs.itemTemporalProperty,
-    updateFrequency: feedAttrs.updateFrequency || undefined
+    variableParamsSchema: feedAttrs.variableParamsSchema,
+    itemsHaveIdentity: feedAttrs.itemsHaveIdentity === undefined ? topic.itemsHaveIdentity || false : feedAttrs.itemsHaveIdentity,
+    itemsHaveSpatialDimension: feedAttrs.itemsHaveSpatialDimension === undefined ? topic.itemsHaveSpatialDimension || false: feedAttrs.itemsHaveSpatialDimension,
+  }
+  if (!createAttrs.constantParams) {
+    delete createAttrs.constantParams
+  }
+  if (!createAttrs.variableParamsSchema) {
+    delete createAttrs.variableParamsSchema
+  }
+  const explicitNullKeys: { [key in FeedCreateExcplicitNullKeys]: true } = {
+    itemPrimaryProperty: true,
+    itemSecondaryProperty: true,
+    itemTemporalProperty: true,
+    updateFrequency: true
+  }
+  for (const explicitNullKey in explicitNullKeys) {
+    const override = (feedAttrs as any)[explicitNullKey]
+    if (override !== null) {
+      (createAttrs as any)[explicitNullKey] = override || (topic as any)[explicitNullKey]
+    }
   }
   return createAttrs
 }
