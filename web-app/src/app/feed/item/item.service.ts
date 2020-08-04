@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
-import { FeedItem } from './item.model';
 import { Feed } from '../feed.model';
+import { Feature } from 'geojson';
 
 export enum FeedAction {
   Select,
@@ -10,7 +10,7 @@ export enum FeedAction {
 
 export interface FeedItemEvent {
   feed: Feed;
-  item: FeedItem;
+  item: Feature;
   action: FeedAction;
 }
 
@@ -22,7 +22,7 @@ export class FeedItemService {
 
   item$ = this.itemSource.asObservable();
 
-  select(feed: Feed, item: FeedItem): void {
+  select(feed: Feed, item: Feature): void {
     this.itemSource.next({
       feed: feed,
       item: item,
@@ -30,7 +30,7 @@ export class FeedItemService {
     });
   }
 
-  deselect(feed: Feed, item: FeedItem): void {
+  deselect(feed: Feed, item: Feature): void {
     this.itemSource.next({
       feed: feed,
       item: item,

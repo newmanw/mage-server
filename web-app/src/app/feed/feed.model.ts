@@ -1,3 +1,5 @@
+import { FeatureCollection, Feature } from 'geojson';
+
 export interface Feed {
   id: string,
   title: string;
@@ -19,4 +21,9 @@ export interface FeedTab {
   title: string;
   icon?: string;
   iconUrl?: string;
+}
+
+export type StyledFeature = Feature & { style: Style }
+export interface FeedContent {
+  items: FeatureCollection
 }

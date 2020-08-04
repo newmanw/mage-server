@@ -671,11 +671,11 @@ function EventService($rootScope, $q, $timeout, $http, ObservationService, Locat
       return;
     }
 
-    FeedService.fetchFeedItems(event.id, feed.id).subscribe(items => {
+    FeedService.fetchFeedItems(event, feed).subscribe(content => {
       // TODO is this really created or updated, maybe just create as empty when,
       // feeds come back
       feedItemsChanged({
-        updated: [{ feed, items}]
+        updated: [{ feed, items: content.items.features}]
       }, event);
 
       feedSync.find(f => f.id === feed.id).lastSync = Date.now();

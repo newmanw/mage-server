@@ -1,7 +1,7 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
 import { FeedService } from './feed.service';
-import { FeedItem } from './item/item.model';
 import { Feed } from './feed.model';
+import { Feature } from 'geojson';
 
 @Component({
   selector: 'feed',
@@ -11,7 +11,7 @@ import { Feed } from './feed.model';
 export class FeedComponent implements OnChanges {
   @Input() feed: Feed;
 
-  items: Array<FeedItem> = [];
+  items: Array<Feature> = [];
 
   constructor(private feedService: FeedService) {}
 
