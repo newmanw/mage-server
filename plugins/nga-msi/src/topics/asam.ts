@@ -86,7 +86,7 @@ const geoJsonFromAsam = (x: Asam): Feature => {
   const feature: Feature = {
     type: 'Feature',
     id: x.reference,
-    properties: { ...x },
+    properties: { ...x, timestamp: Date.parse(x.date) },
     geometry: {
       type: 'Point',
       coordinates: [ x.longitude, x.latitude ]

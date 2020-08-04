@@ -138,7 +138,8 @@ describe('asam topic module', function() {
             id: sampleResponse.asam[0].reference,
             properties: {
               ...sampleResponse.asam[0],
-              hostilityVictim: sampleResponse.asam[0].hostility
+              hostilityVictim: sampleResponse.asam[0].hostility,
+              timestamp: Date.parse(sampleResponse.asam[0].date)
             },
             geometry: {
               type: 'Point',
@@ -150,7 +151,8 @@ describe('asam topic module', function() {
             id: sampleResponse.asam[1].reference,
             properties: {
               ...sampleResponse.asam[1],
-              hostilityVictim: sampleResponse.asam[1].hostility
+              hostilityVictim: sampleResponse.asam[1].hostility,
+              timestamp: Date.parse(sampleResponse.asam[1].date)
             },
             geometry: {
               type: 'Point',
@@ -161,7 +163,8 @@ describe('asam topic module', function() {
             type: 'Feature',
             id: sampleResponse.asam[2].reference,
             properties: {
-              ...sampleResponse.asam[2]
+              ...sampleResponse.asam[2],
+              timestamp: Date.parse(sampleResponse.asam[2].date)
             },
             geometry: {
               type: 'Point',
@@ -173,7 +176,8 @@ describe('asam topic module', function() {
             id: sampleResponse.asam[3].reference,
             properties: {
               ...sampleResponse.asam[3],
-              hostilityVictim: sampleResponse.asam[3].victim
+              hostilityVictim: sampleResponse.asam[3].victim,
+              timestamp: Date.parse(sampleResponse.asam[3].date)
             },
             geometry: {
               type: 'Point',
