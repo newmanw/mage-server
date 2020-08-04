@@ -546,7 +546,7 @@ invalid request
     })
   })
 
-  describe('GET /all_feeds', function() {
+  describe('GET /', function() {
 
     it('returns all the feeds', async function() {
 
@@ -576,14 +576,14 @@ invalid request
       appRequestFactory.createRequest(Arg.any()).returns(appReq)
       appLayer.listAllFeeds(appReq).resolves(AppResponse.success<Feed[], unknown>(feeds))
 
-      const res = await client.get(`${rootPath}/all_feeds`)
+      const res = await client.get(`${rootPath}/`)
       expect(res.status).to.equal(200)
       expect(res.type).to.match(jsonMimeType)
       expect(res.body).to.deep.equal(feeds)
     })
   })
 
-  describe('GET /all_feeds/{feedId}', function() {
+  describe('GET /{feedId}', function() {
     it('has tests', async function() {
       expect.fail('todo')
     })

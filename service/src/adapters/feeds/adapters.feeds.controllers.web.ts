@@ -159,7 +159,7 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
       return next(appRes.error)
     })
 
-  routes.route('/all_feeds')
+  routes.route('/')
     .get(async (req, res, next) => {
       const appReq = createAppRequest(req)
       const appRes = await appLayer.listAllFeeds(appReq)
