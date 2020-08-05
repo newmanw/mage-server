@@ -111,10 +111,6 @@ export interface FeedServiceRepository {
  */
 export type FeedTopicId = string
 
-export class FeedUpdateFrequency {
-  constructor(readonly seconds: number) {}
-}
-
 export interface FeedTopic {
   readonly id: FeedTopicId
   readonly title: string
@@ -130,7 +126,7 @@ export interface FeedTopic {
    * update frequency is unknown and requires configuration in a derived
    * {@linkcode Feed}.
    */
-  readonly updateFrequency?: FeedUpdateFrequency
+  readonly updateFrequencySeconds?: number
   /**
    * When feed items have identity, the `id` property of the GeoJSON feature
    * items fetched from a feed will contain a persistent unique identifier for
@@ -214,7 +210,7 @@ export interface Feed {
    * plugins that are too generic to know what an appropriate update interval
    * would be for particular service's topics.
    */
-  readonly updateFrequency?: FeedUpdateFrequency
+  readonly updateFrequencySeconds?: number
   /**
    * This flag is similar to the like-named property on its source
    * {@linkcode FeedTopic}, but as with {@linkcode Feed.updateFrequency}, allows
@@ -243,7 +239,7 @@ export interface FeedRepository {
   findAll(): Promise<Feed[]>
 }
 
-type FeedCreateExcplicitNullKeys = 'itemTemporalProperty' | 'itemPrimaryProperty' | 'itemSecondaryProperty' | 'updateFrequency'
+type FeedCreateExcplicitNullKeys = 'itemTemporalProperty' | 'itemPrimaryProperty' | 'itemSecondaryProperty' | 'updateFrequencySeconds'
 
 export type FeedMinimalAttrs = Partial<Omit<Feed, FeedCreateExcplicitNullKeys>> & Pick<Feed, 'topic' | 'service'> & {
   readonly [nullable in keyof Pick<Feed, FeedCreateExcplicitNullKeys>]: Feed[nullable] | null
@@ -270,7 +266,7 @@ export const FeedCreateAttrs = (topic: FeedTopic, feedAttrs: FeedMinimalAttrs): 
     itemPrimaryProperty: true,
     itemSecondaryProperty: true,
     itemTemporalProperty: true,
-    updateFrequency: true
+    updateFrequencySeconds: true
   }
   for (const explicitNullKey in explicitNullKeys) {
     const override = (feedAttrs as any)[explicitNullKey]

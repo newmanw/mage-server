@@ -15,7 +15,7 @@ describe('feed-create attribute factory', function() {
       itemPrimaryProperty: 'topicPrimary',
       itemSecondaryProperty: 'topicSecondary',
       itemTemporalProperty: 'topicTemporal',
-      updateFrequency: { seconds: 3600 },
+      updateFrequencySeconds: 3600,
       paramsSchema: {
         type: 'object',
         properties: {
@@ -35,7 +35,7 @@ describe('feed-create attribute factory', function() {
       itemPrimaryProperty: null,
       itemSecondaryProperty: null,
       itemTemporalProperty: 'feedTemporal',
-      updateFrequency: { seconds: 600 },
+      updateFrequencySeconds: 600,
       constantParams: {
         key: 'abc123'
       },
@@ -55,7 +55,7 @@ describe('feed-create attribute factory', function() {
       itemsHaveIdentity: false,
       itemsHaveSpatialDimension: false,
       itemTemporalProperty: feed.itemTemporalProperty,
-      updateFrequency: feed.updateFrequency,
+      updateFrequencySeconds: feed.updateFrequencySeconds,
       constantParams: feed.constantParams,
       variableParamsSchema: feed.variableParamsSchema
     })
@@ -74,7 +74,7 @@ describe('feed-create attribute factory', function() {
       itemPrimaryProperty: 'topicPrimary',
       itemSecondaryProperty: 'topicSecondary',
       itemTemporalProperty: 'topicTemporal',
-      updateFrequency: { seconds: 3600 },
+      updateFrequencySeconds: 3600,
       paramsSchema: {
         type: 'object',
         properties: {
@@ -101,7 +101,7 @@ describe('feed-create attribute factory', function() {
       itemsHaveSpatialDimension: topic.itemsHaveSpatialDimension,
       itemPrimaryProperty: topic.itemPrimaryProperty,
       itemSecondaryProperty: topic.itemSecondaryProperty,
-      updateFrequency: topic.updateFrequency
+      updateFrequencySeconds: topic.updateFrequencySeconds
     })
     expect(createAttrs).to.not.have.property('itemTemporalProperty')
   })

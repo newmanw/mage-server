@@ -128,7 +128,7 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
         itemTemporalProperty: body.itemTemporalProperty,
         itemPrimaryProperty: body.itemPrimaryProperty,
         itemSecondaryProperty: body.itemSecondaryProperty,
-        updateFrequency: body.updateFrequency
+        updateFrequencySeconds: body.updateFrequencySeconds
       }
     }
   }
@@ -153,7 +153,7 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
       if (appRes.success) {
         return res
           .status(201)
-          .header('location', `${req.baseUrl}/all_feeds/${appRes.success.id}`)
+          .header('location', `${req.baseUrl}/${appRes.success.id}`)
           .json(appRes.success)
       }
       return next(appRes.error)

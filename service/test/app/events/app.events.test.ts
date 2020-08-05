@@ -170,9 +170,7 @@ describe('event feeds use case interactions', function() {
         itemPrimaryProperty: 'label',
         itemSecondaryProperty: 'level',
         itemTemporalProperty: 'timestamp',
-        updateFrequency: {
-          seconds: 3600
-        },
+        updateFrequencySeconds: 3600,
         variableParamsSchema: {
           type: 'object',
           properties: {

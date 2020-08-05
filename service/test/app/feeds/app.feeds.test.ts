@@ -360,7 +360,7 @@ describe('feeds use case interactions', function() {
               $ref: 'urn:mage:current_user_location'
             },
             itemsHaveIdentity: true,
-            updateFrequency: { seconds: 3600 }
+            updateFrequencySeconds: 3600
           },
           {
             id: 'fire_reports',
@@ -370,7 +370,7 @@ describe('feeds use case interactions', function() {
               $ref: 'urn:mage:current_user_location'
             },
             itemsHaveIdentity: true,
-            updateFrequency: { seconds: 3600 }
+            updateFrequencySeconds: 3600
           }
         ]
         const conn = Sub.for<FeedServiceConnection>()
@@ -1110,9 +1110,7 @@ describe('feeds use case interactions', function() {
             constantParams: {
               limit: 100
             },
-            updateFrequency: {
-              seconds: 3600
-            }
+            updateFrequencySeconds: 3600
           }
         ]
         app.registerFeeds(...feeds)

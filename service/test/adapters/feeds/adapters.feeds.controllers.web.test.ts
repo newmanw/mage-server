@@ -502,7 +502,7 @@ invalid request
           itemPrimaryProperty: undefined,
           itemSecondaryProperty: undefined,
           itemTemporalProperty: undefined,
-          updateFrequency: undefined
+          updateFrequencySeconds: undefined
         }
       })
       const feed: Feed = {
@@ -524,7 +524,7 @@ invalid request
         .send(postBody)
 
       expect(res.status).to.equal(201)
-      expect(res.header.location).to.equal(`${rootPath}/all_feeds/${feed.id}`)
+      expect(res.header.location).to.equal(`${rootPath}/${feed.id}`)
       expect(res.type).to.match(jsonMimeType)
       expect(res.body).to.deep.equal(feed)
     })
