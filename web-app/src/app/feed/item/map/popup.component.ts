@@ -1,7 +1,7 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { Feed } from '../../feed.model';
-import { FeedItem } from '../item.model';
 import { FeedItemService } from '../item.service';
+import { Feature } from 'geojson';
 
 @Component({
   selector: 'item-map-popup',
@@ -10,7 +10,7 @@ import { FeedItemService } from '../item.service';
 })
 export class FeedItemMapPopupComponent implements OnInit {
   @Input() feed: Feed;
-  @Input() item: FeedItem;
+  @Input() item: Feature;
 
   hasContent = false;
   iconUrl: string;

@@ -1,8 +1,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, Subject } from 'rxjs';
-import { Feed } from './feed.model';
-import { FeedItem } from './item/item.model';
+import { Feed, FeedContent, StyledFeature } from './feed.model';
+import { Feature } from 'geojson';
 
 @Injectable({
   providedIn: 'root'
@@ -17,8 +17,8 @@ export class FeedService {
   private _feeds = new BehaviorSubject<Array<Feed>>([]);
   readonly feeds = this._feeds.asObservable();
 
-  private _feedItems = new Map<string, BehaviorSubject<Array<FeedItem>>>();
-  feedItems(feedId: string): Observable<Array<FeedItem>> {
+  private _feedItems = new Map<string, BehaviorSubject<Array<Feature>>>();
+  feedItems(feedId: string): Observable<Array<Feature>> {
     return this._feedItems.get(feedId).asObservable();
   }
 
@@ -36,6 +36,10 @@ export class FeedService {
     return subject;
   }
 
+  fetchFeed(feedId: number): Observable<Feed> {
+    return this.http.get<Feed>(`/api/feeds/${feedId}`);
+  }
+
   fetchFeeds(eventId: number): Observable<Array<Feed>> {
     const subject = new Subject<Array<Feed>>();
     this.http.get<Array<Feed>>(`/api/events/${eventId}/feeds`).subscribe(feeds => {
@@ -47,7 +51,7 @@ export class FeedService {
       feeds.forEach(feed => {
         let feedItems = this._feedItems.get(feed.id);
         if (!feedItems) {
-          feedItems = new BehaviorSubject<Array<FeedItem>>([]);
+          feedItems = new BehaviorSubject<Array<Feature>>([]);
           this._feedItems.set(feed.id, feedItems);
         }
       })
@@ -59,19 +63,26 @@ export class FeedService {
     return subject;
   }
 
-  fetchFeedItems(eventId: number, feedId: string): Observable<Array<FeedItem>> {
-    const subject = new Subject<Array<FeedItem>>();
+  fetchFeedItems(event: any, feed: Feed): Observable<FeedContent> {
+    const subject = new Subject<FeedContent>();
 
-    const feedItems = this._feedItems.get(feedId);
-    this.http.get<Array<FeedItem>>(`/api/events/${eventId}/feeds/${feedId}/items`).subscribe(items => {
-      items.map(item => {
-        item.id = item.id.toString();
-        item.properties = item.properties || {};
-        return item;
+    const feedItems = this._feedItems.get(feed.id);
+    this.http.post<FeedContent>(`/api/events/${event.id}/feeds/${feed.id}/content`, {}).subscribe(content => {
+      const style = feed.style || {
+        iconUrl: '/assets/images/default_marker.png'
+      }
+
+      const features = content.items.features;
+      features.map((feature: StyledFeature) => {
+        feature.id = feature.id.toString();
+        feature.properties = feature.properties || {};
+        feature.style = style;
+
+        return feature;
       });
 
-      subject.next(items);
-      feedItems.next(items);
+      subject.next(content);
+      feedItems.next(features);
     });
 
     return subject;

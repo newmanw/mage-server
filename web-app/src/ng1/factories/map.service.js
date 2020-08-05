@@ -220,11 +220,6 @@ function MapService(EventService, LocationService, FeatureService, FeedItemPopup
 
     // Filter out non geospatial feeds
     changed.added.filter(geospatialFilter).forEach(({ feed, items }) => {
-      const features = items.map(item => {
-        item.style = feed.style;
-        return item;
-      });
-
       service.createFeedLayer({
         id: `feed-${feed.id}`,
         name: feed.title,
@@ -232,7 +227,7 @@ function MapService(EventService, LocationService, FeatureService, FeedItemPopup
         type: 'geojson',
         geojson: {
           type: 'FeatureCollection',
-          features: features
+          features: items
         },
         options: {
           iconWidth: 24,
@@ -248,14 +243,9 @@ function MapService(EventService, LocationService, FeatureService, FeedItemPopup
     });
 
     changed.updated.filter(geospatialFilter).forEach(({feed, items}) => {
-        const features = items.map(item => {
-          item.style = feed.style;
-          return item;
-        });
-
         featuresChanged({
           id: `feed-${feed.id}`,
-          updated: features
+          updated: items
         });
     });
 

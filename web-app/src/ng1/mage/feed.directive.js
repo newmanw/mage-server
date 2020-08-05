@@ -212,10 +212,11 @@ function NewsFeedController($scope, MapService, EventService, ObservationService
 
   function onFeedsChanged(feeds) {
     $scope.tabs = tabs.concat(_.map(feeds, feed => {
+      const style = feed.style || {}
       return {
         id: `feed-${feed.id}`,
         title: feed.title,
-        iconUrl: feed.style.iconUrl,
+        iconUrl: style.iconUrl,
         feed: feed
       };
     }))

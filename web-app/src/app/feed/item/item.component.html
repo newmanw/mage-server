@@ -11,8 +11,8 @@
       <div class="card-title">{{primary}}</div>
       <div class="card-subtitle">{{secondary}}</div>
     </div>
-    <mat-icon *ngIf="!feed.style.iconUrl">rss_feed</mat-icon>
-    <img mat-card-avatar *ngIf="feed.style.iconUrl" [src]="feed.style.iconUrl" />
+    <mat-icon *ngIf="!iconUrl">rss_feed</mat-icon>
+    <img mat-card-avatar *ngIf="iconUrl" [src]="iconUrl" />
   </div>
   <div mat-card-image>
     <map-clip class="map" [feature]=item></map-clip>

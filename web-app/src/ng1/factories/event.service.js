@@ -630,7 +630,7 @@ function EventService($rootScope, $q, $timeout, $http, ObservationService, Locat
 
       const feed = eventsById[event.id].feedsById[localFeed.id]
 
-      if ((now - localFeed.lastSync) > (feed.updateFrequency * 1000)) {
+      if ((now - localFeed.lastSync) > (feed.updateFrequency.seconds * 1000)) {
         return true;
       }
     }) || {};
@@ -647,10 +647,10 @@ function EventService($rootScope, $q, $timeout, $http, ObservationService, Locat
       if (!localFeed.lastSync) return 0;
 
       const elapsed = (now - localFeed.lastSync) / 1000;
-      if (elapsed > feed.updateFrequency) {
+      if (elapsed > feed.updateFrequency.seconds) {
         return 5 
       } else {
-        return feed.updateFrequency - elapsed
+        return feed.updateFrequency.seconds - elapsed
       } 
     });
 
@@ -671,11 +671,11 @@ function EventService($rootScope, $q, $timeout, $http, ObservationService, Locat
       return;
     }
 
-    FeedService.fetchFeedItems(event.id, feed.id).subscribe(items => {
+    FeedService.fetchFeedItems(event, feed).subscribe(content => {
       // TODO is this really created or updated, maybe just create as empty when,
       // feeds come back
       feedItemsChanged({
-        updated: [{ feed, items}]
+        updated: [{ feed, items: content.items.features}]
       }, event);
 
       feedSync.find(f => f.id === feed.id).lastSync = Date.now();

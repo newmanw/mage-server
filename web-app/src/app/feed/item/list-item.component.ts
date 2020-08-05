@@ -1,8 +1,8 @@
 import { Component, OnInit, Input, Inject } from '@angular/core';
-import { FeedItem } from './item.model';
 import { Feed } from '../feed.model';
 import { FeedItemService } from './item.service';
 import { MapService } from 'src/app/upgrade/ajs-upgraded-providers';
+import { Feature } from 'geojson';
 
 @Component({
   selector: 'feed-list-item',
@@ -11,17 +11,22 @@ import { MapService } from 'src/app/upgrade/ajs-upgraded-providers';
 })
 export class FeedListItemComponent implements OnInit {
   @Input() feed: Feed;
-  @Input() item: FeedItem;
+  @Input() item: Feature;
 
   hasContent = false;
   timestamp: number;
   primary: string;
   secondary: string;
+  iconUrl: string;
 
   constructor(private feedItemService: FeedItemService, @Inject(MapService) private mapService: any) { }
 
   ngOnInit(): void {
     if (!this.item.properties) return;
+
+    if (this.feed.style) {
+      this.iconUrl = this.feed.style.iconUrl;
+    }
 
     if (this.feed.itemTemporalProperty && this.item.properties[this.feed.itemTemporalProperty] != null) {
       this.timestamp = this.item.properties[this.feed.itemTemporalProperty];
