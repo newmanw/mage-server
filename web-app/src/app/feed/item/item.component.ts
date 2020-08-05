@@ -9,7 +9,7 @@ import { Feature } from 'geojson';
   templateUrl: './item.component.html',
   styleUrls: ['./item.component.scss']
 })
-export class FeedItemComponent implements OnInit, OnChanges {
+export class FeedItemComponent implements OnChanges {
   @Input() feed: Feed;
   @Input() item: Feature;
 
