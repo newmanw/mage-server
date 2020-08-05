@@ -630,7 +630,7 @@ function EventService($rootScope, $q, $timeout, $http, ObservationService, Locat
 
       const feed = eventsById[event.id].feedsById[localFeed.id]
 
-      if ((now - localFeed.lastSync) > (feed.updateFrequency.seconds * 1000)) {
+      if ((now - localFeed.lastSync) > (feed.updateFrequencySeconds * 1000)) {
         return true;
       }
     }) || {};
@@ -647,16 +647,14 @@ function EventService($rootScope, $q, $timeout, $http, ObservationService, Locat
       if (!localFeed.lastSync) return 0;
 
       const elapsed = (now - localFeed.lastSync) / 1000;
-      if (elapsed > feed.updateFrequency.seconds) {
+      if (elapsed > feed.updateFrequencySeconds) {
         return 5 
       } else {
-        return feed.updateFrequency.seconds - elapsed
+        return feed.updateFrequencySeconds - elapsed
       } 
     });
 
-    const delay = Math.min(...delays);
-
-    return delay;
+    return Math.min(...delays);
   }
 
   function pollFeeds() {
