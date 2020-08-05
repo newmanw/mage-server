@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Inject } from '@angular/core';
+import { Component, OnInit, Input, Inject, OnChanges, SimpleChanges } from '@angular/core';
 import { Feed } from '../feed.model';
 import { FeedItemService } from './item.service';
 import { MapService } from '../../upgrade/ajs-upgraded-providers';
@@ -9,7 +9,7 @@ import { Feature } from 'geojson';
   templateUrl: './item.component.html',
   styleUrls: ['./item.component.scss']
 })
-export class FeedItemComponent implements OnInit {
+export class FeedItemComponent implements OnInit, OnChanges {
   @Input() feed: Feed;
   @Input() item: Feature;
 
@@ -22,7 +22,13 @@ export class FeedItemComponent implements OnInit {
 
   constructor(private feedItemService: FeedItemService, @Inject(MapService) private mapService: any) {}
 
-  ngOnInit(): void {
+  ngOnChanges(changes: SimpleChanges): void {
+    this.updateItem();
+  }
+
+  private updateItem(): void {
+    if (!this.feed || !this.item) return;
+
     if (!this.item.properties) return;
 
     if (this.feed.style) {
