@@ -66,7 +66,7 @@ export const FeedSchema = new mongoose.Schema(
     summary: { type: String, required: false },
     constantParams: { type: mongoose.Schema.Types.Mixed, required: false },
     variableParamsSchema: { type: mongoose.Schema.Types.Mixed, required: false },
-    updateFrequency: { type: {}, required: false },
+    updateFrequencySeconds: { type: Number, required: false },
     itemsHaveIdentity: { type: Boolean, required: true },
     itemsHaveSpatialDimension: { type: Boolean, required: true },
     itemTemporalProperty: { type: String, required: false },

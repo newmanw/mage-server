@@ -268,23 +268,22 @@ describe('feeds repositories', function() {
 
         const nextId = `feed:test:${Date.now()}`
         idFactory.nextId().resolves(nextId)
-        const createAttrs: FeedCreateAttrs = Object.freeze({
+        const createAttrs = Object.freeze({
           id: 'not this one',
           service: mongoose.Types.ObjectId().toHexString(),
           topic: uniqid(),
           title: uniqid(),
           itemsHaveIdentity: true,
           itemsHaveSpatialDimension: true,
-          updateFrequency: {
-            seconds: 60
-          }
+          updateFrequencySeconds: 60
         })
+        const expectedFeed: Omit<Feed, 'id'> = _.omit(createAttrs, 'id')
         const created = await repo.create({ ...createAttrs })
         const fetched = await model.findById(nextId)
 
         expect(created.id).to.equal(nextId)
         expect(fetched).to.not.be.null
-        expect(created).to.deep.include(Object.assign({ ...createAttrs }, { id: nextId }))
+        expect(created).to.deep.include(Object.assign({ ...expectedFeed }, { id: nextId }))
         expect(created).to.deep.equal(fetched?.toJSON())
         idFactory.received(1).nextId()
       })
