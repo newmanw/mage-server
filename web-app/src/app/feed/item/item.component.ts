@@ -22,7 +22,7 @@ export class FeedItemComponent implements OnChanges {
 
   constructor(private feedItemService: FeedItemService, @Inject(MapService) private mapService: any) {}
 
-  ngOnChanges(changes: SimpleChanges): void {
+  ngOnChanges(_changes: SimpleChanges): void {
     this.updateItem();
   }
 

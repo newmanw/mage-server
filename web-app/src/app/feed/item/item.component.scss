@@ -1,3 +1,9 @@
+mat-toolbar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+}
+
 .mat-list-base {
   padding: 0px;
 }
@@ -12,6 +18,7 @@
   flex-shrink: unset;
   object-fit: unset;
   margin-bottom: 16px;
+  font-size: 40px;
 }
 
 .mat-card {
@@ -83,4 +90,5 @@
   height: 200px;
   width: 100%;
   background: blue;
+  z-index: 0;
 }

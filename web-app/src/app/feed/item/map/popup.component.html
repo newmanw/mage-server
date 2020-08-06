@@ -1,6 +1,6 @@
 <mat-list>
   <mat-list-item class="item" (click)="onInfo()">
-    <mat-icon *ngIf="!iconUrl" matListIcon>rss_feed</mat-icon>
+    <mat-icon *ngIf="!iconUrl" matListIcon color="primary">place</mat-icon>
     <img *ngIf="iconUrl" [src]="iconUrl" matListIcon />
     <span *ngIf="hasContent" matLine class="overline">{{timestamp | moment}}</span>
     <span *ngIf="hasContent" matLine class="mat-body-2">{{primary || "&nbsp;"}}</span>
