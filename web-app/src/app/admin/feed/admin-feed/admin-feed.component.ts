@@ -3,7 +3,7 @@ import { Component, OnInit, Inject } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
-import { Feed } from 'src/app/feed/feed.model';
+import { Feed, ServiceType, FeedTopic, Service } from 'src/app/feed/feed.model';
 import { StateService } from '@uirouter/angular';
 import { UserService, Event } from '../../../upgrade/ajs-upgraded-providers';
 import { FeedService } from 'src/app/feed/feed.service';
@@ -22,12 +22,23 @@ export class AdminFeedComponent implements OnInit {
   hasFeedDeletePermission: boolean;
   hasUpdateEventPermission: boolean;
 
+  eventsPerPage = 10;
+  eventsPage = 0;
+  editEvent = false;
+
   searchControl: FormControl = new FormControl();
   eventModel: any;
   filteredChoices: Observable<any[]>;
   events = [];
   nonFeedEvents: Array<Event> = [];
   feedEvents = [];
+
+  service: Service;
+  feedServiceType: ServiceType;
+  feedTopic: FeedTopic;
+  fullService: string;
+  fullServiceType: string;
+  fullTopic: string;
 
   constructor(
     private feedService: FeedService,
@@ -42,16 +53,26 @@ export class AdminFeedComponent implements OnInit {
     }
 
   ngOnInit(): void {
-    console.log('on init')
     this.feedService.fetchFeed(this.stateService.params.feedId).subscribe(feed => {
       this.feed = feed;
       console.log('feed', feed);
       this.fullFeed = JSON.stringify(feed, null, 2);
       this.feedLoaded = Promise.resolve(true);
+      this.feedService.fetchService(this.feed.service).subscribe(service => {
+        this.service = service;
+        this.fullService = JSON.stringify(service, null, 2);
+        this.feedService.fetchServiceType(service.serviceType).subscribe(serviceType => {
+          this.feedServiceType = serviceType;
+          this.fullServiceType = JSON.stringify(serviceType, null, 2);
+        });
+      });
+      this.feedService.fetchTopic(feed.service, feed.topic).subscribe(topic => {
+        this.feedTopic = topic;
+        this.fullTopic = JSON.stringify(topic, null, 2);
+      });
     });
 
     this.eventResource.query(events => {
-      console.log('events', events);
       this.events = events.sort((a: {name: string}, b: {name: string}) => {
         if (a.name < b.name) { return -1; }
         if (a.name > b.name) { return 1; }
@@ -59,8 +80,9 @@ export class AdminFeedComponent implements OnInit {
       });
 
       this.feedEvents = _.filter(events, event => {
-        return _.some(event.feeds, feed => {
-          return this.feed.id === feed.id;
+        console.log('event.feedIds', event.feedIds);
+        return _.some(event.feedIds, feedId => {
+          return this.feed.id === feedId;
         });
       });
 
@@ -76,8 +98,8 @@ export class AdminFeedComponent implements OnInit {
       }
 
       chain = chain.reject(event => {
-        return _.some(event.feeds, feed => {
-          return this.feed.id === feed.id;
+        return _.some(event.feedIds, feedId => {
+          return this.feed.id === feedId;
         });
       });
 
@@ -103,7 +125,7 @@ export class AdminFeedComponent implements OnInit {
 
   addEventToFeed(): void {
     console.log('add event', this.eventModel);
-    this.eventResource.addFeed({ id: this.eventModel.id }, this.feed, event => {
+    this.eventResource.addFeed({ id: this.eventModel.id }, `"${this.feed.id}"`, event => {
       this.feedEvents.push(event);
       this.nonFeedEvents = _.reject(this.nonFeedEvents, e => {
         return e.id === event.id;
@@ -125,6 +147,10 @@ export class AdminFeedComponent implements OnInit {
 
   goToFeeds(): void {
     this.stateService.go('admin.feeds');
+  }
+
+  goToEvent(event: Event): void {
+
   }
 
 }

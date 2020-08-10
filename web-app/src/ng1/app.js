@@ -40,6 +40,7 @@ import { FeedItemPopupService } from '../app/feed/item/map/popup.service';
 import { FeedItemMapPopupComponent } from '../app/feed/item/map/popup.component'
 import { FeedsComponent } from '../app/admin/feed/feeds/feeds.component';
 import { AdminFeedComponent } from '../app/admin/feed/admin-feed/admin-feed.component';
+import { FeedEditComponent } from '../app/admin/feed/feed-edit/feed-edit.component';
 
 require('angular-minicolors');
 require('select2');
@@ -88,6 +89,7 @@ app
   .directive('feedItemMapPopup', downgradeComponent({ component: FeedItemMapPopupComponent }))
   .directive('feeds', downgradeComponent({ component: FeedsComponent }))
   .directive('adminFeed', downgradeComponent({ component: AdminFeedComponent }))
+  .directive('feedEdit', downgradeComponent({ component: FeedEditComponent }))
   .directive('swagger', downgradeComponent({ component: SwaggerComponent }));
 
 app
@@ -399,6 +401,11 @@ function config($httpProvider, $stateProvider, $urlRouterProvider, $urlServicePr
   $stateProvider.state('admin.feed', {
     url: '/feeds/:feedId',
     component: "adminFeed",
+    resolve: resolveAdmin()
+  });
+  $stateProvider.state('admin.feedEdit', {
+    url: '/feeds/new',
+    component: "feedEdit",
     resolve: resolveAdmin()
   });
 
