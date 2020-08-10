@@ -1,6 +1,6 @@
 import express from 'express'
 import { MageEventRepository, MageEventId } from '../../entities/events/entities.events'
-import { AddFeedToEvent, ListEventFeeds, AddFeedToEventRequest, ListEventFeedsRequest } from '../../app.api/events/app.api.events'
+import { AddFeedToEvent, ListEventFeeds, AddFeedToEventRequest, ListEventFeedsRequest, RemoveFeedFromEvent, RemoveFeedFromEventRequest } from '../../app.api/events/app.api.events'
 import { FetchFeedContent, FetchFeedContentRequest } from '../../app.api/feeds/app.api.feeds'
 import { WebAppRequestFactory } from '../adapters.controllers.web'
 import { MageError, ErrPermissionDenied, ErrEntityNotFound, EntityNotFoundError } from '../../app.api/app.api.errors'
@@ -9,6 +9,7 @@ export type EventFeedsApp = {
   eventRepo: MageEventRepository
   addFeedToEvent: AddFeedToEvent
   listEventFeeds: ListEventFeeds
+  removeFeedFromEvent: RemoveFeedFromEvent
   fetchFeedContent: FetchFeedContent
 }
 
@@ -47,6 +48,19 @@ export function EventFeedsRoutes(eventFeeds: EventFeedsApp, createAppRequest: We
         event: req.eventEntity!.id
       })
       const appRes = await eventFeeds.listEventFeeds(appReq)
+      if (appRes.success) {
+        return res.json(appRes.success)
+      }
+      return next(appRes.error)
+    })
+
+  routes.route('/:eventId/feeds/:feedId')
+    .delete(async (req, res, next) => {
+      const appReq: RemoveFeedFromEventRequest = createAppRequest( req, {
+        event: req.eventEntity!.id,
+        feed: req.params.feedId
+      })
+      const appRes = await eventFeeds.removeFeedFromEvent(appReq)
       if (appRes.success) {
         return res.json(appRes.success)
       }

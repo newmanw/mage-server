@@ -8,7 +8,7 @@ import _ from 'lodash'
 import { AppResponse, AppRequest } from '../../../lib/app.api/app.api.global'
 import { WebAppRequestFactory } from '../../../lib/adapters/adapters.controllers.web'
 import { MageEvent, MageEventRepository } from '../../../lib/entities/events/entities.events'
-import { AddFeedToEventRequest, ListEventFeedsRequest, UserFeed } from '../../../lib/app.api/events/app.api.events'
+import { AddFeedToEventRequest, ListEventFeedsRequest, UserFeed, RemoveFeedFromEventRequest } from '../../../lib/app.api/events/app.api.events'
 import { FeedId, FeedContent } from '../../../lib/entities/feeds/entities.feeds'
 import { FetchFeedContentRequest } from '../../../lib/app.api/feeds/app.api.feeds'
 import { EventFeedsApp, EventFeedsRoutes } from '../../../lib/adapters/events/adapters.events.controllers.web'
@@ -102,7 +102,7 @@ describe('event feeds web controller', function() {
     })
   })
 
-  describe('GET /events/{eventId/feeds', function() {
+  describe('GET /events/{eventId}/feeds', function() {
 
     it('returns the list of feeds assigned to the event', async function() {
 
@@ -136,6 +136,38 @@ describe('event feeds web controller', function() {
       expect(res.type).to.match(jsonMimeType)
       expect(res.body).to.deep.equal(eventFeeds)
       eventFeedsApp.received(1).listEventFeeds(Arg.is(x => _.isMatch(x, reqParams)))
+    })
+
+    it('fails with 404 if the event does not exist', async function() {
+      expect.fail('todo')
+    })
+
+    it('fails with 403 without permission', async function() {
+      expect.fail('todo')
+    })
+  })
+
+  describe('DELETE /events/{eventId}/feeds/{feedId}', function() {
+
+    it('removes the feed id from the event feeds list', async function() {
+
+      const feedId = uniqid()
+      const appReqParams: Omit<RemoveFeedFromEventRequest, 'context'> = {
+        event: event.id,
+        feed: feedId
+      }
+      eventFeedsApp.removeFeedFromEvent(Arg.is(x => _.isMatch(x, appReqParams)))
+        .resolves(AppResponse.success<MageEvent, unknown>(event))
+      const res = await client.delete(`${rootPath}/${event.id}/feeds/${feedId}`)
+
+      expect(res.status).to.equal(200)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.deep.equal(event)
+      eventFeedsApp.received(1).removeFeedFromEvent(Arg.is(x => _.isMatch(x, appReqParams)))
+    })
+
+    it('fails with 400 if the feed is not assigned to the event', async function() {
+      expect.fail('todo')
     })
 
     it('fails with 404 if the event does not exist', async function() {

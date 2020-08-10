@@ -133,6 +133,7 @@ type AppLayer = {
     eventRepo: MageEventRepository
     addFeedToEvent: eventsApi.AddFeedToEvent
     listEventFeeds: eventsApi.ListEventFeeds
+    removeFeedFromEvent: eventsApi.RemoveFeedFromEvent
     fetchFeedContent: feedsApi.FetchFeedContent
   }
 }
@@ -177,6 +178,7 @@ async function intializeEventsAppLayer(dbModels: DatabaseModels, feeds: AppLayer
     eventRepo,
     addFeedToEvent: eventsImpl.AddFeedToEvent(eventPermissions.defaultEventPermissionsSevice, eventRepo),
     listEventFeeds: eventsImpl.ListEventFeeds(eventPermissions.defaultEventPermissionsSevice, eventRepo, feeds.feedRepo),
+    removeFeedFromEvent: eventsImpl.RemoveFeedFromEvent(eventPermissions.defaultEventPermissionsSevice, eventRepo),
     fetchFeedContent: feedsImpl.FetchFeedContent(eventFeedsPermissions, feeds.serviceTypeRepo, feeds.serviceRepo, feeds.feedRepo, feeds.jsonSchemaService)
   }
 }

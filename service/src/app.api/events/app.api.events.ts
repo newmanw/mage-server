@@ -25,3 +25,12 @@ export type UserFeed = Omit<Feed, 'constantParams'>
 export interface ListEventFeeds {
   (req: ListEventFeedsRequest): Promise<AppResponse<UserFeed[], PermissionDeniedError | EntityNotFoundError>>
 }
+
+export interface RemoveFeedFromEventRequest extends AppRequest {
+  event: MageEventId,
+  feed: FeedId
+}
+
+export interface RemoveFeedFromEvent {
+  (req: RemoveFeedFromEventRequest): Promise<AppResponse<MageEvent, PermissionDeniedError | EntityNotFoundError>>
+}
