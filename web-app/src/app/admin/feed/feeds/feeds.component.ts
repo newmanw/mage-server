@@ -65,4 +65,9 @@ export class FeedsComponent implements OnInit {
     this.stateService.go('admin.feed', { feedId: feed.id });
   }
 
+  newFeed(): void {
+    console.log('new feed');
+    this.stateService.go('admin.feedEdit');
+  }
+
 }

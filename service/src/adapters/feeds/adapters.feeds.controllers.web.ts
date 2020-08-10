@@ -111,8 +111,7 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
       }
       next(appRes.error)
     })
-
-
+  
   const feedCreateParamsFromRequest = (req: express.Request): Pick<CreateFeedRequest, 'feed'> => {
     const body = req.body
     return {
@@ -167,6 +166,56 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
         return res.json(appRes.success)
       }
       return next(appRes.error)
+    })
+// Temporary
+    routes.route('/:feedId')
+    .get(async (req, res, next) => {
+      const appReq = createAppRequest(req)
+      const appRes = await appLayer.listAllFeeds(appReq)
+      if (appRes.success) {
+        return res.json(appRes.success.filter(feed => {
+          return feed.id === req.params.feedId;
+        })[0]);
+      }
+      return next(appRes.error)
+    })
+
+    routes.route('/services/:serviceId')
+    .get(async (req, res, next) => {
+      const appReq = createAppRequest(req)
+      const appRes = await appLayer.listServices(appReq)
+      if (appRes.success) {
+        return res.json(appRes.success.filter(service => {
+          return service.id === req.params.serviceId;
+        })[0]);
+      }
+      return next(appRes.error)
+    })
+
+    routes.route('/service_types/:serviceTypeId')
+    .get(async (req, res, next) => {
+
+      const appReq = createAppRequest(req)
+      const appRes = await appLayer.listServiceTypes(appReq)
+      if (appRes.success) {
+        return res.json(appRes.success.filter(serviceType => {
+          return serviceType.id === req.params.serviceTypeId;
+        })[0]);      }
+      next(appRes.error)
+    })
+
+    routes.route('/services/:serviceId/topics/:topicId')
+    .get(async (req, res, next) => {
+      const appReq: ListServiceTopicsRequest = createAppRequest(req, {
+        service: req.params.serviceId
+      })
+      const appRes = await appLayer.listTopics(appReq)
+      if (appRes.success) {
+        return res.json(appRes.success.filter(topic => {
+          return topic.id === req.params.topicId;
+        })[0]);
+      }
+      next(appRes.error)
     })
 
   routes.use(errorHandler)

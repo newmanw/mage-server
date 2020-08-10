@@ -9,11 +9,6 @@ import { UpgradeModule } from '@angular/upgrade/static';
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
 
 import {
-  MatIcon,
-  MatButton,
-  MatToolbar,
-  MatSpinner,
-  MatFormField,
   MatIconModule,
   MatButtonModule,
   MatChipsModule,
@@ -28,21 +23,20 @@ import {
   MatListModule,
   MatRippleModule,
   MatSidenavModule,
-  MatSidenav,
-  MatSidenavContent,
-  MatSidenavContainer,
   MatRadioModule,
   MatCheckboxModule,
   MatSliderModule,
   MatExpansionModule
 } from '@angular/material';
+import { FeedEditComponent } from './feed-edit/feed-edit.component';
 
 
 @NgModule({
   declarations: [
     FeedConfigurationComponent,
     FeedsComponent,
-    AdminFeedComponent
+    AdminFeedComponent,
+    FeedEditComponent
   ],
   imports: [
     FormsModule,
@@ -72,11 +66,13 @@ import {
   ],
   entryComponents: [
     FeedsComponent,
-    AdminFeedComponent
+    AdminFeedComponent,
+    FeedEditComponent
   ],
   exports: [
     FeedsComponent,
-    AdminFeedComponent
+    AdminFeedComponent,
+    FeedEditComponent
   ]
 })
 export class FeedModule { }

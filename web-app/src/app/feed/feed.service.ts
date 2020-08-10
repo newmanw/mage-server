@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, BehaviorSubject, Subject } from 'rxjs';
-import { Feed, FeedContent, StyledFeature } from './feed.model';
+import { Feed, FeedContent, StyledFeature, Service, ServiceType, FeedTopic } from './feed.model';
 import { Feature } from 'geojson';
 
 @Injectable({
@@ -36,8 +36,60 @@ export class FeedService {
     return subject;
   }
 
-  fetchFeed(feedId: number): Observable<Feed> {
+  fetchFeed(feedId: string): Observable<Feed> {
     return this.http.get<Feed>(`/api/feeds/${feedId}`);
+  }
+
+  fetchService(serviceId: string): Observable<Service> {
+    return this.http.get<Service>(`/api/feeds/services/${serviceId}`);
+  }
+
+  fetchServices(): Observable<Array<Service>> {
+    return this.http.get<Array<Service>>(`/api/feeds/services`);
+  }
+
+  fetchServiceType(serviceTypeId: string): Observable<ServiceType> {
+    return this.http.get<ServiceType>(`/api/feeds/service_types/${serviceTypeId}`);
+  }
+
+  fetchTopics(serviceId: string): Observable<Array<FeedTopic>> {
+    return this.http.get<Array<FeedTopic>>(`api/feeds/services/${serviceId}/topics`);
+  }
+
+  previewFeed(serviceId: string, topicId: string, topicConfiguration: any): Observable<FeedContent> {
+    // const subject = new Subject<FeedContent>();
+
+    // const feedItems = this._feedItems.get(feed.id);
+    return this.http.post<FeedContent>(
+      `/api/feeds/services/${serviceId}/topics/${topicId}/feed_preview`,
+      topicConfiguration);
+    // .subscribe(content => {
+    //   const style = feed.style || {
+    //     iconUrl: '/assets/images/default_marker.png'
+    //   }
+
+    //   const features = content.items.features;
+    //   features.map((feature: StyledFeature) => {
+    //     feature.id = feature.id.toString();
+    //     feature.properties = feature.properties || {};
+    //     feature.style = style;
+
+    //     return feature;
+    //   });
+
+    //   subject.next(content);
+    //   feedItems.next(features);
+    // });
+
+    // return subject;
+  }
+
+  fetchTopic(serviceId: string, topicId: string): Observable<FeedTopic> {
+    return this.http.get<FeedTopic>(`/api/feeds/services/${serviceId}/topics/${topicId}`);
+  }
+
+  fetchServiceTypes(): Observable<Array<ServiceType>> {
+    return this.http.get<Array<ServiceType>>(`/api/feeds/service_types`);
   }
 
   fetchFeeds(eventId: number): Observable<Array<Feed>> {

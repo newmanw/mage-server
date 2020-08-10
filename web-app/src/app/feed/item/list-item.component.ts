@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Inject } from '@angular/core';
+import { Component, OnInit, Input, Inject, ViewEncapsulation } from '@angular/core';
 import { Feed } from '../feed.model';
 import { FeedItemService } from './item.service';
 import { MapService } from 'src/app/upgrade/ajs-upgraded-providers';
@@ -7,7 +7,8 @@ import { Feature } from 'geojson';
 @Component({
   selector: 'feed-list-item',
   templateUrl: './list-item.component.html',
-  styleUrls: ['./list-item.component.scss']
+  styleUrls: ['./list-item.component.scss'],
+  // encapsulation: ViewEncapsulation.None
 })
 export class FeedListItemComponent implements OnInit {
   @Input() feed: Feed;

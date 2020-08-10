@@ -1,7 +1,6 @@
-Form
-
 <json-schema-form
     loadExternalAssets="true"
-    [form]="myJsonSchema"
+    [form]="realSchema"
     framework="material-design"
+    (onSubmit)="onSubmit($event)"
     ></json-schema-form>
