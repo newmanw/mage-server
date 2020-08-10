@@ -1,9 +1,10 @@
-
-.mat-list-base .mat-list-item .mat-list-icon {
-  height: unset;
+.mat-list-icon {
+  border-radius: unset !important;
+  height: unset !important;
 }
 
-.mat-list-icon {
+.list-item-icon {
+  border-radius: unset;
   height: unset;
 }
 
