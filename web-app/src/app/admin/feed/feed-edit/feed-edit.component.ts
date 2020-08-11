@@ -30,9 +30,11 @@ export class FeedEditComponent implements OnInit {
   previewItems: Array<any>;
 
   feedConfigurationSchema: any;
+  formOptions: any;
   constantParams: any;
 
   feed: Feed;
+  editFeed: any;
 
   step = 0;
 
@@ -65,65 +67,71 @@ export class FeedEditComponent implements OnInit {
         type: 'string',
         title: 'Item Secondary Property'
       },
-      feedIconUrl: {
-        type: 'string',
-        title: 'Feed Icon URL'
-      },
-      feedItemIconUrl: {
-        type: 'string',
-        title: 'Feed Item Icon URL'
+      style: {
+        type: 'object',
+        title: 'Style',
+        properties: {
+          iconUrl: {
+            type: 'string',
+            title: 'Feed Icon URL'
+          }
+        }
       }
     };
 
-    this.feed = {
-      title: 'title',
-      id: 'temp',
-      service: null,
-      topic: null
-    }
+    this.formOptions = {
+      addSubmit: false
+    };
 
+    this.editFeed = {};
+
+    this.constantParams = {};
   }
 
   ngOnInit(): void {
     this.feedService.fetchServices().subscribe(services => {
       this.services = services;
+      if (this.services.length === 1) {
+        this.selectedService = this.services[0];
+        this.serviceSelected();
+      }
     });
 
     this.feedService.fetchServiceTypes().subscribe(serviceTypes => {
-      console.log('serviceTypes', serviceTypes);
       this.serviceTypes = serviceTypes;
     });
   }
 
   serviceSelected(): void {
-    console.log('service selected', this.selectedService);
-    this.feed.service = this.selectedService.id;
     this.feedService.fetchTopics(this.selectedService.id).subscribe(topics => {
       this.topics = topics;
+      if (this.topics.length === 1) {
+        this.selectedTopic = this.topics[0];
+        this.topicSelected();
+      }
     });
     this.fullService = JSON.stringify(this.selectedService, null, 2);
   }
 
   topicSelected(): void {
-    this.feed.topic = this.selectedTopic.id;
+    this.editFeed.service = this.selectedService.id;
+    this.editFeed.topic = this.selectedTopic.id;
+    this.editFeed = { ...this.selectedTopic };
+    this.editFeed.topic = this.selectedTopic.id;
     this.fullTopic = JSON.stringify(this.selectedTopic, null, 2);
-    // this.feedConfigurationSchema.constantParams = this.selectedTopic.paramsSchema;
   }
 
-  topicConfigured($event: any): void {
-    console.log('topic configuration', $event);
-    this.constantParams = $event;
-    this.feedService.previewFeed(this.selectedService.id, this.selectedTopic.id, $event.topicParams)
+  topicConfigured(): void {
+    this.feedService.previewFeed(this.selectedService.id, this.selectedTopic.id, this.constantParams)
       .subscribe(content => {
-        // console.log(content);
-        // console.log('items', JSON.stringify(content.content.items, null, 2));
         this.previewItems = content.content.items.features;
       });
+    this.nextStep();
   }
 
-  feedConfigured($event: any): void {
-    $event.constantParams = this.constantParams;
-    this.feedService.createFeed(this.selectedService.id, this.selectedTopic.id, $event).subscribe(feed => {
+  submitFeed(): void {
+    this.editFeed.constantParams = this.constantParams;
+    this.feedService.createFeed(this.selectedService.id, this.selectedTopic.id, this.editFeed).subscribe(feed => {
       this.stateService.go('admin.feed', { feedId: feed.id });
     });
   }

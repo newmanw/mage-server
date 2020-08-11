@@ -76,7 +76,8 @@ import { FeedListItemComponent } from 'src/app/feed/item/list-item.component';
   exports: [
     FeedsComponent,
     AdminFeedComponent,
-    FeedEditComponent
+    FeedEditComponent,
+    // FeedListItemComponent
   ]
 })
 export class FeedModule { }

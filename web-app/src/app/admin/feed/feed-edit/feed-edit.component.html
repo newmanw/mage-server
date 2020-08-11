@@ -102,6 +102,8 @@
                 <app-feed-configuration
                   loadExternalAssets="true"
                   [form]="selectedTopic.paramsSchema"
+                  [options]="formOptions"
+                  [(data)]="constantParams"
                   framework="material-design"
                   (onSubmit)="topicConfigured($event)"
                   ></app-feed-configuration>
@@ -109,7 +111,7 @@
             </div>
             <mat-action-row>
               <button mat-button color="warn" (click)="prevStep()">Previous</button>
-              <button mat-button color="primary" (click)="nextStep()">Next</button>
+              <button mat-button color="primary" (click)="topicConfigured()">Next</button>
             </mat-action-row>
           </mat-expansion-panel>
           <!-- <mat-expansion-panel [expanded]="step === 2" (opened)="setStep(2)" hideToggle>
@@ -139,7 +141,6 @@
               Set Feed Configuration
             </mat-panel-title>
             <mat-panel-description>
-              This is a summary of the content
             </mat-panel-description>
           </mat-expansion-panel-header>
           <div class="row">
@@ -147,16 +148,16 @@
             <div class="col-md-12">
               <app-feed-configuration
                   loadExternalAssets="true"
-                  [data]="selectedTopic"
+                  [(data)]="editFeed"
+                  [options]="formOptions"
                   [schema]="feedConfigurationSchema"
                   framework="material-design"
-                  (onSubmit)="feedConfigured($event)"
                   ></app-feed-configuration>
             </div>
             </div>
             <mat-action-row>
               <button mat-button color="warn" (click)="prevStep()">Previous</button>
-              <button mat-button color="primary" (click)="nextStep()">Next</button>
+              <button mat-button color="primary" (click)="submitFeed()">Next</button>
             </mat-action-row>
           </mat-expansion-panel>
 
@@ -169,6 +170,8 @@
                 <mat-divider></mat-divider>
               </ng-container> -->
               <div class="row" *ngFor="let item of previewItems">
+                <!-- <feed-list-item [item]="item" [feed]="feed"></feed-list-item> -->
+
                 <div class="col-md-12">
                   {{item | json}}
                 </div>

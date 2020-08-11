@@ -227,6 +227,7 @@ export interface Feed {
    */
   readonly itemPrimaryProperty?: string
   readonly itemSecondaryProperty?: string
+  readonly style?: any
 }
 
 
@@ -255,6 +256,8 @@ export const FeedCreateAttrs = (topic: FeedTopic, feedAttrs: FeedMinimalAttrs): 
     variableParamsSchema: feedAttrs.variableParamsSchema,
     itemsHaveIdentity: feedAttrs.itemsHaveIdentity === undefined ? topic.itemsHaveIdentity || false : feedAttrs.itemsHaveIdentity,
     itemsHaveSpatialDimension: feedAttrs.itemsHaveSpatialDimension === undefined ? topic.itemsHaveSpatialDimension || false: feedAttrs.itemsHaveSpatialDimension,
+    style: feedAttrs.style,
+
   }
   if (!createAttrs.constantParams) {
     delete createAttrs.constantParams
