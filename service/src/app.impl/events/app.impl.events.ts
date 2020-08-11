@@ -1,10 +1,15 @@
-import { AddFeedToEvent, AddFeedToEventRequest, ListEventFeeds, ListEventFeedsRequest, UserFeed } from '../../app.api/events/app.api.events'
+import { AddFeedToEvent, AddFeedToEventRequest, ListEventFeeds, ListEventFeedsRequest, UserFeed, RemoveFeedFromEvent, RemoveFeedFromEventRequest } from '../../app.api/events/app.api.events'
 import { MageEventRepository, MageEvent } from '../../entities/events/entities.events'
-import { entityNotFound, EntityNotFoundError, PermissionDeniedError } from '../../app.api/app.api.errors'
+import { entityNotFound, EntityNotFoundError, PermissionDeniedError, permissionDenied } from '../../app.api/app.api.errors'
 import { AppResponse } from '../../app.api/app.api.global'
 import { FeedRepository } from '../../entities/feeds/entities.feeds'
 import { EventPermissionServiceImpl } from '../../permissions/permissions.events'
 
+/*
+TODO:
+create an event request context to avoid redundant fetching of events
+between permission checks and proceeding application logic
+*/
 
 export function AddFeedToEvent(permissionService: EventPermissionServiceImpl, eventRepo: MageEventRepository): AddFeedToEvent {
   return async function(req: AddFeedToEventRequest): ReturnType<AddFeedToEvent> {
@@ -38,5 +43,26 @@ export function ListEventFeeds(permissionService: EventPermissionServiceImpl, ev
       return userFeed
     })
     return AppResponse.success(userFeeds)
+  }
+}
+
+export function RemoveFeedFromEvent(permissionService: EventPermissionServiceImpl, eventRepo: MageEventRepository):  RemoveFeedFromEvent {
+  return async function(req: RemoveFeedFromEventRequest): ReturnType<RemoveFeedFromEvent> {
+    const event = await eventRepo.findById(req.event)
+    if (!event) {
+      return AppResponse.error<MageEvent, EntityNotFoundError>(entityNotFound(req.event, 'MageEvent'))
+    }
+    const denied = await permissionService.ensureEventUpdatePermission(req.context)
+    if (denied) {
+      return AppResponse.error<MageEvent, PermissionDeniedError>(denied)
+    }
+    if (event.feedIds.indexOf(req.feed) < 0) {
+      return AppResponse.error<MageEvent, EntityNotFoundError>(entityNotFound(req.feed, 'MageEvent.feedIds'))
+    }
+    const updated = await eventRepo.removeFeedsFromEvent(event.id, req.feed)
+    if (updated) {
+      return AppResponse.success<MageEvent, unknown>(updated)
+    }
+    return AppResponse.error<MageEvent, EntityNotFoundError>(entityNotFound(event.id, 'MageEvent', 'event removed before update'))
   }
 }

@@ -29,8 +29,8 @@ export function permissionDenied(permission: string, subject: string, object?: s
   return new MageError(ErrPermissionDenied, { permission, subject, object: object || null }, message)
 }
 
-export function entityNotFound(entityId: any, entityType: string): EntityNotFoundError {
-  return new MageError(ErrEntityNotFound, { entityId, entityType }, `${entityType} not found: ${entityId}`)
+export function entityNotFound(entityId: any, entityType: string, message?: string): EntityNotFoundError {
+  return new MageError(ErrEntityNotFound, { entityId, entityType }, message || `${entityType} not found: ${entityId}`)
 }
 
 /**

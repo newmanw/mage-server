@@ -3,9 +3,9 @@ import uniqid from 'uniqid'
 import { expect } from 'chai'
 import { Substitute as Sub, Arg, SubstituteOf } from '@fluffy-spoon/substitute'
 import { MageEvent, MageEventId, MageEventRepository } from '../../../lib/entities/events/entities.events'
-import { AddFeedToEventRequest, ListEventFeedsRequest } from '../../../lib/app.api/events/app.api.events'
-import { AddFeedToEvent, ListEventFeeds } from '../../../lib/app.impl/events/app.impl.events'
-import { MageError, ErrEntityNotFound, permissionDenied, ErrPermissionDenied, EntityNotFoundError } from '../../../lib/app.api/app.api.errors'
+import { AddFeedToEventRequest, ListEventFeedsRequest, RemoveFeedFromEventRequest } from '../../../lib/app.api/events/app.api.events'
+import { AddFeedToEvent, ListEventFeeds, RemoveFeedFromEvent } from '../../../lib/app.impl/events/app.impl.events'
+import { MageError, ErrEntityNotFound, permissionDenied, ErrPermissionDenied, EntityNotFoundError, PermissionDeniedError } from '../../../lib/app.api/app.api.errors'
 import { AppRequest } from '../../../lib/app.api/app.api.global'
 import { Feed, FeedRepository, FeedServiceRepository, FeedServiceTypeRepository } from '../../../lib/entities/feeds/entities.feeds'
 import { EventPermissionServiceImpl } from '../../../lib/permissions/permissions.events'
@@ -227,6 +227,100 @@ describe('event feeds use case interactions', function() {
       app.permissionService.received(1).ensureEventReadPermission(req.context)
     })
   })
+
+  describe('removing a feed from an event', function() {
+
+    it('saves the event feed list without the removed feed', async function() {
+
+      event.feedIds.push(uniqid(), uniqid())
+      const updatedEvent = { ...event }
+      updatedEvent.feedIds = [ event.feedIds[1] ]
+      app.permissionService.ensureEventUpdatePermission(Arg.all()).resolves(null)
+      app.eventRepo.findById(event.id).resolves(event)
+      app.eventRepo.removeFeedsFromEvent(event.id, event.feedIds[0]).resolves(updatedEvent)
+      const req: RemoveFeedFromEventRequest = requestBy('admin', { event: event.id, feed: event.feedIds[0] })
+      const res = await app.removeFeedFromEvent(req)
+
+      expect(res.error).to.be.null
+      expect(res.success).to.deep.equal(updatedEvent)
+      app.eventRepo.received(1).removeFeedsFromEvent(event.id, event.feedIds[0])
+    })
+
+    it('fails if the event does not exist', async function() {
+
+      app.eventRepo.findById(event.id).resolves(null)
+      app.eventRepo.removeFeedsFromEvent(Arg.all()).resolves(null)
+      const req: RemoveFeedFromEventRequest = requestBy('admin', { event: event.id, feed: uniqid() })
+      const res = await app.removeFeedFromEvent(req)
+
+      expect(res.success).to.be.null
+      expect(res.error).to.be.instanceOf(MageError)
+      expect(res.error?.code).to.equal(ErrEntityNotFound)
+      const err = res.error as EntityNotFoundError
+      expect(err.data.entityId).to.equal(event.id)
+      expect(err.data.entityType).to.equal('MageEvent')
+      app.eventRepo.didNotReceive().removeFeedsFromEvent(Arg.all())
+    })
+
+    it('fails if the event was removed before udpating', async function() {
+
+      event.feedIds.push(uniqid(), uniqid())
+      const updatedEvent = { ...event }
+      updatedEvent.feedIds = [ event.feedIds[1] ]
+      app.permissionService.ensureEventUpdatePermission(Arg.all()).resolves(null)
+      app.eventRepo.findById(event.id).resolves(event)
+      app.eventRepo.removeFeedsFromEvent(event.id, event.feedIds[0]).resolves(null)
+      const req: RemoveFeedFromEventRequest = requestBy('admin', { event: event.id, feed: event.feedIds[0] })
+      const res = await app.removeFeedFromEvent(req)
+
+      expect(res.success).to.be.null
+      expect(res.error).to.be.instanceOf(MageError)
+      expect(res.error?.code).to.equal(ErrEntityNotFound)
+      const err = res.error as EntityNotFoundError
+      expect(err.data.entityId).to.equal(event.id)
+      expect(err.data.entityType).to.equal('MageEvent')
+      expect(err.message).to.equal('event removed before update')
+      app.eventRepo.received(1).removeFeedsFromEvent(event.id, event.feedIds[0])
+    })
+
+    it('checks permission for removing the feed from the event', async function() {
+
+      app.eventRepo.findById(Arg.any()).resolves(event)
+      app.permissionService.ensureEventUpdatePermission(Arg.any()).resolves(permissionDenied('update_event', 'admin', String(event.id)))
+      const req: RemoveFeedFromEventRequest = requestBy('admin',
+        { event: event.id, feed: uniqid() })
+      const res = await app.removeFeedFromEvent(req)
+
+      expect(res.success).to.be.null
+      expect(res.error).to.be.instanceOf(MageError)
+      expect(res.error?.code).to.equal(ErrPermissionDenied)
+      const err = res.error as PermissionDeniedError
+      expect(err.data.subject).to.equal('admin')
+      expect(err.data.permission).to.equal('update_event')
+      expect(err.data.object).to.equal(String(event.id))
+      app.eventRepo.received(1).findById(event.id)
+      app.permissionService.received(1).ensureEventUpdatePermission(req.context)
+      app.eventRepo.didNotReceive().removeFeedsFromEvent(Arg.all())
+    })
+
+    it('fails if the feed id is not in the event feeds list', async function() {
+
+      event.feedIds = []
+      app.eventRepo.findById(event.id).resolves(event)
+      const req: RemoveFeedFromEventRequest = requestBy('admin', { event: event.id, feed: uniqid() })
+      app.permissionService.ensureEventUpdatePermission(Arg.deepEquals(req.context)).resolves(null)
+      const res = await app.removeFeedFromEvent(req)
+
+      expect(res.success).to.be.null
+      expect(res.error).to.be.instanceOf(MageError)
+      expect(res.error?.code).to.equal(ErrEntityNotFound)
+      const err = res.error as EntityNotFoundError
+      expect(err.data.entityId).to.equal(req.feed)
+      expect(err.data.entityType).to.equal('MageEvent.feedIds')
+      app.eventRepo.received(1).findById(event.id)
+      app.eventRepo.didNotReceive().removeFeedsFromEvent(Arg.all())
+    })
+  })
 })
 
 class EventsUseCaseInteractions {
@@ -239,4 +333,5 @@ class EventsUseCaseInteractions {
 
   readonly addFeedToEvent = AddFeedToEvent(this.permissionService, this.eventRepo)
   readonly listEventFeeds = ListEventFeeds(this.permissionService, this.eventRepo, this.feedRepo)
+  readonly removeFeedFromEvent = RemoveFeedFromEvent(this.permissionService, this.eventRepo)
 }

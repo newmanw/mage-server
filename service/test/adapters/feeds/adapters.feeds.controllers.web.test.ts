@@ -584,8 +584,35 @@ invalid request
   })
 
   describe('GET /{feedId}', function() {
+
     it('has tests', async function() {
-      expect.fail('todo')
+
+      const feedId = uniqid()
+      const feed: Feed = {
+        id: feedId,
+        service: uniqid(),
+        topic: uniqid(),
+        title: 'Get the Feed',
+        summary: 'Get it and test it',
+        itemsHaveIdentity: true,
+        itemsHaveSpatialDimension: true,
+        constantParams: {
+          test: 'yes'
+        },
+        itemPrimaryProperty: 'title',
+        itemTemporalProperty: 'date',
+        variableParamsSchema: {
+          type: 'object',
+          properties: {
+            limit: { type: 'number' }
+          }
+        }
+      }
+      const res = await client.get(`/${rootPath}/${feedId}`)
+
+      expect(res.status).to.equal(200)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.equal(feed)
     })
   })
 })

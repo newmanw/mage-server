@@ -131,6 +131,7 @@ export interface MageEventRepository {
    * @param event an Event ID
    * @param feed a Feed ID
    */
-  addFeedsToEvent(event: MageEventId, feed: FeedId): Promise<MageEvent | null>
+  addFeedsToEvent(event: MageEventId, ...feeds: FeedId[]): Promise<MageEvent | null>
   findTeamsInEvent(event: MageEventId): Promise<Team[] | null>
+  removeFeedsFromEvent(event: MageEventId, ...feeds: FeedId[]): Promise<MageEvent | null>
 }

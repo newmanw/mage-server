@@ -31,7 +31,19 @@ export class MongooseMageEventRepository extends BaseMongooseRepository<MageEven
         }
       },
       { new: true })
-    return updated?.toJSON()
+    return updated?.toJSON() || null
+  }
+
+  async removeFeedsFromEvent(event: MageEventId, ...feeds: FeedId[]): Promise<MageEvent | null> {
+    const updated = await this.model.findByIdAndUpdate(
+      event,
+      {
+        $pull: {
+          feedIds: { $in: feeds }
+        }
+      },
+      { new: true })
+    return updated?.toJSON() || null
   }
 
   async findTeamsInEvent(event: MageEventId): Promise<Team[] | null> {
