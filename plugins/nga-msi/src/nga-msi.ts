@@ -2,6 +2,7 @@
 import { FeedServiceType, FeedServiceConnection, FeedServiceTypeId, FeedTopic, FeedServiceInfo, InvalidServiceConfigError, FeedTopicId, FeedsError, ErrInvalidServiceConfig, FeedServiceTypeUnregistered, FeedTopicContent } from "@ngageoint/mage.service/lib/entities/feeds/entities.feeds"
 import { Json, JSONSchema4, JsonObject } from '@ngageoint/mage.service/lib/entities/entities.json_types'
 import * as Asam from './topics/asam'
+import * as Modu from './topics/modu'
 import { URL } from 'url'
 import querystring from 'querystring'
 
@@ -43,6 +44,7 @@ export class MsiServiceType implements FeedServiceType {
 
 const topics: Map<string, MsiTopicModule> = new Map<FeedTopicId, MsiTopicModule>([
   [ Asam.topicDescriptor.id, Asam ],
+  [ Modu.topicDescriptor.id, Modu ]
 ])
 
 export class MsiConnection implements FeedServiceConnection {

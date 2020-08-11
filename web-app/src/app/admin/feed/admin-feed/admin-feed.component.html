@@ -14,7 +14,7 @@
 
         <div class="row">
           <div class="col-md-10">
-            <h2><img style="width: 24px; height: 24px;" [src]="feed.style?.iconUrl"/>{{feed.title}}</h2>
+            <h2><img class="feed-icon" [src]="feed.style?.iconUrl"/>{{feed.title}} Feed</h2>
           </div>
           <div class="col-md-2" *ngIf="hasFeedEditPermission">
             <h2>
@@ -27,69 +27,49 @@
             <div class="col-md-6 col-xs-12">
 
               <div class="row">
-                <div class="col-md-3">
+                <div class="col-md-4">
                   <span class="muted">Name:&nbsp;</span>
                 </div>
-                <div class="col-md-9">
+                <div class="col-md-8">
                   <span>{{feed.title}}</span>
                 </div>
               </div>
 
               <div class="row top-gap-s">
-                <div class="col-md-3">
+                <div class="col-md-4">
                   <span class="muted">Summary:&nbsp;</span>
                 </div>
-                <div class="col-md-9">
+                <div class="col-md-8">
                   <span>{{feed.summary}}</span>
                 </div>
               </div>
 
               <div class="row top-gap-s">
-                <div class="col-md-3">
-                  <span class="muted">Service:&nbsp;</span>
+                <div class="col-md-4">
+                  <span class="muted">Primary Property:&nbsp;</span>
                 </div>
-                <div class="col-md-9">
-                  <span>{{service?.title}}</span>
-                </div>
-              </div>
-
-              <div class="row top-gap-s">
-                <div class="col-md-3">
-                  <span class="muted">Service Type Summary:&nbsp;</span>
-                </div>
-                <div class="col-md-9">
-                  <span>{{feedServiceType?.summary}}</span>
-                </div>
-              </div>
-
-              <div class="row top-gap-s">
-                <div class="col-md-3">
-                  <span class="muted">Feed Item Primary Property:&nbsp;</span>
-                </div>
-                <div class="col-md-9">
+                <div class="col-md-8">
                   <span>{{feed?.itemPrimaryProperty}}</span>
                 </div>
               </div>
 
               <div class="row top-gap-s">
-                <div class="col-md-3">
-                  <span class="muted">Feed Item Secondary Property:&nbsp;</span>
+                <div class="col-md-4">
+                  <span class="muted">Secondary Property:&nbsp;</span>
                 </div>
-                <div class="col-md-9">
+                <div class="col-md-8">
                   <span>{{feed?.itemSecondaryProperty}}</span>
                 </div>
               </div>
 
               <div class="row top-gap-s">
-                <div class="col-md-3">
-                  <span class="muted">Update Frequency Seconds:&nbsp;</span>
+                <div class="col-md-4">
+                  <span class="muted">Update Frequency:&nbsp;</span>
                 </div>
-                <div class="col-md-9">
-                  <span>{{feed?.updateFrequencySeconds}}</span>
+                <div class="col-md-8">
+                  <span>{{feed?.updateFrequencySeconds}} seconds</span>
                 </div>
               </div>
-
-              <hr>
               
               <!-- <div class="row top-gap-s">
                 <div class="col-md-3">
@@ -135,6 +115,27 @@
                   <span>{{fullTopic}}</span>
                 </div>
               </div> -->
+
+              <hr>
+
+              <div class="row top-gap-s">
+                <div class="col-md-4">
+                  <span class="muted">Service:&nbsp;</span>
+                </div>
+                <div class="col-md-8">
+                  <span>{{service?.title}}</span>
+                </div>
+              </div>
+              
+              <div class="row top-gap-s">
+                <div class="col-md-4">
+                  <span class="muted">Service Type Summary:&nbsp;</span>
+                </div>
+                <div class="col-md-8">
+                  <span>{{feedServiceType?.summary}}</span>
+                </div>
+              </div>
+  
             </div>
         
             <div class="col-md-6">
