@@ -8,6 +8,7 @@ import { AdminFeedComponent } from './admin-feed/admin-feed.component';
 import { UpgradeModule } from '@angular/upgrade/static';
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
 
+
 import {
   MatIconModule,
   MatButtonModule,
@@ -29,6 +30,7 @@ import {
   MatExpansionModule
 } from '@angular/material';
 import { FeedEditComponent } from './feed-edit/feed-edit.component';
+import { FeedListItemComponent } from 'src/app/feed/item/list-item.component';
 
 
 @NgModule({
@@ -36,9 +38,11 @@ import { FeedEditComponent } from './feed-edit/feed-edit.component';
     FeedConfigurationComponent,
     FeedsComponent,
     AdminFeedComponent,
-    FeedEditComponent
+    FeedEditComponent,
+    // FeedListItemComponent,
   ],
   imports: [
+    // FeedListItemComponent,
     FormsModule,
     ReactiveFormsModule,
     CommonModule,

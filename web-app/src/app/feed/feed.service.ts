@@ -56,32 +56,10 @@ export class FeedService {
     return this.http.get<Array<FeedTopic>>(`api/feeds/services/${serviceId}/topics`);
   }
 
-  previewFeed(serviceId: string, topicId: string, topicConfiguration: any): Observable<FeedContent> {
-    // const subject = new Subject<FeedContent>();
-
-    // const feedItems = this._feedItems.get(feed.id);
-    return this.http.post<FeedContent>(
+  previewFeed(serviceId: string, topicId: string, topicConfiguration: any): Observable<{content: FeedContent}> {
+    return this.http.post<{content: FeedContent}>(
       `/api/feeds/services/${serviceId}/topics/${topicId}/feed_preview`,
       topicConfiguration);
-    // .subscribe(content => {
-    //   const style = feed.style || {
-    //     iconUrl: '/assets/images/default_marker.png'
-    //   }
-
-    //   const features = content.items.features;
-    //   features.map((feature: StyledFeature) => {
-    //     feature.id = feature.id.toString();
-    //     feature.properties = feature.properties || {};
-    //     feature.style = style;
-
-    //     return feature;
-    //   });
-
-    //   subject.next(content);
-    //   feedItems.next(features);
-    // });
-
-    // return subject;
   }
 
   fetchTopic(serviceId: string, topicId: string): Observable<FeedTopic> {
@@ -90,6 +68,10 @@ export class FeedService {
 
   fetchServiceTypes(): Observable<Array<ServiceType>> {
     return this.http.get<Array<ServiceType>>(`/api/feeds/service_types`);
+  }
+
+  createFeed(serviceId: string, topicId: string, feedConfiguration: any): Observable<Feed> {
+    return this.http.post<Feed>(`/api/feeds/services/${serviceId}/topics/${topicId}/feeds`, feedConfiguration);
   }
 
   fetchFeeds(eventId: number): Observable<Array<Feed>> {

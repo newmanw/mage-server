@@ -176,7 +176,11 @@ import { FeedTabComponent } from './feed/tab.component';
     FeedComponent,
     FeedTabComponent,
     FeedItemComponent,
-    FeedItemMapPopupComponent
+    FeedItemMapPopupComponent,
+    FeedListItemComponent
+  ],
+  exports: [
+    FeedListItemComponent
   ]
 })
 export class AppModule {
