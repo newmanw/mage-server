@@ -23,31 +23,19 @@
           <h2><img style="width: 24px; height: 24px;" [src]="feed.style?.iconUrl"/>{{feed.title}}</h2>
         </div>
         <ng-template #elseBlockTitle>
-          <h2>New Feedadsfasdf</h2>
+          <h2>New Feed</h2>
         </ng-template>
       </div>
-      <hr>
-      <!-- <app-feed-configuration
-                  loadExternalAssets="true"
-                  [schema]="feedConfigurationSchema.schema"
-                  framework="material-design"
-                  (onSubmit)="topicConfigured($event)"
-                  ></app-feed-configuration> -->
-<hr>
-                   <!-- <app-feed-configuration
-                  loadExternalAssets="true"
-                  [form]="selectedTopic?.paramsSchema"
-                  framework="material-design"
-                  (onSubmit)="topicConfigured($event)"
-                  ></app-feed-configuration> -->
+      <div class="row">
+        <div class="col-md-6">
       <mat-accordion class="example-headers-align">
         <mat-expansion-panel [expanded]="step === 0" (opened)="setStep(0)"  hideToggle>
           <mat-expansion-panel-header>
             <mat-panel-title>
-              Service stuff
+              Choose a Service and Topic
             </mat-panel-title>
             <mat-panel-description>
-              This is a summary of the content
+              {{selectedService?.title}} : {{selectedTopic?.title}}
             </mat-panel-description>
           </mat-expansion-panel-header>
             <!-- <div class="row">
@@ -107,26 +95,16 @@
                 Configure The Content Fetch Parameters
               </mat-panel-title>
               <mat-panel-description>
-                This is a summary of the content
               </mat-panel-description>
             </mat-expansion-panel-header>
             <div class="row" *ngIf="selectedTopic">
-              <!-- <h2>Configure The Feed:</h2> -->
               <div class="col-md-12">
-                <!-- <app-feed-configuration
-                  loadExternalAssets="true"
-                  [schema]="feedConfigurationSchema"
-                  framework="material-design"
-                  (onSubmit)="feedConfigured($event)"
-                  ></app-feed-configuration> -->
                 <app-feed-configuration
                   loadExternalAssets="true"
                   [form]="selectedTopic.paramsSchema"
                   framework="material-design"
                   (onSubmit)="topicConfigured($event)"
                   ></app-feed-configuration>
-                <!-- <app-feed-configuration [schema]="selectedTopic.paramsSchema"
-                (configurationComplete)="topicConfigured($event)"></app-feed-configuration> -->
               </div>
             </div>
             <mat-action-row>
@@ -134,7 +112,7 @@
               <button mat-button color="primary" (click)="nextStep()">Next</button>
             </mat-action-row>
           </mat-expansion-panel>
-          <mat-expansion-panel [expanded]="step === 2" (opened)="setStep(2)" hideToggle>
+          <!-- <mat-expansion-panel [expanded]="step === 2" (opened)="setStep(2)" hideToggle>
             <mat-expansion-panel-header>
               <mat-panel-title>
                 Preview The Feed Items
@@ -154,8 +132,8 @@
               <button mat-button color="warn" (click)="prevStep()">Previous</button>
               <button mat-button color="primary" (click)="nextStep()">Next</button>
             </mat-action-row>
-          </mat-expansion-panel>
-        <mat-expansion-panel [expanded]="step === 3" (opened)="setStep(3)" hideToggle>
+          </mat-expansion-panel> -->
+        <mat-expansion-panel [expanded]="step === 2" (opened)="setStep(2)" hideToggle>
           <mat-expansion-panel-header>
             <mat-panel-title>
               Set Feed Configuration
@@ -169,77 +147,13 @@
             <div class="col-md-12">
               <app-feed-configuration
                   loadExternalAssets="true"
+                  [data]="selectedTopic"
                   [schema]="feedConfigurationSchema"
                   framework="material-design"
                   (onSubmit)="feedConfigured($event)"
                   ></app-feed-configuration>
-              <!-- <app-feed-configuration [schema]="feedConfigurationSchema"
-              (configurationComplete)="feedConfigured($event)"></app-feed-configuration> -->
             </div>
-          </div>
-            <!-- <div class="row">
-              <div class="col-md-3">
-                <span class="muted">Service:&nbsp;</span>
-              </div>
-              <div class="col-md-9">
-                <span>{{fullService}}</span>
-              </div>
             </div>
-
-
-            <div class="row top-gap-s">
-              <div class="col-md-3">
-                <span class="muted">Summary:&nbsp;</span>
-              </div>
-              <div class="col-md-9">
-                <span>{{feed?.summary}}</span>
-              </div>
-            </div>
-
-            <div class="row top-gap-s">
-              <div class="col-md-3">
-                <span class="muted">Service:&nbsp;</span>
-              </div>
-              <div class="col-md-9">
-                <span>{{service?.title}}</span>
-              </div>
-            </div>
-
-            <div class="row top-gap-s">
-              <div class="col-md-3">
-                <span class="muted">Service Type Summary:&nbsp;</span>
-              </div>
-              <div class="col-md-9">
-                <span>{{feedServiceType?.summary}}</span>
-              </div>
-            </div>
-
-            <div class="row top-gap-s">
-              <div class="col-md-3">
-                <span class="muted">Feed Item Primary Property:&nbsp;</span>
-              </div>
-              <div class="col-md-9">
-                <span>{{feed?.itemPrimaryProperty}}</span>
-              </div>
-            </div>
-
-            <div class="row top-gap-s">
-              <div class="col-md-3">
-                <span class="muted">Feed Item Secondary Property:&nbsp;</span>
-              </div>
-              <div class="col-md-9">
-                <span>{{feed?.itemSecondaryProperty}}</span>
-              </div>
-            </div>
-
-            <div class="row top-gap-s">
-              <div class="col-md-3">
-                <span class="muted">Update Frequency Seconds:&nbsp;</span>
-              </div>
-              <div class="col-md-9">
-                <span>{{feed?.updateFrequencySeconds}}</span>
-              </div>
-            </div> -->
             <mat-action-row>
               <button mat-button color="warn" (click)="prevStep()">Previous</button>
               <button mat-button color="primary" (click)="nextStep()">Next</button>
@@ -247,52 +161,23 @@
           </mat-expansion-panel>
 
           </mat-accordion>
+          </div>
+          <div class="col-md-6">
+            <div *ngIf="previewItems">
+              <!-- <ng-container *ngFor="let item of previewItems">
+                <feed-list-item [item]="item" [feed]="feed"></feed-list-item>
+                <mat-divider></mat-divider>
+              </ng-container> -->
+              <div class="row" *ngFor="let item of previewItems">
+                <div class="col-md-12">
+                  {{item | json}}
+                </div>
+              </div>
+            </div>
+          </div>
+          </div>
             <hr>
-            
-            <!-- <div class="row top-gap-s">
-              <div class="col-md-3">
-                <span class="muted">Feed:&nbsp;</span>
-              </div>
-              <div class="col-md-9">
-                <span>{{fullFeed}}</span>
-              </div>
-            </div>
 
-            <div class="row top-gap-s">
-              <div class="col-md-3">
-                <span class="muted">feedEvents:&nbsp;</span>
-              </div>
-              <div class="col-md-9">
-                <span>{{feedEvents}}</span>
-              </div>
-            </div>
-
-            <div class="row top-gap-s">
-              <div class="col-md-3">
-                <span class="muted">service:&nbsp;</span>
-              </div>
-              <div class="col-md-9">
-                <span>{{fullService}}</span>
-              </div>
-            </div>
-
-            <div class="row top-gap-s">
-              <div class="col-md-3">
-                <span class="muted">serviceType:&nbsp;</span>
-              </div>
-              <div class="col-md-9">
-                <span>{{fullServiceType}}</span>
-              </div>
-            </div>
-
-            <div class="row top-gap-s">
-              <div class="col-md-3">
-                <span class="muted">topc:&nbsp;</span>
-              </div>
-              <div class="col-md-9">
-                <span>{{fullTopic}}</span>
-              </div>
-            </div> -->
       
           <div class="col-md-6">
             <div class="card" *ngIf="hasFeedDeletePermission">

@@ -64,8 +64,24 @@ export class FeedEditComponent implements OnInit {
       itemSecondaryProperty: {
         type: 'string',
         title: 'Item Secondary Property'
+      },
+      feedIconUrl: {
+        type: 'string',
+        title: 'Feed Icon URL'
+      },
+      feedItemIconUrl: {
+        type: 'string',
+        title: 'Feed Item Icon URL'
       }
     };
+
+    this.feed = {
+      title: 'title',
+      id: 'temp',
+      service: null,
+      topic: null
+    }
+
   }
 
   ngOnInit(): void {
@@ -81,6 +97,7 @@ export class FeedEditComponent implements OnInit {
 
   serviceSelected(): void {
     console.log('service selected', this.selectedService);
+    this.feed.service = this.selectedService.id;
     this.feedService.fetchTopics(this.selectedService.id).subscribe(topics => {
       this.topics = topics;
     });
@@ -88,6 +105,7 @@ export class FeedEditComponent implements OnInit {
   }
 
   topicSelected(): void {
+    this.feed.topic = this.selectedTopic.id;
     this.fullTopic = JSON.stringify(this.selectedTopic, null, 2);
     // this.feedConfigurationSchema.constantParams = this.selectedTopic.paramsSchema;
   }
