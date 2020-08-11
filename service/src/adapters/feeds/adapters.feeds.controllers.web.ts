@@ -11,6 +11,7 @@ import express from 'express'
 import { ListFeedServiceTypes, ListServiceTopics, CreateFeedService, ListFeedServices, PreviewTopics, PreviewTopicsRequest, CreateFeed, CreateFeedRequest, ListServiceTopicsRequest, ListAllFeeds, FetchFeedContent, PreviewFeedRequest, PreviewFeed } from '../../app.api/feeds/app.api.feeds'
 import { ErrPermissionDenied, MageError, PermissionDeniedError, ErrInvalidInput, invalidInput, ErrEntityNotFound } from '../../app.api/app.api.errors'
 import { WebAppRequestFactory } from '../adapters.controllers.web'
+import { FeedServiceId, FeedTopicId } from '../../entities/feeds/entities.feeds'
 
 export interface FeedsAppLayer {
   listServiceTypes: ListFeedServiceTypes
@@ -111,13 +112,12 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
       }
       next(appRes.error)
     })
-  
-  const feedCreateParamsFromRequest = (req: express.Request): Pick<CreateFeedRequest, 'feed'> => {
-    const body = req.body
+
+  const feedCreateParamsFromRequestBody = (service: FeedServiceId, topic: FeedTopicId, body: any): Pick<CreateFeedRequest, 'feed'> => {
     return {
       feed: {
-        service: req.params.serviceId,
-        topic: req.params.topicId,
+        service,
+        topic,
         title: body.title,
         summary: body.summary,
         constantParams: body.constantParams,
@@ -135,7 +135,7 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
 
   routes.route('/services/:serviceId/topics/:topicId/feed_preview')
     .post(async (req, res, next) => {
-      const params = feedCreateParamsFromRequest(req) as Omit<PreviewFeedRequest, 'context'>
+      const params = feedCreateParamsFromRequestBody(req.params.serviceId, req.params.topicId, req.body.feed) as Omit<PreviewFeedRequest, 'context'>
       params.variableParams = req.body.variableParams
       const appReq = createAppRequest(req, params)
       const appRes = await appLayer.previewFeed(appReq)
@@ -147,7 +147,7 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
 
   routes.route('/services/:serviceId/topics/:topicId/feeds')
     .post(async (req, res, next) => {
-      const params: Omit<CreateFeedRequest, 'context'> = feedCreateParamsFromRequest(req)
+      const params: Omit<CreateFeedRequest, 'context'> = feedCreateParamsFromRequestBody(req.params.serviceId, req.params.topicId, req.body)
       const appReq = createAppRequest(req, params)
       const appRes = await appLayer.createFeed(appReq)
       if (appRes.success) {
@@ -168,20 +168,10 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
       }
       return next(appRes.error)
     })
-// Temporary
-    routes.route('/:feedId')
-    .get(async (req, res, next) => {
-      const appReq = createAppRequest(req)
-      const appRes = await appLayer.listAllFeeds(appReq)
-      if (appRes.success) {
-        return res.json(appRes.success.filter(feed => {
-          return feed.id === req.params.feedId;
-        })[0]);
-      }
-      return next(appRes.error)
-    })
 
-    routes.route('/services/:serviceId')
+  // Temporary
+
+  routes.route('/services/:serviceId')
     .get(async (req, res, next) => {
       const appReq = createAppRequest(req)
       const appRes = await appLayer.listServices(appReq)
@@ -193,9 +183,8 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
       return next(appRes.error)
     })
 
-    routes.route('/service_types/:serviceTypeId')
+  routes.route('/service_types/:serviceTypeId')
     .get(async (req, res, next) => {
-
       const appReq = createAppRequest(req)
       const appRes = await appLayer.listServiceTypes(appReq)
       if (appRes.success) {
@@ -205,7 +194,7 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
       next(appRes.error)
     })
 
-    routes.route('/services/:serviceId/topics/:topicId')
+  routes.route('/services/:serviceId/topics/:topicId')
     .get(async (req, res, next) => {
       const appReq: ListServiceTopicsRequest = createAppRequest(req, {
         service: req.params.serviceId
@@ -217,6 +206,18 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
         })[0]);
       }
       next(appRes.error)
+    })
+
+  routes.route('/:feedId')
+    .get(async (req, res, next) => {
+      const appReq = createAppRequest(req)
+      const appRes = await appLayer.listAllFeeds(appReq)
+      if (appRes.success) {
+        return res.json(appRes.success.filter(feed => {
+          return feed.id === req.params.feedId;
+        })[0]);
+      }
+      return next(appRes.error)
     })
 
   routes.use(errorHandler)

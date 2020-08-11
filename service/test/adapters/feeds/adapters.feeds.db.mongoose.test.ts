@@ -268,14 +268,27 @@ describe('feeds repositories', function() {
 
         const nextId = `feed:test:${Date.now()}`
         idFactory.nextId().resolves(nextId)
-        const createAttrs = Object.freeze({
+        const createAttrs: Required<FeedCreateAttrs> = Object.freeze({
           id: 'not this one',
           service: mongoose.Types.ObjectId().toHexString(),
           topic: uniqid(),
           title: uniqid(),
+          summary: 'everything is required',
           itemsHaveIdentity: true,
           itemsHaveSpatialDimension: true,
-          updateFrequencySeconds: 60
+          updateFrequencySeconds: 60,
+          itemPrimaryProperty: 'great',
+          itemSecondaryProperty: 'meh',
+          itemTemporalProperty: 'timestamp',
+          constantParams: {
+            testCoverage: 0.999
+          },
+          variableParamsSchema: {
+            type: 'object',
+            properties: {
+              newerThanSeconds: { type: 'number' }
+            }
+          }
         })
         const expectedFeed: Omit<Feed, 'id'> = _.omit(createAttrs, 'id')
         const created = await repo.create({ ...createAttrs })
@@ -286,6 +299,55 @@ describe('feeds repositories', function() {
         expect(created).to.deep.include(Object.assign({ ...expectedFeed }, { id: nextId }))
         expect(created).to.deep.equal(fetched?.toJSON())
         idFactory.received(1).nextId()
+      })
+    })
+
+    describe('finding all feeds', function() {
+
+      it('returns all the feeds', async function() {
+
+        const feedStubs: FeedCreateAttrs[] = [
+          {
+            id: '1',
+            service: mongoose.Types.ObjectId().toHexString(),
+            topic: uniqid(),
+            title: 'Feed 1',
+            constantParams: {
+              limit: 20
+            },
+            itemsHaveIdentity: false,
+            itemsHaveSpatialDimension: false,
+          },
+          {
+            id: '2',
+            service: mongoose.Types.ObjectId().toHexString(),
+            topic: uniqid(),
+            title: 'Feed 2',
+            summary: 'The second one',
+            constantParams: {
+              limit: 7
+            },
+            itemsHaveIdentity: true,
+            itemsHaveSpatialDimension: true,
+            itemPrimaryProperty: 'crucialStuff',
+            itemSecondaryProperty: 'details',
+            itemTemporalProperty: 'when',
+            updateFrequencySeconds: 3600,
+            variableParamsSchema: {
+              type: 'object',
+              properties: {
+                newerThanHours: { type: 'number' }
+              }
+            }
+          }
+        ]
+        const createdDocs = await Promise.all(feedStubs.map(x => model.create(Object.assign({ ...x }, { _id: x.id }))))
+        const createdEntities = createdDocs.map(x => x.toJSON())
+        const fetched = _.sortBy(await repo.findAll(), [ 'id' ])
+
+        expect(createdEntities).to.have.deep.members(feedStubs)
+        expect(fetched).to.have.deep.members(feedStubs)
+        expect(fetched).to.have.deep.members(createdEntities)
       })
     })
 

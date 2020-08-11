@@ -8,11 +8,12 @@ import uniqid from 'uniqid'
 import _ from 'lodash'
 import { AppResponse, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeedsRoutes, FeedsAppLayer } from '../../../lib/adapters/feeds/adapters.feeds.controllers.web'
-import { CreateFeedServiceRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, CreateFeedRequest, ListServiceTopicsRequest } from '../../../lib/app.api/feeds/app.api.feeds'
-import { FeedService, Feed, FeedTopic } from '../../../lib/entities/feeds/entities.feeds'
+import { CreateFeedServiceRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, CreateFeedRequest, ListServiceTopicsRequest, ListAllFeeds, PreviewFeedRequest, FeedPreview } from '../../../lib/app.api/feeds/app.api.feeds'
+import { FeedService, Feed, FeedTopic, FeedCreateAttrs, FeedMinimalAttrs } from '../../../lib/entities/feeds/entities.feeds'
 import { permissionDenied, PermissionDeniedError, InvalidInputError, invalidInput, EntityNotFoundError, entityNotFound } from '../../../lib/app.api/app.api.errors'
 import { WebAppRequestFactory } from '../../../lib/adapters/adapters.controllers.web'
 import { JSONSchema4 } from 'json-schema'
+import { json } from 'body-parser'
 
 declare module 'express-serve-static-core' {
   interface Request {
@@ -22,7 +23,7 @@ declare module 'express-serve-static-core' {
 
 const jsonMimeType = /^application\/json/
 
-describe('feeds web controller', function() {
+describe.only('feeds web controller', function() {
 
   const adminPrincipal = {
     user: 'admin'
@@ -463,7 +464,92 @@ invalid request
 
   describe('POST /services/{serviceId}/topics/{topicId}/feed_preview', function() {
 
-    it('has tests', async function() {
+    type CompletePreviewFeedRequestParams = Required<Omit<PreviewFeedRequest, 'context'>> & {
+      feed: Omit<Required<PreviewFeedRequest['feed']>, 'id'>
+    }
+
+    type CompleteFeedPreview = FeedPreview & {
+      feed: Required<FeedPreview['feed']>
+    }
+
+    it('maps the web request to the app request', async function() {
+
+      const service = uniqid()
+      const topic = uniqid()
+      const appReqParams: CompletePreviewFeedRequestParams = Object.freeze({
+        feed: {
+          service,
+          topic,
+          title: 'Title of Feed',
+          summary: 'Testing the feed preview',
+          itemsHaveIdentity: false,
+          itemsHaveSpatialDimension: true,
+          itemTemporalProperty: 'when',
+          itemPrimaryProperty: 'summary',
+          itemSecondaryProperty: 'details',
+          updateFrequencySeconds: 120,
+          constantParams: {
+            limit: 50
+          },
+          variableParamsSchema: {
+            type: 'object',
+            properties: {
+              bbox: { type: 'array', items: { type: 'number' }}
+            }
+          }
+        },
+        variableParams: {
+          bbox: [ 12, 13, 14, 15 ]
+        }
+      })
+      const appReq: PreviewFeedRequest = createAdminRequest(appReqParams)
+      const preview: CompleteFeedPreview = {
+        feed: {
+          id: 'preview',
+          service,
+          topic,
+          title: appReqParams.feed.title,
+          summary: appReqParams.feed.summary,
+          itemsHaveIdentity: appReqParams.feed.itemsHaveIdentity,
+          itemsHaveSpatialDimension: appReqParams.feed.itemsHaveSpatialDimension,
+          itemPrimaryProperty: appReqParams.feed.itemTemporalProperty as string,
+          itemSecondaryProperty: appReqParams.feed.itemSecondaryProperty as string,
+          itemTemporalProperty: appReqParams.feed.itemTemporalProperty as string,
+          updateFrequencySeconds: appReqParams.feed.updateFrequencySeconds as number,
+          constantParams: appReqParams.feed.constantParams,
+          variableParamsSchema: appReqParams.feed.variableParamsSchema
+        },
+        content: {
+          topic,
+          feed: 'preview',
+          variableParams: appReqParams.variableParams,
+          items: {
+            type: 'FeatureCollection',
+            features: []
+          }
+        }
+      }
+      appRequestFactory.createRequest(Arg.any(), Arg.deepEquals(appReqParams)).returns(appReq)
+      appLayer.previewFeed(appReq).resolves(AppResponse.success<FeedPreview, unknown>(preview))
+
+      expect(appReq).to.deep.include(appReqParams)
+
+      const res = await client.post(`${rootPath}/services/${service}/topics/${topic}/feed_preview`).send(appReqParams)
+
+      expect(res.status).to.equal(200)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.deep.equal(preview)
+    })
+
+    it('fails with 404 if the service does not exist', async function() {
+      expect.fail('todo')
+    })
+
+    it('fails with 404 if the topic does not exist', async function() {
+      expect.fail('todo')
+    })
+
+    it('fails with 403 without permission', async function() {
       expect.fail('todo')
     })
   })
@@ -517,7 +603,7 @@ invalid request
         variableParamsSchema: appReq.feed.variableParamsSchema
       }
       appRequestFactory.createRequest(Arg.any(), Arg.deepEquals({ feed: appReq.feed })).returns(appReq)
-      appLayer.createFeed(Arg.is((x: AppRequest) => x.context?.requestToken === appReq.context.requestToken) as any).resolves(AppResponse.success<Feed, unknown>(feed))
+      appLayer.createFeed(Arg.requestTokenMatches(appReq)).resolves(AppResponse.success<Feed, unknown>(feed))
 
       const res = await client
         .post(`${rootPath}/services/${service}/topics/${topic}/feeds`)
@@ -585,7 +671,7 @@ invalid request
 
   describe('GET /{feedId}', function() {
 
-    it('has tests', async function() {
+    it('returns the feed for the id in the path', async function() {
 
       const feedId = uniqid()
       const feed: Feed = {
@@ -608,11 +694,16 @@ invalid request
           }
         }
       }
-      const res = await client.get(`/${rootPath}/${feedId}`)
+      const appReq = createAdminRequest()
+      appRequestFactory.createRequest(Arg.all()).returns(appReq)
+      appLayer.listAllFeeds(Arg.requestTokenMatches(appReq)).resolves(AppResponse.success<Feed[], unknown>([feed]))
+      const res = await client.get(`${rootPath}/${feedId}`)
 
       expect(res.status).to.equal(200)
       expect(res.type).to.match(jsonMimeType)
-      expect(res.body).to.equal(feed)
+      expect(res.body).to.deep.equal(feed)
+
+      expect.fail('todo: finish app layer')
     })
   })
 })
