@@ -9,21 +9,7 @@ import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescri
 import uniqid from 'uniqid'
 import { AppRequestContext, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeatureCollection } from 'geojson'
-import { JsonObject, JsonSchemaService, JsonValidator, Json } from '../../../lib/entities/entities.json_types'
-import { Argument } from '@fluffy-spoon/substitute/dist/src/Arguments'
-
-
-declare module '@fluffy-spoon/substitute' {
-  // use namespace to effectively merge a static function to an existing class
-  namespace Arg {
-    function requestTokenMatches<T extends AppRequest>(expectedRequest: T): Argument<T> & T
-  }
-}
-
-Arg.requestTokenMatches = <T extends AppRequest>(expectedRequest: T): Argument<T> & T => {
-  return new Argument<T>(`request token ${JSON.stringify(expectedRequest.context.requestToken)}`,
-    (x: T): boolean => x.context.requestToken === expectedRequest.context.requestToken) as Argument<T> & T
-}
+import { JsonObject, JsonSchemaService, JsonValidator } from '../../../lib/entities/entities.json_types'
 
 
 function mockServiceType(descriptor: FeedServiceTypeDescriptor): SubstituteOf<RegisteredFeedServiceType> {

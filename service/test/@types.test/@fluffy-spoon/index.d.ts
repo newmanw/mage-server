@@ -1,4 +1,5 @@
-import { Argument } from '@fluffy-spoon/substitute/dist/src/Arguments';
+import { Argument } from '@fluffy-spoon/substitute/dist/src/Arguments'
+import { AppRequest } from '../../../lib/app.api/app.api.global'
 
 /**
  * For some reason, putting the declaration here in this specific folder is the
@@ -25,5 +26,7 @@ declare module '@fluffy-spoon/substitute' {
   // use namespace to effectively merge a static function to an existing class
   namespace Arg {
     function deepEquals<T>(x: T): Argument<T> & T
+    function requestTokenMatches<T extends AppRequest>(expectedRequest: T): Argument<T> & T
   }
 }
+
