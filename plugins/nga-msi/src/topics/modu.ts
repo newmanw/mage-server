@@ -27,7 +27,10 @@ export const topicDescriptor: FeedTopic = {
   itemPrimaryProperty: 'name',
   itemSecondaryProperty: 'rigStatus',
   itemTemporalProperty: 'timestamp',
-  updateFrequencySeconds: 60 * 15
+  updateFrequencySeconds: 60 * 15,
+  style: {
+    iconUrl: 'https://mage-msi.geointservices.io/icons/modu.png'
+  }
 }
 
 export interface ModuTopicParams {

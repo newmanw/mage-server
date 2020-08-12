@@ -168,6 +168,8 @@ export interface FeedTopic {
    * unknown and requires configuration in a derived {@linkcode Feed}.
    */
   readonly itemSecondaryProperty?: string
+
+  readonly style?: any 
 }
 
 export interface FeedTopicContent {
