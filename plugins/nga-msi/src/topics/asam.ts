@@ -22,7 +22,10 @@ export const topicDescriptor: FeedTopic = {
   itemPrimaryProperty: 'description',
   itemSecondaryProperty: 'hostilityVictim',
   itemTemporalProperty: 'timestamp',
-  updateFrequencySeconds: 60 * 15
+  updateFrequencySeconds: 60 * 15,
+  mapStyle: {
+    // TODO
+  }
 }
 
 export interface AsamTopicParams {
