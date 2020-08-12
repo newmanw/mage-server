@@ -23,6 +23,10 @@ describe('feed-create attribute factory', function() {
           key: { type: 'string' }
         },
         required: [ 'key' ]
+      },
+      mapStyle: {
+        stroke: 'abc123',
+        strokeOpacity: 0.5
       }
     }
     const feed: FeedMinimalAttrs = {
@@ -44,6 +48,10 @@ describe('feed-create attribute factory', function() {
         properties: {
           limit: { type: 'number', maximum: 200, default: 25 }
         }
+      },
+      mapStyle: {
+        stroke: 'abcddd',
+        strokeOpacity: 0.4
       }
     }
     const createAttrs = FeedCreateAttrs(topic, feed)
@@ -57,7 +65,8 @@ describe('feed-create attribute factory', function() {
       itemTemporalProperty: feed.itemTemporalProperty,
       updateFrequencySeconds: feed.updateFrequencySeconds,
       constantParams: feed.constantParams,
-      variableParamsSchema: feed.variableParamsSchema
+      variableParamsSchema: feed.variableParamsSchema,
+      mapStyle: feed.mapStyle
     })
     expect(createAttrs).to.not.have.property('itemPrimaryProperty')
     expect(createAttrs).to.not.have.property('itemSecondaryProperty')
@@ -82,6 +91,9 @@ describe('feed-create attribute factory', function() {
           key: { type: 'string' }
         },
         required: [ 'key' ]
+      },
+      mapStyle: {
+        iconUrl: 'https://icons.net/building.png'
       }
     }
     const feed: FeedMinimalAttrs = {
@@ -101,7 +113,8 @@ describe('feed-create attribute factory', function() {
       itemsHaveSpatialDimension: topic.itemsHaveSpatialDimension,
       itemPrimaryProperty: topic.itemPrimaryProperty,
       itemSecondaryProperty: topic.itemSecondaryProperty,
-      updateFrequencySeconds: topic.updateFrequencySeconds
+      updateFrequencySeconds: topic.updateFrequencySeconds,
+      mapStyle: topic.mapStyle
     })
     expect(createAttrs).to.not.have.property('itemTemporalProperty')
   })

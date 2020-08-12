@@ -288,6 +288,13 @@ describe('feeds repositories', function() {
             properties: {
               newerThanSeconds: { type: 'number' }
             }
+          },
+          mapStyle: {
+            stroke: 'aabbcc',
+            strokeWidth: 1,
+            fill: 'abc123',
+            fillOpacity: 0.5,
+            iconUrl: 'test.png'
           }
         })
         const expectedFeed: Omit<Feed, 'id'> = _.omit(createAttrs, 'id')

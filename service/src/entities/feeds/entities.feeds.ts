@@ -168,6 +168,7 @@ export interface FeedTopic {
    * unknown and requires configuration in a derived {@linkcode Feed}.
    */
   readonly itemSecondaryProperty?: string
+  readonly mapStyle?: MapStyle
 }
 
 export interface FeedTopicContent {
@@ -227,9 +228,26 @@ export interface Feed {
    */
   readonly itemPrimaryProperty?: string
   readonly itemSecondaryProperty?: string
-  readonly style?: any
+  readonly mapStyle?: MapStyle
 }
 
+/**
+ * TODO: This could move outside of feeds to be used for other map-able
+ * elements.
+ */
+export interface MapStyle {
+  stroke?: HexRgb
+  strokeOpacity?: number
+  strokeWidth?: number
+  fill?: HexRgb
+  fillOpacity?: number
+  iconUrl?: string
+}
+
+/**
+ * HexRgb is the typical hexadecimal, 24-bit color string.
+ */
+export type HexRgb = string
 
 export type FeedCreateAttrs = Omit<Feed, 'id'> & { id?: FeedId }
 
@@ -240,7 +258,7 @@ export interface FeedRepository {
   findAll(): Promise<Feed[]>
 }
 
-type FeedCreateExcplicitNullKeys = 'itemTemporalProperty' | 'itemPrimaryProperty' | 'itemSecondaryProperty' | 'updateFrequencySeconds'
+type FeedCreateExcplicitNullKeys = 'itemTemporalProperty' | 'itemPrimaryProperty' | 'itemSecondaryProperty' | 'updateFrequencySeconds' | 'mapStyle'
 
 export type FeedMinimalAttrs = Partial<Omit<Feed, FeedCreateExcplicitNullKeys>> & Pick<Feed, 'topic' | 'service'> & {
   readonly [nullable in keyof Pick<Feed, FeedCreateExcplicitNullKeys>]: Feed[nullable] | null
@@ -255,9 +273,7 @@ export const FeedCreateAttrs = (topic: FeedTopic, feedAttrs: FeedMinimalAttrs): 
     constantParams: feedAttrs.constantParams,
     variableParamsSchema: feedAttrs.variableParamsSchema,
     itemsHaveIdentity: feedAttrs.itemsHaveIdentity === undefined ? topic.itemsHaveIdentity || false : feedAttrs.itemsHaveIdentity,
-    itemsHaveSpatialDimension: feedAttrs.itemsHaveSpatialDimension === undefined ? topic.itemsHaveSpatialDimension || false: feedAttrs.itemsHaveSpatialDimension,
-    style: feedAttrs.style,
-
+    itemsHaveSpatialDimension: feedAttrs.itemsHaveSpatialDimension === undefined ? topic.itemsHaveSpatialDimension || false : feedAttrs.itemsHaveSpatialDimension,
   }
   if (!createAttrs.constantParams) {
     delete createAttrs.constantParams
@@ -269,7 +285,8 @@ export const FeedCreateAttrs = (topic: FeedTopic, feedAttrs: FeedMinimalAttrs): 
     itemPrimaryProperty: true,
     itemSecondaryProperty: true,
     itemTemporalProperty: true,
-    updateFrequencySeconds: true
+    updateFrequencySeconds: true,
+    mapStyle: true
   }
   for (const explicitNullKey in explicitNullKeys) {
     const override = (feedAttrs as any)[explicitNullKey]

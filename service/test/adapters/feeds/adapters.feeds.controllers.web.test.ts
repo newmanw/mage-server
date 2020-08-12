@@ -9,7 +9,7 @@ import _ from 'lodash'
 import { AppResponse, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeedsRoutes, FeedsAppLayer } from '../../../lib/adapters/feeds/adapters.feeds.controllers.web'
 import { CreateFeedServiceRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, CreateFeedRequest, ListServiceTopicsRequest, ListAllFeeds, PreviewFeedRequest, FeedPreview } from '../../../lib/app.api/feeds/app.api.feeds'
-import { FeedService, Feed, FeedTopic, FeedCreateAttrs, FeedMinimalAttrs } from '../../../lib/entities/feeds/entities.feeds'
+import { FeedService, Feed, FeedTopic, FeedCreateAttrs, FeedMinimalAttrs, MapStyle } from '../../../lib/entities/feeds/entities.feeds'
 import { permissionDenied, PermissionDeniedError, InvalidInputError, invalidInput, EntityNotFoundError, entityNotFound } from '../../../lib/app.api/app.api.errors'
 import { WebAppRequestFactory } from '../../../lib/adapters/adapters.controllers.web'
 import { JSONSchema4 } from 'json-schema'
@@ -23,7 +23,7 @@ declare module 'express-serve-static-core' {
 
 const jsonMimeType = /^application\/json/
 
-describe.only('feeds web controller', function() {
+describe('feeds web controller', function() {
 
   const adminPrincipal = {
     user: 'admin'
@@ -496,6 +496,10 @@ invalid request
             properties: {
               bbox: { type: 'array', items: { type: 'number' }}
             }
+          },
+          mapStyle: {
+            stroke: 'abcdef',
+            strokeWidth: 2.5
           }
         },
         variableParams: {
@@ -517,7 +521,8 @@ invalid request
           itemTemporalProperty: appReqParams.feed.itemTemporalProperty as string,
           updateFrequencySeconds: appReqParams.feed.updateFrequencySeconds as number,
           constantParams: appReqParams.feed.constantParams,
-          variableParamsSchema: appReqParams.feed.variableParamsSchema
+          variableParamsSchema: appReqParams.feed.variableParamsSchema,
+          mapStyle: appReqParams.feed.mapStyle as MapStyle
         },
         content: {
           topic,
@@ -588,7 +593,8 @@ invalid request
           itemPrimaryProperty: undefined,
           itemSecondaryProperty: undefined,
           itemTemporalProperty: undefined,
-          updateFrequencySeconds: undefined
+          updateFrequencySeconds: undefined,
+          mapStyle: undefined,
         }
       })
       const feed: Feed = {
