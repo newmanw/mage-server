@@ -20,7 +20,7 @@
 
       <div class="row">
         <div class="col-md-10" *ngIf="feed; else elseBlockTitle">
-          <h2><img style="width: 24px; height: 24px;" [src]="feed.style?.iconUrl"/>{{feed.title}}</h2>
+          <h2><img style="width: 24px; height: 24px;" [src]="feed.mapStyle?.iconUrl"/>{{feed.title}}</h2>
         </div>
         <ng-template #elseBlockTitle>
           <h2>New Feed</h2>

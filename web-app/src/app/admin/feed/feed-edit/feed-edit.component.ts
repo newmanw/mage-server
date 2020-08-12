@@ -148,4 +148,9 @@ export class FeedEditComponent implements OnInit {
     this.step--;
   }
 
+
+  goToFeeds(): void {
+    
+  }
+
 }

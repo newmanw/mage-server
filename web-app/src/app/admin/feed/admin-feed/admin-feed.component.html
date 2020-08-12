@@ -14,7 +14,7 @@
 
         <div class="row">
           <div class="col-md-10">
-            <h2><img class="feed-icon" [src]="feed.style?.iconUrl"/>{{feed.title}} Feed</h2>
+            <h2><img class="feed-icon" [src]="feed.mapStyle?.iconUrl"/>{{feed.title}} Feed</h2>
           </div>
           <div class="col-md-2" *ngIf="hasFeedEditPermission">
             <h2>
@@ -219,10 +219,10 @@
 
                     <div class="well-item">
                         <!-- ng-repeat="e in ($ctrl.filteredEvents = ($ctrl.layerEvents | filter:$ctrl.filterEvents)) | orderBy:'name' | offset: $ctrl.eventsPage*$ctrl.eventsPerPage | limitTo:$ctreventsPerPage" > -->
-                      <div class="row pointer" (click)="gotoEvent(e)">
+                      <div class="row pointer" (click)="goToEvent(e)">
                         <div class="col-md-12">
                           <span class="pull-right" ngShow="editEvent">
-                            <a class="btn btn-xs btn-danger" (click)="removeEventFromLayer($event, e)"><i class="fa fa-minus"></i></a>
+                            <a class="btn btn-xs btn-danger" (click)="removeEventFromFeed($event, e)"><i class="fa fa-minus"></i></a>
                           </span>
 
                           <div class="right-gap pull-left">
