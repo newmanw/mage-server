@@ -21,7 +21,7 @@ export class FeedItemMapPopupComponent implements OnInit {
   constructor(private feedItemService: FeedItemService) { }
 
   ngOnInit(): void {
-    if (this.feed.style) this.iconUrl = this.feed.style.iconUrl;
+    if (this.feed.mapStyle) this.iconUrl = this.feed.mapStyle.iconUrl;
 
     if (!this.item.properties) return;
 

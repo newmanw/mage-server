@@ -67,7 +67,7 @@ export class FeedEditComponent implements OnInit {
         type: 'string',
         title: 'Item Secondary Property'
       },
-      style: {
+      mapStyle: {
         type: 'object',
         title: 'Style',
         properties: {

@@ -102,7 +102,7 @@ export class FeedService {
 
     const feedItems = this._feedItems.get(feed.id);
     this.http.post<FeedContent>(`/api/events/${event.id}/feeds/${feed.id}/content`, {}).subscribe(content => {
-      const style = feed.style || {
+      const style = feed.mapStyle || {
         iconUrl: '/assets/images/default_marker.png'
       }
 

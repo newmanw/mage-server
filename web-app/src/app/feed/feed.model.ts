@@ -6,7 +6,7 @@ export interface Feed {
   topic: string;
   title: string;
   summary?: string;
-  style?: Style;
+  mapStyle?: Style;
   itemTemporalProperty?: string;
   itemPrimaryProperty?: string;
   itemSecondaryProperty?: string;

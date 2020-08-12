@@ -31,8 +31,8 @@ export class FeedItemComponent implements OnChanges {
 
     if (!this.item.properties) return;
 
-    if (this.feed.style) {
-      this.iconUrl = this.feed.style.iconUrl;
+    if (this.feed.mapStyle) {
+      this.iconUrl = this.feed.mapStyle.iconUrl;
     }
 
     if (this.feed.itemTemporalProperty && this.item.properties[this.feed.itemTemporalProperty] != null) {
