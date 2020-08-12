@@ -53,7 +53,7 @@ export interface FeedServiceType {
   readonly configSchema: JSONSchema4 | null
 
   validateServiceConfig(config: Json): Promise<null | InvalidServiceConfigError>
-  createConnection(config: Json): FeedServiceConnection
+  createConnection(config: Json): Promise<FeedServiceConnection>
 }
 
 export type RegisteredFeedServiceType = FeedServiceType & { id: string }

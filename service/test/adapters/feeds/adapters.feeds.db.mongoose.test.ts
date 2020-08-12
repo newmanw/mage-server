@@ -69,7 +69,7 @@ describe('feeds repositories', function() {
       async validateServiceConfig(config: Json): Promise<null | InvalidServiceConfigError> {
         return null
       },
-      createConnection(config: Json): FeedServiceConnection {
+      async createConnection(config: Json): Promise<FeedServiceConnection> {
         const topics = this.topics
         const serviceInfo = this.serviceInfo
         return {
@@ -154,7 +154,7 @@ describe('feeds repositories', function() {
 
       const registered = await repo.register(serviceType.moduleName, serviceType)
       const found = await repo.findById(registered.id)
-      const conn = found?.createConnection(null)
+      const conn = await found?.createConnection(null)
       const info = await conn?.fetchServiceInfo()
       const topics = await conn?.fetchAvailableTopics()
 
