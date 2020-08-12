@@ -14,7 +14,7 @@
 
         <div class="row">
           <div class="col-md-10">
-            <h2><img class="feed-icon" [src]="feed.style?.iconUrl"/>{{feed.title}} Feed</h2>
+            <h2><img class="feed-icon" [src]="feed.mapStyle?.iconUrl"/>{{feed.title}} Feed</h2>
           </div>
           <div class="col-md-2" *ngIf="hasFeedEditPermission">
             <h2>
@@ -214,25 +214,24 @@
 
               <div class="row">
                 <div class="col-sm-12">
-                  <div class="admin-table">
-                    <ng-container *ngFor="let e of feedEvents | slice:eventsPage*eventsPerPage:eventsPerPage;">
+                  <div class="admin-table" *ngIf="feedEvents">
+                    <ng-container *ngFor="let e of feedEvents | slice:(eventsPage*eventsPerPage):((eventsPage+1)*eventsPerPage);">
 
-                    <div class="well-item">
-                        <!-- ng-repeat="e in ($ctrl.filteredEvents = ($ctrl.layerEvents | filter:$ctrl.filterEvents)) | orderBy:'name' | offset: $ctrl.eventsPage*$ctrl.eventsPerPage | limitTo:$ctreventsPerPage" > -->
-                      <div class="row pointer" (click)="gotoEvent(e)">
-                        <div class="col-md-12">
-                          <span class="pull-right" ngShow="editEvent">
-                            <a class="btn btn-xs btn-danger" (click)="removeEventFromLayer($event, e)"><i class="fa fa-minus"></i></a>
-                          </span>
+                      <div class="well-item">
+                        <div class="row pointer" (click)="goToEvent(e)">
+                          <div class="col-md-12">
+                            <span class="pull-right" [hidden]="!editEvent">
+                              <a class="btn btn-xs btn-danger" (click)="removeEventFromFeed($event, e)"><i class="fa fa-minus"></i></a>
+                            </span>
 
-                          <div class="right-gap pull-left">
-                            <i class="fa fa-calendar admin-layer-icon"></i>
+                            <div class="right-gap pull-left">
+                              <i class="fa fa-calendar admin-layer-icon"></i>
+                            </div>
+                            <div class="strong">{{e.name}}</div>
+                            <div class="muted">{{e.description}}</div>
                           </div>
-                          <div class="strong">{{e.name}}</div>
-                          <div class="muted">{{e.description}}</div>
                         </div>
                       </div>
-                    </div>
                     </ng-container>
                   </div>
                 </div>
@@ -240,10 +239,10 @@
               <div class="row">
                 <div class="col-md-12">
                   <ul class="pager pull-right">
-                    <li *ngClass="{'disabled': eventsPage == 0}">
+                    <li [ngClass]="{'disabled': eventsPage == 0}">
                       <a href="javascript:void(0);" (click)="eventsPage == 0 || (eventsPage=eventsPage-1)">&larr; Previous</a>
                     </li>
-                    <li *ngClass="{'disabled': eventsPage >= (feedEvents.length/eventsPerPage) - 1}">
+                    <li [ngClass]="{'disabled': eventsPage >= (feedEvents.length/eventsPerPage) - 1}">
                       <a href="javascript:void(0);" (click)="eventsPage >= (feedEvents.length/eventsPerPage) - 1 || (eventsPage=eventsPage+1)">Next&rarr;</a>
                     </li>
                   </ul>

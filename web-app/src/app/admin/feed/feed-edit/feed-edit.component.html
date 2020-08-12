@@ -20,7 +20,7 @@
 
       <div class="row">
         <div class="col-md-10" *ngIf="feed; else elseBlockTitle">
-          <h2><img style="width: 24px; height: 24px;" [src]="feed.style?.iconUrl"/>{{feed.title}}</h2>
+          <h2><img style="width: 24px; height: 24px;" [src]="feed.mapStyle?.iconUrl"/>{{feed.title}}</h2>
         </div>
         <ng-template #elseBlockTitle>
           <h2>New Feed</h2>
@@ -28,172 +28,163 @@
       </div>
       <div class="row">
         <div class="col-md-6">
-      <mat-accordion class="example-headers-align">
-        <mat-expansion-panel [expanded]="step === 0" (opened)="setStep(0)"  hideToggle>
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              Choose a Service and Topic
-            </mat-panel-title>
-            <mat-panel-description>
-              {{selectedService?.title}} : {{selectedTopic?.title}}
-            </mat-panel-description>
-          </mat-expansion-panel-header>
-            <!-- <div class="row">
-              <div class="col-md-12">
-                <mat-form-field appearance="outline">
-                  <mat-label>Select A Service Type</mat-label>
-                  <mat-select [(ngModel)]="selectedServiceType">
-                    <mat-option>
-                      <ngx-mat-select-search [formControl]="searchControl" placeholderLabel="Select A ServiceType" noEntriesFoundLabel=""></ngx-mat-select-search>
-                    </mat-option>
-                    <mat-option *ngFor="let serviceType of serviceTypes" [value]="serviceType">
-                      {{serviceType.title}}
-                    </mat-option>
-                  </mat-select>
-                </mat-form-field>
-              </div>
-            </div> -->
+          <mat-accordion class="example-headers-align">
+            <mat-expansion-panel [expanded]="step === -1" (opened)="setStep(-1)" hideToggle>
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  Create A New Service
+                </mat-panel-title>
+                <mat-panel-description>
 
-            <div class="row">
-              <div class="col-md-12">
-                <mat-form-field appearance="outline">
-                  <mat-label>Select A Service</mat-label>
-                  <mat-select [(ngModel)]="selectedService" (selectionChange)="serviceSelected()">
-                    <mat-option>
-                      <ngx-mat-select-search [formControl]="serviceSearchControl" placeholderLabel="Select A Service" noEntriesFoundLabel=""></ngx-mat-select-search>
-                    </mat-option>
-                    <mat-option *ngFor="let service of services" [value]="service">
-                      {{service.title}}
-                    </mat-option>
-                  </mat-select>
-                </mat-form-field>
-              </div>
-            </div>
-
-            <div class="row">
-              <div class="col-md-12">
-                <mat-form-field appearance="outline">
-                  <mat-label>Select A Topic</mat-label>
-                  <mat-select [(ngModel)]="selectedTopic" (selectionChange)="topicSelected()">
-                    <mat-option>
-                      <ngx-mat-select-search [formControl]="topicSearchControl" placeholderLabel="Select A Topic" noEntriesFoundLabel=""></ngx-mat-select-search>
-                    </mat-option>
-                    <mat-option *ngFor="let topic of topics" [value]="topic">
-                      {{topic.title}}
-                    </mat-option>
-                  </mat-select>
-                </mat-form-field>
-              </div>
-            </div>
-            <mat-action-row>
-              <button mat-button color="primary" (click)="nextStep()">Next</button>
-            </mat-action-row>
-          </mat-expansion-panel>
-          <mat-expansion-panel [expanded]="step === 1" (opened)="setStep(1)" hideToggle>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                Configure The Content Fetch Parameters
-              </mat-panel-title>
-              <mat-panel-description>
-              </mat-panel-description>
-            </mat-expansion-panel-header>
-            <div class="row" *ngIf="selectedTopic">
-              <div class="col-md-12">
-                <app-feed-configuration
-                  loadExternalAssets="true"
-                  [form]="selectedTopic.paramsSchema"
-                  [options]="formOptions"
-                  [(data)]="constantParams"
-                  framework="material-design"
-                  (onSubmit)="topicConfigured($event)"
-                  ></app-feed-configuration>
-              </div>
-            </div>
-            <mat-action-row>
-              <button mat-button color="warn" (click)="prevStep()">Previous</button>
-              <button mat-button color="primary" (click)="topicConfigured()">Next</button>
-            </mat-action-row>
-          </mat-expansion-panel>
-          <!-- <mat-expansion-panel [expanded]="step === 2" (opened)="setStep(2)" hideToggle>
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                Preview The Feed Items
-              </mat-panel-title>
-              <mat-panel-description>
-                This is a summary of the content
-              </mat-panel-description>
-            </mat-expansion-panel-header>
-            <div *ngIf="previewItems">
-              <div class="row" *ngFor="let item of previewItems">
+                </mat-panel-description>
+              </mat-expansion-panel-header>
+              <div class="row">
                 <div class="col-md-12">
-                  {{item | json}}
+                  <mat-form-field appearance="outline">
+                    <mat-label>Select A Service Type</mat-label>
+                    <mat-select [(ngModel)]="selectedServiceType" (selectionChange)="serviceTypeSelected()">
+                      <mat-option>
+                        <ngx-mat-select-search [formControl]="searchControl" placeholderLabel="Select A Service Type"
+                          noEntriesFoundLabel=""></ngx-mat-select-search>
+                      </mat-option>
+                      <mat-option *ngFor="let serviceType of serviceTypes" [value]="serviceType">
+                        {{serviceType.title}}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                  {{selectedServiceTypeConfigSchema | json }}
+                    <app-feed-configuration loadExternalAssets="true"
+                      [schema]="selectedServiceTypeConfigSchema" [options]="formOptions" [(data)]="serviceConfiguration"
+                      framework="material-design"></app-feed-configuration>
                 </div>
               </div>
-            </div>
-            <mat-action-row>
-              <button mat-button color="warn" (click)="prevStep()">Previous</button>
-              <button mat-button color="primary" (click)="nextStep()">Next</button>
-            </mat-action-row>
-          </mat-expansion-panel> -->
-        <mat-expansion-panel [expanded]="step === 2" (opened)="setStep(2)" hideToggle>
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              Set Feed Configuration
-            </mat-panel-title>
-            <mat-panel-description>
-            </mat-panel-description>
-          </mat-expansion-panel-header>
-          <div class="row">
-            <h2>Configure The Feed parameters:</h2>
-            <div class="col-md-12">
-              <app-feed-configuration
-                  loadExternalAssets="true"
-                  [(data)]="editFeed"
-                  [options]="formOptions"
-                  [schema]="feedConfigurationSchema"
-                  framework="material-design"
-                  ></app-feed-configuration>
-            </div>
-            </div>
-            <mat-action-row>
-              <button mat-button color="warn" (click)="prevStep()">Previous</button>
-              <button mat-button color="primary" (click)="submitFeed()">Next</button>
-            </mat-action-row>
-          </mat-expansion-panel>
+              <mat-action-row>
+                <button mat-button [disabled]="!selectedServiceType" color="primary" (click)="createService()">Create Service</button>
+              </mat-action-row>
+            </mat-expansion-panel>
+            <ng-container *ngIf="services.length">
+            <mat-expansion-panel [disabled]="step === -1" [expanded]="step === 0" (opened)="setStep(0)" hideToggle>
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  Choose a Service and Topic
+                </mat-panel-title>
+                <mat-panel-description>
+                  {{selectedService?.title}} : {{selectedTopic?.title}}
+                </mat-panel-description>
+              </mat-expansion-panel-header>
+              <div class="row">
+                <div class="col-md-12">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Select A Service</mat-label>
+                    <mat-select [(ngModel)]="selectedService" (selectionChange)="serviceSelected()">
+                      <mat-option>
+                        <ngx-mat-select-search [formControl]="serviceSearchControl" placeholderLabel="Select A Service"
+                          noEntriesFoundLabel=""></ngx-mat-select-search>
+                      </mat-option>
+                      <mat-option *ngFor="let service of services" [value]="service">
+                        {{service.title}}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+              </div>
 
+              <div class="row">
+                <div class="col-md-12">
+                  <mat-form-field appearance="outline">
+                    <mat-label>Select A Topic</mat-label>
+                    <mat-select [(ngModel)]="selectedTopic" (selectionChange)="topicSelected()">
+                      <mat-option>
+                        <ngx-mat-select-search [formControl]="topicSearchControl" placeholderLabel="Select A Topic"
+                          noEntriesFoundLabel=""></ngx-mat-select-search>
+                      </mat-option>
+                      <mat-option *ngFor="let topic of topics" [value]="topic">
+                        {{topic.title}}
+                      </mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+              </div>
+              <mat-action-row>
+                <button mat-button color="primary" (click)="nextStep()">Next</button>
+              </mat-action-row>
+            </mat-expansion-panel>
+            <mat-expansion-panel [disabled]="step === -1" [expanded]="step === 1" (opened)="setStep(1)" hideToggle>
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  Configure The Content Fetch Parameters
+                </mat-panel-title>
+                <mat-panel-description>
+                </mat-panel-description>
+              </mat-expansion-panel-header>
+              <div class="row" *ngIf="selectedTopic">
+                <div class="col-md-12">
+                  <app-feed-configuration loadExternalAssets="true" [form]="selectedTopic.paramsSchema"
+                    [options]="formOptions" [(data)]="constantParams" framework="material-design"
+                    (onSubmit)="topicConfigured($event)"></app-feed-configuration>
+                </div>
+              </div>
+              <mat-action-row>
+                <button mat-button color="warn" (click)="prevStep()">Previous</button>
+                <button mat-button color="primary" (click)="topicConfigured()">Next</button>
+              </mat-action-row>
+            </mat-expansion-panel>
+            <mat-expansion-panel [disabled]="step === -1" [expanded]="step === 2" (opened)="setStep(2)" hideToggle>
+              <mat-expansion-panel-header>
+                <mat-panel-title>
+                  Set Feed Configuration
+                </mat-panel-title>
+                <mat-panel-description>
+                </mat-panel-description>
+              </mat-expansion-panel-header>
+              <div class="row">
+                <div class="col-md-12">
+                  <app-feed-configuration loadExternalAssets="true" [(data)]="editFeed" [options]="formOptions"
+                    [schema]="feedConfigurationSchema" framework="material-design" [layout]="formLayout">
+                  </app-feed-configuration>
+                </div>
+              </div>
+              <mat-action-row>
+                <button mat-button color="warn" (click)="prevStep()">Previous</button>
+                <button mat-button color="primary" (click)="submitFeed()">Next</button>
+              </mat-action-row>
+            </mat-expansion-panel>
+            </ng-container>
           </mat-accordion>
-          </div>
-          <div class="col-md-6">
-            <div *ngIf="previewItems">
-              <!-- <ng-container *ngFor="let item of previewItems">
+        </div>
+        <div class="col-md-6">
+          <div *ngIf="previewItems">
+            <!-- <ng-container *ngFor="let item of previewItems">
                 <feed-list-item [item]="item" [feed]="feed"></feed-list-item>
                 <mat-divider></mat-divider>
               </ng-container> -->
-              <div class="row" *ngFor="let item of previewItems">
-                <!-- <feed-list-item [item]="item" [feed]="feed"></feed-list-item> -->
+            <div class="row" *ngFor="let item of previewItems">
+              <!-- <feed-list-item [item]="item" [feed]="feed"></feed-list-item> -->
 
-                <div class="col-md-12">
-                  {{item | json}}
-                </div>
+              <div class="col-md-12">
+                {{item | json}}
               </div>
             </div>
           </div>
-          </div>
-            <hr>
+        </div>
+      </div>
+      <hr>
 
-      
-          <div class="col-md-6">
-            <div class="card" *ngIf="hasFeedDeletePermission">
-              <div class="card-content">
-                <strong class="text-danger">Delete feed</strong>
-                <p class="text-danger">Deleting feed will remove all information. This cannot be undone, all feed data will be unrecoverable.</p>
-                <button class="btn btn-danger top-gap" ng-click="deleteFeed()"> <i class="fa fa-trash-o"></i> Delete</button>
-              </div>
-            </div>
+
+      <div class="col-md-6">
+        <div class="card" *ngIf="hasFeedDeletePermission">
+          <div class="card-content">
+            <strong class="text-danger">Delete feed</strong>
+            <p class="text-danger">Deleting feed will remove all information. This cannot be undone, all feed data will
+              be unrecoverable.</p>
+            <button class="btn btn-danger top-gap" ng-click="deleteFeed()"> <i class="fa fa-trash-o"></i>
+              Delete</button>
           </div>
-        <!-- </div> -->
-        <hr>
-        <!-- <div class="row">
+        </div>
+      </div>
+      <!-- </div> -->
+      <hr>
+      <!-- <div class="row">
           <div class="col-md-6 col-xs-12">
             <div class="row">
               <div class="col-md-12">
@@ -294,6 +285,6 @@
             </div>
           </div>
         </div> -->
-      </div>
+    </div>
   </div>
 </div>
