@@ -14,6 +14,7 @@ export interface Feed {
   updateFrequency?: number;
   constantParams?: any;
   variableParamsSchema?: JSON;
+  updateFrequencySeconds: number;
 }
 
 export interface Style {

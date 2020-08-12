@@ -12,6 +12,8 @@ import { StateService } from '@uirouter/angular';
 export class FeedEditComponent implements OnInit {
   @Input() feed: Feed;
 
+  hasFeedDeletePermission: boolean;
+
   searchControl: FormControl = new FormControl();
   serviceSearchControl: FormControl = new FormControl();
   topicSearchControl: FormControl = new FormControl();
@@ -182,6 +184,10 @@ export class FeedEditComponent implements OnInit {
 
 
   goToFeeds(): void {
+    
+  }
+
+  deleteFeed(): void {
     
   }
 

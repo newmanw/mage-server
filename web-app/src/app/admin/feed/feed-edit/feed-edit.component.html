@@ -120,8 +120,7 @@
               <div class="row" *ngIf="selectedTopic">
                 <div class="col-md-12">
                   <app-feed-configuration loadExternalAssets="true" [form]="selectedTopic.paramsSchema"
-                    [options]="formOptions" [(data)]="constantParams" framework="material-design"
-                    (onSubmit)="topicConfigured($event)"></app-feed-configuration>
+                    [options]="formOptions" [(data)]="constantParams" framework="material-design"></app-feed-configuration>
                 </div>
               </div>
               <mat-action-row>
@@ -177,7 +176,7 @@
             <strong class="text-danger">Delete feed</strong>
             <p class="text-danger">Deleting feed will remove all information. This cannot be undone, all feed data will
               be unrecoverable.</p>
-            <button class="btn btn-danger top-gap" ng-click="deleteFeed()"> <i class="fa fa-trash-o"></i>
+            <button class="btn btn-danger top-gap" (click)="deleteFeed()"> <i class="fa fa-trash-o"></i>
               Delete</button>
           </div>
         </div>
