@@ -18,7 +18,7 @@ describe('end to end', function() {
 
     const serviceTypes = await hooks.feeds.loadServiceTypes()
     const serviceType = serviceTypes[0]
-    const conn = serviceType.createConnection('https://msi.gs.mil')
+    const conn = await serviceType.createConnection('https://msi.gs.mil')
     const content = await conn.fetchTopicContent('asam', { newerThanDays: 60 })
     console.log(JSON.stringify(content, null, 2))
   })

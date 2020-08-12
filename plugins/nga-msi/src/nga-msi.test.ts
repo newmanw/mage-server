@@ -35,7 +35,7 @@ describe('msi service type', function() {
 
   it('creates a service connection with a url string and transport', async function() {
 
-    const conn = msi.createConnection('http://test.msi') as MSI.MsiConnection
+    const conn = await msi.createConnection('http://test.msi') as MSI.MsiConnection
 
     expect(conn).toBeInstanceOf(MSI.MsiConnection)
     expect(conn.baseUrl).toEqual('http://test.msi')

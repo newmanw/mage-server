@@ -31,7 +31,7 @@ export function PreviewTopics(permissionService: api.FeedsPermissionService, rep
         if (invalid) {
           return invalidInputServiceConfig(invalid, 'serviceConfig')
         }
-        const conn = serviceType.createConnection(req.serviceConfig)
+        const conn = await serviceType.createConnection(req.serviceConfig)
         return await conn.fetchAvailableTopics()
       }
     )
@@ -86,7 +86,7 @@ export function ListServiceTopics(permissionService: api.FeedsPermissionService,
     return await withPermission<FeedTopic[], KnownErrorsOf<api.ListServiceTopics>>(
       permissionService.ensureListTopicsPermissionFor(req.context, service.id),
       async (): Promise<FeedTopic[] | EntityNotFoundError> => {
-        const conn = serviceType.createConnection(service.config)
+        const conn = await serviceType.createConnection(service.config)
         return await conn.fetchAvailableTopics()
       }
     )
@@ -123,7 +123,7 @@ function buildFeedCreateContext<R>(feedStub: FeedMinimalAttrs, deps: CreateFeedD
         if (!serviceType) {
           return entityNotFound(service.serviceType, 'FeedServiceType')
         }
-        const conn = serviceType.createConnection(service.config)
+        const conn = await serviceType.createConnection(service.config)
         const topics = await conn.fetchAvailableTopics()
         const topic = topics.find(x => x.id === feedStub.topic)
         if (!topic) {
@@ -233,7 +233,7 @@ export function FetchFeedContent(permissionService: api.FeedsPermissionService, 
         if (!serviceType) {
           return entityNotFound(service.serviceType, 'FeedServiceType')
         }
-        const conn = serviceType.createConnection(service.config)
+        const conn = await serviceType.createConnection(service.config)
         let params = req.variableParams || {}
         params = Object.assign(params, feed.constantParams || {})
         const content = await conn.fetchTopicContent(feed.topic, params)
