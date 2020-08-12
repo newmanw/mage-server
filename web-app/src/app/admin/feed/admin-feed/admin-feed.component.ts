@@ -55,7 +55,6 @@ export class AdminFeedComponent implements OnInit {
   ngOnInit(): void {
     this.feedService.fetchFeed(this.stateService.params.feedId).subscribe(feed => {
       this.feed = feed;
-      console.log('feed', feed);
       this.fullFeed = JSON.stringify(feed, null, 2);
       this.feedLoaded = Promise.resolve(true);
       this.feedService.fetchService(this.feed.service).subscribe(service => {
@@ -80,7 +79,6 @@ export class AdminFeedComponent implements OnInit {
       });
 
       this.feedEvents = _.filter(events, event => {
-        console.log('event.feedIds', event.feedIds);
         return _.some(event.feedIds, feedId => {
           return this.feed.id === feedId;
         });
@@ -124,7 +122,6 @@ export class AdminFeedComponent implements OnInit {
   }
 
   addEventToFeed(): void {
-    console.log('add event', this.eventModel);
     this.eventResource.addFeed({ id: this.eventModel.id }, `"${this.feed.id}"`, event => {
       this.feedEvents.push(event);
       this.nonFeedEvents = _.reject(this.nonFeedEvents, e => {

@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, Input } from '@angular/core';
 import { FeedService } from 'src/app/feed/feed.service';
 import { ServiceType, Feed, Service, FeedTopic } from 'src/app/feed/feed.model';
 import { FormControl } from '@angular/forms';
@@ -10,17 +10,19 @@ import { StateService } from '@uirouter/angular';
   styleUrls: ['./feed-edit.component.scss']
 })
 export class FeedEditComponent implements OnInit {
+  @Input() feed: Feed;
 
   searchControl: FormControl = new FormControl();
   serviceSearchControl: FormControl = new FormControl();
   topicSearchControl: FormControl = new FormControl();
-
 
   serviceTypes: Array<ServiceType>;
   selectedServiceType: ServiceType;
 
   services: Array<Service>;
   selectedService: Service;
+  serviceConfiguration: any = {};
+  selectedServiceTypeConfigSchema: any;
 
   topics: Array<FeedTopic>;
   selectedTopic: FeedTopic;
@@ -32,11 +34,11 @@ export class FeedEditComponent implements OnInit {
   feedConfigurationSchema: any;
   formOptions: any;
   constantParams: any;
+  formLayout: any;
 
-  feed: Feed;
   editFeed: any;
 
-  step = 0;
+  step = -1;
 
   constructor(
     private feedService: FeedService,
@@ -69,7 +71,6 @@ export class FeedEditComponent implements OnInit {
       },
       mapStyle: {
         type: 'object',
-        title: 'Style',
         properties: {
           iconUrl: {
             type: 'string',
@@ -83,6 +84,20 @@ export class FeedEditComponent implements OnInit {
       addSubmit: false
     };
 
+    this.formLayout = [
+      'title',
+      'itemsHaveIdentity',
+      'itemsHaveSpatialDimension',
+      'itemTemporalProperty',
+      'itemPrimaryProperty',
+      'itemSecondaryProperty',
+      {
+        type: 'text',
+        key: 'style.iconUrl',
+        title: 'Feed Icon URL'
+      }
+    ];
+
     this.editFeed = {};
 
     this.constantParams = {};
@@ -91,15 +106,32 @@ export class FeedEditComponent implements OnInit {
   ngOnInit(): void {
     this.feedService.fetchServices().subscribe(services => {
       this.services = services;
+      if (!this.services || this.services.length === 0) {
+        this.feedService.fetchServiceTypes().subscribe(serviceTypes => {
+          this.serviceTypes = serviceTypes;
+          this.step = -1;
+        });
+      } else {
+        this.step = 0;
+      }
       if (this.services.length === 1) {
         this.selectedService = this.services[0];
         this.serviceSelected();
       }
     });
+  }
 
-    this.feedService.fetchServiceTypes().subscribe(serviceTypes => {
-      this.serviceTypes = serviceTypes;
-    });
+  createService(): void {
+
+  }
+
+  serviceTypeSelected(): void {
+    this.selectedServiceTypeConfigSchema = { ...this.selectedServiceType.configSchema };
+    this.selectedServiceTypeConfigSchema.title = {
+      type: 'string',
+      title: 'Service Name'
+    };
+
   }
 
   serviceSelected(): void {
