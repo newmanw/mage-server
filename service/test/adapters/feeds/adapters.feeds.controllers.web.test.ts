@@ -546,6 +546,58 @@ invalid request
       expect(res.body).to.deep.equal(preview)
     })
 
+    it('accepts empty body', async function() {
+
+      const service = uniqid()
+      const topic = uniqid()
+      const minimalFeed: FeedMinimalAttrs = Object.freeze({
+        service,
+        topic,
+        title: undefined,
+        summary: undefined,
+        itemsHaveIdentity: undefined,
+        itemsHaveSpatialDimension: undefined,
+        itemPrimaryProperty: undefined,
+        itemSecondaryProperty: undefined,
+        itemTemporalProperty: undefined,
+        constantParams: undefined,
+        variableParamsSchema: undefined,
+        updateFrequencySeconds: undefined,
+        mapStyle: undefined,
+      })
+      const appReq: PreviewFeedRequest = createAdminRequest({
+        feed: minimalFeed
+      })
+      const preview: FeedPreview = {
+        feed: {
+          id: 'preview',
+          service,
+          topic,
+          title: 'Topic Title',
+          itemsHaveIdentity: true,
+          itemsHaveSpatialDimension: true,
+          itemPrimaryProperty: 'topicPrimary',
+        },
+        content: {
+          topic,
+          feed: 'preview',
+          items: {
+            type: 'FeatureCollection',
+            features: []
+          }
+        }
+      }
+
+      appRequestFactory.createRequest(Arg.any(), Arg.deepEquals({ feed: minimalFeed, variableParams: undefined })).returns(appReq)
+      appLayer.previewFeed(appReq).resolves(AppResponse.success<FeedPreview, unknown>(preview))
+
+      const res = await client.post(`${rootPath}/services/${service}/topics/${topic}/feed_preview`).send({})
+
+      expect(res.status).to.equal(200)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.deep.equal(preview)
+    })
+
     it('fails with 404 if the service does not exist', async function() {
       expect.fail('todo')
     })
