@@ -32,7 +32,7 @@ export class FeedsComponent implements OnInit {
     this.hasFeedDeletePermission = _.contains(userService.myself.role.permissions, 'DELETE_LAYER');
   }
 
-  ngOnInit() {
+  ngOnInit(): void {
     this.feedService.fetchAllFeeds().subscribe(feeds => {
       this.allFeeds = feeds;
       this.updateFilteredFeeds();

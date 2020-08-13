@@ -70,51 +70,6 @@
                   <span>{{feed?.updateFrequencySeconds}} seconds</span>
                 </div>
               </div>
-              
-              <!-- <div class="row top-gap-s">
-                <div class="col-md-3">
-                  <span class="muted">Feed:&nbsp;</span>
-                </div>
-                <div class="col-md-9">
-                  <span>{{fullFeed}}</span>
-                </div>
-              </div>
-
-              <div class="row top-gap-s">
-                <div class="col-md-3">
-                  <span class="muted">feedEvents:&nbsp;</span>
-                </div>
-                <div class="col-md-9">
-                  <span>{{feedEvents}}</span>
-                </div>
-              </div>
-
-              <div class="row top-gap-s">
-                <div class="col-md-3">
-                  <span class="muted">service:&nbsp;</span>
-                </div>
-                <div class="col-md-9">
-                  <span>{{fullService}}</span>
-                </div>
-              </div>
-
-              <div class="row top-gap-s">
-                <div class="col-md-3">
-                  <span class="muted">serviceType:&nbsp;</span>
-                </div>
-                <div class="col-md-9">
-                  <span>{{fullServiceType}}</span>
-                </div>
-              </div>
-
-              <div class="row top-gap-s">
-                <div class="col-md-3">
-                  <span class="muted">topc:&nbsp;</span>
-                </div>
-                <div class="col-md-9">
-                  <span>{{fullTopic}}</span>
-                </div>
-              </div> -->
 
               <hr>
 
@@ -205,7 +160,7 @@
                         </div>
                       </form>
                       <div class="navbar-form navbar-right right-gap-s">
-                        <button class="btn btn-default navbar-right" ng-click="$ctrl.editEvent = !$ctrl.editEvent">Edit</button>
+                        <button class="btn btn-default navbar-right" (click)="editEvent = !editEvent">Edit</button>
                       </div>
                     </div>
                   </nav>
@@ -221,7 +176,7 @@
                         <div class="row pointer" (click)="goToEvent(e)">
                           <div class="col-md-12">
                             <span class="pull-right" [hidden]="!editEvent">
-                              <a class="btn btn-xs btn-danger" (click)="removeEventFromFeed()"><i class="fa fa-minus"></i></a>
+                              <a class="btn btn-xs btn-danger" (click)="removeEventFromFeed(e)"><i class="fa fa-minus"></i></a>
                             </span>
 
                             <div class="right-gap pull-left">

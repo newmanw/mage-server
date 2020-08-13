@@ -132,10 +132,14 @@ export class AdminFeedComponent implements OnInit {
     });
   }
 
-  removeEventFromFeed() {
-    // this.eventResource.removeFeed({ id: event.id, feedId: this.feed.id }, event => {
-      
-    // })
+  removeEventFromFeed(event: any): void {
+    this.eventResource.removeFeed({ id: event.id, feedId: this.feed.id }, removed => {
+      console.log('removed event', removed);
+      this.feedEvents = _.reject(this.feedEvents, e => {
+        return e.id === event.id;
+      });
+      this.nonFeedEvents.push(event);
+    });
   }
 
   editFeed(): void {
