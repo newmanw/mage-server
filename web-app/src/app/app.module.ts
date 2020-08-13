@@ -68,9 +68,10 @@ import { FeedComponent } from './feed/feed.component';
 import { FeedItemComponent } from './feed/feed-item/feed-item.component';
 import { FeedItemService } from './feed/feed-item/feed-item.service';
 import { FeedItemPopupService } from './feed/feed-item/feed-item-map/feed-item-map-popup.service';
-import { FeedItemSummaryComponent } from './feed/feed-item/feed-item-summary/feed-item-summary.component';
 import { FeedItemMapPopupComponent } from './feed/feed-item/feed-item-map/feed-item-map-popup.component';
 import { FeedModule } from './admin/feed/feed.module';
+import { FeedItemSummaryModule } from './feed/feed-item/feed-item-summary/feed-item-summary.module';
+
 import { MomentPipe } from './moment/moment.pipe';
 import { MapClipComponent } from './map/clip/clip.component';
 import { GeometryPipe } from './geometry/geometry.pipe';
@@ -96,7 +97,6 @@ import { FeedTabComponent } from './feed/feed-tab.component';
     ColorPickerComponent,
     BootstrapComponent,
     FeedComponent,
-    FeedItemSummaryComponent,
     MomentPipe,
     FeedItemComponent,
     MapClipComponent,
@@ -138,7 +138,8 @@ import { FeedTabComponent } from './feed/feed-tab.component';
     AlphaModule,
     CheckboardModule,
     JsonSchemaWidgetsModule,
-    FeedModule
+    FeedModule,
+    FeedItemSummaryModule
   ],
   providers: [
     FeedItemService,
@@ -174,8 +175,7 @@ import { FeedTabComponent } from './feed/feed-tab.component';
     FeedComponent,
     FeedTabComponent,
     FeedItemComponent,
-    FeedItemMapPopupComponent,
-    FeedItemSummaryComponent
+    FeedItemMapPopupComponent
   ]
 })
 export class AppModule {

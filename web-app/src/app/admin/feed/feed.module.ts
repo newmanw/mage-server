@@ -30,6 +30,7 @@ import {
 } from '@angular/material';
 
 import { FeedEditComponent } from './feed-edit/feed-edit.component';
+import { FeedItemSummaryModule } from 'src/app/feed/feed-item/feed-item-summary/feed-item-summary.module';
 
 @NgModule({
   declarations: [
@@ -62,7 +63,8 @@ import { FeedEditComponent } from './feed-edit/feed-edit.component';
     MatRippleModule,
     NgxMatSelectSearchModule,
     MatChipsModule,
-    MatSidenavModule
+    MatSidenavModule,
+    FeedItemSummaryModule
   ],
   entryComponents: [
     FeedsComponent,
@@ -73,7 +75,6 @@ import { FeedEditComponent } from './feed-edit/feed-edit.component';
     FeedsComponent,
     AdminFeedComponent,
     FeedEditComponent,
-    // FeedListItemComponent
   ]
 })
 export class FeedModule { }

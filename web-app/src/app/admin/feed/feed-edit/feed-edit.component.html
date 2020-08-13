@@ -161,17 +161,17 @@
         </div>
         <div class="col-md-6">
           <div *ngIf="previewItems">
-            <!-- <ng-container *ngFor="let item of previewItems">
-                <feed-list-item [item]="item" [feed]="feed"></feed-list-item>
+            <h3>Item Preview</h3>
+            <ng-container *ngFor="let item of previewItems">
+                <feed-item-summary [item]="item" [feed]="feed"></feed-item-summary>
                 <mat-divider></mat-divider>
-              </ng-container> -->
-            <div class="row" *ngFor="let item of previewItems">
-              <!-- <feed-list-item [item]="item" [feed]="feed"></feed-list-item> -->
-
+              </ng-container>
+            <!-- <div class="row" *ngFor="let item of previewItems">
+              <feed-list-item [item]="item" [feed]="feed"></feed-list-item>
               <div class="col-md-12">
                 {{item | json}}
               </div>
-            </div>
+            </div> -->
           </div>
         </div>
       </div>
