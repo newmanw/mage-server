@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, Inject } from '@angular/core';
+import { Component, Input, Inject, OnChanges, SimpleChanges } from '@angular/core';
 import { Feed } from '../../feed.model';
 import { FeedItemService } from '../feed-item.service';
 import { MapService } from 'src/app/upgrade/ajs-upgraded-providers';
@@ -9,7 +9,7 @@ import { Feature } from 'geojson';
   templateUrl: './feed-item-summary.component.html',
   styleUrls: ['./feed-item-summary.component.scss']
 })
-export class FeedItemSummaryComponent implements OnInit {
+export class FeedItemSummaryComponent implements OnChanges {
   @Input() feed: Feed;
   @Input() item: Feature;
 
@@ -21,8 +21,8 @@ export class FeedItemSummaryComponent implements OnInit {
 
   constructor(private feedItemService: FeedItemService, @Inject(MapService) private mapService: any) { }
 
-  ngOnInit(): void {
-    if (!this.item.properties) return;
+  ngOnChanges(_changes: SimpleChanges): void {
+    if (!this.feed || !this.item.properties) return;
 
     if (this.feed.mapStyle) {
       this.iconUrl = this.feed.mapStyle.iconUrl;
@@ -32,7 +32,7 @@ export class FeedItemSummaryComponent implements OnInit {
       this.timestamp = this.item.properties[this.feed.itemTemporalProperty];
       this.hasContent = true;
     }
-   
+
     if (this.feed.itemPrimaryProperty && this.item.properties[this.feed.itemPrimaryProperty] != null) {
       this.primary = this.item.properties[this.feed.itemPrimaryProperty];
       this.hasContent = true;
