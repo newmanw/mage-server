@@ -18,7 +18,7 @@
   <div class="row">
     <div class="col-md-offset-1 col-md-10">
       <div class="row">
-        <div class="col-md-10" *ngIf="feed; else elseBlockTitle">
+        <div class="col-md-10" *ngIf="feed">
           <h2><img style="width: 24px; height: 24px;" *ngIf="feed.mapStyle?.iconUrl" [src]="feed.mapStyle?.iconUrl"/>{{feed.title}}</h2>
         </div>
       </div>
