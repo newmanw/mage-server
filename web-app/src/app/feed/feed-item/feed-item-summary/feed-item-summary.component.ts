@@ -1,15 +1,15 @@
-import { Component, OnInit, Input, Inject, OnChanges, SimpleChanges } from '@angular/core';
-import { Feed } from '../feed.model';
-import { FeedItemService } from './item.service';
-import { MapService } from '../../upgrade/ajs-upgraded-providers';
+import { Component, OnInit, Input, Inject } from '@angular/core';
+import { Feed } from '../../feed.model';
+import { FeedItemService } from '../feed-item.service';
+import { MapService } from 'src/app/upgrade/ajs-upgraded-providers';
 import { Feature } from 'geojson';
 
 @Component({
-  selector: 'feed-item',
-  templateUrl: './item.component.html',
-  styleUrls: ['./item.component.scss']
+  selector: 'feed-item-summary',
+  templateUrl: './feed-item-summary.component.html',
+  styleUrls: ['./feed-item-summary.component.scss']
 })
-export class FeedItemComponent implements OnChanges {
+export class FeedItemSummaryComponent implements OnInit {
   @Input() feed: Feed;
   @Input() item: Feature;
 
@@ -18,17 +18,10 @@ export class FeedItemComponent implements OnChanges {
   primary: string;
   secondary: string;
   iconUrl: string;
-  properties = []
 
-  constructor(private feedItemService: FeedItemService, @Inject(MapService) private mapService: any) {}
+  constructor(private feedItemService: FeedItemService, @Inject(MapService) private mapService: any) { }
 
-  ngOnChanges(_changes: SimpleChanges): void {
-    this.updateItem();
-  }
-
-  private updateItem(): void {
-    if (!this.feed || !this.item) return;
-
+  ngOnInit(): void {
     if (!this.item.properties) return;
 
     if (this.feed.mapStyle) {
@@ -39,7 +32,7 @@ export class FeedItemComponent implements OnChanges {
       this.timestamp = this.item.properties[this.feed.itemTemporalProperty];
       this.hasContent = true;
     }
-
+   
     if (this.feed.itemPrimaryProperty && this.item.properties[this.feed.itemPrimaryProperty] != null) {
       this.primary = this.item.properties[this.feed.itemPrimaryProperty];
       this.hasContent = true;
@@ -49,23 +42,10 @@ export class FeedItemComponent implements OnChanges {
       this.secondary = this.item.properties[this.feed.itemSecondaryProperty];
       this.hasContent = true;
     }
-
-    if (this.item.properties) {
-      this.properties = Object.keys(this.item.properties).map(key => {
-        return {
-          key: key,
-          value: this.item.properties[key]
-        }
-      });
-    }
   }
 
-  close(): void {
-    this.feedItemService.deselect(this.feed, this.item);
-  }
-
-  onLocationClick(): void {
+  onItemSelect(): void {
+    this.feedItemService.select(this.feed, this.item);
     this.mapService.zoomToFeatureInLayer(this.item, `feed-${this.feed.id}`);
   }
-
 }
