@@ -36,6 +36,7 @@ export class FeedEditComponent implements OnInit {
   previewItems: Array<any>;
 
   feedConfigurationSchema: any;
+  feedConfiguration: any;
   formOptions: any;
   constantParams: any;
   formLayout: any;
@@ -182,11 +183,9 @@ export class FeedEditComponent implements OnInit {
   }
 
   topicSelected(): void {
-    this.editFeed.service = this.selectedService.id;
-    this.editFeed.topic = this.selectedTopic.id;
-    this.editFeed = { ...this.selectedTopic };
-    this.editFeed.topic = this.selectedTopic.id;
-    this.fullTopic = JSON.stringify(this.selectedTopic, null, 2);
+    // this.editFeed = { ...this.selectedTopic };
+    // this.editFeed.topic = this.selectedTopic.id;
+    // this.fullTopic = JSON.stringify(this.selectedTopic, null, 2);
   }
 
   topicConfigured(): void {
@@ -197,9 +196,19 @@ export class FeedEditComponent implements OnInit {
     this.nextStep();
   }
 
+  topicConfigChanged($event: any): void {
+    this.constantParams = $event;
+  }
+
+  feedConfigChanged($event: any): void {
+    this.feedConfiguration = $event;
+  }
+
   submitFeed(): void {
-    this.editFeed.constantParams = this.constantParams;
-    this.feedService.createFeed(this.selectedService.id, this.selectedTopic.id, this.editFeed).subscribe(feed => {
+    this.feedConfiguration.service = this.selectedService.id;
+    this.feedConfiguration.topic = this.selectedTopic.id;
+    this.feedConfiguration.constantParams = this.constantParams;
+    this.feedService.createFeed(this.selectedService.id, this.selectedTopic.id, this.feedConfiguration).subscribe(feed => {
       this.stateService.go('admin.feed', { feedId: feed.id });
     });
   }
