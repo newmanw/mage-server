@@ -113,22 +113,25 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
       next(appRes.error)
     })
 
-  const feedCreateParamsFromRequestBody = (service: FeedServiceId, topic: FeedTopicId, body: any): Pick<CreateFeedRequest, 'feed'> => {
+  const feedCreateParamsFromRequestBody = (service: FeedServiceId, topic: FeedTopicId, bodyFeed: any): Pick<CreateFeedRequest, 'feed'> => {
+    if (!bodyFeed) {
+      bodyFeed = {}
+    }
     return {
       feed: {
         service,
         topic,
-        title: body.title,
-        summary: body.summary,
-        constantParams: body.constantParams,
-        variableParamsSchema: body.variableParamsSchema,
-        itemsHaveIdentity: body.itemsHaveIdentity,
-        itemsHaveSpatialDimension: body.itemsHaveSpatialDimension,
-        itemTemporalProperty: body.itemTemporalProperty,
-        itemPrimaryProperty: body.itemPrimaryProperty,
-        itemSecondaryProperty: body.itemSecondaryProperty,
-        updateFrequencySeconds: body.updateFrequencySeconds,
-        mapStyle: body.mapStyle
+        title: bodyFeed.title,
+        summary: bodyFeed.summary,
+        constantParams: bodyFeed.constantParams,
+        variableParamsSchema: bodyFeed.variableParamsSchema,
+        itemsHaveIdentity: bodyFeed.itemsHaveIdentity,
+        itemsHaveSpatialDimension: bodyFeed.itemsHaveSpatialDimension,
+        itemTemporalProperty: bodyFeed.itemTemporalProperty,
+        itemPrimaryProperty: bodyFeed.itemPrimaryProperty,
+        itemSecondaryProperty: bodyFeed.itemSecondaryProperty,
+        updateFrequencySeconds: bodyFeed.updateFrequencySeconds,
+        mapStyle: bodyFeed.mapStyle
       }
     }
   }
