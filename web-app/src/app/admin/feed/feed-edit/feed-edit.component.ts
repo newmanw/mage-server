@@ -33,7 +33,7 @@ export class FeedEditComponent implements OnInit {
 
   fullTopic: string;
   fullService: string;
-  previewItems: Array<any>;
+  preview: any;
 
   feedConfigurationSchema: any;
   feedConfiguration: any;
@@ -192,9 +192,9 @@ export class FeedEditComponent implements OnInit {
     const feedPreviewRequest = { ...this.constantParams };
     feedPreviewRequest.feed = {};
     this.feedService.previewFeed(this.selectedService.id, this.selectedTopic.id, feedPreviewRequest)
-      .subscribe(content => {
-        console.log('content', content);
-        this.previewItems = content.content.items.features;
+      .subscribe(preview => {
+        console.log('preview', preview);
+        this.preview = preview;
       });
     this.nextStep();
   }
