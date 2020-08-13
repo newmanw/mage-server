@@ -44,6 +44,10 @@ export class FeedService {
     return this.http.get<Service>(`/api/feeds/services/${serviceId}`);
   }
 
+  createService(service: { title: string, summary?: string, serviceType: string, config: any}): Observable<Service> {
+    return this.http.post<Service>(`/api/feeds/services`, service);
+  }
+
   fetchServices(): Observable<Array<Service>> {
     return this.http.get<Array<Service>>(`/api/feeds/services`);
   }

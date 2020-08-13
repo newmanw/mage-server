@@ -52,17 +52,24 @@
                       </mat-option>
                     </mat-select>
                   </mat-form-field>
-                  {{selectedServiceTypeConfigSchema | json }}
+                  <div *ngIf="selectedServiceType && serviceFormReady">
                     <app-feed-configuration loadExternalAssets="true"
-                      [schema]="selectedServiceTypeConfigSchema" [options]="formOptions" [(data)]="serviceConfiguration"
+                        [schema]="serviceTitleSummarySchema"
+                        [options]="formOptions" (onChanges)="serviceTitleSummaryChanged($event)"
+                        framework="material-design"></app-feed-configuration>
+                    <app-feed-configuration loadExternalAssets="true"
+                      [schema]="serviceConfigurationSchema"
+                      [options]="formOptions" (onChanges)="serviceConfigurationChanged($event)"
                       framework="material-design"></app-feed-configuration>
+                  </div>
                 </div>
               </div>
               <mat-action-row>
+                <button mat-button [hidden]="services.length === 0" color="warn" (click)="nextStep()">Cancel</button>
                 <button mat-button [disabled]="!selectedServiceType" color="primary" (click)="createService()">Create Service</button>
               </mat-action-row>
             </mat-expansion-panel>
-            <ng-container *ngIf="services.length">
+            <ng-container *ngIf="services?.length">
             <mat-expansion-panel [disabled]="step === -1" [expanded]="step === 0" (opened)="setStep(0)" hideToggle>
               <mat-expansion-panel-header>
                 <mat-panel-title>
