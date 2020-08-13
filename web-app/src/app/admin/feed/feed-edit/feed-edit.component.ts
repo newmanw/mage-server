@@ -230,7 +230,7 @@ export class FeedEditComponent implements OnInit {
 
 
   goToFeeds(): void {
-    
+    this.stateService.go('admin.feeds');
   }
 
   deleteFeed(): void {
