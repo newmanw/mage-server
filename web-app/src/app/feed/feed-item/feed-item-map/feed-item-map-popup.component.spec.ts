@@ -1,6 +1,6 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { FeedItemMapPopupComponent } from './popup.component';
+import { FeedItemMapPopupComponent } from './feed-item-map-popup.component';
 
 describe('ItemMapPopupComponent', () => {
   let component: FeedItemMapPopupComponent;

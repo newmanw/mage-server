@@ -34,10 +34,10 @@ import { MultiSelectDropdownComponent } from '../app/observation/edit/multiselec
 import { FeedService } from '../app/feed/feed.service'
 import { FeedComponent } from '../app/feed/feed.component'
 import { FeedTabComponent } from '../app/feed/tab.component'
-import { FeedItemComponent } from '../app/feed/item/item.component'
-import { FeedItemService } from '../app/feed/item/item.service';
-import { FeedItemPopupService } from '../app/feed/item/map/popup.service';
-import { FeedItemMapPopupComponent } from '../app/feed/item/map/popup.component'
+import { FeedItemComponent } from '../app/feed/feed-item/feed-item.component'
+import { FeedItemService } from '../app/feed/feed-item/feed-item.service';
+import { FeedItemPopupService } from '../app/feed/feed-item/feed-item-map/feed-item-map-popup.service';
+import { FeedItemMapPopupComponent } from '../app/feed/feed-item/feed-item-map/feed-item-map-popup.component'
 import { FeedsComponent } from '../app/admin/feed/feeds/feeds.component';
 import { AdminFeedComponent } from '../app/admin/feed/admin-feed/admin-feed.component';
 import { FeedEditComponent } from '../app/admin/feed/feed-edit/feed-edit.component';

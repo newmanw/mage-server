@@ -1,12 +1,12 @@
 import { Component, OnInit, Input } from '@angular/core';
 import { Feed } from '../../feed.model';
-import { FeedItemService } from '../item.service';
+import { FeedItemService } from '../feed-item.service';
 import { Feature } from 'geojson';
 
 @Component({
-  selector: 'item-map-popup',
-  templateUrl: './popup.component.html',
-  styleUrls: ['./popup.component.scss']
+  selector: 'feed-item-map-popup',
+  templateUrl: './feed-item-map-popup.component.html',
+  styleUrls: ['./feed-item-map-popup.component.scss']
 })
 export class FeedItemMapPopupComponent implements OnInit {
   @Input() feed: Feed;

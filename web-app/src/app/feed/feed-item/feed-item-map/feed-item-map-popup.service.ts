@@ -1,7 +1,7 @@
 import { Injectable, ComponentFactoryResolver, Injector, ApplicationRef } from '@angular/core';
 import { Marker, LeafletMouseEvent } from 'leaflet';
 import { Feed } from '../../feed.model';
-import { FeedItemMapPopupComponent } from './popup.component';
+import { FeedItemMapPopupComponent } from './feed-item-map-popup.component';
 import { Feature } from 'geojson';
 
 @Injectable({
