@@ -27,7 +27,7 @@
     "url": "https://github.com/ngageoint/mage-server/issues"
   },
   "scripts": {
-    "start": "ng serve",
+    "start": "ng serve --aot",
     "build": "ng build --prod=true",
     "ng": "ng",
     "test": "ng test",
