@@ -403,8 +403,13 @@ function config($httpProvider, $stateProvider, $urlRouterProvider, $urlServicePr
     component: "adminFeed",
     resolve: resolveAdmin()
   });
-  $stateProvider.state('admin.feedEdit', {
+  $stateProvider.state('admin.feedCreate', {
     url: '/feeds/new',
+    component: "feedEdit",
+    resolve: resolveAdmin()
+  });
+  $stateProvider.state('admin.feedEdit', {
+    url: '/feeds/:feedId/edit',
     component: "feedEdit",
     resolve: resolveAdmin()
   });

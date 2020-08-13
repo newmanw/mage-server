@@ -67,7 +67,7 @@ export class FeedsComponent implements OnInit {
 
   newFeed(): void {
     console.log('new feed');
-    this.stateService.go('admin.feedEdit');
+    this.stateService.go('admin.feedCreate');
   }
 
 }

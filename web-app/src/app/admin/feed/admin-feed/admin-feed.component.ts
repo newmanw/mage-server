@@ -15,7 +15,7 @@ import { FeedService } from 'src/app/feed/feed.service';
 })
 export class AdminFeedComponent implements OnInit {
   feedLoaded: Promise<boolean>;
-  feed: Feed = {} as Feed;
+  feed: Feed;
   fullFeed: string;
   hasFeedCreatePermission: boolean;
   hasFeedEditPermission: boolean;
@@ -143,15 +143,15 @@ export class AdminFeedComponent implements OnInit {
   }
 
   editFeed(): void {
-    
+    this.stateService.go('admin.feedEdit', { feedId: this.feed.id });
   }
 
   goToFeeds(): void {
     this.stateService.go('admin.feeds');
   }
 
-  goToEvent(event: Event): void {
-
+  goToEvent(event: any): void {
+    this.stateService.go('admin.event', { eventId: event.id });
   }
 
 }

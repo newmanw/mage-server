@@ -10,7 +10,7 @@ import { StateService } from '@uirouter/angular';
   styleUrls: ['./feed-edit.component.scss']
 })
 export class FeedEditComponent implements OnInit {
-  @Input() feed: Feed;
+  feed: Feed;
 
   hasFeedDeletePermission: boolean;
 
@@ -110,22 +110,40 @@ export class FeedEditComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.feedService.fetchServices().subscribe(services => {
-      this.services = services;
-      if (this.services && this.services.length !== 0) {
-        this.setStep(0);
-      }
-      this.feedService.fetchServiceTypes().subscribe(serviceTypes => {
-        this.serviceTypes = serviceTypes;
-        if (!this.services || this.services.length === 0) {
-          this.setStep(-1);
+    if (this.stateService.params.feedId) {
+      this.feedService.fetchFeed(this.stateService.params.feedId).subscribe(feed => {
+        this.feed = feed;
+        this.feedService.fetchService(this.feed.service).subscribe(service => {
+          this.services = [service];
+          this.selectedService = service;
+          this.feedService.fetchTopic(this.selectedService.id, this.feed.topic).subscribe(topic => {
+            this.topics = [topic];
+            this.selectedTopic = topic;
+            this.topicSelected();
+            console.log('feed', feed);
+            this.setStep(1);
+          });
+        });
+
+      });
+    } else {
+      this.feedService.fetchServices().subscribe(services => {
+        this.services = services;
+        if (this.services && this.services.length !== 0) {
+          this.setStep(0);
+        }
+        this.feedService.fetchServiceTypes().subscribe(serviceTypes => {
+          this.serviceTypes = serviceTypes;
+          if (!this.services || this.services.length === 0) {
+            this.setStep(-1);
+          }
+        });
+        if (this.services.length === 1) {
+          this.selectedService = this.services[0];
+          this.serviceSelected();
         }
       });
-      if (this.services.length === 1) {
-        this.selectedService = this.services[0];
-        this.serviceSelected();
-      }
-    });
+    }
   }
 
   createService(): void {
@@ -205,6 +223,10 @@ export class FeedEditComponent implements OnInit {
 
   feedConfigChanged($event: any): void {
     this.feedConfiguration = $event;
+    if (this.preview) {
+      this.preview.feed = $event;
+      console.log('this.preview', this.preview);
+    }
   }
 
   submitFeed(): void {
