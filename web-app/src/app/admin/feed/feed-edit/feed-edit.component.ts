@@ -189,8 +189,11 @@ export class FeedEditComponent implements OnInit {
   }
 
   topicConfigured(): void {
-    this.feedService.previewFeed(this.selectedService.id, this.selectedTopic.id, this.constantParams)
+    const feedPreviewRequest = { ...this.constantParams };
+    feedPreviewRequest.feed = {};
+    this.feedService.previewFeed(this.selectedService.id, this.selectedTopic.id, feedPreviewRequest)
       .subscribe(content => {
+        console.log('content', content);
         this.previewItems = content.content.items.features;
       });
     this.nextStep();

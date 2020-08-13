@@ -65,7 +65,7 @@
                 </div>
               </div>
               <mat-action-row>
-                <button mat-button [hidden]="services.length === 0" color="warn" (click)="nextStep()">Cancel</button>
+                <button mat-button [hidden]="services?.length === 0" color="warn" (click)="nextStep()">Cancel</button>
                 <button mat-button [disabled]="!selectedServiceType" color="primary" (click)="createService()">Create Service</button>
               </mat-action-row>
             </mat-expansion-panel>
