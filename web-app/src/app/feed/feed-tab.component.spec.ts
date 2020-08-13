@@ -1,20 +1,20 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 
-import { FeedItemMapPopupComponent } from './popup.component';
+import { FeedTabComponent } from './feed-tab.component';
 
-describe('ItemMapPopupComponent', () => {
-  let component: FeedItemMapPopupComponent;
-  let fixture: ComponentFixture<FeedItemMapPopupComponent>;
+describe('IconComponent', () => {
+  let component: FeedTabComponent;
+  let fixture: ComponentFixture<FeedTabComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [FeedItemMapPopupComponent ]
+      declarations: [FeedTabComponent ]
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(FeedItemMapPopupComponent);
+    fixture = TestBed.createComponent(FeedTabComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

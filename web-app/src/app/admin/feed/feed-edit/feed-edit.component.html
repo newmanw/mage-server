@@ -52,17 +52,24 @@
                       </mat-option>
                     </mat-select>
                   </mat-form-field>
-                  {{selectedServiceTypeConfigSchema | json }}
+                  <div *ngIf="selectedServiceType && serviceFormReady">
                     <app-feed-configuration loadExternalAssets="true"
-                      [schema]="selectedServiceTypeConfigSchema" [options]="formOptions" [(data)]="serviceConfiguration"
+                        [schema]="serviceTitleSummarySchema"
+                        [options]="formOptions" (onChanges)="serviceTitleSummaryChanged($event)"
+                        framework="material-design"></app-feed-configuration>
+                    <app-feed-configuration loadExternalAssets="true"
+                      [schema]="serviceConfigurationSchema"
+                      [options]="formOptions" (onChanges)="serviceConfigurationChanged($event)"
                       framework="material-design"></app-feed-configuration>
+                  </div>
                 </div>
               </div>
               <mat-action-row>
+                <button mat-button [hidden]="services?.length === 0" color="warn" (click)="nextStep()">Cancel</button>
                 <button mat-button [disabled]="!selectedServiceType" color="primary" (click)="createService()">Create Service</button>
               </mat-action-row>
             </mat-expansion-panel>
-            <ng-container *ngIf="services.length">
+            <ng-container *ngIf="services?.length">
             <mat-expansion-panel [disabled]="step === -1" [expanded]="step === 0" (opened)="setStep(0)" hideToggle>
               <mat-expansion-panel-header>
                 <mat-panel-title>
@@ -120,7 +127,7 @@
               <div class="row" *ngIf="selectedTopic">
                 <div class="col-md-12">
                   <app-feed-configuration loadExternalAssets="true" [form]="selectedTopic.paramsSchema"
-                    [options]="formOptions" [(data)]="constantParams" framework="material-design"></app-feed-configuration>
+                    [options]="formOptions" (onChanges)="topicConfigChanged($event)" framework="material-design"></app-feed-configuration>
                 </div>
               </div>
               <mat-action-row>
@@ -138,8 +145,9 @@
               </mat-expansion-panel-header>
               <div class="row">
                 <div class="col-md-12">
-                  <app-feed-configuration loadExternalAssets="true" [(data)]="editFeed" [options]="formOptions"
-                    [schema]="feedConfigurationSchema" framework="material-design" [layout]="formLayout">
+                  <app-feed-configuration loadExternalAssets="true" (onChanges)="feedConfigChanged($event)"
+                   [options]="formOptions" [data]="selectedTopic"
+                   [schema]="feedConfigurationSchema" framework="material-design" [layout]="formLayout">
                   </app-feed-configuration>
                 </div>
               </div>
@@ -153,17 +161,17 @@
         </div>
         <div class="col-md-6">
           <div *ngIf="previewItems">
-            <!-- <ng-container *ngFor="let item of previewItems">
-                <feed-list-item [item]="item" [feed]="feed"></feed-list-item>
+            <h3>Item Preview</h3>
+            <ng-container *ngFor="let item of previewItems">
+                <feed-item-summary [item]="item" [feed]="feed"></feed-item-summary>
                 <mat-divider></mat-divider>
-              </ng-container> -->
-            <div class="row" *ngFor="let item of previewItems">
-              <!-- <feed-list-item [item]="item" [feed]="feed"></feed-list-item> -->
-
+              </ng-container>
+            <!-- <div class="row" *ngFor="let item of previewItems">
+              <feed-list-item [item]="item" [feed]="feed"></feed-list-item>
               <div class="col-md-12">
                 {{item | json}}
               </div>
-            </div>
+            </div> -->
           </div>
         </div>
       </div>

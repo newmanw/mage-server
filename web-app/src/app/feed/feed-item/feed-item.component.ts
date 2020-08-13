@@ -1,15 +1,15 @@
-import { Component, OnInit, Input, Inject } from '@angular/core';
+import { Component, Input, Inject, OnChanges, SimpleChanges } from '@angular/core';
 import { Feed } from '../feed.model';
-import { FeedItemService } from './item.service';
-import { MapService } from 'src/app/upgrade/ajs-upgraded-providers';
+import { FeedItemService } from './feed-item.service';
+import { MapService } from '../../upgrade/ajs-upgraded-providers';
 import { Feature } from 'geojson';
 
 @Component({
-  selector: 'feed-list-item',
-  templateUrl: './list-item.component.html',
-  styleUrls: ['./list-item.component.scss']
+  selector: 'feed-item',
+  templateUrl: './feed-item.component.html',
+  styleUrls: ['./feed-item.component.scss']
 })
-export class FeedListItemComponent implements OnInit {
+export class FeedItemComponent implements OnChanges {
   @Input() feed: Feed;
   @Input() item: Feature;
 
@@ -18,10 +18,17 @@ export class FeedListItemComponent implements OnInit {
   primary: string;
   secondary: string;
   iconUrl: string;
+  properties = []
 
-  constructor(private feedItemService: FeedItemService, @Inject(MapService) private mapService: any) { }
+  constructor(private feedItemService: FeedItemService, @Inject(MapService) private mapService: any) {}
 
-  ngOnInit(): void {
+  ngOnChanges(_changes: SimpleChanges): void {
+    this.updateItem();
+  }
+
+  private updateItem(): void {
+    if (!this.feed || !this.item) return;
+
     if (!this.item.properties) return;
 
     if (this.feed.mapStyle) {
@@ -32,7 +39,7 @@ export class FeedListItemComponent implements OnInit {
       this.timestamp = this.item.properties[this.feed.itemTemporalProperty];
       this.hasContent = true;
     }
-   
+
     if (this.feed.itemPrimaryProperty && this.item.properties[this.feed.itemPrimaryProperty] != null) {
       this.primary = this.item.properties[this.feed.itemPrimaryProperty];
       this.hasContent = true;
@@ -42,10 +49,23 @@ export class FeedListItemComponent implements OnInit {
       this.secondary = this.item.properties[this.feed.itemSecondaryProperty];
       this.hasContent = true;
     }
+
+    if (this.item.properties) {
+      this.properties = Object.keys(this.item.properties).map(key => {
+        return {
+          key: key,
+          value: this.item.properties[key]
+        }
+      });
+    }
   }
 
-  onItemSelect(): void {
-    this.feedItemService.select(this.feed, this.item);
+  close(): void {
+    this.feedItemService.deselect(this.feed, this.item);
+  }
+
+  onLocationClick(): void {
     this.mapService.zoomToFeatureInLayer(this.item, `feed-${this.feed.id}`);
   }
+
 }

@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 
-import { FeedItemService } from './item.service';
+import { FeedItemService } from './feed-item.service';
 
 describe('ItemService', () => {
   beforeEach(() => TestBed.configureTestingModule({}));

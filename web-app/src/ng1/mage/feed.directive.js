@@ -1,6 +1,6 @@
 const _ = require('underscore')
   , moment = require('moment')
-  , FeedAction = require('../../app/feed/item/item.service').FeedAction;
+  , FeedAction = require('../../app/feed/feed-item/feed-item.service').FeedAction;
 
 module.exports = NewsFeed;
 

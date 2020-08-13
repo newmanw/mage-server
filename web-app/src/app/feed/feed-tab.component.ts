@@ -3,8 +3,8 @@ import { FeedTab } from './feed.model';
 
 @Component({
   selector: 'feed-tab',
-  templateUrl: './tab.component.html',
-  styleUrls: ['./tab.component.scss']
+  templateUrl: './feed-tab.component.html',
+  styleUrls: ['./feed-tab.component.scss']
 })
 export class FeedTabComponent implements OnInit {
   @Input() tab: FeedTab;
