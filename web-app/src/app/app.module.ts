@@ -72,11 +72,11 @@ import { FeedItemMapPopupComponent } from './feed/feed-item/feed-item-map/feed-i
 import { FeedModule } from './admin/feed/feed.module';
 import { FeedItemSummaryModule } from './feed/feed-item/feed-item-summary/feed-item-summary.module';
 
-import { MomentPipe } from './moment/moment.pipe';
 import { MapClipComponent } from './map/clip/clip.component';
 import { GeometryPipe } from './geometry/geometry.pipe';
 
 import { FeedTabComponent } from './feed/feed-tab.component';
+import { MageModule } from './mage/mage.module';
 
 @NgModule({
   declarations: [
@@ -97,7 +97,6 @@ import { FeedTabComponent } from './feed/feed-tab.component';
     ColorPickerComponent,
     BootstrapComponent,
     FeedComponent,
-    MomentPipe,
     FeedItemComponent,
     MapClipComponent,
     GeometryPipe,
@@ -138,6 +137,7 @@ import { FeedTabComponent } from './feed/feed-tab.component';
     AlphaModule,
     CheckboardModule,
     JsonSchemaWidgetsModule,
+    MageModule,
     FeedModule,
     FeedItemSummaryModule
   ],

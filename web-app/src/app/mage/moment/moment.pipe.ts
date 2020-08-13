@@ -1,5 +1,5 @@
 import { Pipe, PipeTransform, Inject } from '@angular/core';
-import { LocalStorageService } from '../upgrade/ajs-upgraded-providers';
+import { LocalStorageService } from '../../upgrade/ajs-upgraded-providers';
 import * as moment from 'moment';
 
 @Pipe({
