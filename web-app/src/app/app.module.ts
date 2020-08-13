@@ -5,8 +5,6 @@ import { UpgradeModule } from '@angular/upgrade/static';
 import { UIRouterUpgradeModule } from '@uirouter/angular-hybrid';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
-import { UIRouter } from '@uirouter/core';
-
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
 import { ScrollingModule } from '@angular/cdk/scrolling';
@@ -53,7 +51,6 @@ import { ScrollWrapperComponent } from './wrapper/scroll/feed-scroll.component';
 import { DropdownComponent } from './observation/edit/dropdown/dropdown.component';
 import { MultiSelectDropdownComponent } from './observation/edit/multiselectdropdown/multiselectdropdown.component';
 
-// import app from '../ng1/app.js';
 import { LocationComponent } from './map/controls/location.component';
 import { SearchComponent } from './map/controls/search.component';
 import { HttpClientModule, HTTP_INTERCEPTORS } from '@angular/common/http';
@@ -78,7 +75,7 @@ import { MomentPipe } from './moment/moment.pipe';
 import { MapClipComponent } from './map/clip/clip.component';
 import { GeometryPipe } from './geometry/geometry.pipe';
 
-import { FeedTabComponent } from './feed/tab.component';
+import { FeedTabComponent } from './feed/feed-tab.component';
 
 @NgModule({
   declarations: [
@@ -182,37 +179,7 @@ import { FeedTabComponent } from './feed/tab.component';
   ]
 })
 export class AppModule {
-
-  constructor(private router: UIRouter) {
-
-  }
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   public ngDoBootstrap(appRef: ApplicationRef): void {
-    // this.upgrade.bootstrap(document.body, ["app"], { strictDi: true });
   }
 }
-
-// platformBrowserDynamic().bootstrapModule(AppModule).then(platformRef => {
-//   const upgrade = platformRef.injector.get(UpgradeModule) as UpgradeModule;
-//   upgrade.bootstrap(document.body, ['myApp'], { strictDi: true });
-//   });
-
-// platformBrowserDynamic()
-//   .bootstrapModule(AppModule)
-//   .then(platformRef => {
-//     // const url: UrlService = getUIRouter(injector).urlService;
-//     // const upgrade = platformRef.injector.get(UpgradeModule) as UpgradeModule;
-//     // upgrade.bootstrap(document.body, ['myApp'], { strictDi: true });
-
-//     // Intialize the Angular Module
-//     // get() the UIRouter instance from DI to initialize the router
-//     const urlService: UrlService = getUIRouter(platformRef.injector).urlService;
-//     // Instruct UIRouter to listen to URL changes
-//     const startUIRouter = (): void => {
-//       urlService.listen();
-//       urlService.sync();
-//     };
-
-//     platformRef.injector.get<NgZone>(NgZone).run(startUIRouter);
-
-//   });

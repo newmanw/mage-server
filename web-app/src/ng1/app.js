@@ -33,7 +33,7 @@ import { MultiSelectDropdownComponent } from '../app/observation/edit/multiselec
 
 import { FeedService } from '../app/feed/feed.service'
 import { FeedComponent } from '../app/feed/feed.component'
-import { FeedTabComponent } from '../app/feed/tab.component'
+import { FeedTabComponent } from '../app/feed/feed-tab.component'
 import { FeedItemComponent } from '../app/feed/feed-item/feed-item.component'
 import { FeedItemService } from '../app/feed/feed-item/feed-item.service';
 import { FeedItemPopupService } from '../app/feed/feed-item/feed-item-map/feed-item-map-popup.service';
