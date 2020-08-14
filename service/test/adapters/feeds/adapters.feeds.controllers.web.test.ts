@@ -5,10 +5,10 @@ import { expect } from 'chai'
 import supertest from 'supertest'
 import Substitute, { SubstituteOf, Arg } from '@fluffy-spoon/substitute'
 import uniqid from 'uniqid'
-import _ from 'lodash'
+import _, { uniq } from 'lodash'
 import { AppResponse, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeedsRoutes, FeedsAppLayer } from '../../../lib/adapters/feeds/adapters.feeds.controllers.web'
-import { CreateFeedServiceRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, CreateFeedRequest, ListServiceTopicsRequest, ListAllFeeds, PreviewFeedRequest, FeedPreview } from '../../../lib/app.api/feeds/app.api.feeds'
+import { CreateFeedServiceRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, CreateFeedRequest, ListServiceTopicsRequest, ListAllFeeds, PreviewFeedRequest, FeedPreview, FeedExpanded } from '../../../lib/app.api/feeds/app.api.feeds'
 import { FeedService, Feed, FeedTopic, FeedCreateAttrs, FeedMinimalAttrs, MapStyle } from '../../../lib/entities/feeds/entities.feeds'
 import { permissionDenied, PermissionDeniedError, InvalidInputError, invalidInput, EntityNotFoundError, entityNotFound } from '../../../lib/app.api/app.api.errors'
 import { WebAppRequestFactory } from '../../../lib/adapters/adapters.controllers.web'
@@ -727,15 +727,24 @@ invalid request
     })
   })
 
-  describe('GET /{feedId}', function() {
+  describe.only('GET /{feedId}', function() {
 
     it('returns the feed for the id in the path', async function() {
 
       const feedId = uniqid()
-      const feed: Feed = {
+      const feed: FeedExpanded = {
         id: feedId,
-        service: uniqid(),
-        topic: uniqid(),
+        service: {
+          id: uniqid(),
+          title: 'The Service That Provides the Topic',
+          summary: null,
+          config: { test: true },
+          serviceType: uniqid(),
+        },
+        topic: {
+          id: uniqid(),
+          title: 'The Topic of the Feed',
+        },
         title: 'Get the Feed',
         summary: 'Get it and test it',
         itemsHaveIdentity: true,
@@ -754,14 +763,40 @@ invalid request
       }
       const appReq = createAdminRequest()
       appRequestFactory.createRequest(Arg.all()).returns(appReq)
-      appLayer.listAllFeeds(Arg.requestTokenMatches(appReq)).resolves(AppResponse.success<Feed[], unknown>([feed]))
+      appLayer.getFeed(Arg.requestTokenMatches(appReq)).resolves(AppResponse.success<FeedExpanded, unknown>(feed))
       const res = await client.get(`${rootPath}/${feedId}`)
 
       expect(res.status).to.equal(200)
       expect(res.type).to.match(jsonMimeType)
       expect(res.body).to.deep.equal(feed)
+    })
 
-      expect.fail('todo: finish app layer')
+    it('fails with 404 if the feed does not exist', async function() {
+      expect.fail('todo')
+    })
+
+    it('fails with 500 if the service does not exist', async function() {
+      expect.fail('todo')
+    })
+
+    it('fails with 500 if the topic does not exist', async function() {
+      expect.fail('todo')
+    })
+
+    it('fails with 500 if the service type does not exist', async function() {
+      expect.fail('todo')
+    })
+  })
+
+  describe('PUT /{feedId}', async function() {
+    it('has tests', async function() {
+      expect.fail('todo')
+    })
+  })
+
+  describe('DELETE /{feed}', async function() {
+    it('has tests', async function() {
+      expect.fail('todo')
     })
   })
 })

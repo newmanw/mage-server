@@ -65,6 +65,19 @@ export interface ListAllFeeds {
   (req: AppRequest): Promise<AppResponse<Feed[], PermissionDeniedError>>
 }
 
+export interface GetFeedRequest extends AppRequest {
+  feed: FeedId
+}
+
+export type FeedExpanded = Omit<Feed, 'service' | 'topic'> & {
+  service: FeedService,
+  topic: FeedTopic
+}
+
+export interface GetFeed {
+  (req: GetFeedRequest): Promise<AppResponse<FeedExpanded, PermissionDeniedError | EntityNotFoundError>>
+}
+
 export interface FetchFeedContentRequest extends AppRequest {
   feed: FeedId,
   variableParams?: FeedContentParams

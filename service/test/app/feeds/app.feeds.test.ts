@@ -2,10 +2,10 @@ import { describe, it, beforeEach, Context } from 'mocha'
 import { expect } from 'chai'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
 import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedService, FeedServiceConnection, RegisteredFeedServiceType, Feed, FeedMinimalAttrs, FeedCreateAttrs, FeedRepository, FeedId, FeedContent } from '../../../lib/entities/feeds/entities.feeds'
-import { ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics, ListFeedServices, PreviewFeed, CreateFeed, ListAllFeeds, FetchFeedContent } from '../../../lib/app.impl/feeds/app.impl.feeds'
+import { ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics, ListFeedServices, PreviewFeed, CreateFeed, ListAllFeeds, FetchFeedContent, GetFeed } from '../../../lib/app.impl/feeds/app.impl.feeds'
 import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError, PermissionDeniedErrorData } from '../../../lib/app.api/app.api.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
-import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, FeedPreview, FetchFeedContentRequest } from '../../../lib/app.api/feeds/app.api.feeds'
+import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, FeedPreview, FetchFeedContentRequest, FeedExpanded, GetFeedRequest } from '../../../lib/app.api/feeds/app.api.feeds'
 import uniqid from 'uniqid'
 import { AppRequestContext, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeatureCollection } from 'geojson'
@@ -1071,7 +1071,131 @@ describe('feeds use case interactions', function() {
       })
     })
 
-    describe('listing all feeds', async function() {
+    describe.only('single feed operations', function() {
+
+      let feeds: Feed[]
+      let services: { service: FeedService, topics: FeedTopic[], conn: SubstituteOf<FeedServiceConnection> }[]
+
+      beforeEach(function() {
+        services = [
+          {
+            service: Object.freeze({
+              id: uniqid(),
+              serviceType: someServiceTypes[1].id,
+              title: 'News 1',
+              summary: null,
+              config: { url: 'https://test.service1', secret: uniqid() },
+            }),
+            topics: [
+              Object.freeze({
+                id: uniqid(),
+                title: 'News 1 Politics',
+              })
+            ],
+            conn: Sub.for<FeedServiceConnection>(),
+          },
+          {
+            service: Object.freeze({
+              id: uniqid(),
+              serviceType: someServiceTypes[1].id,
+              title: 'News 2',
+              summary: null,
+              config: { url: 'https://test.service2' },
+            }),
+            topics: [
+              Object.freeze({
+                id: uniqid(),
+                title: 'News 2 Sports'
+              })
+            ],
+            conn: Sub.for<FeedServiceConnection>(),
+          }
+        ]
+        feeds = [
+          Object.freeze({
+            id: uniqid(),
+            title: 'Politics',
+            service: services[0].service.id,
+            topic: services[0].topics[0].id,
+            itemsHaveIdentity: true,
+            itemsHaveSpatialDimension: false,
+            variableParamsSchema: {
+              properties: {
+                search: { type: 'string' }
+              }
+            }
+          }),
+          Object.freeze({
+            id: uniqid(),
+            title: 'Sports',
+            service: services[1].service.id,
+            topic: services[1].topics[0].id,
+            itemsHaveIdentity: true,
+            itemsHaveSpatialDimension: true,
+            constantParams: {
+              limit: 50
+            },
+            updateFrequencySeconds:  10 * 60
+          })
+        ]
+        app.registerServiceTypes(...someServiceTypes)
+        app.registerServices(...services.map(x => x.service))
+        app.registerFeeds(...feeds)
+        const serviceType = someServiceTypes[1]
+        for (const serviceTuple of services) {
+          serviceType.createConnection(Arg.deepEquals(serviceTuple.service.config)).resolves(serviceTuple.conn)
+          serviceTuple.conn.fetchAvailableTopics().resolves(serviceTuple.topics)
+        }
+      })
+
+      describe('getting an expanded feed', function() {
+
+        it('returns the feed with service and topic populated', async function() {
+
+          const feedExpanded: FeedExpanded = Object.assign({ ...feeds[0] }, {
+            service: { ...services[0].service },
+            topic: { ...services[0].topics[0] }
+          })
+          const req: GetFeedRequest = requestBy(adminPrincipal, { feed: feeds[0].id })
+          const res = await app.getFeed(req)
+
+          expect(res.error).to.be.null
+          expect(res.success).to.deep.equal(feedExpanded)
+        })
+
+        it('checks permission for fetting the feed', async function() {
+
+          app.permissionService.revokeListFeeds(adminPrincipal.user)
+          const req: GetFeedRequest = requestBy(adminPrincipal, { feed: feeds[0].id })
+          const res = await app.getFeed(req)
+
+          expect(res.success).to.be.null
+          expect(res.error).to.be.instanceOf(MageError)
+          expect(res.error?.code).to.equal(ErrPermissionDenied)
+        })
+      })
+
+      describe('updating a feed', function() {
+
+        it('saves the new feed attributes', async function() {
+          expect.fail('todo')
+        })
+
+        it('does not allow changing the service and topic', async function() {
+          expect.fail('todo')
+        })
+      })
+
+      describe('deleting a feed', function() {
+
+        it('deletes the feed from the repository', async function() {
+          expect.fail('todo')
+        })
+      })
+    })
+
+
+    describe('listing all feeds', function() {
 
       it('returns all the feeds', async function() {
 
@@ -1251,6 +1375,7 @@ class TestApp {
   readonly previewFeed = PreviewFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.jsonSchemaService)
   readonly createFeed = CreateFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo, this.jsonSchemaService)
   readonly listFeeds = ListAllFeeds(this.permissionService, this.feedRepo)
+  readonly getFeed = GetFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo)
   readonly fetchFeedContent = FetchFeedContent(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo, this.jsonSchemaService)
 
   registerServiceTypes(...types: RegisteredFeedServiceType[]): void {
@@ -1411,6 +1536,10 @@ class TestPermissionService implements FeedsPermissionService {
     const acl = this.serviceAcls.get(service)
     const servicePermissions = acl?.get(user)
     servicePermissions?.delete(ListServiceTopics.name)
+  }
+
+  revokeListFeeds(user: UserId) {
+    this.revokePrivilege(user, ListAllFeeds.name)
   }
 
   checkPrivilege(user: UserId, privilege: string): null | PermissionDeniedError {
