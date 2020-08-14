@@ -31,7 +31,7 @@ import {
 
 import { FeedEditComponent } from './feed-edit/feed-edit.component';
 import { FeedItemSummaryModule } from 'src/app/feed/feed-item/feed-item-summary/feed-item-summary.module';
-import { MageModule } from 'src/app/mage/mage.module';
+import { MomentModule } from 'src/app/moment/moment.module';
 
 @NgModule({
   declarations: [
@@ -65,7 +65,7 @@ import { MageModule } from 'src/app/mage/mage.module';
     NgxMatSelectSearchModule,
     MatChipsModule,
     MatSidenavModule,
-    MageModule,
+    MomentModule,
     FeedItemSummaryModule
   ],
   entryComponents: [

@@ -1,16 +1,16 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { MomentPipe } from './moment/moment.pipe';
+import { GeometryPipe } from './geometry.pipe';
 
 @NgModule({
   declarations: [
-    MomentPipe
+    GeometryPipe
   ],
   exports: [
-    MomentPipe
+    GeometryPipe
   ],
   imports: [
     CommonModule
   ]
 })
-export class MageModule { }
+export class GeometryModule { }

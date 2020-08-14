@@ -73,10 +73,10 @@ import { FeedModule } from './admin/feed/feed.module';
 import { FeedItemSummaryModule } from './feed/feed-item/feed-item-summary/feed-item-summary.module';
 
 import { MapClipComponent } from './map/clip/clip.component';
-import { GeometryPipe } from './geometry/geometry.pipe';
 
 import { FeedTabComponent } from './feed/feed-tab.component';
-import { MageModule } from './mage/mage.module';
+import { MomentModule } from './moment/moment.module';
+import { GeometryModule } from './geometry/geometry.module';
 
 @NgModule({
   declarations: [
@@ -99,7 +99,6 @@ import { MageModule } from './mage/mage.module';
     FeedComponent,
     FeedItemComponent,
     MapClipComponent,
-    GeometryPipe,
     FeedItemMapPopupComponent,
     FeedTabComponent
   ],
@@ -137,7 +136,8 @@ import { MageModule } from './mage/mage.module';
     AlphaModule,
     CheckboardModule,
     JsonSchemaWidgetsModule,
-    MageModule,
+    MomentModule,
+    GeometryModule,
     FeedModule,
     FeedItemSummaryModule
   ],
