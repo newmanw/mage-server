@@ -70,4 +70,13 @@ export class FeedsComponent implements OnInit {
     this.stateService.go('admin.feedCreate');
   }
 
+  editFeed(feed: Feed): void {
+    
+  }
+  
+
+  deleteFeed(feed: Feed): void {
+    
+  }
+
 }

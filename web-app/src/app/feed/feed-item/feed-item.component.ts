@@ -1,8 +1,7 @@
 import { Component, Input, Inject, OnChanges, SimpleChanges } from '@angular/core';
-import { Feed } from '../feed.model';
+import { Feed, StyledFeature } from '../feed.model';
 import { FeedItemService } from './feed-item.service';
 import { MapService } from '../../upgrade/ajs-upgraded-providers';
-import { Feature } from 'geojson';
 
 @Component({
   selector: 'feed-item',
@@ -11,13 +10,14 @@ import { Feature } from 'geojson';
 })
 export class FeedItemComponent implements OnChanges {
   @Input() feed: Feed;
-  @Input() item: Feature;
+  @Input() item: StyledFeature;
 
   hasContent = false;
   timestamp: number;
   primary: string;
   secondary: string;
   iconUrl: string;
+  mapFeature: StyledFeature;
   properties = []
 
   constructor(private feedItemService: FeedItemService, @Inject(MapService) private mapService: any) {}
@@ -28,6 +28,9 @@ export class FeedItemComponent implements OnChanges {
 
   private updateItem(): void {
     if (!this.feed || !this.item) return;
+
+    this.mapFeature = { ...this.item };
+    this.mapFeature.style.iconUrl = '/assets/images/default_marker.png';
 
     if (!this.item.properties) return;
 

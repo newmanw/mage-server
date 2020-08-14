@@ -78,6 +78,10 @@ export class FeedService {
     return this.http.post<Feed>(`/api/feeds/services/${serviceId}/topics/${topicId}/feeds`, feedConfiguration);
   }
 
+  updateFeed(feed: Feed): Observable<Feed> {
+    return this.http.put<Feed>(`/api/feeds/${feed.id}`, feed);
+  }
+
   fetchFeeds(eventId: number): Observable<Array<Feed>> {
     const subject = new Subject<Array<Feed>>();
     this.http.get<Array<Feed>>(`/api/events/${eventId}/feeds`).subscribe(feeds => {

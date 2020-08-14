@@ -3,6 +3,7 @@ import { FeedService } from 'src/app/feed/feed.service';
 import { ServiceType, Feed, Service, FeedTopic } from 'src/app/feed/feed.model';
 import { FormControl } from '@angular/forms';
 import { StateService } from '@uirouter/angular';
+import * as _ from 'underscore';
 
 @Component({
   selector: 'app-feed-edit',
@@ -46,10 +47,14 @@ export class FeedEditComponent implements OnInit {
   step = -1;
   serviceFormReady = false;
 
+  debouncedPreview: any;
+
   constructor(
     private feedService: FeedService,
     private stateService: StateService,
   ) {
+    this.debouncedPreview = _.debounce(this.previewFeed, 500);
+
     this.feedConfigurationSchema = {
       title: {
         type: 'string',
@@ -122,6 +127,7 @@ export class FeedEditComponent implements OnInit {
             this.topicSelected();
             console.log('feed', feed);
             this.setStep(1);
+            this.previewFeed();
           });
         });
 
@@ -207,33 +213,52 @@ export class FeedEditComponent implements OnInit {
   }
 
   topicConfigured(): void {
-    const feedPreviewRequest = { ...this.constantParams };
-    feedPreviewRequest.feed = {};
-    this.feedService.previewFeed(this.selectedService.id, this.selectedTopic.id, feedPreviewRequest)
-      .subscribe(preview => {
-        console.log('preview', preview);
-        this.preview = preview;
-      });
+    this.previewFeed();
     this.nextStep();
   }
 
   topicConfigChanged($event: any): void {
     this.constantParams = $event;
+
+    if (this.feed) {
+      console.log('ask to preview');
+      this.debouncedPreview();
+    }
+  }
+
+  previewFeed(): void {
+    console.log('previewing feed');
+    const feedPreviewRequest = {
+      feed: { constantParams: this.constantParams }
+    };
+    // feedPreviewRequest.feed = { constantParams: this.constantParams };
+    this.feedService.previewFeed(this.selectedService.id, this.selectedTopic.id, feedPreviewRequest)
+      .subscribe(preview => {
+        console.log('preview', preview);
+        this.preview = preview;
+      });
   }
 
   feedConfigChanged($event: any): void {
     this.feedConfiguration = $event;
     if (this.preview) {
       this.preview.feed = $event;
-      console.log('this.preview', this.preview);
     }
   }
 
-  submitFeed(): void {
+  createFeed(): void {
     this.feedConfiguration.service = this.selectedService.id;
     this.feedConfiguration.topic = this.selectedTopic.id;
     this.feedConfiguration.constantParams = this.constantParams;
     this.feedService.createFeed(this.selectedService.id, this.selectedTopic.id, this.feedConfiguration).subscribe(feed => {
+      this.stateService.go('admin.feed', { feedId: feed.id });
+    });
+  }
+
+  updateFeed(): void {
+    this.feed.constantParams = this.constantParams;
+    Object.assign(this.feed, this.feedConfiguration);
+    this.feedService.updateFeed(this.feed).subscribe(feed => {
       this.stateService.go('admin.feed', { feedId: feed.id });
     });
   }

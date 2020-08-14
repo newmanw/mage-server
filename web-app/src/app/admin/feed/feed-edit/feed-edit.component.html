@@ -18,14 +18,14 @@
   <div class="row">
     <div class="col-md-offset-1 col-md-10">
       <div class="row">
-        <div class="col-md-10" *ngIf="feed; else elseBlockTitle">
+        <div class="col-md-10" *ngIf="feed">
           <h2><img style="width: 24px; height: 24px;" *ngIf="feed.mapStyle?.iconUrl" [src]="feed.mapStyle?.iconUrl"/>{{feed.title}}</h2>
         </div>
       </div>
 
       <div class="row">
         <div class="col-md-6">
-          <mat-accordion class="example-headers-align" multi>
+          <mat-accordion class="example-headers-align" [multi]="feed">
             <mat-expansion-panel *ngIf="!feed" [expanded]="step === -1" (opened)="setStep(-1)" hideToggle>
               <mat-expansion-panel-header>
                 <mat-panel-title>
@@ -113,7 +113,7 @@
                 <button mat-button color="primary" (click)="nextStep()">Next</button>
               </mat-action-row>
             </mat-expansion-panel>
-            <mat-expansion-panel [disabled]="step === -1" [expanded]="step === 1" (opened)="setStep(1)" hideToggle>
+            <mat-expansion-panel [disabled]="step === -1" [expanded]="step === 1 || feed" (opened)="setStep(1)" hideToggle>
               <mat-expansion-panel-header>
                 <mat-panel-title>
                   Configure The Content Fetch Parameters
@@ -127,12 +127,12 @@
                     [options]="formOptions" (onChanges)="topicConfigChanged($event)" framework="material-design"></app-feed-configuration>
                 </div>
               </div>
-              <mat-action-row>
+              <mat-action-row *ngIf="!feed">
                 <button mat-button color="warn" (click)="prevStep()">Previous</button>
                 <button mat-button color="primary" (click)="topicConfigured()">Next</button>
               </mat-action-row>
             </mat-expansion-panel>
-            <mat-expansion-panel [disabled]="step === -1" [expanded]="step === 2" (opened)="setStep(2)" hideToggle>
+            <mat-expansion-panel [disabled]="step === -1" [expanded]="step === 2 || feed" (opened)="setStep(2)" hideToggle>
               <mat-expansion-panel-header>
                 <mat-panel-title>
                   Set Feed Configuration
@@ -149,8 +149,9 @@
                 </div>
               </div>
               <mat-action-row>
-                <button mat-button color="warn" (click)="prevStep()">Previous</button>
-                <button mat-button color="primary" (click)="submitFeed()">Create Feed</button>
+                <button *ngIf="!feed" mat-button color="warn" (click)="prevStep()">Previous</button>
+                <button *ngIf="!feed" mat-button color="primary" (click)="createFeed()">Create Feed</button>
+                <button *ngIf="feed" mat-button color="primary" (click)="updateFeed()">Update Feed</button>
               </mat-action-row>
             </mat-expansion-panel>
             </ng-container>
