@@ -256,6 +256,7 @@ export interface FeedRepository {
   findById(id: FeedId): Promise<Feed | null>
   findFeedsByIds(...feedIds: FeedId[]): Promise<Feed[]>
   findAll(): Promise<Feed[]>
+  update(feed: FeedUpdateAttrs): Promise<Feed | null>
 }
 
 type FeedCreateExcplicitNullKeys = 'itemTemporalProperty' | 'itemPrimaryProperty' | 'itemSecondaryProperty' | 'updateFrequencySeconds' | 'mapStyle'
@@ -264,7 +265,9 @@ export type FeedMinimalAttrs = Partial<Omit<Feed, FeedCreateExcplicitNullKeys>> 
   readonly [nullable in keyof Pick<Feed, FeedCreateExcplicitNullKeys>]: Feed[nullable] | null
 }
 
-export const FeedCreateAttrs = (topic: FeedTopic, feedAttrs: FeedMinimalAttrs): FeedCreateAttrs => {
+export type FeedUpdateAttrs = Omit<FeedMinimalAttrs, 'service' | 'topic'> & Pick<Feed, 'id'>
+
+export const normalizeFeedMinimalAttrs = (topic: FeedTopic, feedAttrs: FeedMinimalAttrs): FeedCreateAttrs => {
   const createAttrs: { -readonly [mutable in keyof FeedCreateAttrs]: FeedCreateAttrs[mutable] } = {
     service: feedAttrs.service,
     topic: topic.id,

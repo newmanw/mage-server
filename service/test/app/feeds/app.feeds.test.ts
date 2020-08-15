@@ -1,15 +1,16 @@
 import { describe, it, beforeEach, Context } from 'mocha'
 import { expect } from 'chai'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
-import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedService, FeedServiceConnection, RegisteredFeedServiceType, Feed, FeedMinimalAttrs, FeedCreateAttrs, FeedRepository, FeedId, FeedContent } from '../../../lib/entities/feeds/entities.feeds'
-import { ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics, ListFeedServices, PreviewFeed, CreateFeed, ListAllFeeds, FetchFeedContent, GetFeed } from '../../../lib/app.impl/feeds/app.impl.feeds'
+import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedService, FeedServiceConnection, RegisteredFeedServiceType, Feed, FeedMinimalAttrs, normalizeFeedMinimalAttrs, FeedRepository, FeedId, FeedContent, FeedUpdateAttrs, FeedCreateAttrs } from '../../../lib/entities/feeds/entities.feeds'
+import { ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics, ListFeedServices, PreviewFeed, CreateFeed, ListAllFeeds, FetchFeedContent, GetFeed, UpdateFeed, DeleteFeed } from '../../../lib/app.impl/feeds/app.impl.feeds'
 import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError, PermissionDeniedErrorData } from '../../../lib/app.api/app.api.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
-import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, FeedPreview, FetchFeedContentRequest, FeedExpanded, GetFeedRequest } from '../../../lib/app.api/feeds/app.api.feeds'
+import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, FeedPreview, FetchFeedContentRequest, FeedExpanded, GetFeedRequest, UpdateFeedRequest } from '../../../lib/app.api/feeds/app.api.feeds'
 import uniqid from 'uniqid'
 import { AppRequestContext, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeatureCollection } from 'geojson'
 import { JsonObject, JsonSchemaService, JsonValidator } from '../../../lib/entities/entities.json_types'
+import _ from 'lodash'
 
 
 function mockServiceType(descriptor: FeedServiceTypeDescriptor): SubstituteOf<RegisteredFeedServiceType> {
@@ -1074,7 +1075,7 @@ describe('feeds use case interactions', function() {
     describe.only('single feed operations', function() {
 
       let feeds: Feed[]
-      let services: { service: FeedService, topics: FeedTopic[], conn: SubstituteOf<FeedServiceConnection> }[]
+      let services: { service: FeedService, topics: Required<FeedTopic>[], conn: SubstituteOf<FeedServiceConnection> }[]
 
       beforeEach(function() {
         services = [
@@ -1090,6 +1091,19 @@ describe('feeds use case interactions', function() {
               Object.freeze({
                 id: uniqid(),
                 title: 'News 1 Politics',
+                summary: 'News on politics 1',
+                itemPrimaryProperty: 'topic1:primary',
+                itemSecondaryProperty: 'topic1:secondary',
+                itemTemporalProperty: 'topic1:published',
+                itemsHaveIdentity: false,
+                itemsHaveSpatialDimension: true,
+                paramsSchema: {
+                  title: 'Topic 1 Params'
+                },
+                mapStyle: {
+                  iconUrl: 'topic1.png'
+                },
+                updateFrequencySeconds: 5 * 60,
               })
             ],
             conn: Sub.for<FeedServiceConnection>(),
@@ -1105,7 +1119,20 @@ describe('feeds use case interactions', function() {
             topics: [
               Object.freeze({
                 id: uniqid(),
-                title: 'News 2 Sports'
+                title: 'News 2 Sports',
+                summary: 'News on sports 2',
+                itemPrimaryProperty: 'topic2:primary',
+                itemSecondaryProperty: 'topic2:secondary',
+                itemTemporalProperty: 'topic2:published',
+                itemsHaveIdentity: false,
+                itemsHaveSpatialDimension: true,
+                paramsSchema: {
+                  title: 'Topic 2 Params'
+                },
+                mapStyle: {
+                  iconUrl: 'topic2.png'
+                },
+                updateFrequencySeconds: 15 * 60,
               })
             ],
             conn: Sub.for<FeedServiceConnection>(),
@@ -1178,10 +1205,64 @@ describe('feeds use case interactions', function() {
       describe('updating a feed', function() {
 
         it('saves the new feed attributes', async function() {
-          expect.fail('todo')
+
+          const feedMod: Omit<Required<Feed>, 'service' | 'topic'> = {
+            id: feeds[1].id,
+            title: 'Updated Feed',
+            summary: 'Test updateds',
+            itemPrimaryProperty: 'updated1',
+            itemSecondaryProperty: 'updated2',
+            itemTemporalProperty: 'updatedTemporal',
+            itemsHaveIdentity: !feeds[1].itemsHaveIdentity,
+            itemsHaveSpatialDimension: !feeds[1].itemsHaveSpatialDimension,
+            constantParams: {
+              updated: true
+            },
+            variableParamsSchema: {
+              properties: {
+                test: { type: 'string' }
+              }
+            },
+            mapStyle: {
+              fill: 'updated-green'
+            },
+            updateFrequencySeconds: 357
+          }
+          app.permissionService.grantCreateFeed(adminPrincipal.user, feeds[1].service)
+          const req: UpdateFeedRequest = requestBy(adminPrincipal, { feed: feedMod })
+          const res = await app.updateFeed(req)
+
+          const expanded = Object.assign({ ...feedMod }, { service: services[1].service, topic: services[1].topics[0] })
+          const referenced = Object.assign({ ...feedMod }, { service: feeds[1].service, topic: feeds[1].topic })
+          const inDb = app.feedRepo.db.get(feeds[1].id)
+          expect(res.error).to.be.null
+          expect(res.success).to.deep.equal(expanded)
+          expect(inDb).to.deep.equal(referenced)
         })
 
         it('does not allow changing the service and topic', async function() {
+          expect.fail('todo')
+        })
+
+        it('applies topic attributes for attributes the update does not specify', async function() {
+
+          const feedMod: FeedUpdateAttrs = {
+            id: feeds[1].id,
+          }
+          app.permissionService.grantCreateFeed(adminPrincipal.user, feeds[1].service)
+          const req: UpdateFeedRequest = requestBy(adminPrincipal, { feed: feedMod })
+          const res = await app.updateFeed(req)
+
+          const withTopicAttrs = normalizeFeedMinimalAttrs(services[1].topics[0], { ...feedMod, service: feeds[1].service, topic: feeds[1].topic })
+          withTopicAttrs.id = feedMod.id
+          const expanded = Object.assign({ ...withTopicAttrs }, { service: services[1].service, topic: services[1].topics[0] })
+          const inDb = app.feedRepo.db.get(feeds[1].id)
+          expect(res.error).to.be.null
+          expect(res.success).to.deep.equal(expanded)
+          expect(inDb).to.deep.equal(withTopicAttrs)
+        })
+
+        it('checks permission for updating the feed', async function() {
           expect.fail('todo')
         })
       })
@@ -1189,6 +1270,10 @@ describe('feeds use case interactions', function() {
       describe('deleting a feed', function() {
 
         it('deletes the feed from the repository', async function() {
+
+          // const req: DeleteFeedRequest = requestBy(adminPrincipal, { feed: feeds[0].id })
+          // const res = await app.deleteFeed(req)
+
           expect.fail('todo')
         })
       })
@@ -1376,6 +1461,8 @@ class TestApp {
   readonly createFeed = CreateFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo, this.jsonSchemaService)
   readonly listFeeds = ListAllFeeds(this.permissionService, this.feedRepo)
   readonly getFeed = GetFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo)
+  readonly updateFeed = UpdateFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo)
+  readonly deleteFeed = DeleteFeed(this.permissionService, this.feedRepo)
   readonly fetchFeedContent = FetchFeedContent(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo, this.jsonSchemaService)
 
   registerServiceTypes(...types: RegisteredFeedServiceType[]): void {
@@ -1457,6 +1544,16 @@ class TestFeedRepository implements FeedRepository {
 
   async findAll(): Promise<Feed[]> {
     return Array.from(this.db.values())
+  }
+
+  async update(feed: Omit<Feed, 'service' | 'topic'>): Promise<Feed | null> {
+    const existing = this.db.get(feed.id)
+    if (!existing) {
+      return null
+    }
+    const updated = Object.assign({ ...feed }, { service: existing.service, topic: existing.topic })
+    this.db.set(feed.id, updated)
+    return updated
   }
 }
 class TestPermissionService implements FeedsPermissionService {
@@ -1542,9 +1639,9 @@ class TestPermissionService implements FeedsPermissionService {
     this.revokePrivilege(user, ListAllFeeds.name)
   }
 
-  checkPrivilege(user: UserId, privilege: string): null | PermissionDeniedError {
+  checkPrivilege(user: UserId, privilege: string, object?: string): null | PermissionDeniedError {
     if (!this.privleges[user]?.[privilege]) {
-      return permissionDenied(privilege, user)
+      return permissionDenied(privilege, user, object)
     }
     return null
   }

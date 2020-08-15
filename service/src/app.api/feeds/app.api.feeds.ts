@@ -1,5 +1,5 @@
 import { AppRequest, AppResponse, Descriptor, AppRequestContext, KnownErrorsOf } from '../app.api.global'
-import { FeedService, FeedTopic, FeedContent, FeedId, FeedServiceTypeId, FeedServiceId, Feed, FeedTopicId, FeedServiceType, FeedCreateAttrs, FeedContentParams, FeedMinimalAttrs } from '../../entities/feeds/entities.feeds'
+import { FeedService, FeedTopic, FeedContent, FeedId, FeedServiceTypeId, FeedServiceId, Feed, FeedServiceType, FeedContentParams, FeedMinimalAttrs, FeedUpdateAttrs, FeedCreateAttrs } from '../../entities/feeds/entities.feeds'
 import { Json, JsonObject } from '../../entities/entities.json_types'
 import { PermissionDeniedError, EntityNotFoundError, InvalidInputError } from '../app.api.errors'
 
@@ -76,6 +76,22 @@ export type FeedExpanded = Omit<Feed, 'service' | 'topic'> & {
 
 export interface GetFeed {
   (req: GetFeedRequest): Promise<AppResponse<FeedExpanded, PermissionDeniedError | EntityNotFoundError>>
+}
+
+export interface UpdateFeedRequest extends AppRequest {
+  feed: FeedUpdateAttrs
+}
+
+export interface UpdateFeed {
+  (req: UpdateFeedRequest): Promise<AppResponse<FeedExpanded, PermissionDeniedError | EntityNotFoundError | InvalidInputError>>
+}
+
+export interface DeleteFeedRequest {
+  feed: FeedId
+}
+
+export interface DeleteFeed {
+  (req: DeleteFeedRequest): Promise<AppResponse<void, PermissionDeniedError | EntityNotFoundError>>
 }
 
 export interface FetchFeedContentRequest extends AppRequest {

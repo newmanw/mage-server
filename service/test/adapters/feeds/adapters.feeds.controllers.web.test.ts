@@ -9,7 +9,7 @@ import _, { uniq } from 'lodash'
 import { AppResponse, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeedsRoutes, FeedsAppLayer } from '../../../lib/adapters/feeds/adapters.feeds.controllers.web'
 import { CreateFeedServiceRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, CreateFeedRequest, ListServiceTopicsRequest, ListAllFeeds, PreviewFeedRequest, FeedPreview, FeedExpanded } from '../../../lib/app.api/feeds/app.api.feeds'
-import { FeedService, Feed, FeedTopic, FeedCreateAttrs, FeedMinimalAttrs, MapStyle } from '../../../lib/entities/feeds/entities.feeds'
+import { FeedService, Feed, FeedTopic, normalizeFeedMinimalAttrs, FeedMinimalAttrs, MapStyle } from '../../../lib/entities/feeds/entities.feeds'
 import { permissionDenied, PermissionDeniedError, InvalidInputError, invalidInput, EntityNotFoundError, entityNotFound } from '../../../lib/app.api/app.api.errors'
 import { WebAppRequestFactory } from '../../../lib/adapters/adapters.controllers.web'
 import { JSONSchema4 } from 'json-schema'
@@ -394,7 +394,25 @@ invalid request
     })
   })
 
-  describe('GET /services/{serviceId}/topics', async function() {
+  describe('GET /services/{serviceId}', function() {
+    it('has tests', async function() {
+      expect.fail('todo')
+    })
+  })
+
+  describe('PUT /services/{serviceId}', function() {
+    it('has tests', async function() {
+      expect.fail('todo')
+    })
+  })
+
+  describe('DELETE /services/{serviceId}', function() {
+    it('has tests', async function() {
+      expect.fail('todo')
+    })
+  })
+
+  describe('GET /services/{serviceId}/topics', function() {
 
     it('lists the service topcis', async function() {
 

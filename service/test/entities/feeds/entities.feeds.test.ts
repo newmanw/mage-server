@@ -1,5 +1,5 @@
 import uniqid from 'uniqid'
-import { FeedCreateAttrs, FeedTopic, FeedMinimalAttrs } from '../../../lib/entities/feeds/entities.feeds'
+import { normalizeFeedMinimalAttrs, FeedTopic, FeedMinimalAttrs } from '../../../lib/entities/feeds/entities.feeds'
 import { expect } from 'chai'
 
 describe('feed-create attribute factory', function() {
@@ -54,7 +54,7 @@ describe('feed-create attribute factory', function() {
         strokeOpacity: 0.4
       }
     }
-    const createAttrs = FeedCreateAttrs(topic, feed)
+    const createAttrs = normalizeFeedMinimalAttrs(topic, feed)
     expect(createAttrs).to.deep.equal({
       service: feed.service,
       topic: topic.id,
@@ -102,7 +102,7 @@ describe('feed-create attribute factory', function() {
       summary: 'About the feed',
       itemTemporalProperty: null
     }
-    const createAttrs = FeedCreateAttrs(topic, feed)
+    const createAttrs = normalizeFeedMinimalAttrs(topic, feed)
 
     expect(createAttrs).to.deep.equal({
       service: feed.service,

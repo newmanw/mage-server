@@ -1,4 +1,4 @@
-import { FeedServiceTypeRepository, FeedServiceRepository, FeedTopic, FeedService, InvalidServiceConfigError, FeedContent, Feed, FeedTopicId, FeedServiceConnection, FeedRepository, FeedCreateAttrs, FeedMinimalAttrs, FeedServiceType, FeedServiceId } from '../../entities/feeds/entities.feeds';
+import { FeedServiceTypeRepository, FeedServiceRepository, FeedTopic, FeedService, InvalidServiceConfigError, FeedContent, Feed, FeedTopicId, FeedServiceConnection, FeedRepository, normalizeFeedMinimalAttrs, FeedMinimalAttrs, FeedServiceType, FeedServiceId } from '../../entities/feeds/entities.feeds';
 import * as api from '../../app.api/feeds/app.api.feeds'
 import { AppRequest, KnownErrorsOf, withPermission, AppResponse } from '../../app.api/app.api.global'
 import { PermissionDeniedError, EntityNotFoundError, InvalidInputError, entityNotFound, invalidInput, MageError, ErrInvalidInput, KeyPathError } from '../../app.api/app.api.errors'
@@ -184,7 +184,7 @@ export function PreviewFeed(permissionService: api.FeedsPermissionService, servi
             }
           }
           const topicContent = await context.conn.fetchTopicContent(reqFeed.topic, mergedParams)
-          const previewCreateAttrs = FeedCreateAttrs(context.topic, reqFeed)
+          const previewCreateAttrs = normalizeFeedMinimalAttrs(context.topic, reqFeed)
           const previewContent: FeedContent & { feed: 'preview' } = {
             feed: 'preview',
             topic: topicContent.topic,
@@ -211,7 +211,7 @@ export function CreateFeed(permissionService: api.FeedsPermissionService, servic
       permissionService.ensureCreateFeedPermissionFor(req.context, reqFeed.service),
       withFetchContext<Feed>({ serviceRepo, serviceTypeRepo, jsonSchemaService }, reqFeed)
         .then(async (context: ContentFetchContext): Promise<Feed> => {
-          const feedAttrs = FeedCreateAttrs(context.topic, reqFeed)
+          const feedAttrs = normalizeFeedMinimalAttrs(context.topic, reqFeed)
           const feed = await feedRepo.create(feedAttrs)
           return feed
         })
@@ -246,6 +246,34 @@ export function GetFeed(permissionService: api.FeedsPermissionService, serviceTy
         return Object.assign({ ...feed }, { service: feedCompanions.service, topic: feedCompanions.topic })
       }
     )
+  }
+}
+
+export function UpdateFeed(permissionService: api.FeedsPermissionService, serviceTypeRepo: FeedServiceTypeRepository, serviceRepo: FeedServiceRepository, feedRepo: FeedRepository): api.UpdateFeed {
+  return async function updateFeed(req: api.UpdateFeedRequest): ReturnType<api.UpdateFeed> {
+    const feed = await feedRepo.findById(req.feed.id)
+    if (!feed) {
+      return AppResponse.error<api.FeedExpanded, EntityNotFoundError>(entityNotFound(req.feed.id, 'Feed'))
+    }
+    return await withPermission<api.FeedExpanded, KnownErrorsOf<api.UpdateFeed>>(
+      permissionService.ensureCreateFeedPermissionFor(req.context, feed.service),
+      withFetchContext<api.FeedExpanded | EntityNotFoundError>({ serviceTypeRepo, serviceRepo }, { service: feed.service, topic: feed.topic }).then(
+        async (fetchContext): Promise<api.FeedExpanded | EntityNotFoundError> => {
+          const updateAttrs = normalizeFeedMinimalAttrs(fetchContext.topic, { ...req.feed, service: feed.service, topic: feed.topic })
+          const updated = await feedRepo.update({ ...updateAttrs, id: feed.id })
+          if (!updated) {
+            return entityNotFound(feed.id, 'Feed', 'feed deleted before update')
+          }
+          return Object.assign({ ...updated }, { service: fetchContext.service, topic: fetchContext.topic })
+        }
+      )
+    )
+  }
+}
+
+export function DeleteFeed(permissionService: api.FeedsPermissionService, feedRepo: FeedRepository): api.DeleteFeed {
+  return async function deleteFeed(req: api.DeleteFeedRequest): ReturnType<api.DeleteFeed> {
+    throw new Error('unimplemented')
   }
 }
 
