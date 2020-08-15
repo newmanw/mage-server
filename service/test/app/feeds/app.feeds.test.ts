@@ -3,7 +3,7 @@ import { expect } from 'chai'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
 import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedService, FeedServiceConnection, RegisteredFeedServiceType, Feed, FeedMinimalAttrs, normalizeFeedMinimalAttrs, FeedRepository, FeedId, FeedContent, FeedUpdateAttrs, FeedCreateAttrs } from '../../../lib/entities/feeds/entities.feeds'
 import { ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics, ListFeedServices, PreviewFeed, CreateFeed, ListAllFeeds, FetchFeedContent, GetFeed, UpdateFeed, DeleteFeed } from '../../../lib/app.impl/feeds/app.impl.feeds'
-import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError, PermissionDeniedErrorData } from '../../../lib/app.api/app.api.errors'
+import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError, PermissionDeniedErrorData, KeyPathError } from '../../../lib/app.api/app.api.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
 import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, FeedPreview, FetchFeedContentRequest, FeedExpanded, GetFeedRequest, UpdateFeedRequest } from '../../../lib/app.api/feeds/app.api.feeds'
 import uniqid from 'uniqid'
@@ -1241,7 +1241,28 @@ describe('feeds use case interactions', function() {
         })
 
         it('does not allow changing the service and topic', async function() {
-          expect.fail('todo')
+
+          const feedMod: FeedUpdateAttrs & Pick<Feed, 'service' | 'topic'> = Object.freeze({
+            id: feeds[0].id,
+            service: feeds[0].service + '-mod',
+            topic: feeds[0].topic + '-mod'
+          })
+          app.permissionService.grantCreateFeed(adminPrincipal.user, feeds[0].service)
+          const req: UpdateFeedRequest = requestBy(adminPrincipal, { feed: feedMod })
+          const res = await app.updateFeed(req)
+
+          expect(res.success).to.be.null
+          expect(res.error).to.be.instanceOf(MageError)
+          expect(res.error?.code).to.equal(ErrInvalidInput)
+          expect(res.error?.message).to.contain('service')
+          expect(res.error?.message).to.contain('topic')
+          const errData = res.error?.data as KeyPathError[]
+          expect(errData).to.have.deep.members([
+            [ 'changing feed service is not allowed', 'feed', 'service' ],
+            [ 'changing feed topic is not allowed', 'feed', 'topic' ]
+          ])
+          const inDb = app.feedRepo.db.get(feeds[0].id)
+          expect(inDb).to.deep.equal(feeds[0])
         })
 
         it('applies topic attributes for attributes the update does not specify', async function() {

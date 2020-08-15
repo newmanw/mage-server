@@ -255,6 +255,16 @@ export function UpdateFeed(permissionService: api.FeedsPermissionService, servic
     if (!feed) {
       return AppResponse.error<api.FeedExpanded, EntityNotFoundError>(entityNotFound(req.feed.id, 'Feed'))
     }
+    const invalidKeys: KeyPathError[] = []
+    if ('service' in req.feed) {
+      invalidKeys.push([ 'changing feed service is not allowed', 'feed', 'service' ])
+    }
+    if ('topic' in req.feed) {
+      invalidKeys.push([ 'changing feed topic is not allowed', 'feed', 'topic' ])
+    }
+    if (invalidKeys.length) {
+      return AppResponse.error<api.FeedExpanded, InvalidInputError>(invalidInput('feed service and topic cannot be modified', ...invalidKeys))
+    }
     return await withPermission<api.FeedExpanded, KnownErrorsOf<api.UpdateFeed>>(
       permissionService.ensureCreateFeedPermissionFor(req.context, feed.service),
       withFetchContext<api.FeedExpanded | EntityNotFoundError>({ serviceTypeRepo, serviceRepo }, { service: feed.service, topic: feed.topic }).then(
