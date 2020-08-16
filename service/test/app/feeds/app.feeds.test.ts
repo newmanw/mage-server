@@ -1204,6 +1204,11 @@ describe('feeds use case interactions', function() {
 
       describe('updating a feed', function() {
 
+        beforeEach(function() {
+          app.permissionService.grantCreateFeed(adminPrincipal.user, feeds[0].service)
+          app.permissionService.grantCreateFeed(adminPrincipal.user, feeds[1].service)
+        })
+
         it('saves the new feed attributes', async function() {
 
           const feedMod: Omit<Required<Feed>, 'service' | 'topic'> = {
@@ -1228,7 +1233,6 @@ describe('feeds use case interactions', function() {
             },
             updateFrequencySeconds: 357
           }
-          app.permissionService.grantCreateFeed(adminPrincipal.user, feeds[1].service)
           const req: UpdateFeedRequest = requestBy(adminPrincipal, { feed: feedMod })
           const res = await app.updateFeed(req)
 
@@ -1247,7 +1251,6 @@ describe('feeds use case interactions', function() {
             service: feeds[0].service + '-mod',
             topic: feeds[0].topic + '-mod'
           })
-          app.permissionService.grantCreateFeed(adminPrincipal.user, feeds[0].service)
           const req: UpdateFeedRequest = requestBy(adminPrincipal, { feed: feedMod })
           const res = await app.updateFeed(req)
 
@@ -1270,7 +1273,6 @@ describe('feeds use case interactions', function() {
           const feedMod: FeedUpdateAttrs = {
             id: feeds[1].id,
           }
-          app.permissionService.grantCreateFeed(adminPrincipal.user, feeds[1].service)
           const req: UpdateFeedRequest = requestBy(adminPrincipal, { feed: feedMod })
           const res = await app.updateFeed(req)
 
@@ -1284,7 +1286,18 @@ describe('feeds use case interactions', function() {
         })
 
         it('checks permission for updating the feed', async function() {
-          expect.fail('todo')
+
+          const feedMod: FeedUpdateAttrs = {
+            id: feeds[0].id,
+          }
+          const req: UpdateFeedRequest = requestBy(bannedPrincipal, { feed: feedMod })
+          const res = await app.updateFeed(req)
+
+          expect(res.success).to.be.null
+          expect(res.error).to.be.instanceOf(MageError)
+          expect(res.error?.code).to.equal(ErrPermissionDenied)
+          const inDb = app.feedRepo.db.get(feeds[0].id)
+          expect(inDb).to.deep.equal(feeds[0])
         })
       })
 
