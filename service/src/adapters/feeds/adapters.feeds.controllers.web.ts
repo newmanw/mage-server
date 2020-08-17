@@ -8,7 +8,7 @@ declare global {
 }
 
 import express from 'express'
-import { ListFeedServiceTypes, ListServiceTopics, CreateFeedService, ListFeedServices, PreviewTopics, PreviewTopicsRequest, CreateFeed, CreateFeedRequest, ListServiceTopicsRequest, ListAllFeeds, FetchFeedContent, PreviewFeedRequest, PreviewFeed, GetFeed } from '../../app.api/feeds/app.api.feeds'
+import { ListFeedServiceTypes, ListServiceTopics, CreateFeedService, ListFeedServices, PreviewTopics, PreviewTopicsRequest, CreateFeed, CreateFeedRequest, ListServiceTopicsRequest, ListAllFeeds, FetchFeedContent, PreviewFeedRequest, PreviewFeed, GetFeed, UpdateFeed, UpdateFeedRequest } from '../../app.api/feeds/app.api.feeds'
 import { ErrPermissionDenied, MageError, PermissionDeniedError, ErrInvalidInput, invalidInput, ErrEntityNotFound } from '../../app.api/app.api.errors'
 import { WebAppRequestFactory } from '../adapters.controllers.web'
 import { FeedServiceId, FeedTopicId } from '../../entities/feeds/entities.feeds'
@@ -23,6 +23,7 @@ export interface FeedsAppLayer {
   createFeed: CreateFeed
   listAllFeeds: ListAllFeeds
   getFeed: GetFeed
+  updateFeed: UpdateFeed
 }
 
 export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppRequestFactory): express.Router {
@@ -216,6 +217,17 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
     .get(async (req, res, next) => {
       const appReq = createAppRequest(req, { feed: req.params.feedId })
       const appRes = await appLayer.getFeed(appReq)
+      if (appRes.success) {
+        return res.json(appRes.success)
+      }
+      return next(appRes.error)
+    })
+    .put(async (req, res, next) => {
+      const updateParams = Object.assign({ ...feedCreateParamsFromRequestBody('remove', 'remove', req.body).feed }, { id: req.body.id as string })
+      delete updateParams.service
+      delete updateParams.topic
+      const appReq: UpdateFeedRequest = createAppRequest(req, { feed: updateParams })
+      const appRes = await appLayer.updateFeed(appReq)
       if (appRes.success) {
         return res.json(appRes.success)
       }

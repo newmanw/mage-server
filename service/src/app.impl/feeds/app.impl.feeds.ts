@@ -256,10 +256,10 @@ export function UpdateFeed(permissionService: api.FeedsPermissionService, servic
       return AppResponse.error<api.FeedExpanded, EntityNotFoundError>(entityNotFound(req.feed.id, 'Feed'))
     }
     const invalidKeys: KeyPathError[] = []
-    if ('service' in req.feed) {
+    if ('service' in req.feed && (req.feed as any).service !== feed.service) {
       invalidKeys.push([ 'changing feed service is not allowed', 'feed', 'service' ])
     }
-    if ('topic' in req.feed) {
+    if ('topic' in req.feed && (req.feed as any).topic !== feed.topic) {
       invalidKeys.push([ 'changing feed topic is not allowed', 'feed', 'topic' ])
     }
     if (invalidKeys.length) {

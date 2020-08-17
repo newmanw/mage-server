@@ -1268,6 +1268,24 @@ describe('feeds use case interactions', function() {
           expect(inDb).to.deep.equal(feeds[0])
         })
 
+        it('accepts service and topic if they match the existing feed', async function() {
+
+          const feedMod: FeedUpdateAttrs & Pick<Feed, 'service' | 'topic'> = Object.freeze({
+            id: feeds[0].id,
+            service: feeds[0].service,
+            topic: feeds[0].topic
+          })
+          const req: UpdateFeedRequest = requestBy(adminPrincipal, { feed: feedMod })
+          const res = await app.updateFeed(req)
+
+          expect(res.error).to.be.null
+          expect(res.success).to.deep.include({
+            id: feeds[0].id,
+            service: services[0].service,
+            topic: services[0].topics[0]
+          })
+        })
+
         it('applies topic attributes for attributes the update does not specify', async function() {
 
           const feedMod: FeedUpdateAttrs = {

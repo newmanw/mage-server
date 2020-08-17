@@ -9,7 +9,7 @@ import _, { uniq } from 'lodash'
 import { AppResponse, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeedsRoutes, FeedsAppLayer } from '../../../lib/adapters/feeds/adapters.feeds.controllers.web'
 import { CreateFeedServiceRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, CreateFeedRequest, ListServiceTopicsRequest, ListAllFeeds, PreviewFeedRequest, FeedPreview, FeedExpanded } from '../../../lib/app.api/feeds/app.api.feeds'
-import { FeedService, Feed, FeedTopic, normalizeFeedMinimalAttrs, FeedMinimalAttrs, MapStyle } from '../../../lib/entities/feeds/entities.feeds'
+import { FeedService, Feed, FeedTopic, normalizeFeedMinimalAttrs, FeedMinimalAttrs, MapStyle, FeedUpdateAttrs } from '../../../lib/entities/feeds/entities.feeds'
 import { permissionDenied, PermissionDeniedError, InvalidInputError, invalidInput, EntityNotFoundError, entityNotFound } from '../../../lib/app.api/app.api.errors'
 import { WebAppRequestFactory } from '../../../lib/adapters/adapters.controllers.web'
 import { JSONSchema4 } from 'json-schema'
@@ -806,8 +806,74 @@ invalid request
     })
   })
 
-  describe('PUT /{feedId}', async function() {
-    it('has tests', async function() {
+  describe.only('PUT /{feedId}', async function() {
+
+    it('maps the request body to a feed update', async function() {
+
+      const body: Required<FeedUpdateAttrs> & { superfluous: any, service: string, topic: string } = {
+        id: uniqid(),
+        title: 'Update Title',
+        summary: 'Update summary',
+        itemsHaveIdentity: true,
+        itemsHaveSpatialDimension: true,
+        itemPrimaryProperty: 'updated1',
+        itemSecondaryProperty: 'updated2',
+        itemTemporalProperty: 'updatedTime',
+        constantParams: { updated: 'yes' },
+        variableParamsSchema: {
+          properties: { updated: { type: 'object' }}
+        },
+        mapStyle: {
+          iconUrl: 'http://static.test/updated.png'
+        },
+        updateFrequencySeconds: 987,
+        superfluous: {
+          partOfUpdate: false
+        },
+        service: 'service not allowed',
+        topic: 'topic not allowed'
+      }
+      const feedUpdate: Required<FeedUpdateAttrs> = _.omit(body, 'superfluous', 'service', 'topic')
+      const appReq = createAdminRequest({ feed: feedUpdate })
+      const appRes = AppResponse.success<FeedExpanded, unknown>({
+        id: body.id,
+        title: 'Update Title',
+        summary: 'Update summary',
+        itemsHaveIdentity: true,
+        itemsHaveSpatialDimension: true,
+        itemPrimaryProperty: 'updated1',
+        itemSecondaryProperty: 'updated2',
+        itemTemporalProperty: 'updatedTime',
+        constantParams: { updated: 'yes' },
+        variableParamsSchema: {
+          properties: { updated: { type: 'object' }}
+        },
+        mapStyle: {
+          iconUrl: 'http://static.test/updated.png'
+        },
+        updateFrequencySeconds: 987,
+        service: {
+          id: uniqid(),
+          serviceType: uniqid(),
+          title: 'Test Service',
+          summary: null,
+          config: { test: true }
+        },
+        topic: {
+          id: uniqid(),
+          title: 'Test Topic'
+        }
+      })
+      appRequestFactory.createRequest(Arg.any(), Arg.deepEquals({ feed: feedUpdate })).returns(appReq)
+      appLayer.updateFeed(appReq).resolves(appRes)
+      const res = await client.put(`${rootPath}/${body.id}`).send(body)
+
+      expect(res.status).to.equal(200)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.deep.equal(_.omit(appRes.success))
+    })
+
+    it('fails with 404 if the feed id is not found', async function() {
       expect.fail('todo')
     })
   })
