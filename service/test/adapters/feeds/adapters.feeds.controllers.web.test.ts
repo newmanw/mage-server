@@ -8,7 +8,7 @@ import uniqid from 'uniqid'
 import _, { uniq } from 'lodash'
 import { AppResponse, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeedsRoutes, FeedsAppLayer } from '../../../lib/adapters/feeds/adapters.feeds.controllers.web'
-import { CreateFeedServiceRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, CreateFeedRequest, ListServiceTopicsRequest, ListAllFeeds, PreviewFeedRequest, FeedPreview, FeedExpanded } from '../../../lib/app.api/feeds/app.api.feeds'
+import { CreateFeedServiceRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, CreateFeedRequest, ListServiceTopicsRequest, ListAllFeeds, PreviewFeedRequest, FeedPreview, FeedExpanded, DeleteFeedRequest } from '../../../lib/app.api/feeds/app.api.feeds'
 import { FeedService, Feed, FeedTopic, normalizeFeedMinimalAttrs, FeedMinimalAttrs, MapStyle, FeedUpdateAttrs } from '../../../lib/entities/feeds/entities.feeds'
 import { permissionDenied, PermissionDeniedError, InvalidInputError, invalidInput, EntityNotFoundError, entityNotFound } from '../../../lib/app.api/app.api.errors'
 import { WebAppRequestFactory } from '../../../lib/adapters/adapters.controllers.web'
@@ -745,7 +745,7 @@ invalid request
     })
   })
 
-  describe.only('GET /{feedId}', function() {
+  describe('GET /{feedId}', function() {
 
     it('returns the feed for the id in the path', async function() {
 
@@ -806,7 +806,7 @@ invalid request
     })
   })
 
-  describe.only('PUT /{feedId}', async function() {
+  describe('PUT /{feedId}', async function() {
 
     it('maps the request body to a feed update', async function() {
 
@@ -878,8 +878,25 @@ invalid request
     })
   })
 
-  describe('DELETE /{feed}', async function() {
-    it('has tests', async function() {
+  describe.only('DELETE /{feed}', async function() {
+
+    it('deletes the feed for the id in the path', async function() {
+
+      const feedId = uniqid()
+      const appReq: DeleteFeedRequest = createAdminRequest({ feed: feedId })
+      appRequestFactory.createRequest(Arg.deepEquals({ feed: feedId })).returns(appReq)
+      appLayer.deleteFeed(appReq).resolves(AppResponse.success(true))
+      const res = await client.delete(`${rootPath}/${feedId}`)
+
+      expect(res.status).to.equal(200)
+      expect(res.body).to.be.empty
+    })
+
+    it('fails with 403 without permission', async function() {
+      expect.fail('todo')
+    })
+
+    it('fails with 404 if the feed id is not found', async function() {
       expect.fail('todo')
     })
   })

@@ -8,7 +8,7 @@ declare global {
 }
 
 import express from 'express'
-import { ListFeedServiceTypes, ListServiceTopics, CreateFeedService, ListFeedServices, PreviewTopics, PreviewTopicsRequest, CreateFeed, CreateFeedRequest, ListServiceTopicsRequest, ListAllFeeds, FetchFeedContent, PreviewFeedRequest, PreviewFeed, GetFeed, UpdateFeed, UpdateFeedRequest } from '../../app.api/feeds/app.api.feeds'
+import { ListFeedServiceTypes, ListServiceTopics, CreateFeedService, ListFeedServices, PreviewTopics, PreviewTopicsRequest, CreateFeed, CreateFeedRequest, ListServiceTopicsRequest, ListAllFeeds, FetchFeedContent, PreviewFeedRequest, PreviewFeed, GetFeed, UpdateFeed, UpdateFeedRequest, DeleteFeed, DeleteFeedRequest } from '../../app.api/feeds/app.api.feeds'
 import { ErrPermissionDenied, MageError, PermissionDeniedError, ErrInvalidInput, invalidInput, ErrEntityNotFound } from '../../app.api/app.api.errors'
 import { WebAppRequestFactory } from '../adapters.controllers.web'
 import { FeedServiceId, FeedTopicId } from '../../entities/feeds/entities.feeds'
@@ -24,6 +24,7 @@ export interface FeedsAppLayer {
   listAllFeeds: ListAllFeeds
   getFeed: GetFeed
   updateFeed: UpdateFeed
+  deleteFeed: DeleteFeed
 }
 
 export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppRequestFactory): express.Router {
@@ -230,6 +231,15 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
       const appRes = await appLayer.updateFeed(appReq)
       if (appRes.success) {
         return res.json(appRes.success)
+      }
+      return next(appRes.error)
+    })
+    .delete(async (req, res, next) => {
+      const feedId = req.params.feedId
+      const appReq: DeleteFeedRequest = createAppRequest(req, { feed: feedId })
+      const appRes = await appLayer.deleteFeed(appReq)
+      if (appRes.success) {
+        return res.sendStatus(200)
       }
       return next(appRes.error)
     })

@@ -130,6 +130,7 @@ type AppLayer = {
     listAllFeeds: feedsApi.ListAllFeeds
     getFeed: feedsApi.GetFeed
     updateFeed: feedsApi.UpdateFeed
+    deleteFeed: feedsApi.DeleteFeed
   },
   events: {
     eventRepo: MageEventRepository
@@ -209,6 +210,7 @@ function intializeFeedsAppLayer(dbModels: DatabaseModels): AppLayer['feeds'] {
   const listAllFeeds = feedsImpl.ListAllFeeds(permissionService, feedRepo)
   const getFeed = feedsImpl.GetFeed(permissionService, serviceTypeRepo, serviceRepo, feedRepo)
   const updateFeed = feedsImpl.UpdateFeed(permissionService, serviceTypeRepo, serviceRepo, feedRepo)
+  const deleteFeed = feedsImpl.DeleteFeed(permissionService, feedRepo)
   return {
     serviceTypeRepo,
     serviceRepo,
@@ -225,6 +227,7 @@ function intializeFeedsAppLayer(dbModels: DatabaseModels): AppLayer['feeds'] {
     listAllFeeds,
     getFeed,
     updateFeed,
+    deleteFeed,
   }
 }
 
