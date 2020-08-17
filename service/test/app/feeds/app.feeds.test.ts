@@ -5,7 +5,7 @@ import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, FeedServiceRepos
 import { ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics, ListFeedServices, PreviewFeed, CreateFeed, ListAllFeeds, FetchFeedContent, GetFeed, UpdateFeed, DeleteFeed } from '../../../lib/app.impl/feeds/app.impl.feeds'
 import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError, PermissionDeniedErrorData, KeyPathError } from '../../../lib/app.api/app.api.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
-import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, FeedPreview, FetchFeedContentRequest, FeedExpanded, GetFeedRequest, UpdateFeedRequest } from '../../../lib/app.api/feeds/app.api.feeds'
+import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, FeedPreview, FetchFeedContentRequest, FeedExpanded, GetFeedRequest, UpdateFeedRequest, DeleteFeedRequest } from '../../../lib/app.api/feeds/app.api.feeds'
 import uniqid from 'uniqid'
 import { AppRequestContext, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeatureCollection } from 'geojson'
@@ -1321,12 +1321,49 @@ describe('feeds use case interactions', function() {
 
       describe('deleting a feed', function() {
 
+        beforeEach(function() {
+          app.permissionService.grantCreateFeed(adminPrincipal.user, services[0].service.id)
+          app.permissionService.grantCreateFeed(adminPrincipal.user, services[1].service.id)
+        })
+
         it('deletes the feed from the repository', async function() {
 
-          // const req: DeleteFeedRequest = requestBy(adminPrincipal, { feed: feeds[0].id })
-          // const res = await app.deleteFeed(req)
+          const req: DeleteFeedRequest = requestBy(adminPrincipal, { feed: feeds[0].id })
+          const res = await app.deleteFeed(req)
 
-          expect.fail('todo')
+          expect(res.error).to.be.null
+          expect(res.success).to.be.true
+          const inDb = app.feedRepo.db.get(feeds[0].id)
+          expect(inDb).to.be.undefined
+        })
+
+        it('checks permission for deleting a feed', async function() {
+
+          const req: DeleteFeedRequest = requestBy(bannedPrincipal, { feed: feeds[1].id })
+          const res = await app.deleteFeed(req)
+
+          expect(res.success).to.be.null
+          expect(res.error).to.be.instanceOf(MageError)
+          expect(res.error?.code).to.equal(ErrPermissionDenied)
+          const err = res.error as PermissionDeniedError
+          expect(err.data.subject).to.equal(bannedPrincipal.user)
+          expect(err.data.permission).to.equal(CreateFeed.name)
+          expect(err.data.object).to.equal(feeds[1].service)
+          const inDb = app.feedRepo.db.get(req.feed)
+          expect(inDb).to.deep.equal(feeds[1])
+        })
+
+        it('fails if the feed id is not found', async function() {
+
+          const req: DeleteFeedRequest = requestBy(adminPrincipal, { feed: feeds[0].id + '-nope' })
+          const res = await app.deleteFeed(req)
+
+          expect(res.success).to.be.null
+          expect(res.error).to.be.instanceOf(MageError)
+          expect(res.error?.code).to.equal(ErrEntityNotFound)
+          const err = res.error as EntityNotFoundError
+          expect(err.data.entityId).to.equal(req.feed)
+          expect(err.data.entityType).to.equal('Feed')
         })
       })
     })
@@ -1606,6 +1643,15 @@ class TestFeedRepository implements FeedRepository {
     const updated = Object.assign({ ...feed }, { service: existing.service, topic: existing.topic })
     this.db.set(feed.id, updated)
     return updated
+  }
+
+  async removeById(feedId: FeedId): Promise<Feed | null> {
+    const removed = this.db.get(feedId)
+    this.db.delete(feedId)
+    if (removed) {
+      return removed
+    }
+    return null
   }
 }
 class TestPermissionService implements FeedsPermissionService {

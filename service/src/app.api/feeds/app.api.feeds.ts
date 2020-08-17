@@ -86,12 +86,12 @@ export interface UpdateFeed {
   (req: UpdateFeedRequest): Promise<AppResponse<FeedExpanded, PermissionDeniedError | EntityNotFoundError | InvalidInputError>>
 }
 
-export interface DeleteFeedRequest {
+export interface DeleteFeedRequest extends AppRequest {
   feed: FeedId
 }
 
 export interface DeleteFeed {
-  (req: DeleteFeedRequest): Promise<AppResponse<void, PermissionDeniedError | EntityNotFoundError>>
+  (req: DeleteFeedRequest): Promise<AppResponse<true, PermissionDeniedError | EntityNotFoundError>>
 }
 
 export interface FetchFeedContentRequest extends AppRequest {

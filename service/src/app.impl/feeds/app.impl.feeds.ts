@@ -283,7 +283,20 @@ export function UpdateFeed(permissionService: api.FeedsPermissionService, servic
 
 export function DeleteFeed(permissionService: api.FeedsPermissionService, feedRepo: FeedRepository): api.DeleteFeed {
   return async function deleteFeed(req: api.DeleteFeedRequest): ReturnType<api.DeleteFeed> {
-    throw new Error('unimplemented')
+    const feed = await feedRepo.findById(req.feed)
+    if (!feed) {
+      return AppResponse.error<true, EntityNotFoundError>(entityNotFound(req.feed, 'Feed'))
+    }
+    return await withPermission<true, KnownErrorsOf<api.DeleteFeed>>(
+      permissionService.ensureCreateFeedPermissionFor(req.context, feed.service),
+      async (): Promise<true | EntityNotFoundError> => {
+        const removed = await feedRepo.removeById(req.feed)
+        if (removed) {
+          return true
+        }
+        return entityNotFound(req.feed, 'Feed', `feed ${req.feed} was already deleted before delete attempt`)
+      }
+    )
   }
 }
 

@@ -6,7 +6,7 @@ import { mongoTestAfterAllHook, mongoTestBeforeAllHook, MongoTestContext } from 
 import { BaseMongooseRepository } from '../../../lib/adapters/base/adapters.base.db.mongoose'
 
 
-describe('base mongoose repository', async function() {
+describe.only('base mongoose repository', async function() {
 
   interface BaseEntity {
     id: string
@@ -157,11 +157,18 @@ describe('base mongoose repository', async function() {
     }
     const created = await repo.create(seed)
     const beforeDelete = await repo.findAll()
-    await repo.removeById(created.id)
+    const removed = await repo.removeById(created.id)
     const afterDelete = await repo.findAll()
 
     expect(beforeDelete.length).to.equal(1)
     expect(beforeDelete[0]).to.deep.include(seed)
     expect(afterDelete.length).to.equal(0)
+    expect(removed).to.deep.equal(created)
+  })
+
+  it('returns null if the delete id does not exist', async function() {
+
+    const removed = await repo.removeById(mongoose.Types.ObjectId().toHexString())
+    expect(removed).to.be.null
   })
 })

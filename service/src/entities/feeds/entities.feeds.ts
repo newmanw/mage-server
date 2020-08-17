@@ -257,6 +257,7 @@ export interface FeedRepository {
   findFeedsByIds(...feedIds: FeedId[]): Promise<Feed[]>
   findAll(): Promise<Feed[]>
   update(feed: FeedUpdateAttrs): Promise<Feed | null>
+  removeById(feedId: FeedId): Promise<Feed | null>
 }
 
 type FeedCreateExcplicitNullKeys = 'itemTemporalProperty' | 'itemPrimaryProperty' | 'itemSecondaryProperty' | 'updateFrequencySeconds' | 'mapStyle'

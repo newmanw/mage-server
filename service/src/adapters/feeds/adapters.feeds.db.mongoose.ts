@@ -134,6 +134,7 @@ export class MongooseFeedServiceRepository extends BaseMongooseRepository<FeedSe
 }
 
 export class MongooseFeedRepository extends BaseMongooseRepository<FeedDocument, FeedModel, Feed> implements FeedRepository {
+
   constructor(model: FeedModel, private readonly idFactory: EntityIdFactory) {
     super(model)
   }

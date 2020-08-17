@@ -12,6 +12,7 @@ import { FeedServiceTypeIdentityModel, FeedsModels, FeedServiceTypeIdentitySchem
 import { FeedServiceType } from '../../../lib/entities/feeds/entities.feeds'
 import { Json, JsonObject } from '../../../src/entities/entities.json_types'
 import { EntityIdFactory } from '../../../lib/entities/entities.global'
+import { report } from 'superagent'
 
 describe('feeds repositories', function() {
 
@@ -430,6 +431,32 @@ describe('feeds repositories', function() {
       expect(created).to.not.have.property('__v')
       expect(fetched).to.not.have.property('__v')
       expect(rawFetched).to.have.property('__v')
+    })
+
+    describe.only('removing a feed by id', function() {
+
+      it('removes the feed for the id', async function() {
+
+        const stub: FeedCreateAttrs = Object.freeze({
+          service: mongoose.Types.ObjectId().toHexString(),
+          topic: uniqid(),
+          title: 'No Version Keys',
+          summary: 'Testing',
+          itemsHaveIdentity: true,
+          itemsHaveSpatialDimension: true
+        })
+        idFactory.nextId().resolves('remove_test')
+        const created = await repo.create({ ...stub })
+        let fetched = await model.findById(created.id)
+
+        expect(created).to.deep.include(stub)
+        expect(fetched?.toJSON()).to.deep.equal(created)
+
+        const removed = await repo.removeById(created.id)
+        fetched = await model.findById(created.id)
+        expect(fetched).to.be.null
+        expect(removed).to.deep.equal(created)
+      })
     })
   })
 })

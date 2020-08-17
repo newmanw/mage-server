@@ -51,7 +51,11 @@ export class BaseMongooseRepository<D extends mongoose.Document, M extends mongo
     return this.docToEntity(doc)
   }
 
-  async removeById(id: any): Promise<void> {
-    await this.model.findByIdAndRemove(id)
+  async removeById(id: any): Promise<E | null> {
+    const doc = await this.model.findByIdAndRemove(id)
+    if (doc) {
+      return this.docToEntity(doc)
+    }
+    return null
   }
 }
