@@ -779,7 +779,7 @@ invalid request
           }
         }
       }
-      const appReq = createAdminRequest()
+      const appReq = createAdminRequest({ feed: feedId })
       appRequestFactory.createRequest(Arg.all()).returns(appReq)
       appLayer.getFeed(Arg.requestTokenMatches(appReq)).resolves(AppResponse.success<FeedExpanded, unknown>(feed))
       const res = await client.get(`${rootPath}/${feedId}`)
@@ -878,13 +878,13 @@ invalid request
     })
   })
 
-  describe.only('DELETE /{feed}', async function() {
+  describe('DELETE /{feed}', async function() {
 
     it('deletes the feed for the id in the path', async function() {
 
       const feedId = uniqid()
       const appReq: DeleteFeedRequest = createAdminRequest({ feed: feedId })
-      appRequestFactory.createRequest(Arg.deepEquals({ feed: feedId })).returns(appReq)
+      appRequestFactory.createRequest(Arg.any(), Arg.deepEquals({ feed: feedId })).returns(appReq)
       appLayer.deleteFeed(appReq).resolves(AppResponse.success(true))
       const res = await client.delete(`${rootPath}/${feedId}`)
 

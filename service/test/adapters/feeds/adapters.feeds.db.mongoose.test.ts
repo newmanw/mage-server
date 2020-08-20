@@ -433,7 +433,7 @@ describe('feeds repositories', function() {
       expect(rawFetched).to.have.property('__v')
     })
 
-    describe.only('removing a feed by id', function() {
+    describe('removing a feed by id', function() {
 
       it('removes the feed for the id', async function() {
 

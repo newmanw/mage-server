@@ -1072,7 +1072,7 @@ describe('feeds use case interactions', function() {
       })
     })
 
-    describe.only('single feed operations', function() {
+    describe('single feed operations', function() {
 
       let feeds: Feed[]
       let services: { service: FeedService, topics: Required<FeedTopic>[], conn: SubstituteOf<FeedServiceConnection> }[]

@@ -6,7 +6,7 @@ import { mongoTestAfterAllHook, mongoTestBeforeAllHook, MongoTestContext } from 
 import { BaseMongooseRepository } from '../../../lib/adapters/base/adapters.base.db.mongoose'
 
 
-describe.only('base mongoose repository', async function() {
+describe('base mongoose repository', async function() {
 
   interface BaseEntity {
     id: string
