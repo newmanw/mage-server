@@ -5,7 +5,7 @@ import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, FeedServiceRepos
 import { ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics, ListFeedServices, PreviewFeed, CreateFeed, ListAllFeeds, FetchFeedContent, GetFeed, UpdateFeed, DeleteFeed } from '../../../lib/app.impl/feeds/app.impl.feeds'
 import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError, PermissionDeniedErrorData, KeyPathError } from '../../../lib/app.api/app.api.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
-import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, FeedPreview, FetchFeedContentRequest, FeedExpanded, GetFeedRequest, UpdateFeedRequest, DeleteFeedRequest } from '../../../lib/app.api/feeds/app.api.feeds'
+import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, FeedPreview, FetchFeedContentRequest, FeedExpanded, GetFeedRequest, UpdateFeedRequest, DeleteFeedRequest, CreateFeedServiceRequest } from '../../../lib/app.api/feeds/app.api.feeds'
 import uniqid from 'uniqid'
 import { AppRequestContext, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeatureCollection } from 'geojson'
@@ -88,7 +88,7 @@ function requestBy<RequestType>(principal: TestPrincipal, params?: RequestType):
   )
 }
 
-describe('feeds use case interactions', function() {
+describe.only('feeds use case interactions', function() {
 
   let app: TestApp
   let someServiceTypes: SubstituteOf<RegisteredFeedServiceType>[]
@@ -183,6 +183,7 @@ describe('feeds use case interactions', function() {
         const serviceType = someServiceTypes[0]
         const config = { url: 'https://some.service/somewhere' }
         serviceType.validateServiceConfig(Arg.deepEquals(config) as any).resolves(null)
+        serviceType.redactServiceConfig(Arg.any()).returns(config)
 
         const created = await app
           .createService(requestBy(adminPrincipal, { serviceType: serviceType.id, title: 'Test Service', config }))
@@ -197,6 +198,32 @@ describe('feeds use case interactions', function() {
           config: config
         })
         expect(inDb).to.deep.equal(created)
+      })
+
+      it('redacts the feed service config in the result', async function() {
+
+        const serviceType = someServiceTypes[0]
+        const config = { url: 'https://lerp', secret: 'redact me' }
+        serviceType.validateServiceConfig(Arg.deepEquals(config) as any).resolves(null)
+        serviceType.redactServiceConfig(Arg.any()).returns(_.omit(config, 'secret'))
+        const req: CreateFeedServiceRequest = requestBy(adminPrincipal, {
+          serviceType: serviceType.id,
+          title: 'Redact Config',
+          summary: null,
+          config
+        })
+        const res = await app.createService(req)
+
+        expect(res.error).to.be.null
+        expect(res.success).to.deep.include({
+          serviceType: req.serviceType,
+          title: req.title,
+          summary: req.summary,
+          config: {
+            url: config.url
+          }
+        })
+        serviceType.received(1).redactServiceConfig(Arg.deepEquals(req.config))
       })
     })
 
@@ -213,7 +240,7 @@ describe('feeds use case interactions', function() {
           }
         },
         {
-          id: `${someServiceTypeDescs[0].id}:${uniqid()}`,
+          id: `${someServiceTypeDescs[1].id}:${uniqid()}`,
           serviceType: someServiceTypeDescs[1].id,
           title: 'OAF 1',
           summary: null,
@@ -225,6 +252,7 @@ describe('feeds use case interactions', function() {
       ]
 
       beforeEach(function() {
+        app.registerServiceTypes(...someServiceTypes)
         app.registerServices(...someServices)
       })
 
@@ -246,14 +274,47 @@ describe('feeds use case interactions', function() {
 
       it('returns the saved services', async function() {
 
+        someServiceTypes[0].redactServiceConfig(Arg.all()).returns(someServices[0].config)
+        someServiceTypes[1].redactServiceConfig(Arg.all()).returns(someServices[1].config)
         const adminReq = requestBy(adminPrincipal)
         const res = await app.listServices(adminReq)
 
         expect(res.error).to.be.null
         expect(res.success).to.be.instanceOf(Array)
         expect(res.success?.length).to.equal(someServices.length)
-        expect(res.success).to.deep.contain(someServices[0])
-        expect(res.success).to.deep.contain(someServices[1])
+        expect(res.success).to.deep.include(someServices[0])
+        expect(res.success).to.deep.include(someServices[1])
+      })
+
+      it('redacts service configurations', async function() {
+
+        const anotherService: FeedService = {
+          id: uniqid(),
+          serviceType: someServiceTypes[1].id,
+          title: 'Service Type 1 Service',
+          summary: null,
+          config: {
+            secretUrl: 'https://type1.secret.net/api'
+          }
+        }
+        app.registerServices(anotherService)
+        someServiceTypes[0].redactServiceConfig(Arg.deepEquals(someServices[0].config)).returns(someServices[0].config)
+        someServiceTypes[1].redactServiceConfig(Arg.deepEquals(someServices[1].config)).returns(someServices[1].config)
+        someServiceTypes[1].redactServiceConfig(Arg.deepEquals(anotherService.config)).returns({})
+        const req = requestBy(adminPrincipal)
+        const res = await app.listServices(req)
+        const services = res.success!
+
+        const anotherServiceRedacted = Object.assign({ ...anotherService }, { config: {}})
+        expect(services).to.have.length(3)
+        expect(services).to.have.deep.members([
+          someServices[0],
+          someServices[1],
+          anotherServiceRedacted
+        ])
+        someServiceTypes[0].received(1).redactServiceConfig(Arg.deepEquals(someServices[0].config))
+        someServiceTypes[1].received(1).redactServiceConfig(Arg.deepEquals(someServices[1].config))
+        someServiceTypes[1].received(1).redactServiceConfig(Arg.deepEquals(anotherService.config))
       })
     })
 
@@ -372,147 +433,165 @@ describe('feeds use case interactions', function() {
       })
     })
 
-    describe('listing topics from a saved service', async function() {
+    describe('single service operations', function() {
 
-      const someServices: FeedService[] = [
-        {
-          id: `${someServiceTypeDescs[0].id}:${uniqid()}`,
-          serviceType: someServiceTypeDescs[0].id,
-          title: 'WFS 1',
-          summary: null,
-          config: {
-            url: 'https://test.mage/wfs1'
-          }
-        },
-        {
-          id: `${someServiceTypeDescs[0].id}:${uniqid()}`,
-          serviceType: someServiceTypeDescs[0].id,
-          title: 'WFS 2',
-          summary: null,
-          config: {
-            url: 'https://test.mage/wfs2'
-          }
-        }
-      ]
+      describe('fetching a service', function() {
 
-      beforeEach(function() {
-        app.registerServiceTypes(...someServiceTypes)
-        app.registerServices(...someServices)
-        for (const service of someServices) {
-          app.permissionService.grantListTopics(adminPrincipal.user, service.id)
-        }
+        it('redacts the service config', async function() {
+          expect.fail('todo')
+        })
       })
 
-      it('checks permission for listing topics', async function() {
+      describe('deleting a service', function() {
 
-        const serviceDesc = someServices[0]
-        const req: ListServiceTopicsRequest = requestBy(
-          bannedPrincipal,
+        it('works', async function() {
+
+          expect.fail('todo')
+        })
+      })
+
+      describe('listing topics from a saved service', async function() {
+
+        const someServices: FeedService[] = [
           {
-            service: serviceDesc.id
-          })
-        const err = await app.listTopics(req).then(res => res.error as PermissionDeniedError)
+            id: `${someServiceTypeDescs[0].id}:${uniqid()}`,
+            serviceType: someServiceTypeDescs[0].id,
+            title: 'WFS 1',
+            summary: null,
+            config: {
+              url: 'https://test.mage/wfs1'
+            }
+          },
+          {
+            id: `${someServiceTypeDescs[0].id}:${uniqid()}`,
+            serviceType: someServiceTypeDescs[0].id,
+            title: 'WFS 2',
+            summary: null,
+            config: {
+              url: 'https://test.mage/wfs2'
+            }
+          }
+        ]
 
-        expect(err).to.be.instanceOf(MageError)
-        expect(err.code).to.equal(ErrPermissionDenied)
-        for (const serviceType of someServiceTypes) {
-          serviceType.didNotReceive().createConnection(Arg.any())
-        }
+        beforeEach(function() {
+          app.registerServiceTypes(...someServiceTypes)
+          app.registerServices(...someServices)
+          for (const service of someServices) {
+            app.permissionService.grantListTopics(adminPrincipal.user, service.id)
+          }
+        })
 
-        const service = Sub.for<FeedServiceConnection>()
-        service.fetchAvailableTopics().resolves([])
-        const serviceType = someServiceTypes.filter(x => x.id === serviceDesc.serviceType)[0]
-        serviceType.createConnection(Arg.deepEquals(serviceDesc.config)).resolves(service)
-        app.permissionService.grantListTopics(bannedPrincipal.user, serviceDesc.id)
+        it('checks permission for listing topics', async function() {
 
-        const res = await app.listTopics(req)
+          const serviceDesc = someServices[0]
+          const req: ListServiceTopicsRequest = requestBy(
+            bannedPrincipal,
+            {
+              service: serviceDesc.id
+            })
+          const err = await app.listTopics(req).then(res => res.error as PermissionDeniedError)
 
-        expect(res.success).to.be.instanceOf(Array)
-        expect(res.success).to.have.lengthOf(0)
-        expect(res.error).to.be.null
-        serviceType.received(1).createConnection(Arg.any())
-      })
+          expect(err).to.be.instanceOf(MageError)
+          expect(err.code).to.equal(ErrPermissionDenied)
+          for (const serviceType of someServiceTypes) {
+            serviceType.didNotReceive().createConnection(Arg.any())
+          }
 
-      it('returns all the topics for a service', async function() {
+          const service = Sub.for<FeedServiceConnection>()
+          service.fetchAvailableTopics().resolves([])
+          const serviceType = someServiceTypes.filter(x => x.id === serviceDesc.serviceType)[0]
+          serviceType.createConnection(Arg.deepEquals(serviceDesc.config)).resolves(service)
+          app.permissionService.grantListTopics(bannedPrincipal.user, serviceDesc.id)
 
-        const topics: FeedTopic[] = [
-          Object.freeze({
-            id: 'weather_alerts',
-            title: 'Weather Alerts',
-            summary: 'Alerts about severe weather activity',
-            constantParamsSchema: {
-              type: 'number',
-              title: 'Max items',
-              default: 20,
-              minimum: 1,
-              maximum: 100
-            },
-            variableParamsSchema: {
-              type: 'object',
-              properties: {
-                '$mage:currentLocation': {
-                  title: 'Current Location',
-                  type: 'array',
-                  minItems: 2,
-                  maxItems: 2,
-                  items: {
-                    type: 'number'
+          const res = await app.listTopics(req)
+
+          expect(res.success).to.be.instanceOf(Array)
+          expect(res.success).to.have.lengthOf(0)
+          expect(res.error).to.be.null
+          serviceType.received(1).createConnection(Arg.any())
+        })
+
+        it('returns all the topics for a service', async function() {
+
+          const topics: FeedTopic[] = [
+            Object.freeze({
+              id: 'weather_alerts',
+              title: 'Weather Alerts',
+              summary: 'Alerts about severe weather activity',
+              constantParamsSchema: {
+                type: 'number',
+                title: 'Max items',
+                default: 20,
+                minimum: 1,
+                maximum: 100
+              },
+              variableParamsSchema: {
+                type: 'object',
+                properties: {
+                  '$mage:currentLocation': {
+                    title: 'Current Location',
+                    type: 'array',
+                    minItems: 2,
+                    maxItems: 2,
+                    items: {
+                      type: 'number'
+                    }
+                  },
+                  radius: {
+                    title: 'Radius (Km)',
+                    type: 'number',
+                    default: 5,
+                    minimum: 1,
+                    maximum: 250
                   }
                 },
-                radius: {
-                  title: 'Radius (Km)',
-                  type: 'number',
-                  default: 5,
-                  minimum: 1,
-                  maximum: 250
-                }
+                required: [ '$mage:currentLocation' ]
               },
-              required: [ '$mage:currentLocation' ]
-            },
-            updateFrequency: { seconds: 60 },
-            itemsHaveIdentity: true,
-            itemsHaveSpatialDimension: true,
-            itemsHaveTemporalDimension: true,
-            itemPrimaryProperty: 'title',
-            itemSecondaryProperty: 'description'
-          }),
-          Object.freeze({
-            id: 'quakes',
-            title: 'Earthquake Alerts',
-            summary: 'Alerts about seismic in a given area',
-            constantParamsSchema: undefined,
-            variableParamsSchema: {
-              type: 'object',
-              properties: {
-                '$mage:currentLocation': {
-                  title: 'Current Location',
-                  type: 'array',
-                  minItems: 2,
-                  maxItems: 2,
-                  items: {
-                    type: 'number'
+              updateFrequency: { seconds: 60 },
+              itemsHaveIdentity: true,
+              itemsHaveSpatialDimension: true,
+              itemsHaveTemporalDimension: true,
+              itemPrimaryProperty: 'title',
+              itemSecondaryProperty: 'description'
+            }),
+            Object.freeze({
+              id: 'quakes',
+              title: 'Earthquake Alerts',
+              summary: 'Alerts about seismic in a given area',
+              constantParamsSchema: undefined,
+              variableParamsSchema: {
+                type: 'object',
+                properties: {
+                  '$mage:currentLocation': {
+                    title: 'Current Location',
+                    type: 'array',
+                    minItems: 2,
+                    maxItems: 2,
+                    items: {
+                      type: 'number'
+                    }
                   }
-                }
+                },
+                required: [ '$mage:currentLocation' ]
               },
-              required: [ '$mage:currentLocation' ]
-            },
-            updateFrequency: undefined,
-            itemsHaveIdentity: false,
-            itemsHaveSpatialDimension: false,
-            itemsHaveTemporalDimension: true,
-            itemPrimaryProperty: 'severity',
-            itemSecondaryProperty: undefined
-          })
-        ]
-        const serviceDesc = someServices[1]
-        const serviceType = someServiceTypes.filter(x => x.id === serviceDesc.serviceType)[0]
-        const service = Sub.for<FeedServiceConnection>()
-        serviceType.createConnection(Arg.deepEquals(serviceDesc.config)).resolves(service)
-        service.fetchAvailableTopics().resolves(topics)
-        const req: ListServiceTopicsRequest = requestBy(adminPrincipal, { service: serviceDesc.id })
-        const fetched = await app.listTopics(req).then(res => res.success)
+              updateFrequency: undefined,
+              itemsHaveIdentity: false,
+              itemsHaveSpatialDimension: false,
+              itemsHaveTemporalDimension: true,
+              itemPrimaryProperty: 'severity',
+              itemSecondaryProperty: undefined
+            })
+          ]
+          const serviceDesc = someServices[1]
+          const serviceType = someServiceTypes.filter(x => x.id === serviceDesc.serviceType)[0]
+          const service = Sub.for<FeedServiceConnection>()
+          serviceType.createConnection(Arg.deepEquals(serviceDesc.config)).resolves(service)
+          service.fetchAvailableTopics().resolves(topics)
+          const req: ListServiceTopicsRequest = requestBy(adminPrincipal, { service: serviceDesc.id })
+          const fetched = await app.listTopics(req).then(res => res.success)
 
-        expect(fetched).to.deep.equal(topics)
+          expect(fetched).to.deep.equal(topics)
+        })
       })
     })
 
@@ -1544,7 +1623,7 @@ class TestApp {
   readonly listServiceTypes = ListFeedServiceTypes(this.permissionService, this.serviceTypeRepo)
   readonly previewTopics = PreviewTopics(this.permissionService, this.serviceTypeRepo)
   readonly createService = CreateFeedService(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
-  readonly listServices = ListFeedServices(this.permissionService, this.serviceRepo)
+  readonly listServices = ListFeedServices(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
   readonly listTopics = ListServiceTopics(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
   readonly previewFeed = PreviewFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.jsonSchemaService)
   readonly createFeed = CreateFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo, this.jsonSchemaService)

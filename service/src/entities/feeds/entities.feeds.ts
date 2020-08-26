@@ -53,6 +53,14 @@ export interface FeedServiceType {
   readonly configSchema: JSONSchema4 | null
 
   validateServiceConfig(config: Json): Promise<null | InvalidServiceConfigError>
+  /**
+   * Remove data from the given service coniguration document that is sensitive
+   * or otherwise unsuitable to send over the wire to a service client.
+   * TODO: this might go away in favor of a marking properties on config
+   * instances as secret
+   * @param config
+   */
+  redactServiceConfig(config: Json): Json
   createConnection(config: Json): Promise<FeedServiceConnection>
 }
 

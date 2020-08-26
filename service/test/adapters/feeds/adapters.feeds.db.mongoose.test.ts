@@ -70,6 +70,9 @@ describe('feeds repositories', function() {
       async validateServiceConfig(config: Json): Promise<null | InvalidServiceConfigError> {
         return null
       },
+      redactServiceConfig(config: Json): Json {
+        throw new Error('never')
+      },
       async createConnection(config: Json): Promise<FeedServiceConnection> {
         const topics = this.topics
         const serviceInfo = this.serviceInfo
@@ -128,6 +131,9 @@ describe('feeds repositories', function() {
           throw new Error('never')
         },
         validateServiceConfig(config: Json) {
+          throw new Error('never')
+        },
+        redactServiceConfig(config: Json) {
           throw new Error('never')
         }
       }

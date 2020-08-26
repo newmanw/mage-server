@@ -51,23 +51,37 @@ export function CreateFeedService(permissionService: api.FeedsPermissionService,
         if (invalid) {
           return invalidInputServiceConfig(invalid, 'config')
         }
-        return await serviceRepo.create({
+        const created = await serviceRepo.create({
           serviceType: req.serviceType,
           title: req.title,
           summary: req.summary || null,
           config: req.config
         })
+        const redactedConfig = serviceType.redactServiceConfig(created.config)
+        return Object.assign({ ...created }, { config: redactedConfig })
       }
     )
   }
 }
 
-export function ListFeedServices(permissionService: api.FeedsPermissionService, serviceRepo: FeedServiceRepository): api.ListFeedServices {
+export function ListFeedServices(permissionService: api.FeedsPermissionService, serviceTypeRepo: FeedServiceTypeRepository, serviceRepo: FeedServiceRepository): api.ListFeedServices {
   return function listFeedServices(req: AppRequest): ReturnType<api.ListFeedServices> {
     return withPermission<FeedService[], KnownErrorsOf<api.ListFeedServices>>(
       permissionService.ensureListServicesPermissionFor(req.context),
       async (): Promise<FeedService[]> => {
-        return await serviceRepo.findAll()
+        const serviceTypes = new Map((await serviceTypeRepo.findAll()).map(x => {
+          return [ x.id, x ]
+        }))
+        const services: FeedService[] = []
+        ;(await serviceRepo.findAll()).forEach(x => {
+          const serviceType = serviceTypes.get(x.serviceType)
+          if (!serviceType) {
+            return
+          }
+          const redactedConfig = serviceType.redactServiceConfig(x.config)
+          services.push(Object.assign({ ...x }, { config: redactedConfig }))
+        })
+        return services
       }
     )
   }

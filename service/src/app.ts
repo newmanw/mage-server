@@ -22,7 +22,6 @@ import { JsonSchemaService, JsonValidator, JSONSchema4 } from './entities/entiti
 import { MageEventModel, MongooseMageEventRepository } from './adapters/events/adapters.events.db.mongoose'
 import { MageEventRepository } from './entities/events/entities.events'
 import { EventFeedsRoutes } from './adapters/events/adapters.events.controllers.web'
-import { Z_UNKNOWN } from 'zlib'
 
 
 export interface MageService {
@@ -203,7 +202,7 @@ function intializeFeedsAppLayer(dbModels: DatabaseModels): AppLayer['feeds'] {
   const listServiceTypes = feedsImpl.ListFeedServiceTypes(permissionService, serviceTypeRepo)
   const previewTopics = feedsImpl.PreviewTopics(permissionService, serviceTypeRepo)
   const createService = feedsImpl.CreateFeedService(permissionService, serviceTypeRepo, serviceRepo)
-  const listServices = feedsImpl.ListFeedServices(permissionService, serviceRepo)
+  const listServices = feedsImpl.ListFeedServices(permissionService, serviceTypeRepo, serviceRepo)
   const listTopics = feedsImpl.ListServiceTopics(permissionService, serviceTypeRepo, serviceRepo)
   const previewFeed = feedsImpl.PreviewFeed(permissionService, serviceTypeRepo, serviceRepo, jsonSchemaService)
   const createFeed = feedsImpl.CreateFeed(permissionService, serviceTypeRepo, serviceRepo, feedRepo, jsonSchemaService)
