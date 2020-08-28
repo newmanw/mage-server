@@ -57,8 +57,7 @@ export function CreateFeedService(permissionService: api.FeedsPermissionService,
           summary: req.summary || null,
           config: req.config
         })
-        const redactedConfig = serviceType.redactServiceConfig(created.config)
-        return Object.assign({ ...created }, { config: redactedConfig })
+        return redactServiceConfig(created, serviceType)
       }
     )
   }
@@ -78,10 +77,30 @@ export function ListFeedServices(permissionService: api.FeedsPermissionService, 
           if (!serviceType) {
             return
           }
-          const redactedConfig = serviceType.redactServiceConfig(x.config)
-          services.push(Object.assign({ ...x }, { config: redactedConfig }))
+          const redactedService = redactServiceConfig(x, serviceType)
+          services.push(redactedService)
         })
         return services
+      }
+    )
+  }
+}
+
+export function GetFeedService(permissionService: api.FeedsPermissionService, serviceTypeRepo: FeedServiceTypeRepository, serviceRepo: FeedServiceRepository): api.GetFeedService {
+  return function getFeedService(req: api.GetFeedServiceRequest): ReturnType<api.GetFeedService> {
+    return withPermission<api.FeedServiceExpanded, KnownErrorsOf<api.GetFeedService>>(
+      permissionService.ensureListServicesPermissionFor(req.context),
+      async (): Promise<api.FeedServiceExpanded | EntityNotFoundError> => {
+        const service = await serviceRepo.findById(req.service)
+        if (!service) {
+          return entityNotFound(req.service, 'FeedService')
+        }
+        const serviceType = await serviceTypeRepo.findById(service.serviceType)
+        if (!serviceType) {
+          return entityNotFound(service.serviceType, 'FeedServiceType')
+        }
+        const redacted = redactServiceConfig(service, serviceType)
+        return Object.assign({ ...redacted }, { serviceType: FeedServiceTypeDescriptor(serviceType) })
       }
     )
   }
@@ -257,7 +276,8 @@ export function GetFeed(permissionService: api.FeedsPermissionService, serviceTy
         if (feedCompanions instanceof MageError) {
           return feedCompanions as EntityNotFoundError
         }
-        return Object.assign({ ...feed }, { service: feedCompanions.service, topic: feedCompanions.topic })
+        const serviceRedacted = redactServiceConfig(feedCompanions.service, feedCompanions.serviceType)
+        return Object.assign({ ...feed }, { service: serviceRedacted, topic: feedCompanions.topic })
       }
     )
   }
@@ -346,4 +366,9 @@ function invalidInputServiceConfig(err: InvalidServiceConfigError, ...configKey:
     return [ `${invalidKey} is invalid`, ...configKey, invalidKey ] as KeyPathError
   }) || [[ err.message, 'config' ]]
   return invalidInput(`invalid service config: ${err.message}`, ...problems)
+}
+
+function redactServiceConfig(service: FeedService, serviceType: FeedServiceType): FeedService {
+  const redactedConfig = serviceType.redactServiceConfig(service.config)
+  return Object.assign({ ...service}, { config: redactedConfig })
 }

@@ -2,10 +2,10 @@ import { describe, it, beforeEach, Context } from 'mocha'
 import { expect } from 'chai'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
 import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedService, FeedServiceConnection, RegisteredFeedServiceType, Feed, FeedMinimalAttrs, normalizeFeedMinimalAttrs, FeedRepository, FeedId, FeedContent, FeedUpdateAttrs, FeedCreateAttrs } from '../../../lib/entities/feeds/entities.feeds'
-import { ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics, ListFeedServices, PreviewFeed, CreateFeed, ListAllFeeds, FetchFeedContent, GetFeed, UpdateFeed, DeleteFeed } from '../../../lib/app.impl/feeds/app.impl.feeds'
+import { ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics, ListFeedServices, PreviewFeed, CreateFeed, ListAllFeeds, FetchFeedContent, GetFeed, UpdateFeed, DeleteFeed, GetFeedService } from '../../../lib/app.impl/feeds/app.impl.feeds'
 import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError, PermissionDeniedErrorData, KeyPathError } from '../../../lib/app.api/app.api.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
-import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, FeedPreview, FetchFeedContentRequest, FeedExpanded, GetFeedRequest, UpdateFeedRequest, DeleteFeedRequest, CreateFeedServiceRequest } from '../../../lib/app.api/feeds/app.api.feeds'
+import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, FeedPreview, FetchFeedContentRequest, FeedExpanded, GetFeedRequest, UpdateFeedRequest, DeleteFeedRequest, CreateFeedServiceRequest, GetFeedServiceRequest } from '../../../lib/app.api/feeds/app.api.feeds'
 import uniqid from 'uniqid'
 import { AppRequestContext, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeatureCollection } from 'geojson'
@@ -435,9 +435,86 @@ describe.only('feeds use case interactions', function() {
 
     describe('single service operations', function() {
 
+      const someServices: FeedService[] = [
+        {
+          id: `${someServiceTypeDescs[0].id}:${uniqid()}`,
+          serviceType: someServiceTypeDescs[0].id,
+          title: 'WFS 1',
+          summary: null,
+          config: {
+            url: 'https://test.mage/wfs1'
+          }
+        },
+        {
+          id: `${someServiceTypeDescs[0].id}:${uniqid()}`,
+          serviceType: someServiceTypeDescs[0].id,
+          title: 'WFS 2',
+          summary: null,
+          config: {
+            url: 'https://test.mage/wfs2'
+          }
+        }
+      ]
+
+      beforeEach(function() {
+        app.registerServiceTypes(...someServiceTypes)
+        app.registerServices(...someServices)
+        for (const service of someServices) {
+          app.permissionService.grantListTopics(adminPrincipal.user, service.id)
+        }
+      })
+
       describe('fetching a service', function() {
 
-        it('redacts the service config', async function() {
+        it('returns the expanded and redacted service', async function() {
+
+          const redactedConfig = { redacted: true }
+          someServiceTypes[0].redactServiceConfig(Arg.deepEquals(someServices[1].config)).returns(redactedConfig)
+          const req: GetFeedServiceRequest = requestBy(adminPrincipal, { service: someServices[1].id })
+          const res = await app.getService(req)
+
+          expect(res.error).to.be.null
+          expect(res.success).to.be.an('object')
+          expect(res.success).to.deep.equal(Object.assign({ ...someServices[1] }, { serviceType: someServiceTypeDescs[0], config: redactedConfig }))
+        })
+
+        it('checks permission for fetching a service', async function() {
+
+          const req: GetFeedServiceRequest = requestBy(bannedPrincipal, { service: someServices[1].id })
+          let res = await app.getService(req)
+
+          expect(res.success).to.be.null
+          expect(res.error).to.be.instanceOf(MageError)
+          expect(res.error?.code).to.equal(ErrPermissionDenied)
+          const err = res.error as PermissionDeniedError
+          expect(err.data.subject).to.equal(bannedPrincipal.user)
+          expect(err.data.permission).to.equal(ListFeedServices.name)
+
+          app.permissionService.grantListServices(bannedPrincipal.user)
+          someServiceTypes[0].redactServiceConfig(Arg.any()).returns(someServices[1].config)
+          res = await app.getService(req)
+
+          expect(res.error).to.be.null
+          expect(res.success).to.be.an('object')
+        })
+
+        it('fails if the service does not exist', async function() {
+
+          const req: GetFeedServiceRequest = requestBy(adminPrincipal, { service: uniqid() })
+          let res = await app.getService(req)
+
+          expect(res.success).to.be.null
+          expect(res.error).to.be.instanceOf(MageError)
+          expect(res.error?.code).to.equal(ErrEntityNotFound)
+          const err = res.error as EntityNotFoundError
+          expect(err.data.entityId).to.equal(req.service)
+          expect(err.data.entityType).to.equal('FeedService')
+        })
+      })
+
+      describe('updating a service', function() {
+
+        it('works', async function() {
           expect.fail('todo')
         })
       })
@@ -445,41 +522,11 @@ describe.only('feeds use case interactions', function() {
       describe('deleting a service', function() {
 
         it('works', async function() {
-
           expect.fail('todo')
         })
       })
 
       describe('listing topics from a saved service', async function() {
-
-        const someServices: FeedService[] = [
-          {
-            id: `${someServiceTypeDescs[0].id}:${uniqid()}`,
-            serviceType: someServiceTypeDescs[0].id,
-            title: 'WFS 1',
-            summary: null,
-            config: {
-              url: 'https://test.mage/wfs1'
-            }
-          },
-          {
-            id: `${someServiceTypeDescs[0].id}:${uniqid()}`,
-            serviceType: someServiceTypeDescs[0].id,
-            title: 'WFS 2',
-            summary: null,
-            config: {
-              url: 'https://test.mage/wfs2'
-            }
-          }
-        ]
-
-        beforeEach(function() {
-          app.registerServiceTypes(...someServiceTypes)
-          app.registerServices(...someServices)
-          for (const service of someServices) {
-            app.permissionService.grantListTopics(adminPrincipal.user, service.id)
-          }
-        })
 
         it('checks permission for listing topics', async function() {
 
@@ -1256,17 +1303,20 @@ describe.only('feeds use case interactions', function() {
 
       describe('getting an expanded feed', function() {
 
-        it('returns the feed with service and topic populated', async function() {
+        it('returns the feed with redacted service and topic populated', async function() {
 
+          const redactedConfig = { redacted: true }
           const feedExpanded: FeedExpanded = Object.assign({ ...feeds[0] }, {
-            service: { ...services[0].service },
+            service: Object.assign({ ...services[0].service }, { config: redactedConfig }),
             topic: { ...services[0].topics[0] }
           })
+          someServiceTypes[1].redactServiceConfig(Arg.deepEquals(services[0].service.config)).returns(redactedConfig)
           const req: GetFeedRequest = requestBy(adminPrincipal, { feed: feeds[0].id })
           const res = await app.getFeed(req)
 
           expect(res.error).to.be.null
           expect(res.success).to.deep.equal(feedExpanded)
+          someServiceTypes[1].received(1).redactServiceConfig(Arg.deepEquals(services[0].service.config))
         })
 
         it('checks permission for fetting the feed', async function() {
@@ -1624,6 +1674,7 @@ class TestApp {
   readonly previewTopics = PreviewTopics(this.permissionService, this.serviceTypeRepo)
   readonly createService = CreateFeedService(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
   readonly listServices = ListFeedServices(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
+  readonly getService = GetFeedService(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
   readonly listTopics = ListServiceTopics(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
   readonly previewFeed = PreviewFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.jsonSchemaService)
   readonly createFeed = CreateFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo, this.jsonSchemaService)
