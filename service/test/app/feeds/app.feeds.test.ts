@@ -89,7 +89,7 @@ function requestBy<RequestType>(principal: TestPrincipal, params?: RequestType):
   )
 }
 
-describe.only('feeds use case interactions', function() {
+describe('feeds use case interactions', function() {
 
   let app: TestApp
   let someServiceTypes: SubstituteOf<RegisteredFeedServiceType>[]
@@ -1256,6 +1256,10 @@ describe.only('feeds use case interactions', function() {
                   iconUrl: 'topic1.png'
                 },
                 updateFrequencySeconds: 5 * 60,
+                itemPropertiesSchema: {
+                  type: 'object',
+                  title: 'Topic 1 Item Properties'
+                }
               })
             ],
             conn: Sub.for<FeedServiceConnection>(),
@@ -1285,6 +1289,10 @@ describe.only('feeds use case interactions', function() {
                   iconUrl: 'topic2.png'
                 },
                 updateFrequencySeconds: 15 * 60,
+                itemPropertiesSchema: {
+                  type: 'object',
+                  title: 'Topic 2 Item Properties'
+                }
               })
             ],
             conn: Sub.for<FeedServiceConnection>(),
@@ -1386,7 +1394,11 @@ describe.only('feeds use case interactions', function() {
             mapStyle: {
               fill: 'updated-green'
             },
-            updateFrequencySeconds: 357
+            updateFrequencySeconds: 357,
+            itemPropertiesSchema: {
+              type: 'object',
+              title: 'Updated Item Properties'
+            }
           }
           const req: UpdateFeedRequest = requestBy(adminPrincipal, { feed: feedMod })
           const res = await app.updateFeed(req)

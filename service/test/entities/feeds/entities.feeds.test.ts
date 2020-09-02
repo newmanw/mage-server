@@ -29,7 +29,7 @@ describe('feed-create attribute factory', function() {
         strokeOpacity: 0.5
       }
     }
-    const feed: FeedMinimalAttrs = {
+    const feed: Required<FeedMinimalAttrs> = {
       service: uniqid(),
       topic: topic.id,
       title: 'Feed Title',
@@ -52,6 +52,16 @@ describe('feed-create attribute factory', function() {
       mapStyle: {
         stroke: 'abcddd',
         strokeOpacity: 0.4
+      },
+      itemPropertiesSchema: {
+        type: 'object',
+        title: 'Test Items',
+        properties: {
+          feedTemporal: {
+            type: 'number',
+            format: 'urn:mage:epoch'
+          }
+        }
       }
     }
     const createAttrs = normalizeFeedMinimalAttrs(topic, feed)
@@ -66,7 +76,8 @@ describe('feed-create attribute factory', function() {
       updateFrequencySeconds: feed.updateFrequencySeconds,
       constantParams: feed.constantParams,
       variableParamsSchema: feed.variableParamsSchema,
-      mapStyle: feed.mapStyle
+      mapStyle: feed.mapStyle,
+      itemPropertiesSchema: feed.itemPropertiesSchema
     })
     expect(createAttrs).to.not.have.property('itemPrimaryProperty')
     expect(createAttrs).to.not.have.property('itemSecondaryProperty')
@@ -74,7 +85,7 @@ describe('feed-create attribute factory', function() {
 
   it('applies the topic attributes when feed attributes are not present', function() {
 
-    const topic: FeedTopic = {
+    const topic: Required<FeedTopic> = {
       id: uniqid(),
       title: 'Topic Title',
       summary: 'About the topic',
@@ -94,6 +105,9 @@ describe('feed-create attribute factory', function() {
       },
       mapStyle: {
         iconUrl: 'https://icons.net/building.png'
+      },
+      itemPropertiesSchema: {
+        title: 'Topic Properties'
       }
     }
     const feed: FeedMinimalAttrs = {
@@ -114,7 +128,8 @@ describe('feed-create attribute factory', function() {
       itemPrimaryProperty: topic.itemPrimaryProperty,
       itemSecondaryProperty: topic.itemSecondaryProperty,
       updateFrequencySeconds: topic.updateFrequencySeconds,
-      mapStyle: topic.mapStyle
+      mapStyle: topic.mapStyle,
+      itemPropertiesSchema: topic.itemPropertiesSchema
     })
     expect(createAttrs).to.not.have.property('itemTemporalProperty')
   })

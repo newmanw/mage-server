@@ -177,7 +177,7 @@ export interface FeedTopic {
    */
   readonly itemSecondaryProperty?: string
   readonly mapStyle?: MapStyle
-  readonly itemPropertiesSchema?: Array<PropertiesSchema>
+  readonly itemPropertiesSchema?: JSONSchema4
 }
 
 export interface FeedTopicContent {
@@ -238,7 +238,7 @@ export interface Feed {
   readonly itemPrimaryProperty?: string
   readonly itemSecondaryProperty?: string
   readonly mapStyle?: MapStyle
-  readonly itemPropertiesSchema?: Array<PropertiesSchema>
+  readonly itemPropertiesSchema?: JSONSchema4
 }
 
 export interface PropertiesSchema {
@@ -277,7 +277,7 @@ export interface FeedRepository {
 
 type FeedCreateExcplicitNullKeys = 'itemTemporalProperty' | 'itemPrimaryProperty' | 'itemSecondaryProperty' | 'updateFrequencySeconds' | 'mapStyle'
 
-export type FeedMinimalAttrs = Partial<Omit<Feed, FeedCreateExcplicitNullKeys>> & Pick<Feed, 'topic' | 'service'> & {
+export type FeedMinimalAttrs = Partial<Omit<Feed, 'id' | FeedCreateExcplicitNullKeys>> & Pick<Feed, 'topic' | 'service'> & {
   readonly [nullable in keyof Pick<Feed, FeedCreateExcplicitNullKeys>]: Feed[nullable] | null
 }
 
@@ -289,17 +289,20 @@ export const normalizeFeedMinimalAttrs = (topic: FeedTopic, feedAttrs: FeedMinim
     topic: topic.id,
     title: feedAttrs.title || topic.title,
     summary: feedAttrs.summary || topic.summary,
-    itemPropertiesSchema: feedAttrs.itemPropertiesSchema,
     constantParams: feedAttrs.constantParams,
     variableParamsSchema: feedAttrs.variableParamsSchema,
     itemsHaveIdentity: feedAttrs.itemsHaveIdentity === undefined ? topic.itemsHaveIdentity || false : feedAttrs.itemsHaveIdentity,
     itemsHaveSpatialDimension: feedAttrs.itemsHaveSpatialDimension === undefined ? topic.itemsHaveSpatialDimension || false : feedAttrs.itemsHaveSpatialDimension,
+    itemPropertiesSchema: feedAttrs.itemPropertiesSchema || topic.itemPropertiesSchema,
   }
   if (!createAttrs.constantParams) {
     delete createAttrs.constantParams
   }
   if (!createAttrs.variableParamsSchema) {
     delete createAttrs.variableParamsSchema
+  }
+  if (!createAttrs.itemPropertiesSchema) {
+    delete createAttrs.itemPropertiesSchema
   }
   const explicitNullKeys: { [key in FeedCreateExcplicitNullKeys]: true } = {
     itemPrimaryProperty: true,

@@ -518,6 +518,10 @@ invalid request
           mapStyle: {
             stroke: 'abcdef',
             strokeWidth: 2.5
+          },
+          itemPropertiesSchema: {
+            type: 'object',
+            title: 'Properties of Items'
           }
         },
         variableParams: {
@@ -540,7 +544,8 @@ invalid request
           updateFrequencySeconds: appReqParams.feed.updateFrequencySeconds as number,
           constantParams: appReqParams.feed.constantParams,
           variableParamsSchema: appReqParams.feed.variableParamsSchema,
-          mapStyle: appReqParams.feed.mapStyle as MapStyle
+          mapStyle: appReqParams.feed.mapStyle as MapStyle,
+          itemPropertiesSchema: appReqParams.feed.itemPropertiesSchema
         },
         content: {
           topic,
@@ -582,6 +587,7 @@ invalid request
         variableParamsSchema: undefined,
         updateFrequencySeconds: undefined,
         mapStyle: undefined,
+        itemPropertiesSchema: undefined
       })
       const appReq: PreviewFeedRequest = createAdminRequest({
         feed: minimalFeed
@@ -665,6 +671,7 @@ invalid request
           itemTemporalProperty: undefined,
           updateFrequencySeconds: undefined,
           mapStyle: undefined,
+          itemPropertiesSchema: undefined
         }
       })
       const feed: Feed = {
@@ -827,6 +834,10 @@ invalid request
           iconUrl: 'http://static.test/updated.png'
         },
         updateFrequencySeconds: 987,
+        itemPropertiesSchema: {
+          type: 'object',
+          title: 'Updated Schema'
+        },
         superfluous: {
           partOfUpdate: false
         },
@@ -889,6 +900,7 @@ invalid request
       const res = await client.delete(`${rootPath}/${feedId}`)
 
       expect(res.status).to.equal(200)
+      expect(res.status).to.not.match(jsonMimeType)
       expect(res.body).to.be.empty
     })
 

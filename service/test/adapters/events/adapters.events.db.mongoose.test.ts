@@ -13,7 +13,7 @@ import { MageEvent, MageEventCreateAttrs } from '../../../lib/entities/events/en
 
 const TeamModel = TeamModelModule.TeamModel
 
-describe.only('event mongoose repository', function() {
+describe('event mongoose repository', function() {
 
   let mongo: MongoMemoryServer
   let uri: string

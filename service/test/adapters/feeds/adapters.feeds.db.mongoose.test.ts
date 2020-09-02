@@ -12,7 +12,6 @@ import { FeedServiceTypeIdentityModel, FeedsModels, FeedServiceTypeIdentitySchem
 import { FeedServiceType } from '../../../lib/entities/feeds/entities.feeds'
 import { Json, JsonObject } from '../../../src/entities/entities.json_types'
 import { EntityIdFactory } from '../../../lib/entities/entities.global'
-import { report } from 'superagent'
 
 describe('feeds repositories', function() {
 
@@ -302,6 +301,10 @@ describe('feeds repositories', function() {
             fill: 'abc123',
             fillOpacity: 0.5,
             iconUrl: 'test.png'
+          },
+          itemPropertiesSchema: {
+            title: 'Save Me',
+            type: 'object'
           }
         })
         const expectedFeed: Omit<Feed, 'id'> = _.omit(createAttrs, 'id')
