@@ -59,4 +59,5 @@ export interface FeedTopic {
   itemTemporalProperty?: string;
   itemPrimaryProperty?: string;
   itemSecondaryProperty?: string;
+  itemPropertiesSchema?: Array<any>;
 }

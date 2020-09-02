@@ -72,7 +72,8 @@ export const FeedSchema = new mongoose.Schema(
     itemTemporalProperty: { type: String, required: false },
     itemPrimaryProperty: { type: String, required: false },
     itemSecondaryProperty: { type: String, required: false },
-    mapStyle: { type: mongoose.Schema.Types.Mixed, required: false }
+    mapStyle: { type: mongoose.Schema.Types.Mixed, required: false },
+    itemPropertiesSchema: { type: mongoose.Schema.Types.Mixed, required: false }
   },
   {
     toJSON: {
