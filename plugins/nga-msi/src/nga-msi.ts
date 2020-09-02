@@ -37,6 +37,10 @@ export class MsiServiceType implements FeedServiceType {
     return null
   }
 
+  redactServiceConfig(config: JsonObject): JsonObject {
+    return config
+  }
+
   async createConnection(config: Json): Promise<FeedServiceConnection> {
     return new MsiConnection(topics, config as string, this.transport)
   }
