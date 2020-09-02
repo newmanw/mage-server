@@ -7,11 +7,12 @@ import { expect } from 'chai'
 import { MongoMemoryServer } from 'mongodb-memory-server'
 import { Substitute as Sub, SubstituteOf } from '@fluffy-spoon/substitute'
 import { BaseMongooseRepository } from '../../../lib/adapters/base/adapters.base.db.mongoose'
-import { FeedServiceRepository, FeedServiceTypeUnregistered, InvalidServiceConfigError, FeedServiceConnection, FeedServiceInfo, FeedTopic, FeedTopicId, FeedRepository, Feed, FeedServiceCreateAttrs, FeedCreateAttrs } from '../../../lib/entities/feeds/entities.feeds'
+import { FeedServiceRepository, FeedServiceTypeUnregistered, InvalidServiceConfigError, FeedServiceConnection, FeedServiceInfo, FeedTopic, FeedTopicId, FeedRepository, Feed, FeedServiceCreateAttrs, normalizeFeedMinimalAttrs, FeedCreateAttrs } from '../../../lib/entities/feeds/entities.feeds'
 import { FeedServiceTypeIdentityModel, FeedsModels, FeedServiceTypeIdentitySchema, FeedServiceModel, FeedServiceSchema, MongooseFeedServiceTypeRepository, MongooseFeedServiceRepository, FeedServiceTypeIdentity, FeedServiceTypeIdentityDocument, FeedModel, FeedSchema, MongooseFeedRepository, FeedServiceDocument, FeedDocument } from '../../../lib/adapters/feeds/adapters.feeds.db.mongoose'
 import { FeedServiceType } from '../../../lib/entities/feeds/entities.feeds'
 import { Json, JsonObject } from '../../../src/entities/entities.json_types'
 import { EntityIdFactory } from '../../../lib/entities/entities.global'
+import { report } from 'superagent'
 
 describe('feeds repositories', function() {
 
@@ -68,6 +69,9 @@ describe('feeds repositories', function() {
       configSchema: null,
       async validateServiceConfig(config: Json): Promise<null | InvalidServiceConfigError> {
         return null
+      },
+      redactServiceConfig(config: Json): Json {
+        throw new Error('never')
       },
       async createConnection(config: Json): Promise<FeedServiceConnection> {
         const topics = this.topics
@@ -127,6 +131,9 @@ describe('feeds repositories', function() {
           throw new Error('never')
         },
         validateServiceConfig(config: Json) {
+          throw new Error('never')
+        },
+        redactServiceConfig(config: Json) {
           throw new Error('never')
         }
       }
@@ -430,6 +437,32 @@ describe('feeds repositories', function() {
       expect(created).to.not.have.property('__v')
       expect(fetched).to.not.have.property('__v')
       expect(rawFetched).to.have.property('__v')
+    })
+
+    describe('removing a feed by id', function() {
+
+      it('removes the feed for the id', async function() {
+
+        const stub: FeedCreateAttrs = Object.freeze({
+          service: mongoose.Types.ObjectId().toHexString(),
+          topic: uniqid(),
+          title: 'No Version Keys',
+          summary: 'Testing',
+          itemsHaveIdentity: true,
+          itemsHaveSpatialDimension: true
+        })
+        idFactory.nextId().resolves('remove_test')
+        const created = await repo.create({ ...stub })
+        let fetched = await model.findById(created.id)
+
+        expect(created).to.deep.include(stub)
+        expect(fetched?.toJSON()).to.deep.equal(created)
+
+        const removed = await repo.removeById(created.id)
+        fetched = await model.findById(created.id)
+        expect(fetched).to.be.null
+        expect(removed).to.deep.equal(created)
+      })
     })
   })
 })

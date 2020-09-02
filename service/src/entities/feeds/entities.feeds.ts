@@ -53,6 +53,14 @@ export interface FeedServiceType {
   readonly configSchema: JSONSchema4 | null
 
   validateServiceConfig(config: Json): Promise<null | InvalidServiceConfigError>
+  /**
+   * Remove data from the given service coniguration document that is sensitive
+   * or otherwise unsuitable to send over the wire to a service client.
+   * TODO: this might go away in favor of a marking properties on config
+   * instances as secret
+   * @param config
+   */
+  redactServiceConfig(config: Json): Json
   createConnection(config: Json): Promise<FeedServiceConnection>
 }
 
@@ -263,6 +271,8 @@ export interface FeedRepository {
   findById(id: FeedId): Promise<Feed | null>
   findFeedsByIds(...feedIds: FeedId[]): Promise<Feed[]>
   findAll(): Promise<Feed[]>
+  update(feed: FeedUpdateAttrs): Promise<Feed | null>
+  removeById(feedId: FeedId): Promise<Feed | null>
 }
 
 type FeedCreateExcplicitNullKeys = 'itemTemporalProperty' | 'itemPrimaryProperty' | 'itemSecondaryProperty' | 'updateFrequencySeconds' | 'mapStyle'
@@ -271,7 +281,9 @@ export type FeedMinimalAttrs = Partial<Omit<Feed, FeedCreateExcplicitNullKeys>> 
   readonly [nullable in keyof Pick<Feed, FeedCreateExcplicitNullKeys>]: Feed[nullable] | null
 }
 
-export const FeedCreateAttrs = (topic: FeedTopic, feedAttrs: FeedMinimalAttrs): FeedCreateAttrs => {
+export type FeedUpdateAttrs = Omit<FeedMinimalAttrs, 'service' | 'topic'> & Pick<Feed, 'id'>
+
+export const normalizeFeedMinimalAttrs = (topic: FeedTopic, feedAttrs: FeedMinimalAttrs): FeedCreateAttrs => {
   const createAttrs: { -readonly [mutable in keyof FeedCreateAttrs]: FeedCreateAttrs[mutable] } = {
     service: feedAttrs.service,
     topic: topic.id,

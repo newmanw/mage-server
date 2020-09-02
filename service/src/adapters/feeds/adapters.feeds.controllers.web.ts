@@ -8,7 +8,7 @@ declare global {
 }
 
 import express from 'express'
-import { ListFeedServiceTypes, ListServiceTopics, CreateFeedService, ListFeedServices, PreviewTopics, PreviewTopicsRequest, CreateFeed, CreateFeedRequest, ListServiceTopicsRequest, ListAllFeeds, FetchFeedContent, PreviewFeedRequest, PreviewFeed } from '../../app.api/feeds/app.api.feeds'
+import { ListFeedServiceTypes, ListServiceTopics, CreateFeedService, ListFeedServices, PreviewTopics, PreviewTopicsRequest, CreateFeed, CreateFeedRequest, ListServiceTopicsRequest, ListAllFeeds, FetchFeedContent, PreviewFeedRequest, PreviewFeed, GetFeed, UpdateFeed, UpdateFeedRequest, DeleteFeed, DeleteFeedRequest } from '../../app.api/feeds/app.api.feeds'
 import { ErrPermissionDenied, MageError, PermissionDeniedError, ErrInvalidInput, invalidInput, ErrEntityNotFound } from '../../app.api/app.api.errors'
 import { WebAppRequestFactory } from '../adapters.controllers.web'
 import { FeedServiceId, FeedTopicId } from '../../entities/feeds/entities.feeds'
@@ -22,6 +22,9 @@ export interface FeedsAppLayer {
   previewFeed: PreviewFeed
   createFeed: CreateFeed
   listAllFeeds: ListAllFeeds
+  getFeed: GetFeed
+  updateFeed: UpdateFeed
+  deleteFeed: DeleteFeed
 }
 
 export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppRequestFactory): express.Router {
@@ -214,12 +217,30 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
 
   routes.route('/:feedId')
     .get(async (req, res, next) => {
-      const appReq = createAppRequest(req)
-      const appRes = await appLayer.listAllFeeds(appReq)
+      const appReq = createAppRequest(req, { feed: req.params.feedId })
+      const appRes = await appLayer.getFeed(appReq)
       if (appRes.success) {
-        return res.json(appRes.success.filter(feed => {
-          return feed.id === req.params.feedId;
-        })[0]);
+        return res.json(appRes.success)
+      }
+      return next(appRes.error)
+    })
+    .put(async (req, res, next) => {
+      const updateParams = Object.assign({ ...feedCreateParamsFromRequestBody('remove', 'remove', req.body).feed }, { id: req.body.id as string })
+      delete updateParams.service
+      delete updateParams.topic
+      const appReq: UpdateFeedRequest = createAppRequest(req, { feed: updateParams })
+      const appRes = await appLayer.updateFeed(appReq)
+      if (appRes.success) {
+        return res.json(appRes.success)
+      }
+      return next(appRes.error)
+    })
+    .delete(async (req, res, next) => {
+      const feedId = req.params.feedId
+      const appReq: DeleteFeedRequest = createAppRequest(req, { feed: feedId })
+      const appRes = await appLayer.deleteFeed(appReq)
+      if (appRes.success) {
+        return res.sendStatus(200)
       }
       return next(appRes.error)
     })

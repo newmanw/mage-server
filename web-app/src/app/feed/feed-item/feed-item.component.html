@@ -17,7 +17,7 @@
     <img mat-card-avatar *ngIf="iconUrl" [src]="iconUrl" />
   </div>
   <div mat-card-image>
-    <map-clip class="map" [feature]=item></map-clip>
+    <map-clip class="map" [feature]=mapFeature></map-clip>
   </div>
   <div class="card-actions">
     <button mat-button color="primary" (click)="onLocationClick()">

@@ -29,7 +29,8 @@ export const topicDescriptor: FeedTopic = {
   itemTemporalProperty: 'timestamp',
   updateFrequencySeconds: 60 * 15,
   mapStyle: {
-    iconUrl: 'https://mage-msi.geointservices.io/icons/modu.png'
+    // TODO: figure out dynamic url resolution
+    iconUrl: 'https://magefeed.geointservices.io/icons/asam.png'
   }
 }
 

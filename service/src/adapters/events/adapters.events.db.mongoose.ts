@@ -34,6 +34,10 @@ export class MongooseMageEventRepository extends BaseMongooseRepository<MageEven
     return updated?.toJSON() || null
   }
 
+  async findEventsWithFeed(feed: FeedId): Promise<MageEvent[]> {
+    throw new Error('unimplemented.')
+  }
+
   async removeFeedsFromEvent(event: MageEventId, ...feeds: FeedId[]): Promise<MageEvent | null> {
     const updated = await this.model.findByIdAndUpdate(
       event,
@@ -44,6 +48,12 @@ export class MongooseMageEventRepository extends BaseMongooseRepository<MageEven
       },
       { new: true })
     return updated?.toJSON() || null
+  }
+
+  async removeFeedFromEvents(feed: FeedId): Promise<number> {
+    const filter = filterEventsWithFeed(feed)
+    const updated = await this.model.updateMany(filter, { $pull: { feedIds: feed }})
+    return updated.nModified
   }
 
   async findTeamsInEvent(event: MageEventId): Promise<Team[] | null> {
@@ -59,4 +69,8 @@ export class MongooseMageEventRepository extends BaseMongooseRepository<MageEven
       return team
     })
   }
+}
+
+function filterEventsWithFeed(feed: FeedId): any {
+  return { feedIds: { $elemMatch: { $eq: feed }}}
 }

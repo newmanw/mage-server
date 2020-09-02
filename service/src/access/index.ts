@@ -2,8 +2,8 @@
  * Module dependencies.
  */
 
-import { AnyPermission } from '../models/permission'
 import express from 'express'
+import { AnyPermission } from '../models/permission'
 import { RoleDocument } from '../models/role'
 import { UserDocument } from '../models/user'
 

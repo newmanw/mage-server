@@ -22,7 +22,6 @@ import { JsonSchemaService, JsonValidator, JSONSchema4 } from './entities/entiti
 import { MageEventModel, MongooseMageEventRepository } from './adapters/events/adapters.events.db.mongoose'
 import { MageEventRepository } from './entities/events/entities.events'
 import { EventFeedsRoutes } from './adapters/events/adapters.events.controllers.web'
-import { Z_UNKNOWN } from 'zlib'
 
 
 export interface MageService {
@@ -80,12 +79,13 @@ export const boot = async function(config: BootConfig): Promise<MageService> {
   }
 
   const models = await initializeDatabase()
-  const appLayer = await intitializeAppLayer(models)
+  const repos = await intializeRepositories(models)
+  const appLayer = await intitializeAppLayer(repos)
 
   // load routes the old way
-  const app = await intializeRestInterface(appLayer)
+  const app = await intializeRestInterface(repos, appLayer)
 
-  await loadPlugins(config.plugins, appLayer)
+  await loadPlugins(config.plugins, { feeds: { serviceTypeRepo: repos.feeds.serviceTypeRepo }})
 
   const server = http.createServer(app)
   service = {
@@ -115,9 +115,6 @@ type DatabaseModels = {
 
 type AppLayer = {
   feeds: {
-    serviceTypeRepo: FeedServiceTypeRepository
-    serviceRepo: FeedServiceRepository
-    feedRepo: FeedRepository
     jsonSchemaService: JsonSchemaService
     permissionService: feedsApi.FeedsPermissionService
     listServiceTypes: feedsApi.ListFeedServiceTypes
@@ -128,9 +125,11 @@ type AppLayer = {
     previewFeed: feedsApi.PreviewFeed
     createFeed: feedsApi.CreateFeed
     listAllFeeds: feedsApi.ListAllFeeds
+    getFeed: feedsApi.GetFeed
+    updateFeed: feedsApi.UpdateFeed
+    deleteFeed: feedsApi.DeleteFeed
   },
   events: {
-    eventRepo: MageEventRepository
     addFeedToEvent: eventsApi.AddFeedToEvent
     listEventFeeds: eventsApi.ListEventFeeds
     removeFeedFromEvent: eventsApi.RemoveFeedFromEvent
@@ -145,7 +144,6 @@ async function initializeDatabase(): Promise<DatabaseModels> {
   // TODO: inject connection to migrations
   // TODO: explore performing migrations without mongoose models because current models may not be compatible with past migrations
   require('./models').initializeModels()
-  const idFactory = new SimpleIdFactory()
   const migrate = await import('./migrate')
   await migrate.runDatabaseMigrations(uri, options)
   return {
@@ -161,54 +159,76 @@ async function initializeDatabase(): Promise<DatabaseModels> {
   }
 }
 
-async function intitializeAppLayer(dbModels: DatabaseModels): Promise<AppLayer> {
-  const feeds = await intializeFeedsAppLayer(dbModels)
-  const events = await intializeEventsAppLayer(dbModels, feeds)
+type Repositories = {
+  events: {
+    eventRepo: MageEventRepository
+  },
+  feeds: {
+    serviceTypeRepo: FeedServiceTypeRepository,
+    serviceRepo: FeedServiceRepository,
+    feedRepo: FeedRepository
+  }
+}
+
+  // TODO: the real thing
+const jsonSchemaService: JsonSchemaService = {
+  async validateSchema(schema: JSONSchema4): Promise<JsonValidator> {
+    return {
+      validate: async () => null
+    }
+  }
+}
+
+async function intializeRepositories(models: DatabaseModels): Promise<Repositories> {
+  const serviceTypeRepo = new MongooseFeedServiceTypeRepository(models.feeds.feedServiceTypeIdentity)
+  const serviceRepo = new MongooseFeedServiceRepository(models.feeds.feedService)
+  const feedRepo = new MongooseFeedRepository(models.feeds.feed, new SimpleIdFactory())
+  const eventRepo = new MongooseMageEventRepository(models.events.event)
+  return {
+    feeds: {
+      serviceTypeRepo, serviceRepo, feedRepo
+    },
+    events: {
+      eventRepo
+    }
+  }
+}
+
+async function intitializeAppLayer(repos: Repositories): Promise<AppLayer> {
+  const feeds = await intializeFeedsAppLayer(repos)
+  const events = await intializeEventsAppLayer(repos)
   return {
     events,
     feeds,
   }
 }
 
-async function intializeEventsAppLayer(dbModels: DatabaseModels, feeds: AppLayer['feeds']): Promise<AppLayer['events']> {
+async function intializeEventsAppLayer(repos: Repositories): Promise<AppLayer['events']> {
   const eventPermissions = await import('./permissions/permissions.events')
-  const eventRepo: MageEventRepository = new MongooseMageEventRepository(dbModels.events.event)
-  const eventFeedsPermissions = new eventPermissions.EventFeedsPermissionService(eventRepo, eventPermissions.defaultEventPermissionsSevice)
+  const eventFeedsPermissions = new eventPermissions.EventFeedsPermissionService(repos.events.eventRepo, eventPermissions.defaultEventPermissionsSevice)
   return {
-    eventRepo,
-    addFeedToEvent: eventsImpl.AddFeedToEvent(eventPermissions.defaultEventPermissionsSevice, eventRepo),
-    listEventFeeds: eventsImpl.ListEventFeeds(eventPermissions.defaultEventPermissionsSevice, eventRepo, feeds.feedRepo),
-    removeFeedFromEvent: eventsImpl.RemoveFeedFromEvent(eventPermissions.defaultEventPermissionsSevice, eventRepo),
-    fetchFeedContent: feedsImpl.FetchFeedContent(eventFeedsPermissions, feeds.serviceTypeRepo, feeds.serviceRepo, feeds.feedRepo, feeds.jsonSchemaService)
+    addFeedToEvent: eventsImpl.AddFeedToEvent(eventPermissions.defaultEventPermissionsSevice, repos.events.eventRepo),
+    listEventFeeds: eventsImpl.ListEventFeeds(eventPermissions.defaultEventPermissionsSevice, repos.events.eventRepo, repos.feeds.feedRepo),
+    removeFeedFromEvent: eventsImpl.RemoveFeedFromEvent(eventPermissions.defaultEventPermissionsSevice, repos.events.eventRepo),
+    fetchFeedContent: feedsImpl.FetchFeedContent(eventFeedsPermissions, repos.feeds.serviceTypeRepo, repos.feeds.serviceRepo, repos.feeds.feedRepo, jsonSchemaService)
   }
 }
 
-function intializeFeedsAppLayer(dbModels: DatabaseModels): AppLayer['feeds'] {
-  const serviceTypeRepo = new MongooseFeedServiceTypeRepository(dbModels.feeds.feedServiceTypeIdentity)
-  const serviceRepo = new MongooseFeedServiceRepository(dbModels.feeds.feedService)
-  const feedRepo = new MongooseFeedRepository(dbModels.feeds.feed, new SimpleIdFactory())
-  // TODO: the real thing
-  const jsonSchemaService: JsonSchemaService = {
-    async validateSchema(schema: JSONSchema4): Promise<JsonValidator> {
-      return {
-        validate: async () => null
-      }
-    }
-  }
-
+function intializeFeedsAppLayer(repos: Repositories): AppLayer['feeds'] {
+  const { serviceTypeRepo, serviceRepo, feedRepo } = repos.feeds
   const permissionService = new PreFetchedUserRoleFeedsPermissionService()
   const listServiceTypes = feedsImpl.ListFeedServiceTypes(permissionService, serviceTypeRepo)
   const previewTopics = feedsImpl.PreviewTopics(permissionService, serviceTypeRepo)
   const createService = feedsImpl.CreateFeedService(permissionService, serviceTypeRepo, serviceRepo)
-  const listServices = feedsImpl.ListFeedServices(permissionService, serviceRepo)
+  const listServices = feedsImpl.ListFeedServices(permissionService, serviceTypeRepo, serviceRepo)
   const listTopics = feedsImpl.ListServiceTopics(permissionService, serviceTypeRepo, serviceRepo)
   const previewFeed = feedsImpl.PreviewFeed(permissionService, serviceTypeRepo, serviceRepo, jsonSchemaService)
   const createFeed = feedsImpl.CreateFeed(permissionService, serviceTypeRepo, serviceRepo, feedRepo, jsonSchemaService)
   const listAllFeeds = feedsImpl.ListAllFeeds(permissionService, feedRepo)
+  const getFeed = feedsImpl.GetFeed(permissionService, serviceTypeRepo, serviceRepo, feedRepo)
+  const updateFeed = feedsImpl.UpdateFeed(permissionService, serviceTypeRepo, serviceRepo, feedRepo)
+  const deleteFeed = feedsImpl.DeleteFeed(permissionService, feedRepo, repos.events.eventRepo)
   return {
-    serviceTypeRepo,
-    serviceRepo,
-    feedRepo,
     jsonSchemaService,
     permissionService,
     listServiceTypes,
@@ -219,10 +239,13 @@ function intializeFeedsAppLayer(dbModels: DatabaseModels): AppLayer['feeds'] {
     previewFeed,
     createFeed,
     listAllFeeds,
+    getFeed,
+    updateFeed,
+    deleteFeed,
   }
 }
 
-async function intializeRestInterface(app: AppLayer): Promise<express.Application> {
+async function intializeRestInterface(repos: Repositories, app: AppLayer): Promise<express.Application> {
   const webLayer = await import('./express')
   const webApp = webLayer.app
   const webAuth = webLayer.auth
@@ -239,7 +262,7 @@ async function intializeRestInterface(app: AppLayer): Promise<express.Applicatio
     }
   }
   const feedsRoutes = FeedsRoutes(app.feeds, appRequestFactory)
-  const eventFeedsRoutes = EventFeedsRoutes(app.events, appRequestFactory)
+  const eventFeedsRoutes = EventFeedsRoutes({ ...app.events, eventRepo: repos.events.eventRepo }, appRequestFactory)
   webApp.use('/api/feeds', [
     webAuth.passport.authenticate('bearer'),
     feedsRoutes

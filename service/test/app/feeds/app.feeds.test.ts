@@ -1,15 +1,17 @@
 import { describe, it, beforeEach, Context } from 'mocha'
 import { expect } from 'chai'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
-import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedService, FeedServiceConnection, RegisteredFeedServiceType, Feed, FeedMinimalAttrs, FeedCreateAttrs, FeedRepository, FeedId, FeedContent } from '../../../lib/entities/feeds/entities.feeds'
-import { ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics, ListFeedServices, PreviewFeed, CreateFeed, ListAllFeeds, FetchFeedContent } from '../../../lib/app.impl/feeds/app.impl.feeds'
-import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError, PermissionDeniedErrorData } from '../../../lib/app.api/app.api.errors'
+import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedService, FeedServiceConnection, RegisteredFeedServiceType, Feed, FeedMinimalAttrs, normalizeFeedMinimalAttrs, FeedRepository, FeedId, FeedContent, FeedUpdateAttrs, FeedCreateAttrs } from '../../../lib/entities/feeds/entities.feeds'
+import { ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics, ListFeedServices, PreviewFeed, CreateFeed, ListAllFeeds, FetchFeedContent, GetFeed, UpdateFeed, DeleteFeed, GetFeedService, DeleteFeedService } from '../../../lib/app.impl/feeds/app.impl.feeds'
+import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError, PermissionDeniedErrorData, KeyPathError } from '../../../lib/app.api/app.api.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
-import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, FeedPreview, FetchFeedContentRequest } from '../../../lib/app.api/feeds/app.api.feeds'
+import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, FeedPreview, FetchFeedContentRequest, FeedExpanded, GetFeedRequest, UpdateFeedRequest, DeleteFeedRequest, CreateFeedServiceRequest, GetFeedServiceRequest, DeleteFeedServiceRequest } from '../../../lib/app.api/feeds/app.api.feeds'
 import uniqid from 'uniqid'
 import { AppRequestContext, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeatureCollection } from 'geojson'
 import { JsonObject, JsonSchemaService, JsonValidator } from '../../../lib/entities/entities.json_types'
+import _ from 'lodash'
+import { MageEventRepository } from '../../../lib/entities/events/entities.events'
 
 
 function mockServiceType(descriptor: FeedServiceTypeDescriptor): SubstituteOf<RegisteredFeedServiceType> {
@@ -87,7 +89,7 @@ function requestBy<RequestType>(principal: TestPrincipal, params?: RequestType):
   )
 }
 
-describe('feeds use case interactions', function() {
+describe.only('feeds use case interactions', function() {
 
   let app: TestApp
   let someServiceTypes: SubstituteOf<RegisteredFeedServiceType>[]
@@ -182,6 +184,7 @@ describe('feeds use case interactions', function() {
         const serviceType = someServiceTypes[0]
         const config = { url: 'https://some.service/somewhere' }
         serviceType.validateServiceConfig(Arg.deepEquals(config) as any).resolves(null)
+        serviceType.redactServiceConfig(Arg.any()).returns(config)
 
         const created = await app
           .createService(requestBy(adminPrincipal, { serviceType: serviceType.id, title: 'Test Service', config }))
@@ -196,6 +199,32 @@ describe('feeds use case interactions', function() {
           config: config
         })
         expect(inDb).to.deep.equal(created)
+      })
+
+      it('redacts the feed service config in the result', async function() {
+
+        const serviceType = someServiceTypes[0]
+        const config = { url: 'https://lerp', secret: 'redact me' }
+        serviceType.validateServiceConfig(Arg.deepEquals(config) as any).resolves(null)
+        serviceType.redactServiceConfig(Arg.any()).returns(_.omit(config, 'secret'))
+        const req: CreateFeedServiceRequest = requestBy(adminPrincipal, {
+          serviceType: serviceType.id,
+          title: 'Redact Config',
+          summary: null,
+          config
+        })
+        const res = await app.createService(req)
+
+        expect(res.error).to.be.null
+        expect(res.success).to.deep.include({
+          serviceType: req.serviceType,
+          title: req.title,
+          summary: req.summary,
+          config: {
+            url: config.url
+          }
+        })
+        serviceType.received(1).redactServiceConfig(Arg.deepEquals(req.config))
       })
     })
 
@@ -212,7 +241,7 @@ describe('feeds use case interactions', function() {
           }
         },
         {
-          id: `${someServiceTypeDescs[0].id}:${uniqid()}`,
+          id: `${someServiceTypeDescs[1].id}:${uniqid()}`,
           serviceType: someServiceTypeDescs[1].id,
           title: 'OAF 1',
           summary: null,
@@ -224,6 +253,7 @@ describe('feeds use case interactions', function() {
       ]
 
       beforeEach(function() {
+        app.registerServiceTypes(...someServiceTypes)
         app.registerServices(...someServices)
       })
 
@@ -245,14 +275,47 @@ describe('feeds use case interactions', function() {
 
       it('returns the saved services', async function() {
 
+        someServiceTypes[0].redactServiceConfig(Arg.all()).returns(someServices[0].config)
+        someServiceTypes[1].redactServiceConfig(Arg.all()).returns(someServices[1].config)
         const adminReq = requestBy(adminPrincipal)
         const res = await app.listServices(adminReq)
 
         expect(res.error).to.be.null
         expect(res.success).to.be.instanceOf(Array)
         expect(res.success?.length).to.equal(someServices.length)
-        expect(res.success).to.deep.contain(someServices[0])
-        expect(res.success).to.deep.contain(someServices[1])
+        expect(res.success).to.deep.include(someServices[0])
+        expect(res.success).to.deep.include(someServices[1])
+      })
+
+      it('redacts service configurations', async function() {
+
+        const anotherService: FeedService = {
+          id: uniqid(),
+          serviceType: someServiceTypes[1].id,
+          title: 'Service Type 1 Service',
+          summary: null,
+          config: {
+            secretUrl: 'https://type1.secret.net/api'
+          }
+        }
+        app.registerServices(anotherService)
+        someServiceTypes[0].redactServiceConfig(Arg.deepEquals(someServices[0].config)).returns(someServices[0].config)
+        someServiceTypes[1].redactServiceConfig(Arg.deepEquals(someServices[1].config)).returns(someServices[1].config)
+        someServiceTypes[1].redactServiceConfig(Arg.deepEquals(anotherService.config)).returns({})
+        const req = requestBy(adminPrincipal)
+        const res = await app.listServices(req)
+        const services = res.success!
+
+        const anotherServiceRedacted = Object.assign({ ...anotherService }, { config: {}})
+        expect(services).to.have.length(3)
+        expect(services).to.have.deep.members([
+          someServices[0],
+          someServices[1],
+          anotherServiceRedacted
+        ])
+        someServiceTypes[0].received(1).redactServiceConfig(Arg.deepEquals(someServices[0].config))
+        someServiceTypes[1].received(1).redactServiceConfig(Arg.deepEquals(someServices[1].config))
+        someServiceTypes[1].received(1).redactServiceConfig(Arg.deepEquals(anotherService.config))
       })
     })
 
@@ -371,7 +434,7 @@ describe('feeds use case interactions', function() {
       })
     })
 
-    describe('listing topics from a saved service', async function() {
+    describe('single service operations', function() {
 
       const someServices: FeedService[] = [
         {
@@ -402,116 +465,206 @@ describe('feeds use case interactions', function() {
         }
       })
 
-      it('checks permission for listing topics', async function() {
+      describe('fetching a service', function() {
 
-        const serviceDesc = someServices[0]
-        const req: ListServiceTopicsRequest = requestBy(
-          bannedPrincipal,
-          {
-            service: serviceDesc.id
-          })
-        const err = await app.listTopics(req).then(res => res.error as PermissionDeniedError)
+        it('returns the expanded and redacted service', async function() {
 
-        expect(err).to.be.instanceOf(MageError)
-        expect(err.code).to.equal(ErrPermissionDenied)
-        for (const serviceType of someServiceTypes) {
-          serviceType.didNotReceive().createConnection(Arg.any())
-        }
+          const redactedConfig = { redacted: true }
+          someServiceTypes[0].redactServiceConfig(Arg.deepEquals(someServices[1].config)).returns(redactedConfig)
+          const req: GetFeedServiceRequest = requestBy(adminPrincipal, { service: someServices[1].id })
+          const res = await app.getService(req)
 
-        const service = Sub.for<FeedServiceConnection>()
-        service.fetchAvailableTopics().resolves([])
-        const serviceType = someServiceTypes.filter(x => x.id === serviceDesc.serviceType)[0]
-        serviceType.createConnection(Arg.deepEquals(serviceDesc.config)).resolves(service)
-        app.permissionService.grantListTopics(bannedPrincipal.user, serviceDesc.id)
+          expect(res.error).to.be.null
+          expect(res.success).to.be.an('object')
+          expect(res.success).to.deep.equal(Object.assign({ ...someServices[1] }, { serviceType: someServiceTypeDescs[0], config: redactedConfig }))
+        })
 
-        const res = await app.listTopics(req)
+        it('checks permission for fetching a service', async function() {
 
-        expect(res.success).to.be.instanceOf(Array)
-        expect(res.success).to.have.lengthOf(0)
-        expect(res.error).to.be.null
-        serviceType.received(1).createConnection(Arg.any())
+          const req: GetFeedServiceRequest = requestBy(bannedPrincipal, { service: someServices[1].id })
+          let res = await app.getService(req)
+
+          expect(res.success).to.be.null
+          expect(res.error).to.be.instanceOf(MageError)
+          expect(res.error?.code).to.equal(ErrPermissionDenied)
+          const err = res.error as PermissionDeniedError
+          expect(err.data.subject).to.equal(bannedPrincipal.user)
+          expect(err.data.permission).to.equal(ListFeedServices.name)
+
+          app.permissionService.grantListServices(bannedPrincipal.user)
+          someServiceTypes[0].redactServiceConfig(Arg.any()).returns(someServices[1].config)
+          res = await app.getService(req)
+
+          expect(res.error).to.be.null
+          expect(res.success).to.be.an('object')
+        })
+
+        it('fails if the service does not exist', async function() {
+
+          const req: GetFeedServiceRequest = requestBy(adminPrincipal, { service: uniqid() })
+          let res = await app.getService(req)
+
+          expect(res.success).to.be.null
+          expect(res.error).to.be.instanceOf(MageError)
+          expect(res.error?.code).to.equal(ErrEntityNotFound)
+          const err = res.error as EntityNotFoundError
+          expect(err.data.entityId).to.equal(req.service)
+          expect(err.data.entityType).to.equal('FeedService')
+        })
       })
 
-      it('returns all the topics for a service', async function() {
+      describe('updating a service', function() {
 
-        const topics: FeedTopic[] = [
-          Object.freeze({
-            id: 'weather_alerts',
-            title: 'Weather Alerts',
-            summary: 'Alerts about severe weather activity',
-            constantParamsSchema: {
-              type: 'number',
-              title: 'Max items',
-              default: 20,
-              minimum: 1,
-              maximum: 100
-            },
-            variableParamsSchema: {
-              type: 'object',
-              properties: {
-                '$mage:currentLocation': {
-                  title: 'Current Location',
-                  type: 'array',
-                  minItems: 2,
-                  maxItems: 2,
-                  items: {
-                    type: 'number'
+        it('works', async function() {
+          expect.fail('todo')
+        })
+      })
+
+      describe('deleting a service', function() {
+
+        it('removes the service from the repository', async function() {
+
+          const service = someServices[1]
+          const req: DeleteFeedServiceRequest = requestBy(adminPrincipal, {
+            service: service.id
+          })
+          let inDb = app.serviceRepo.db.get(service.id)
+          expect(inDb).to.deep.equal(service)
+
+          const res = await app.deleteService(req)
+          inDb = app.serviceRepo.db.get(service.id)
+
+          expect(res.error).to.be.null
+          expect(res.success).to.be.true
+          expect(inDb).to.be.undefined
+        })
+
+        it('removes related feeds and their event entries', async function() {
+          expect.fail('todo')
+        })
+
+        it('fails if the service does not exist', async function() {
+          expect.fail('todo')
+        })
+
+        it('checks permission for deleting a service', async function() {
+          expect.fail('todo')
+        })
+      })
+
+      describe('listing topics from a saved service', async function() {
+
+        it('checks permission for listing topics', async function() {
+
+          const serviceDesc = someServices[0]
+          const req: ListServiceTopicsRequest = requestBy(
+            bannedPrincipal,
+            {
+              service: serviceDesc.id
+            })
+          const err = await app.listTopics(req).then(res => res.error as PermissionDeniedError)
+
+          expect(err).to.be.instanceOf(MageError)
+          expect(err.code).to.equal(ErrPermissionDenied)
+          for (const serviceType of someServiceTypes) {
+            serviceType.didNotReceive().createConnection(Arg.any())
+          }
+
+          const service = Sub.for<FeedServiceConnection>()
+          service.fetchAvailableTopics().resolves([])
+          const serviceType = someServiceTypes.filter(x => x.id === serviceDesc.serviceType)[0]
+          serviceType.createConnection(Arg.deepEquals(serviceDesc.config)).resolves(service)
+          app.permissionService.grantListTopics(bannedPrincipal.user, serviceDesc.id)
+
+          const res = await app.listTopics(req)
+
+          expect(res.success).to.be.instanceOf(Array)
+          expect(res.success).to.have.lengthOf(0)
+          expect(res.error).to.be.null
+          serviceType.received(1).createConnection(Arg.any())
+        })
+
+        it('returns all the topics for a service', async function() {
+
+          const topics: FeedTopic[] = [
+            Object.freeze({
+              id: 'weather_alerts',
+              title: 'Weather Alerts',
+              summary: 'Alerts about severe weather activity',
+              constantParamsSchema: {
+                type: 'number',
+                title: 'Max items',
+                default: 20,
+                minimum: 1,
+                maximum: 100
+              },
+              variableParamsSchema: {
+                type: 'object',
+                properties: {
+                  '$mage:currentLocation': {
+                    title: 'Current Location',
+                    type: 'array',
+                    minItems: 2,
+                    maxItems: 2,
+                    items: {
+                      type: 'number'
+                    }
+                  },
+                  radius: {
+                    title: 'Radius (Km)',
+                    type: 'number',
+                    default: 5,
+                    minimum: 1,
+                    maximum: 250
                   }
                 },
-                radius: {
-                  title: 'Radius (Km)',
-                  type: 'number',
-                  default: 5,
-                  minimum: 1,
-                  maximum: 250
-                }
+                required: [ '$mage:currentLocation' ]
               },
-              required: [ '$mage:currentLocation' ]
-            },
-            updateFrequency: { seconds: 60 },
-            itemsHaveIdentity: true,
-            itemsHaveSpatialDimension: true,
-            itemsHaveTemporalDimension: true,
-            itemPrimaryProperty: 'title',
-            itemSecondaryProperty: 'description'
-          }),
-          Object.freeze({
-            id: 'quakes',
-            title: 'Earthquake Alerts',
-            summary: 'Alerts about seismic in a given area',
-            constantParamsSchema: undefined,
-            variableParamsSchema: {
-              type: 'object',
-              properties: {
-                '$mage:currentLocation': {
-                  title: 'Current Location',
-                  type: 'array',
-                  minItems: 2,
-                  maxItems: 2,
-                  items: {
-                    type: 'number'
+              updateFrequency: { seconds: 60 },
+              itemsHaveIdentity: true,
+              itemsHaveSpatialDimension: true,
+              itemsHaveTemporalDimension: true,
+              itemPrimaryProperty: 'title',
+              itemSecondaryProperty: 'description'
+            }),
+            Object.freeze({
+              id: 'quakes',
+              title: 'Earthquake Alerts',
+              summary: 'Alerts about seismic in a given area',
+              constantParamsSchema: undefined,
+              variableParamsSchema: {
+                type: 'object',
+                properties: {
+                  '$mage:currentLocation': {
+                    title: 'Current Location',
+                    type: 'array',
+                    minItems: 2,
+                    maxItems: 2,
+                    items: {
+                      type: 'number'
+                    }
                   }
-                }
+                },
+                required: [ '$mage:currentLocation' ]
               },
-              required: [ '$mage:currentLocation' ]
-            },
-            updateFrequency: undefined,
-            itemsHaveIdentity: false,
-            itemsHaveSpatialDimension: false,
-            itemsHaveTemporalDimension: true,
-            itemPrimaryProperty: 'severity',
-            itemSecondaryProperty: undefined
-          })
-        ]
-        const serviceDesc = someServices[1]
-        const serviceType = someServiceTypes.filter(x => x.id === serviceDesc.serviceType)[0]
-        const service = Sub.for<FeedServiceConnection>()
-        serviceType.createConnection(Arg.deepEquals(serviceDesc.config)).resolves(service)
-        service.fetchAvailableTopics().resolves(topics)
-        const req: ListServiceTopicsRequest = requestBy(adminPrincipal, { service: serviceDesc.id })
-        const fetched = await app.listTopics(req).then(res => res.success)
+              updateFrequency: undefined,
+              itemsHaveIdentity: false,
+              itemsHaveSpatialDimension: false,
+              itemsHaveTemporalDimension: true,
+              itemPrimaryProperty: 'severity',
+              itemSecondaryProperty: undefined
+            })
+          ]
+          const serviceDesc = someServices[1]
+          const serviceType = someServiceTypes.filter(x => x.id === serviceDesc.serviceType)[0]
+          const service = Sub.for<FeedServiceConnection>()
+          serviceType.createConnection(Arg.deepEquals(serviceDesc.config)).resolves(service)
+          service.fetchAvailableTopics().resolves(topics)
+          const req: ListServiceTopicsRequest = requestBy(adminPrincipal, { service: serviceDesc.id })
+          const fetched = await app.listTopics(req).then(res => res.success)
 
-        expect(fetched).to.deep.equal(topics)
+          expect(fetched).to.deep.equal(topics)
+        })
       })
     })
 
@@ -1071,7 +1224,314 @@ describe('feeds use case interactions', function() {
       })
     })
 
-    describe('listing all feeds', async function() {
+    describe('single feed operations', function() {
+
+      let feeds: Feed[]
+      let services: { service: FeedService, topics: Required<FeedTopic>[], conn: SubstituteOf<FeedServiceConnection> }[]
+
+      beforeEach(function() {
+        services = [
+          {
+            service: Object.freeze({
+              id: uniqid(),
+              serviceType: someServiceTypes[1].id,
+              title: 'News 1',
+              summary: null,
+              config: { url: 'https://test.service1', secret: uniqid() },
+            }),
+            topics: [
+              Object.freeze({
+                id: uniqid(),
+                title: 'News 1 Politics',
+                summary: 'News on politics 1',
+                itemPrimaryProperty: 'topic1:primary',
+                itemSecondaryProperty: 'topic1:secondary',
+                itemTemporalProperty: 'topic1:published',
+                itemsHaveIdentity: false,
+                itemsHaveSpatialDimension: true,
+                paramsSchema: {
+                  title: 'Topic 1 Params'
+                },
+                mapStyle: {
+                  iconUrl: 'topic1.png'
+                },
+                updateFrequencySeconds: 5 * 60,
+              })
+            ],
+            conn: Sub.for<FeedServiceConnection>(),
+          },
+          {
+            service: Object.freeze({
+              id: uniqid(),
+              serviceType: someServiceTypes[1].id,
+              title: 'News 2',
+              summary: null,
+              config: { url: 'https://test.service2' },
+            }),
+            topics: [
+              Object.freeze({
+                id: uniqid(),
+                title: 'News 2 Sports',
+                summary: 'News on sports 2',
+                itemPrimaryProperty: 'topic2:primary',
+                itemSecondaryProperty: 'topic2:secondary',
+                itemTemporalProperty: 'topic2:published',
+                itemsHaveIdentity: false,
+                itemsHaveSpatialDimension: true,
+                paramsSchema: {
+                  title: 'Topic 2 Params'
+                },
+                mapStyle: {
+                  iconUrl: 'topic2.png'
+                },
+                updateFrequencySeconds: 15 * 60,
+              })
+            ],
+            conn: Sub.for<FeedServiceConnection>(),
+          }
+        ]
+        feeds = [
+          Object.freeze({
+            id: uniqid(),
+            title: 'Politics',
+            service: services[0].service.id,
+            topic: services[0].topics[0].id,
+            itemsHaveIdentity: true,
+            itemsHaveSpatialDimension: false,
+            variableParamsSchema: {
+              properties: {
+                search: { type: 'string' }
+              }
+            }
+          }),
+          Object.freeze({
+            id: uniqid(),
+            title: 'Sports',
+            service: services[1].service.id,
+            topic: services[1].topics[0].id,
+            itemsHaveIdentity: true,
+            itemsHaveSpatialDimension: true,
+            constantParams: {
+              limit: 50
+            },
+            updateFrequencySeconds:  10 * 60
+          })
+        ]
+        app.registerServiceTypes(...someServiceTypes)
+        app.registerServices(...services.map(x => x.service))
+        app.registerFeeds(...feeds)
+        const serviceType = someServiceTypes[1]
+        for (const serviceTuple of services) {
+          serviceType.createConnection(Arg.deepEquals(serviceTuple.service.config)).resolves(serviceTuple.conn)
+          serviceTuple.conn.fetchAvailableTopics().resolves(serviceTuple.topics)
+        }
+      })
+
+      describe('getting an expanded feed', function() {
+
+        it('returns the feed with redacted service and topic populated', async function() {
+
+          const redactedConfig = { redacted: true }
+          const feedExpanded: FeedExpanded = Object.assign({ ...feeds[0] }, {
+            service: Object.assign({ ...services[0].service }, { config: redactedConfig }),
+            topic: { ...services[0].topics[0] }
+          })
+          someServiceTypes[1].redactServiceConfig(Arg.deepEquals(services[0].service.config)).returns(redactedConfig)
+          const req: GetFeedRequest = requestBy(adminPrincipal, { feed: feeds[0].id })
+          const res = await app.getFeed(req)
+
+          expect(res.error).to.be.null
+          expect(res.success).to.deep.equal(feedExpanded)
+          someServiceTypes[1].received(1).redactServiceConfig(Arg.deepEquals(services[0].service.config))
+        })
+
+        it('checks permission for fetting the feed', async function() {
+
+          app.permissionService.revokeListFeeds(adminPrincipal.user)
+          const req: GetFeedRequest = requestBy(adminPrincipal, { feed: feeds[0].id })
+          const res = await app.getFeed(req)
+
+          expect(res.success).to.be.null
+          expect(res.error).to.be.instanceOf(MageError)
+          expect(res.error?.code).to.equal(ErrPermissionDenied)
+        })
+      })
+
+      describe('updating a feed', function() {
+
+        beforeEach(function() {
+          app.permissionService.grantCreateFeed(adminPrincipal.user, feeds[0].service)
+          app.permissionService.grantCreateFeed(adminPrincipal.user, feeds[1].service)
+        })
+
+        it('saves the new feed attributes', async function() {
+
+          const feedMod: Omit<Required<Feed>, 'service' | 'topic'> = {
+            id: feeds[1].id,
+            title: 'Updated Feed',
+            summary: 'Test updateds',
+            itemPrimaryProperty: 'updated1',
+            itemSecondaryProperty: 'updated2',
+            itemTemporalProperty: 'updatedTemporal',
+            itemsHaveIdentity: !feeds[1].itemsHaveIdentity,
+            itemsHaveSpatialDimension: !feeds[1].itemsHaveSpatialDimension,
+            constantParams: {
+              updated: true
+            },
+            variableParamsSchema: {
+              properties: {
+                test: { type: 'string' }
+              }
+            },
+            mapStyle: {
+              fill: 'updated-green'
+            },
+            updateFrequencySeconds: 357
+          }
+          const req: UpdateFeedRequest = requestBy(adminPrincipal, { feed: feedMod })
+          const res = await app.updateFeed(req)
+
+          const expanded = Object.assign({ ...feedMod }, { service: services[1].service, topic: services[1].topics[0] })
+          const referenced = Object.assign({ ...feedMod }, { service: feeds[1].service, topic: feeds[1].topic })
+          const inDb = app.feedRepo.db.get(feeds[1].id)
+          expect(res.error).to.be.null
+          expect(res.success).to.deep.equal(expanded)
+          expect(inDb).to.deep.equal(referenced)
+        })
+
+        it('does not allow changing the service and topic', async function() {
+
+          const feedMod: FeedUpdateAttrs & Pick<Feed, 'service' | 'topic'> = Object.freeze({
+            id: feeds[0].id,
+            service: feeds[0].service + '-mod',
+            topic: feeds[0].topic + '-mod'
+          })
+          const req: UpdateFeedRequest = requestBy(adminPrincipal, { feed: feedMod })
+          const res = await app.updateFeed(req)
+
+          expect(res.success).to.be.null
+          expect(res.error).to.be.instanceOf(MageError)
+          expect(res.error?.code).to.equal(ErrInvalidInput)
+          expect(res.error?.message).to.contain('service')
+          expect(res.error?.message).to.contain('topic')
+          const errData = res.error?.data as KeyPathError[]
+          expect(errData).to.have.deep.members([
+            [ 'changing feed service is not allowed', 'feed', 'service' ],
+            [ 'changing feed topic is not allowed', 'feed', 'topic' ]
+          ])
+          const inDb = app.feedRepo.db.get(feeds[0].id)
+          expect(inDb).to.deep.equal(feeds[0])
+        })
+
+        it('accepts service and topic if they match the existing feed', async function() {
+
+          const feedMod: FeedUpdateAttrs & Pick<Feed, 'service' | 'topic'> = Object.freeze({
+            id: feeds[0].id,
+            service: feeds[0].service,
+            topic: feeds[0].topic
+          })
+          const req: UpdateFeedRequest = requestBy(adminPrincipal, { feed: feedMod })
+          const res = await app.updateFeed(req)
+
+          expect(res.error).to.be.null
+          expect(res.success).to.deep.include({
+            id: feeds[0].id,
+            service: services[0].service,
+            topic: services[0].topics[0]
+          })
+        })
+
+        it('applies topic attributes for attributes the update does not specify', async function() {
+
+          const feedMod: FeedUpdateAttrs = {
+            id: feeds[1].id,
+          }
+          const req: UpdateFeedRequest = requestBy(adminPrincipal, { feed: feedMod })
+          const res = await app.updateFeed(req)
+
+          const withTopicAttrs = normalizeFeedMinimalAttrs(services[1].topics[0], { ...feedMod, service: feeds[1].service, topic: feeds[1].topic })
+          withTopicAttrs.id = feedMod.id
+          const expanded = Object.assign({ ...withTopicAttrs }, { service: services[1].service, topic: services[1].topics[0] })
+          const inDb = app.feedRepo.db.get(feeds[1].id)
+          expect(res.error).to.be.null
+          expect(res.success).to.deep.equal(expanded)
+          expect(inDb).to.deep.equal(withTopicAttrs)
+        })
+
+        it('checks permission for updating the feed', async function() {
+
+          const feedMod: FeedUpdateAttrs = {
+            id: feeds[0].id,
+          }
+          const req: UpdateFeedRequest = requestBy(bannedPrincipal, { feed: feedMod })
+          const res = await app.updateFeed(req)
+
+          expect(res.success).to.be.null
+          expect(res.error).to.be.instanceOf(MageError)
+          expect(res.error?.code).to.equal(ErrPermissionDenied)
+          const inDb = app.feedRepo.db.get(feeds[0].id)
+          expect(inDb).to.deep.equal(feeds[0])
+        })
+      })
+
+      describe('deleting a feed', function() {
+
+        beforeEach(function() {
+          app.permissionService.grantCreateFeed(adminPrincipal.user, services[0].service.id)
+          app.permissionService.grantCreateFeed(adminPrincipal.user, services[1].service.id)
+        })
+
+        it('deletes the feed id from referencing events then the feed', async function() {
+
+          app.eventRepo.removeFeedFromEvents(Arg.any()).mimicks(async (feed: FeedId): Promise<number> => {
+            if (!app.feedRepo.db.has(feed)) {
+              throw new Error('remove feed from events before deleting')
+            }
+            return 0
+          })
+          const req: DeleteFeedRequest = requestBy(adminPrincipal, { feed: feeds[0].id })
+          const res = await app.deleteFeed(req)
+
+          expect(res.error).to.be.null
+          expect(res.success).to.be.true
+          const inDb = app.feedRepo.db.get(feeds[0].id)
+          expect(inDb).to.be.undefined
+          app.eventRepo.received(1).removeFeedFromEvents(req.feed)
+        })
+
+        it('checks permission for deleting a feed', async function() {
+
+          const req: DeleteFeedRequest = requestBy(bannedPrincipal, { feed: feeds[1].id })
+          const res = await app.deleteFeed(req)
+
+          expect(res.success).to.be.null
+          expect(res.error).to.be.instanceOf(MageError)
+          expect(res.error?.code).to.equal(ErrPermissionDenied)
+          const err = res.error as PermissionDeniedError
+          expect(err.data.subject).to.equal(bannedPrincipal.user)
+          expect(err.data.permission).to.equal(CreateFeed.name)
+          expect(err.data.object).to.equal(feeds[1].service)
+          const inDb = app.feedRepo.db.get(req.feed)
+          expect(inDb).to.deep.equal(feeds[1])
+        })
+
+        it('fails if the feed id is not found', async function() {
+
+          const req: DeleteFeedRequest = requestBy(adminPrincipal, { feed: feeds[0].id + '-nope' })
+          const res = await app.deleteFeed(req)
+
+          expect(res.success).to.be.null
+          expect(res.error).to.be.instanceOf(MageError)
+          expect(res.error?.code).to.equal(ErrEntityNotFound)
+          const err = res.error as EntityNotFoundError
+          expect(err.data.entityId).to.equal(req.feed)
+          expect(err.data.entityType).to.equal('Feed')
+        })
+      })
+    })
+
+
+    describe('listing all feeds', function() {
 
       it('returns all the feeds', async function() {
 
@@ -1242,15 +1702,21 @@ class TestApp {
   readonly feedRepo = new TestFeedRepository()
   readonly permissionService = new TestPermissionService()
   readonly jsonSchemaService = Sub.for<JsonSchemaService>()
+  readonly eventRepo = Sub.for<MageEventRepository>()
 
   readonly listServiceTypes = ListFeedServiceTypes(this.permissionService, this.serviceTypeRepo)
   readonly previewTopics = PreviewTopics(this.permissionService, this.serviceTypeRepo)
   readonly createService = CreateFeedService(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
-  readonly listServices = ListFeedServices(this.permissionService, this.serviceRepo)
+  readonly listServices = ListFeedServices(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
+  readonly getService = GetFeedService(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
+  readonly deleteService = DeleteFeedService(this.permissionService, this.serviceRepo)
   readonly listTopics = ListServiceTopics(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
   readonly previewFeed = PreviewFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.jsonSchemaService)
   readonly createFeed = CreateFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo, this.jsonSchemaService)
   readonly listFeeds = ListAllFeeds(this.permissionService, this.feedRepo)
+  readonly getFeed = GetFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo)
+  readonly updateFeed = UpdateFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo)
+  readonly deleteFeed = DeleteFeed(this.permissionService, this.feedRepo, this.eventRepo)
   readonly fetchFeedContent = FetchFeedContent(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo, this.jsonSchemaService)
 
   registerServiceTypes(...types: RegisteredFeedServiceType[]): void {
@@ -1333,6 +1799,25 @@ class TestFeedRepository implements FeedRepository {
   async findAll(): Promise<Feed[]> {
     return Array.from(this.db.values())
   }
+
+  async update(feed: Omit<Feed, 'service' | 'topic'>): Promise<Feed | null> {
+    const existing = this.db.get(feed.id)
+    if (!existing) {
+      return null
+    }
+    const updated = Object.assign({ ...feed }, { service: existing.service, topic: existing.topic })
+    this.db.set(feed.id, updated)
+    return updated
+  }
+
+  async removeById(feedId: FeedId): Promise<Feed | null> {
+    const removed = this.db.get(feedId)
+    this.db.delete(feedId)
+    if (removed) {
+      return removed
+    }
+    return null
+  }
 }
 class TestPermissionService implements FeedsPermissionService {
 
@@ -1413,9 +1898,13 @@ class TestPermissionService implements FeedsPermissionService {
     servicePermissions?.delete(ListServiceTopics.name)
   }
 
-  checkPrivilege(user: UserId, privilege: string): null | PermissionDeniedError {
+  revokeListFeeds(user: UserId) {
+    this.revokePrivilege(user, ListAllFeeds.name)
+  }
+
+  checkPrivilege(user: UserId, privilege: string, object?: string): null | PermissionDeniedError {
     if (!this.privleges[user]?.[privilege]) {
-      return permissionDenied(privilege, user)
+      return permissionDenied(privilege, user, object)
     }
     return null
   }

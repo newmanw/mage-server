@@ -1,9 +1,10 @@
-import { FeedServiceTypeRepository, FeedServiceRepository, FeedTopic, FeedService, InvalidServiceConfigError, FeedContent, Feed, FeedTopicId, FeedServiceConnection, FeedRepository, FeedCreateAttrs, FeedMinimalAttrs, FeedServiceType } from '../../entities/feeds/entities.feeds';
+import { FeedServiceTypeRepository, FeedServiceRepository, FeedTopic, FeedService, InvalidServiceConfigError, FeedContent, Feed, FeedTopicId, FeedServiceConnection, FeedRepository, normalizeFeedMinimalAttrs, FeedMinimalAttrs, FeedServiceType, FeedServiceId } from '../../entities/feeds/entities.feeds';
 import * as api from '../../app.api/feeds/app.api.feeds'
 import { AppRequest, KnownErrorsOf, withPermission, AppResponse } from '../../app.api/app.api.global'
 import { PermissionDeniedError, EntityNotFoundError, InvalidInputError, entityNotFound, invalidInput, MageError, ErrInvalidInput, KeyPathError } from '../../app.api/app.api.errors'
 import { FeedServiceTypeDescriptor } from '../../app.api/feeds/app.api.feeds'
-import { JsonSchemaService, JsonValidator } from '../../entities/entities.json_types'
+import { JsonSchemaService, JsonValidator, JSONSchema4 } from '../../entities/entities.json_types'
+import { MageEventRepository } from '../../entities/events/entities.events'
 
 
 export function ListFeedServiceTypes(permissionService: api.FeedsPermissionService, repo: FeedServiceTypeRepository): api.ListFeedServiceTypes {
@@ -51,25 +52,64 @@ export function CreateFeedService(permissionService: api.FeedsPermissionService,
         if (invalid) {
           return invalidInputServiceConfig(invalid, 'config')
         }
-        return await serviceRepo.create({
+        const created = await serviceRepo.create({
           serviceType: req.serviceType,
           title: req.title,
           summary: req.summary || null,
           config: req.config
         })
+        return redactServiceConfig(created, serviceType)
       }
     )
   }
 }
 
-export function ListFeedServices(permissionService: api.FeedsPermissionService, serviceRepo: FeedServiceRepository): api.ListFeedServices {
+export function ListFeedServices(permissionService: api.FeedsPermissionService, serviceTypeRepo: FeedServiceTypeRepository, serviceRepo: FeedServiceRepository): api.ListFeedServices {
   return function listFeedServices(req: AppRequest): ReturnType<api.ListFeedServices> {
     return withPermission<FeedService[], KnownErrorsOf<api.ListFeedServices>>(
       permissionService.ensureListServicesPermissionFor(req.context),
       async (): Promise<FeedService[]> => {
-        return await serviceRepo.findAll()
+        const serviceTypes = new Map((await serviceTypeRepo.findAll()).map(x => {
+          return [ x.id, x ]
+        }))
+        const services: FeedService[] = []
+        ;(await serviceRepo.findAll()).forEach(x => {
+          const serviceType = serviceTypes.get(x.serviceType)
+          if (!serviceType) {
+            return
+          }
+          const redactedService = redactServiceConfig(x, serviceType)
+          services.push(redactedService)
+        })
+        return services
       }
     )
+  }
+}
+
+export function GetFeedService(permissionService: api.FeedsPermissionService, serviceTypeRepo: FeedServiceTypeRepository, serviceRepo: FeedServiceRepository): api.GetFeedService {
+  return function getFeedService(req: api.GetFeedServiceRequest): ReturnType<api.GetFeedService> {
+    return withPermission<api.FeedServiceExpanded, KnownErrorsOf<api.GetFeedService>>(
+      permissionService.ensureListServicesPermissionFor(req.context),
+      async (): Promise<api.FeedServiceExpanded | EntityNotFoundError> => {
+        const service = await serviceRepo.findById(req.service)
+        if (!service) {
+          return entityNotFound(req.service, 'FeedService')
+        }
+        const serviceType = await serviceTypeRepo.findById(service.serviceType)
+        if (!serviceType) {
+          return entityNotFound(service.serviceType, 'FeedServiceType')
+        }
+        const redacted = redactServiceConfig(service, serviceType)
+        return Object.assign({ ...redacted }, { serviceType: FeedServiceTypeDescriptor(serviceType) })
+      }
+    )
+  }
+}
+
+export function DeleteFeedService(permissionService: api.FeedsPermissionService, serviceRepo: FeedServiceRepository): api.DeleteFeedService {
+  return async function deleteFeedService(req: api.DeleteFeedServiceRequest): ReturnType<api.DeleteFeedService> {
+    throw new Error('unimplemented')
   }
 }
 
@@ -93,13 +133,13 @@ export function ListServiceTopics(permissionService: api.FeedsPermissionService,
   }
 }
 
-type CreateFeedDependencies = {
+type ContentFetchDependencies = {
   serviceTypeRepo: FeedServiceTypeRepository,
   serviceRepo: FeedServiceRepository,
-  jsonSchemaService: JsonSchemaService,
+  jsonSchemaService?: JsonSchemaService,
 }
 
-type FeedFetchContext = {
+type ContentFetchContext = {
   serviceType: FeedServiceType,
   service: FeedService,
   topic: FeedTopic,
@@ -107,38 +147,52 @@ type FeedFetchContext = {
   variableParamsValidator?: JsonValidator,
 }
 
-interface WithFeedFetchContext<R> {
-  then(createFeedOp: (context: FeedFetchContext) => Promise<R>): () => Promise<EntityNotFoundError | InvalidInputError | R>
+interface WithContentFetchContext<R> {
+  then(createFeedOp: (context: ContentFetchContext) => Promise<R>): () => Promise<EntityNotFoundError | InvalidInputError | R>
 }
 
-function buildFeedCreateContext<R>(feedStub: FeedMinimalAttrs, deps: CreateFeedDependencies): WithFeedFetchContext<R> {
+async function buildFetchContext(deps: ContentFetchDependencies, serviceId: FeedServiceId, topicId: FeedTopicId, variableParamsSchema?: JSONSchema4): Promise<ContentFetchContext | EntityNotFoundError | InvalidInputError> {
+  const service = await deps.serviceRepo.findById(serviceId)
+  if (!service) {
+    return entityNotFound(serviceId, 'FeedService')
+  }
+  const serviceType = await deps.serviceTypeRepo.findById(service.serviceType)
+  if (!serviceType) {
+    return entityNotFound(service.serviceType, 'FeedServiceType')
+  }
+  const conn = await serviceType.createConnection(service.config)
+  const topics = await conn.fetchAvailableTopics()
+  const topic = topics.find(x => x.id === topicId)
+  if (!topic) {
+    return entityNotFound(topicId, 'FeedTopic')
+  }
+  let variableParamsValidator: JsonValidator | undefined = undefined
+  if (variableParamsSchema && deps.jsonSchemaService) {
+    try {
+      variableParamsValidator = await deps.jsonSchemaService.validateSchema(variableParamsSchema)
+    }
+    catch (err) {
+      return invalidInput('invalid variable parameters schema', [ err, 'feed', 'variableParamsSchema' ])
+    }
+  }
+  return { serviceType, service, topic, conn, variableParamsValidator }
+}
+
+interface FetchContextParams {
+  service: FeedServiceId
+  topic: FeedTopicId
+  variableParamsSchema?: JSONSchema4
+}
+
+function withFetchContext<R>(deps: ContentFetchDependencies, { service, topic, variableParamsSchema }: FetchContextParams): WithContentFetchContext<R> {
   return {
-    then(createFeedOp: (context: FeedFetchContext) => Promise<R>): () => Promise<EntityNotFoundError | InvalidInputError | R> {
+    then(operation: (fetchContext: ContentFetchContext) => Promise<R>): () => Promise<EntityNotFoundError | InvalidInputError | R> {
       return async (): Promise<EntityNotFoundError | InvalidInputError | R> => {
-        const service = await deps.serviceRepo.findById(feedStub.service)
-        if (!service) {
-          return entityNotFound(feedStub.service, 'FeedService')
+        const fetchContext = await buildFetchContext(deps, service, topic, variableParamsSchema)
+        if (fetchContext instanceof MageError) {
+          return fetchContext
         }
-        const serviceType = await deps.serviceTypeRepo.findById(service.serviceType)
-        if (!serviceType) {
-          return entityNotFound(service.serviceType, 'FeedServiceType')
-        }
-        const conn = await serviceType.createConnection(service.config)
-        const topics = await conn.fetchAvailableTopics()
-        const topic = topics.find(x => x.id === feedStub.topic)
-        if (!topic) {
-          return entityNotFound(feedStub.topic, 'FeedTopic')
-        }
-        let variableParamsValidator: JsonValidator | undefined = undefined
-        if (feedStub.variableParamsSchema) {
-          try {
-            variableParamsValidator = await deps.jsonSchemaService.validateSchema(feedStub.variableParamsSchema)
-          }
-          catch (err) {
-            return invalidInput('invalid variable parameters schema', [ err, 'feed', 'variableParamsSchema' ])
-          }
-        }
-        return await createFeedOp({ serviceType, service, topic, conn, variableParamsValidator })
+        return await operation(fetchContext)
       }
     }
   }
@@ -149,8 +203,8 @@ export function PreviewFeed(permissionService: api.FeedsPermissionService, servi
     const reqFeed = req.feed
     return await withPermission<api.FeedPreview, KnownErrorsOf<api.PreviewFeed>>(
       permissionService.ensureCreateFeedPermissionFor(req.context, reqFeed.service),
-      buildFeedCreateContext<api.FeedPreview | InvalidInputError>(reqFeed, { serviceTypeRepo, serviceRepo, jsonSchemaService })
-        .then(async (context: FeedFetchContext): Promise<api.FeedPreview | InvalidInputError> => {
+      withFetchContext<api.FeedPreview | InvalidInputError>({ serviceTypeRepo, serviceRepo, jsonSchemaService }, reqFeed)
+        .then(async (context: ContentFetchContext): Promise<api.FeedPreview | InvalidInputError> => {
           const constantParams = reqFeed.constantParams || null
           const variableParams = req.variableParams || null
           if (variableParams && context.variableParamsValidator) {
@@ -170,7 +224,7 @@ export function PreviewFeed(permissionService: api.FeedsPermissionService, servi
             }
           }
           const topicContent = await context.conn.fetchTopicContent(reqFeed.topic, mergedParams)
-          const previewCreateAttrs = FeedCreateAttrs(context.topic, reqFeed)
+          const previewCreateAttrs = normalizeFeedMinimalAttrs(context.topic, reqFeed)
           const previewContent: FeedContent & { feed: 'preview' } = {
             feed: 'preview',
             topic: topicContent.topic,
@@ -195,9 +249,9 @@ export function CreateFeed(permissionService: api.FeedsPermissionService, servic
     const reqFeed = req.feed
     return await withPermission<Feed, KnownErrorsOf<api.CreateFeed>>(
       permissionService.ensureCreateFeedPermissionFor(req.context, reqFeed.service),
-      buildFeedCreateContext<Feed>(reqFeed, { serviceRepo, serviceTypeRepo, jsonSchemaService })
-        .then(async (context: FeedFetchContext): Promise<Feed> => {
-          const feedAttrs = FeedCreateAttrs(context.topic, reqFeed)
+      withFetchContext<Feed>({ serviceRepo, serviceTypeRepo, jsonSchemaService }, reqFeed)
+        .then(async (context: ContentFetchContext): Promise<Feed> => {
+          const feedAttrs = normalizeFeedMinimalAttrs(context.topic, reqFeed)
           const feed = await feedRepo.create(feedAttrs)
           return feed
         })
@@ -211,6 +265,78 @@ export function ListAllFeeds(permissionService: api.FeedsPermissionService, feed
       permissionService.ensureListAllFeedsPermissionFor(req.context),
       async (): Promise<Feed[]> => {
         return await feedRepo.findAll()
+      }
+    )
+  }
+}
+
+export function GetFeed(permissionService: api.FeedsPermissionService, serviceTypeRepo: FeedServiceTypeRepository, serviceRepo: FeedServiceRepository, feedRepo: FeedRepository): api.GetFeed {
+  return async function getFeed(req: api.GetFeedRequest): ReturnType<api.GetFeed> {
+    return await withPermission<api.FeedExpanded, KnownErrorsOf<api.GetFeed>>(
+      permissionService.ensureListAllFeedsPermissionFor(req.context),
+      async (): Promise<api.FeedExpanded | EntityNotFoundError> => {
+        const feed = await feedRepo.findById(req.feed)
+        if (!feed) {
+          return entityNotFound(req.feed, 'Feed')
+        }
+        const feedCompanions = await buildFetchContext({ serviceTypeRepo, serviceRepo }, feed.service, feed.topic)
+        if (feedCompanions instanceof MageError) {
+          return feedCompanions as EntityNotFoundError
+        }
+        const serviceRedacted = redactServiceConfig(feedCompanions.service, feedCompanions.serviceType)
+        return Object.assign({ ...feed }, { service: serviceRedacted, topic: feedCompanions.topic })
+      }
+    )
+  }
+}
+
+export function UpdateFeed(permissionService: api.FeedsPermissionService, serviceTypeRepo: FeedServiceTypeRepository, serviceRepo: FeedServiceRepository, feedRepo: FeedRepository): api.UpdateFeed {
+  return async function updateFeed(req: api.UpdateFeedRequest): ReturnType<api.UpdateFeed> {
+    const feed = await feedRepo.findById(req.feed.id)
+    if (!feed) {
+      return AppResponse.error<api.FeedExpanded, EntityNotFoundError>(entityNotFound(req.feed.id, 'Feed'))
+    }
+    const invalidKeys: KeyPathError[] = []
+    if ('service' in req.feed && (req.feed as any).service !== feed.service) {
+      invalidKeys.push([ 'changing feed service is not allowed', 'feed', 'service' ])
+    }
+    if ('topic' in req.feed && (req.feed as any).topic !== feed.topic) {
+      invalidKeys.push([ 'changing feed topic is not allowed', 'feed', 'topic' ])
+    }
+    if (invalidKeys.length) {
+      return AppResponse.error<api.FeedExpanded, InvalidInputError>(invalidInput('feed service and topic cannot be modified', ...invalidKeys))
+    }
+    return await withPermission<api.FeedExpanded, KnownErrorsOf<api.UpdateFeed>>(
+      permissionService.ensureCreateFeedPermissionFor(req.context, feed.service),
+      withFetchContext<api.FeedExpanded | EntityNotFoundError>({ serviceTypeRepo, serviceRepo }, { service: feed.service, topic: feed.topic }).then(
+        async (fetchContext): Promise<api.FeedExpanded | EntityNotFoundError> => {
+          const updateAttrs = normalizeFeedMinimalAttrs(fetchContext.topic, { ...req.feed, service: feed.service, topic: feed.topic })
+          const updated = await feedRepo.update({ ...updateAttrs, id: feed.id })
+          if (!updated) {
+            return entityNotFound(feed.id, 'Feed', 'feed deleted before update')
+          }
+          return Object.assign({ ...updated }, { service: fetchContext.service, topic: fetchContext.topic })
+        }
+      )
+    )
+  }
+}
+
+export function DeleteFeed(permissionService: api.FeedsPermissionService, feedRepo: FeedRepository, eventRepo: MageEventRepository): api.DeleteFeed {
+  return async function deleteFeed(req: api.DeleteFeedRequest): ReturnType<api.DeleteFeed> {
+    const feed = await feedRepo.findById(req.feed)
+    if (!feed) {
+      return AppResponse.error<true, EntityNotFoundError>(entityNotFound(req.feed, 'Feed'))
+    }
+    return await withPermission<true, KnownErrorsOf<api.DeleteFeed>>(
+      permissionService.ensureCreateFeedPermissionFor(req.context, feed.service),
+      async (): Promise<true | EntityNotFoundError> => {
+        await eventRepo.removeFeedFromEvents(feed.id)
+        const removed = await feedRepo.removeById(req.feed)
+        if (removed) {
+          return true
+        }
+        return entityNotFound(req.feed, 'Feed', `feed ${req.feed} was already deleted before delete attempt`)
       }
     )
   }
@@ -248,4 +374,9 @@ function invalidInputServiceConfig(err: InvalidServiceConfigError, ...configKey:
     return [ `${invalidKey} is invalid`, ...configKey, invalidKey ] as KeyPathError
   }) || [[ err.message, 'config' ]]
   return invalidInput(`invalid service config: ${err.message}`, ...problems)
+}
+
+function redactServiceConfig(service: FeedService, serviceType: FeedServiceType): FeedService {
+  const redactedConfig = serviceType.redactServiceConfig(service.config)
+  return Object.assign({ ...service}, { config: redactedConfig })
 }

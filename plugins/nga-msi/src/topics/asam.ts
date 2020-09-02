@@ -103,39 +103,6 @@ export const topicDescriptor: FeedTopic = {
       }
     }
   ]
-
-  /**
-   * date: "2020-08-04"
-description: "On 4 August, armed men in a speedboat fired upon and boarded a passenger boat transiting between Kula and Port Harcourt in the Rivers State Waterways in vicinity of 04:26N - 006:50E. The armed men stole the passenger belongings and departed the area. One passenger was injured during the incident."
-hostility: null
-latitude: 4.433333333552241
-longitude: 6.833333333449957
-navArea: "II"
-position: "4°26'00"N ↵6°50'00"E"
-reference: "2020-238"
-subreg: "57"
-timestamp: 1596499200000
-victim: null
-   */
-    // type: 'array',
-    // items: {
-    //   type: 'object',
-    //   "phone_numbers": [
-    //     { "type": "cell", "number": "702-123-4567" },
-    //     { "type": "work", "number": "702-987-6543" }
-    //   ],
-    //   mappedProperties: {
-    //     type: "array",
-    //     items: {
-    //       type: "object",
-    //       properties: {
-    //         type: { "type": "string", "enum": [ "cell", "home", "work" ] },
-    //         number: { "type": "string" }
-    //       },
-    //       required: [ "type", "number" ]
-    //     }
-    //   }
-    // }
 }
 
 export interface AsamTopicParams {

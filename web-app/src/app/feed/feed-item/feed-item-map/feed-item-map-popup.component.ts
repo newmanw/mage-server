@@ -13,7 +13,6 @@ export class FeedItemMapPopupComponent implements OnInit {
   @Input() item: Feature;
 
   hasContent = false;
-  iconUrl: string;
   timestamp: number;
   primary: string;
   secondary: string;
@@ -21,8 +20,6 @@ export class FeedItemMapPopupComponent implements OnInit {
   constructor(private feedItemService: FeedItemService) { }
 
   ngOnInit(): void {
-    if (this.feed.mapStyle) this.iconUrl = this.feed.mapStyle.iconUrl;
-
     if (!this.item.properties) return;
 
     if (this.feed.itemTemporalProperty && this.item.properties[this.feed.itemTemporalProperty] != null) {
