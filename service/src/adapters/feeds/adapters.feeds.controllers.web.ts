@@ -134,7 +134,8 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
         itemPrimaryProperty: bodyFeed.itemPrimaryProperty,
         itemSecondaryProperty: bodyFeed.itemSecondaryProperty,
         updateFrequencySeconds: bodyFeed.updateFrequencySeconds,
-        mapStyle: bodyFeed.mapStyle
+        mapStyle: bodyFeed.mapStyle,
+        itemPropertiesSchema: bodyFeed.itemPropertiesSchema
       }
     }
   }

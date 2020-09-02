@@ -1,0 +1,24 @@
+<ng-template #template>
+  <mat-expansion-panel [expanded]="expanded" (opened)="opened.emit()" hideToggle>
+    <mat-expansion-panel-header>
+      <mat-panel-title>
+        Set Feed Configuration
+      </mat-panel-title>
+      <mat-panel-description>
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+    <div class="row">
+      <div class="col-md-12" *ngIf="topic">
+        <app-json-schema loadExternalAssets="true" (onChanges)="feedConfigChanged($event)"
+         [options]="formOptions" [data]="topic"
+         [schema]="feedConfigurationSchema" framework="material-design" [layout]="formLayout">
+        </app-json-schema>
+      </div>
+    </div>
+    <mat-action-row>
+      <button *ngIf="!feed" mat-button color="warn" (click)="prevStep()">Previous</button>
+      <button *ngIf="!feed" mat-button color="primary" (click)="createFeed()">Create Feed</button>
+      <button *ngIf="feed" mat-button color="primary" (click)="updateFeed()">Update Feed</button>
+    </mat-action-row>
+  </mat-expansion-panel>
+</ng-template>

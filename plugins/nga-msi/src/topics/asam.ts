@@ -22,11 +22,87 @@ export const topicDescriptor: FeedTopic = {
   itemPrimaryProperty: 'description',
   itemSecondaryProperty: 'hostilityVictim',
   itemTemporalProperty: 'timestamp',
-  updateFrequencySeconds: 60 * 15,
+  updateFrequencySeconds: 61 * 15,
   mapStyle: {
     // TODO: figure out dynamic url resolution
-    iconUrl: 'https://magefeed.geointservices.io/icons/asam.png'
-  }
+    iconUrl: 'https://mage-msi.geointservices.io/icons/asam.png'
+  },
+  itemPropertiesSchema: [
+    {
+      key: "date",
+      schema: {
+        title: "Date Of Occurrence",
+        type: "string",
+        format: 'date',
+        pattern: "\d\d\d\d-\d\d-\d\d"
+      }
+    },
+    {
+      key: "reference",
+      schema: {
+        title: "Reference Number",
+        type: "string"
+      }
+    },
+    {
+      key: "subreg",
+      schema: {
+        title: "Geographical Subregion",
+        type: "number"
+      }
+    },
+    {
+      key: "description",
+      schema: {
+        title: "Description",
+        type: "string"
+      }
+    },
+    {
+      key: "hostilityVictim",
+      schema: {
+        title: "Aggressor-Victim",
+        type: "string"
+      }
+    },
+    {
+      key: "hostility",
+      schema: {
+        title: "Agressor",
+        type: "string"
+      }
+    },
+    {
+      key: "victim",
+      schema: {
+        title: "Victim",
+        type: "string"
+      }
+    },
+    {
+      key: "navArea",
+      schema: {
+        title: "Navigation Area",
+        type: "string"
+      }
+    },
+    {
+      key: "position",
+      schema: {
+        title: "Position",
+        type: "string",
+        format: "latlondeg"
+      }
+    },
+    {
+      key: "timestamp",
+      schema: {
+        title: "Date Of Occurrence",
+        type: "number",
+        format: "date"
+      }
+    }
+  ]
 }
 
 export interface AsamTopicParams {

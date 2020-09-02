@@ -177,6 +177,7 @@ export interface FeedTopic {
    */
   readonly itemSecondaryProperty?: string
   readonly mapStyle?: MapStyle
+  readonly itemPropertiesSchema?: Array<PropertiesSchema>
 }
 
 export interface FeedTopicContent {
@@ -237,6 +238,12 @@ export interface Feed {
   readonly itemPrimaryProperty?: string
   readonly itemSecondaryProperty?: string
   readonly mapStyle?: MapStyle
+  readonly itemPropertiesSchema?: Array<PropertiesSchema>
+}
+
+export interface PropertiesSchema {
+  key: string
+  schema: JSONSchema4
 }
 
 /**
@@ -282,6 +289,7 @@ export const normalizeFeedMinimalAttrs = (topic: FeedTopic, feedAttrs: FeedMinim
     topic: topic.id,
     title: feedAttrs.title || topic.title,
     summary: feedAttrs.summary || topic.summary,
+    itemPropertiesSchema: feedAttrs.itemPropertiesSchema,
     constantParams: feedAttrs.constantParams,
     variableParamsSchema: feedAttrs.variableParamsSchema,
     itemsHaveIdentity: feedAttrs.itemsHaveIdentity === undefined ? topic.itemsHaveIdentity || false : feedAttrs.itemsHaveIdentity,
