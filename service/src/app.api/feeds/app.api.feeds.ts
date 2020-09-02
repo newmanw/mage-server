@@ -42,6 +42,14 @@ export interface GetFeedService {
   (req: GetFeedServiceRequest): Promise<AppResponse<FeedServiceExpanded, PermissionDeniedError | EntityNotFoundError>>
 }
 
+export interface DeleteFeedServiceRequest extends AppRequest {
+  service: FeedServiceId
+}
+
+export interface DeleteFeedService {
+  (req: DeleteFeedServiceRequest): Promise<AppResponse<true, PermissionDeniedError | EntityNotFoundError>>
+}
+
 export interface ListServiceTopicsRequest extends AppRequest {
   service: FeedServiceId
 }

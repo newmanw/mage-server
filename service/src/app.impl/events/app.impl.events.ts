@@ -17,6 +17,7 @@ export function AddFeedToEvent(permissionService: EventPermissionServiceImpl, ev
     if (!event) {
       return AppResponse.error<MageEvent, EntityNotFoundError>(entityNotFound(req.event, 'MageEvent'))
     }
+    // TODO: also check for permission to read the feed?
     const denied = await permissionService.ensureEventUpdatePermission(req.context)
     if (denied) {
       return AppResponse.error<MageEvent, PermissionDeniedError>(denied)

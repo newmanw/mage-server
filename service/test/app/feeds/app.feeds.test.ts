@@ -2,15 +2,16 @@ import { describe, it, beforeEach, Context } from 'mocha'
 import { expect } from 'chai'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
 import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedService, FeedServiceConnection, RegisteredFeedServiceType, Feed, FeedMinimalAttrs, normalizeFeedMinimalAttrs, FeedRepository, FeedId, FeedContent, FeedUpdateAttrs, FeedCreateAttrs } from '../../../lib/entities/feeds/entities.feeds'
-import { ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics, ListFeedServices, PreviewFeed, CreateFeed, ListAllFeeds, FetchFeedContent, GetFeed, UpdateFeed, DeleteFeed, GetFeedService } from '../../../lib/app.impl/feeds/app.impl.feeds'
+import { ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics, ListFeedServices, PreviewFeed, CreateFeed, ListAllFeeds, FetchFeedContent, GetFeed, UpdateFeed, DeleteFeed, GetFeedService, DeleteFeedService } from '../../../lib/app.impl/feeds/app.impl.feeds'
 import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError, PermissionDeniedErrorData, KeyPathError } from '../../../lib/app.api/app.api.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
-import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, FeedPreview, FetchFeedContentRequest, FeedExpanded, GetFeedRequest, UpdateFeedRequest, DeleteFeedRequest, CreateFeedServiceRequest, GetFeedServiceRequest } from '../../../lib/app.api/feeds/app.api.feeds'
+import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, FeedPreview, FetchFeedContentRequest, FeedExpanded, GetFeedRequest, UpdateFeedRequest, DeleteFeedRequest, CreateFeedServiceRequest, GetFeedServiceRequest, DeleteFeedServiceRequest } from '../../../lib/app.api/feeds/app.api.feeds'
 import uniqid from 'uniqid'
 import { AppRequestContext, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeatureCollection } from 'geojson'
 import { JsonObject, JsonSchemaService, JsonValidator } from '../../../lib/entities/entities.json_types'
 import _ from 'lodash'
+import { MageEventRepository } from '../../../lib/entities/events/entities.events'
 
 
 function mockServiceType(descriptor: FeedServiceTypeDescriptor): SubstituteOf<RegisteredFeedServiceType> {
@@ -521,7 +522,32 @@ describe.only('feeds use case interactions', function() {
 
       describe('deleting a service', function() {
 
-        it('works', async function() {
+        it('removes the service from the repository', async function() {
+
+          const service = someServices[1]
+          const req: DeleteFeedServiceRequest = requestBy(adminPrincipal, {
+            service: service.id
+          })
+          let inDb = app.serviceRepo.db.get(service.id)
+          expect(inDb).to.deep.equal(service)
+
+          const res = await app.deleteService(req)
+          inDb = app.serviceRepo.db.get(service.id)
+
+          expect(res.error).to.be.null
+          expect(res.success).to.be.true
+          expect(inDb).to.be.undefined
+        })
+
+        it('removes related feeds and their event entries', async function() {
+          expect.fail('todo')
+        })
+
+        it('fails if the service does not exist', async function() {
+          expect.fail('todo')
+        })
+
+        it('checks permission for deleting a service', async function() {
           expect.fail('todo')
         })
       })
@@ -1455,8 +1481,14 @@ describe.only('feeds use case interactions', function() {
           app.permissionService.grantCreateFeed(adminPrincipal.user, services[1].service.id)
         })
 
-        it('deletes the feed from the repository', async function() {
+        it('deletes the feed id from referencing events then the feed', async function() {
 
+          app.eventRepo.removeFeedFromEvents(Arg.any()).mimicks(async (feed: FeedId): Promise<number> => {
+            if (!app.feedRepo.db.has(feed)) {
+              throw new Error('remove feed from events before deleting')
+            }
+            return 0
+          })
           const req: DeleteFeedRequest = requestBy(adminPrincipal, { feed: feeds[0].id })
           const res = await app.deleteFeed(req)
 
@@ -1464,6 +1496,7 @@ describe.only('feeds use case interactions', function() {
           expect(res.success).to.be.true
           const inDb = app.feedRepo.db.get(feeds[0].id)
           expect(inDb).to.be.undefined
+          app.eventRepo.received(1).removeFeedFromEvents(req.feed)
         })
 
         it('checks permission for deleting a feed', async function() {
@@ -1669,19 +1702,21 @@ class TestApp {
   readonly feedRepo = new TestFeedRepository()
   readonly permissionService = new TestPermissionService()
   readonly jsonSchemaService = Sub.for<JsonSchemaService>()
+  readonly eventRepo = Sub.for<MageEventRepository>()
 
   readonly listServiceTypes = ListFeedServiceTypes(this.permissionService, this.serviceTypeRepo)
   readonly previewTopics = PreviewTopics(this.permissionService, this.serviceTypeRepo)
   readonly createService = CreateFeedService(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
   readonly listServices = ListFeedServices(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
   readonly getService = GetFeedService(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
+  readonly deleteService = DeleteFeedService(this.permissionService, this.serviceRepo)
   readonly listTopics = ListServiceTopics(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
   readonly previewFeed = PreviewFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.jsonSchemaService)
   readonly createFeed = CreateFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo, this.jsonSchemaService)
   readonly listFeeds = ListAllFeeds(this.permissionService, this.feedRepo)
   readonly getFeed = GetFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo)
   readonly updateFeed = UpdateFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo)
-  readonly deleteFeed = DeleteFeed(this.permissionService, this.feedRepo)
+  readonly deleteFeed = DeleteFeed(this.permissionService, this.feedRepo, this.eventRepo)
   readonly fetchFeedContent = FetchFeedContent(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo, this.jsonSchemaService)
 
   registerServiceTypes(...types: RegisteredFeedServiceType[]): void {

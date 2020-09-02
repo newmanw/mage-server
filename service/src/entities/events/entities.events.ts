@@ -126,6 +126,7 @@ export type MageEventCreateAttrs = Pick<MageEvent, 'name' | 'description'>
 
 export interface MageEventRepository {
   findById(id: MageEventId): Promise<MageEvent | null>
+  findEventsWithFeed(feed: FeedId): Promise<MageEvent[]>
   /**
    * Add a reference to the given feed ID on the given event.
    * @param event an Event ID
@@ -134,4 +135,10 @@ export interface MageEventRepository {
   addFeedsToEvent(event: MageEventId, ...feeds: FeedId[]): Promise<MageEvent | null>
   findTeamsInEvent(event: MageEventId): Promise<Team[] | null>
   removeFeedsFromEvent(event: MageEventId, ...feeds: FeedId[]): Promise<MageEvent | null>
+  /**
+   * Remove the given feed from any events that reference the feed.  Return the
+   * count of events the operation modified.
+   * @param feed the ID of the feed to remove from event
+   */
+  removeFeedFromEvents(feed: FeedId): Promise<number>
 }

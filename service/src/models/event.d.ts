@@ -35,7 +35,7 @@ export interface MageEventDocumentAcl {
   [userId: string]: EventRole
 }
 export type FormDocument = Form & mongoose.Document & {
-  _id: number,
+  _id: number
 }
 export type FormFieldDocument = FormField & mongoose.Document & {
   _id: never

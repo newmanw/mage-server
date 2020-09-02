@@ -3,7 +3,8 @@ import * as api from '../../app.api/feeds/app.api.feeds'
 import { AppRequest, KnownErrorsOf, withPermission, AppResponse } from '../../app.api/app.api.global'
 import { PermissionDeniedError, EntityNotFoundError, InvalidInputError, entityNotFound, invalidInput, MageError, ErrInvalidInput, KeyPathError } from '../../app.api/app.api.errors'
 import { FeedServiceTypeDescriptor } from '../../app.api/feeds/app.api.feeds'
-import { JsonSchemaService, JsonValidator, JSONSchema4, JsonObject } from '../../entities/entities.json_types'
+import { JsonSchemaService, JsonValidator, JSONSchema4 } from '../../entities/entities.json_types'
+import { MageEventRepository } from '../../entities/events/entities.events'
 
 
 export function ListFeedServiceTypes(permissionService: api.FeedsPermissionService, repo: FeedServiceTypeRepository): api.ListFeedServiceTypes {
@@ -103,6 +104,12 @@ export function GetFeedService(permissionService: api.FeedsPermissionService, se
         return Object.assign({ ...redacted }, { serviceType: FeedServiceTypeDescriptor(serviceType) })
       }
     )
+  }
+}
+
+export function DeleteFeedService(permissionService: api.FeedsPermissionService, serviceRepo: FeedServiceRepository): api.DeleteFeedService {
+  return async function deleteFeedService(req: api.DeleteFeedServiceRequest): ReturnType<api.DeleteFeedService> {
+    throw new Error('unimplemented')
   }
 }
 
@@ -315,7 +322,7 @@ export function UpdateFeed(permissionService: api.FeedsPermissionService, servic
   }
 }
 
-export function DeleteFeed(permissionService: api.FeedsPermissionService, feedRepo: FeedRepository): api.DeleteFeed {
+export function DeleteFeed(permissionService: api.FeedsPermissionService, feedRepo: FeedRepository, eventRepo: MageEventRepository): api.DeleteFeed {
   return async function deleteFeed(req: api.DeleteFeedRequest): ReturnType<api.DeleteFeed> {
     const feed = await feedRepo.findById(req.feed)
     if (!feed) {
@@ -324,6 +331,7 @@ export function DeleteFeed(permissionService: api.FeedsPermissionService, feedRe
     return await withPermission<true, KnownErrorsOf<api.DeleteFeed>>(
       permissionService.ensureCreateFeedPermissionFor(req.context, feed.service),
       async (): Promise<true | EntityNotFoundError> => {
+        await eventRepo.removeFeedFromEvents(feed.id)
         const removed = await feedRepo.removeById(req.feed)
         if (removed) {
           return true

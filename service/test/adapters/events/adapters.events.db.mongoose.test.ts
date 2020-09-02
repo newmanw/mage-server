@@ -9,10 +9,11 @@ import * as legacy from '../../../lib/models/event'
 import { MageEventDocument } from '../../../src/models/event'
 import TeamModelModule = require('../../../lib/models/team')
 import { Team } from '../../../lib/entities/teams/entities.teams'
+import { MageEvent, MageEventCreateAttrs } from '../../../lib/entities/events/entities.events'
 
 const TeamModel = TeamModelModule.TeamModel
 
-describe('event mongoose repository', function() {
+describe.only('event mongoose repository', function() {
 
   let mongo: MongoMemoryServer
   let uri: string
@@ -32,21 +33,28 @@ describe('event mongoose repository', function() {
 
   let model: MageEventModel
   let repo: MongooseMageEventRepository
-  let eventDoc: legacy.MageEventDocument
+  let eventDoc: MageEventDocument
+  let createEvent: (attrs: MageEventCreateAttrs & Partial<MageEvent>) => Promise<MageEventDocument>
 
   beforeEach('initialize model', async function() {
-    model = legacy.Model
+    model = legacy.Model as mongoose.Model<MageEventDocument>
     repo = new MongooseMageEventRepository(model)
-    eventDoc = await new Promise<legacy.MageEventDocument>((resolve) => {
-      legacy.create(
-        {
-          name: 'Test Event',
-          description: 'For testing'
-        },
-        { _id: mongoose.Types.ObjectId() },
-        (err: any | null, event?: legacy.MageEventDocument) => {
-          resolve(event!)
-        })
+    createEvent = (attrs: Partial<MageEvent>): Promise<MageEventDocument> => {
+      return new Promise<MageEventDocument>((resolve, reject) => {
+        legacy.create(
+          attrs as MageEventCreateAttrs,
+          { _id: mongoose.Types.ObjectId() },
+          (err: any | null, event?: MageEventDocument) => {
+            if (err) {
+              return reject(err)
+            }
+            resolve(event!)
+          })
+      })
+    }
+    eventDoc = await createEvent({
+      name: 'Test Event',
+      description: 'For testing'
     })
     // fetch again, because the create method does not return the event with the
     // implicitly created team id in the teamIds list
@@ -65,12 +73,19 @@ describe('event mongoose repository', function() {
     await mongo.stop()
   })
 
-  describe('fetching events by id', function() {
+  describe('finding events by id', function() {
 
     it('looks up a feed by id', async function() {
 
       const fetched = await repo.findById(eventDoc._id)
       expect(fetched).to.deep.equal(eventDoc.toJSON())
+    })
+  })
+
+  describe('finding events with a feed', function() {
+
+    it('returns all the events with the given feed id', async function() {
+      expect.fail('todo')
     })
   })
 
@@ -225,6 +240,69 @@ describe('event mongoose repository', function() {
       expect(typedEventDoc.feedIds).to.deep.equal(feedIds)
       expect(fetched?.feedIds).to.deep.equal(feedIds)
       expect(updated).to.be.null
+    })
+  })
+
+  describe('removing a feed from all referencing events', function() {
+
+    it('removes the feed id entry from all events that reference the feed', async function() {
+
+      const feedId = uniqid()
+      const eventDocs = await Promise.all([
+        createEvent({
+          name: 'Remove Feeds 1',
+          description: 'testing',
+          feedIds: [
+            uniqid(),
+            feedId,
+            uniqid(),
+          ]
+        }),
+        createEvent({
+          name: 'Remove Feeds 2',
+          description: 'testing',
+          feedIds: [
+            feedId
+          ]
+        }),
+        createEvent({
+          name: 'Remove Feeds 3',
+          description: 'testing',
+          feedIds: [
+            uniqid(),
+            uniqid()
+          ]
+        })
+      ])
+      const updateCount = await repo.removeFeedFromEvents(feedId)
+      const updatedEventDocs = await model.find({ _id: { $in: eventDocs.map(x => x._id) }})
+      expect(updateCount).to.equal(2)
+      expect(updatedEventDocs).to.have.length(3)
+      const byId = _.keyBy(updatedEventDocs.map(x => x.toJSON() as MageEvent), 'id')
+      expect(byId[eventDocs[0].id]).to.deep.include(
+        {
+          id: eventDocs[0]._id,
+          name: 'Remove Feeds 1',
+          description: 'testing',
+          feedIds: [ eventDocs[0].feedIds[0], eventDocs[0].feedIds[2] ]
+        }
+      )
+      expect(byId[eventDocs[1].id]).to.deep.include(
+        {
+          id: eventDocs[1]._id,
+          name: 'Remove Feeds 2',
+          description: 'testing',
+          feedIds: []
+        }
+      )
+      expect(byId[eventDocs[2].id]).to.deep.include(
+        {
+          id: eventDocs[2]._id,
+          name: 'Remove Feeds 3',
+          description: 'testing',
+          feedIds: eventDocs[2].feedIds
+        }
+      )
     })
   })
 
