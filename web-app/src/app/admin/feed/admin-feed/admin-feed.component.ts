@@ -7,6 +7,8 @@ import { Feed, ServiceType, FeedTopic, Service } from 'src/app/feed/feed.model';
 import { StateService } from '@uirouter/angular';
 import { UserService, Event } from '../../../upgrade/ajs-upgraded-providers';
 import { FeedService } from 'src/app/feed/feed.service';
+import { AdminFeedDeleteComponent } from './admin-feed-delete.component';
+import { MatDialog } from '@angular/material';
 
 @Component({
   selector: 'app-admin-feed',
@@ -43,6 +45,7 @@ export class AdminFeedComponent implements OnInit {
   constructor(
     private feedService: FeedService,
     private stateService: StateService,
+    public dialog: MatDialog,
     @Inject(UserService) private userService: { myself: { id: string, role: {permissions: Array<string>}}},
     @Inject(Event) private eventResource: any
     ) {
@@ -144,6 +147,21 @@ export class AdminFeedComponent implements OnInit {
 
   editFeed(): void {
     this.stateService.go('admin.feedEdit', { feedId: this.feed.id });
+  }
+
+  deleteFeed(): void {
+
+    this.dialog.open(AdminFeedDeleteComponent, {
+      data: this.feed,
+      autoFocus: false,
+      disableClose: true
+    }).afterClosed().subscribe(result => {
+      if (result === true) {
+        this.feedService.deleteFeed(this.feed).subscribe(() => {
+          this.goToFeeds();
+        })
+      }
+    });
   }
 
   goToFeeds(): void {

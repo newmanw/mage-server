@@ -28,12 +28,14 @@ import {
   MatRadioModule,
   MatCheckboxModule,
   MatSliderModule,
-  MatExpansionModule
+  MatExpansionModule,
+  MatDialogModule
 } from '@angular/material';
 
 import { FeedEditComponent } from './feed-edit/feed-edit.component';
 import { FeedItemSummaryModule } from 'src/app/feed/feed-item/feed-item-summary/feed-item-summary.module';
 import { MomentModule } from 'src/app/moment/moment.module';
+import { AdminFeedDeleteComponent } from './admin-feed/admin-feed-delete.component';
 import { AutocompleteMaterialSelectComponent } from './autocomplete-material-select/autocomplete-material-select.component';
 import { CreateServiceComponent } from './feed-edit/create-service/create-service.component';
 import { FeedItemPropertiesConfigurationComponent } from './feed-edit/feed-item-properties-configuration/feed-item-properties-configuration.component';
@@ -45,6 +47,7 @@ import { FeedConfigurationComponent } from './feed-edit/feed-configuration/feed-
     JsonSchemaComponent,
     FeedsComponent,
     AdminFeedComponent,
+    AdminFeedDeleteComponent,
     FeedEditComponent,
     AutocompleteMaterialSelectComponent,
     CreateServiceComponent,
@@ -63,6 +66,7 @@ import { FeedConfigurationComponent } from './feed-edit/feed-configuration/feed-
     MatTooltipModule,
     MatButtonModule,
     MatCardModule,
+    MatDialogModule,
     MatProgressSpinnerModule,
     MatFormFieldModule,
     MatRadioModule,
@@ -83,6 +87,7 @@ import { FeedConfigurationComponent } from './feed-edit/feed-configuration/feed-
   entryComponents: [
     FeedsComponent,
     AdminFeedComponent,
+    AdminFeedDeleteComponent,
     FeedEditComponent,
     AutocompleteMaterialSelectComponent
   ],

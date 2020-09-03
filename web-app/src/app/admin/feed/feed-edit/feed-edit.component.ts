@@ -207,13 +207,7 @@ export class FeedEditComponent implements OnInit {
     this.step--;
   }
 
-
   goToFeeds(): void {
     this.stateService.go('admin.feeds');
   }
-
-  deleteFeed(): void {
-
-  }
-
 }

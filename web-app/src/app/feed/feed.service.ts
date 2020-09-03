@@ -1,8 +1,9 @@
 import { Injectable } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, Subject } from 'rxjs';
+import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
+import { Observable, BehaviorSubject, Subject, throwError } from 'rxjs';
 import { Feed, FeedContent, StyledFeature, Service, ServiceType, FeedTopic } from './feed.model';
 import { Feature } from 'geojson';
+import { catchError } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -80,6 +81,10 @@ export class FeedService {
 
   updateFeed(feed: Feed): Observable<Feed> {
     return this.http.put<Feed>(`/api/feeds/${feed.id}`, feed);
+  }
+
+  deleteFeed(feed: Feed): Observable<{}> {
+    return this.http.delete(`/api/feeds/${feed.id}`, {responseType: 'text'});
   }
 
   fetchFeeds(eventId: number): Observable<Array<Feed>> {
