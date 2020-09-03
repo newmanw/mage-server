@@ -1,4 +1,15 @@
-import { Component, OnInit, OnChanges, Input, Output, ViewChild, ViewContainerRef, EventEmitter } from '@angular/core';
+import {
+  Component,
+  OnInit,
+  OnChanges,
+  Input,
+  Output,
+  ViewChild,
+  ViewContainerRef,
+  EventEmitter,
+  KeyValueDiffers,
+  KeyValueDiffer, 
+  Query} from '@angular/core';
 import { FeedTopic } from 'src/app/feed/feed.model';
 
 @Component({
@@ -11,13 +22,14 @@ export class TopicConfigurationComponent implements OnInit, OnChanges {
   @Input() expanded: boolean;
   @Input() disabled: boolean;
   @Input() topic: FeedTopic;
+  @Input() params: any;
   @Output() topicConfigurationChanged = new EventEmitter<any>();
   @Output() topicConfigured = new EventEmitter<any>();
   @Output() cancelled = new EventEmitter();
   @Output() opened = new EventEmitter();
-  @ViewChild('template', {static: true}) template;
+  @ViewChild('template', {static: true}) template: any;
 
-  topicConfiguration: any;
+  currentConfiguration: any;
 
   newProperty: any;
   itemPropertySchemaLayout: any;
@@ -26,8 +38,10 @@ export class TopicConfigurationComponent implements OnInit, OnChanges {
   feed: any;
 
   finalProperties: any[];
+  paramDiffer: KeyValueDiffer<string, any>;
 
   constructor(
+    private differs: KeyValueDiffers,
     private viewContainerRef: ViewContainerRef
   ) { }
 
@@ -37,23 +51,24 @@ export class TopicConfigurationComponent implements OnInit, OnChanges {
     this.formOptions = {
       addSubmit: false
     };
+
+    this.paramDiffer = this.differs.find(this.params).create();
+
   }
 
   ngOnChanges(): void {
-
   }
 
   topicConfigChanged($event: any): void {
-    this.topicConfiguration = $event;
-    this.topicConfigurationChanged.emit($event);
-    // if (this.feed) {
-    //   console.log('ask to preview');
-    //   this.debouncedPreview();
-    // }
+    if (this.paramDiffer.diff($event)) {
+      console.log('changed', new Date());
+      this.currentConfiguration = $event;
+      this.topicConfigurationChanged.emit($event);
+    }
   }
 
   finish(): void {
-    this.topicConfigured.emit(this.topicConfiguration);
+    this.topicConfigured.emit(this.currentConfiguration);
   }
 
   cancel(): void {

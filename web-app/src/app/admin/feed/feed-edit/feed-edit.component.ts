@@ -1,7 +1,6 @@
-import { Component, OnInit, Input, ChangeDetectorRef } from '@angular/core';
+import { Component, OnInit } from '@angular/core';
 import { FeedService } from 'src/app/feed/feed.service';
 import { Feed, Service, FeedTopic } from 'src/app/feed/feed.model';
-import { FormControl } from '@angular/forms';
 import { StateService } from '@uirouter/angular';
 import * as _ from 'underscore';
 
@@ -15,17 +14,8 @@ export class FeedEditComponent implements OnInit {
   currentItemProperties: Array<any>;
   hasFeedDeletePermission: boolean;
 
-  serviceSearchControl: FormControl = new FormControl();
-  topicSearchControl: FormControl = new FormControl();
-
-
-  services: Array<Service>;
   selectedService: Service;
-
-
-  topics: Array<FeedTopic>;
   selectedTopic: FeedTopic;
-
 
   itemProperties: any[];
 
@@ -34,15 +24,13 @@ export class FeedEditComponent implements OnInit {
   feedConfiguration: any;
   constantParams: any;
 
-  step = -1;
+  step = 0;
 
   debouncedPreview: any;
-  // customWidgets: any;
 
   constructor(
     private feedService: FeedService,
-    private stateService: StateService,
-    private cdr: ChangeDetectorRef
+    private stateService: StateService
   ) {
     this.debouncedPreview = _.debounce(this.previewFeed, 500);
 
@@ -53,35 +41,17 @@ export class FeedEditComponent implements OnInit {
     if (this.stateService.params.feedId) {
       this.feedService.fetchFeed(this.stateService.params.feedId).subscribe(feed => {
         this.feed = feed;
-        this.feedService.fetchService(this.feed.service).subscribe(service => {
-          this.services = [service];
-          this.selectedService = service;
-          this.feedService.fetchTopic(this.selectedService.id, this.feed.topic).subscribe(topic => {
-            this.topics = [topic];
-            this.selectedTopic = topic;
-            this.topicSelected();
-            console.log('feed', feed);
-            this.setStep(1);
-            this.previewFeed();
-          });
-        });
-
-      });
-    } else {
-      this.feedService.fetchServices().subscribe(services => {
-        this.services = services;
-        if (this.services && this.services.length !== 0) {
-          this.setStep(0);
-        }
-        if (!this.services || this.services.length === 0) {
-          this.setStep(-1);
-        }
-        if (this.services.length === 1) {
-          this.selectedService = this.services[0];
-          this.serviceSelected();
-        }
+        this.constantParams = feed.constantParams;
+        this.selectedService = this.feed.service;
+        this.selectedTopic = this.feed.topic;
+        this.step = 1;
+        this.serviceAndTopicSelected({service: this.selectedService, topic: this.selectedTopic});
+        this.previewFeed();
       });
     }
+  }
+  noServicesExist(): void {
+    this.setStep(0);
   }
 
   serviceCreationCancelled(): void {
@@ -90,20 +60,7 @@ export class FeedEditComponent implements OnInit {
   }
 
   serviceCreated(service: Service): void {
-    this.services.push(service);
-    this.selectedService = service;
     this.setStep(0);
-    this.serviceSelected();
-  }
-
-  serviceSelected(): void {
-    this.feedService.fetchTopics(this.selectedService.id).subscribe(topics => {
-      this.topics = topics;
-      if (this.topics.length === 1) {
-        this.selectedTopic = this.topics[0];
-        this.topicSelected();
-      }
-    });
   }
 
   itemPropertiesSchemaToTitleMap(value: any): any {
@@ -116,21 +73,26 @@ export class FeedEditComponent implements OnInit {
     };
   }
 
-  topicSelected(): void {
-    this.itemProperties = this.selectedTopic.itemPropertiesSchema.map(value => {
-      return {
-        key: value.key,
-        schema: value.schema
-      };
-    });
+  serviceAndTopicSelected(serviceAndTopic: {service: Service, topic: FeedTopic}): void {
+    this.selectedTopic = serviceAndTopic.topic;
+    this.selectedService = serviceAndTopic.service;
+    // this.itemProperties = this.selectedTopic.itemPropertiesSchema.map(value => {
+    //   return {
+    //     key: value.key,
+    //     schema: value.schema
+    //   };
+    // });
+    this.nextStep();
   }
 
   topicConfigured(topicParameters: any): void {
+    this.constantParams = topicParameters;
     this.previewFeed();
     this.nextStep();
   }
 
   topicConfigChanged(topicParameters: any): void {
+    console.log('topic config changed')
     this.constantParams = topicParameters;
 
     if (this.feed) {
@@ -144,7 +106,6 @@ export class FeedEditComponent implements OnInit {
     const feedPreviewRequest = {
       feed: { constantParams: this.constantParams }
     };
-    // feedPreviewRequest.feed = { constantParams: this.constantParams };
     this.feedService.previewFeed(this.selectedService.id, this.selectedTopic.id, feedPreviewRequest)
       .subscribe(preview => {
         console.log('preview', preview);
@@ -181,7 +142,7 @@ export class FeedEditComponent implements OnInit {
     this.feedConfiguration.service = this.selectedService.id;
     this.feedConfiguration.topic = this.selectedTopic.id;
     this.feedConfiguration.constantParams = this.constantParams;
-    this.feedConfiguration.itemPropertiesSchema = this.itemProperties;
+    // this.feedConfiguration.itemPropertiesSchema = this.itemProperties;
     this.feedService.createFeed(this.selectedService.id, this.selectedTopic.id, this.feedConfiguration).subscribe(feed => {
       this.stateService.go('admin.feed', { feedId: feed.id });
     });

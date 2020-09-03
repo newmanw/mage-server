@@ -38,9 +38,6 @@ export class AdminFeedComponent implements OnInit {
   service: Service;
   feedServiceType: ServiceType;
   feedTopic: FeedTopic;
-  fullService: string;
-  fullServiceType: string;
-  fullTopic: string;
 
   constructor(
     private feedService: FeedService,
@@ -60,17 +57,10 @@ export class AdminFeedComponent implements OnInit {
       this.feed = feed;
       this.fullFeed = JSON.stringify(feed, null, 2);
       this.feedLoaded = Promise.resolve(true);
-      this.feedService.fetchService(this.feed.service).subscribe(service => {
-        this.service = service;
-        this.fullService = JSON.stringify(service, null, 2);
-        this.feedService.fetchServiceType(service.serviceType).subscribe(serviceType => {
-          this.feedServiceType = serviceType;
-          this.fullServiceType = JSON.stringify(serviceType, null, 2);
-        });
-      });
-      this.feedService.fetchTopic(feed.service, feed.topic).subscribe(topic => {
-        this.feedTopic = topic;
-        this.fullTopic = JSON.stringify(topic, null, 2);
+      this.service = this.feed.service;
+      this.feedTopic = this.feed.topic;
+      this.feedService.fetchServiceType(this.service.serviceType).subscribe(serviceType => {
+        this.feedServiceType = serviceType;
       });
     });
 

@@ -26,84 +26,44 @@
       <div class="row">
         <div class="col-md-6">
           <mat-accordion class="example-headers-align" [multi]="feed">
-            <app-create-service 
+            <app-create-service
+              *ngIf="!feed"
               [expanded]="step === -1" 
               (opened)="setStep(-1)" 
               (cancelled)="serviceCreationCancelled()" 
               (serviceCreated)="serviceCreated($event)">
             </app-create-service>
-            <ng-container *ngIf="services?.length">
-            <mat-expansion-panel *ngIf="!feed" [disabled]="step === -1" [expanded]="step === 0" (opened)="setStep(0)" hideToggle>
-              <mat-expansion-panel-header>
-                <mat-panel-title>
-                  Choose a Service and Topic
-                </mat-panel-title>
-                <mat-panel-description>
-                  {{selectedService?.title}} : {{selectedTopic?.title}}
-                </mat-panel-description>
-              </mat-expansion-panel-header>
-              <div class="row">
-                <div class="col-md-12">
-                  <mat-form-field appearance="outline">
-                    <mat-label>Select A Service</mat-label>
-                    <mat-select [(ngModel)]="selectedService" (selectionChange)="serviceSelected()">
-                      <mat-option>
-                        <ngx-mat-select-search [formControl]="serviceSearchControl" placeholderLabel="Select A Service"
-                          noEntriesFoundLabel=""></ngx-mat-select-search>
-                      </mat-option>
-                      <mat-option *ngFor="let service of services" [value]="service">
-                        {{service.title}}
-                      </mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                </div>
-              </div>
-
-              <div class="row">
-                <div class="col-md-12">
-                  <mat-form-field appearance="outline">
-                    <mat-label>Select A Topic</mat-label>
-                    <mat-select [(ngModel)]="selectedTopic" (selectionChange)="topicSelected()">
-                      <mat-option>
-                        <ngx-mat-select-search [formControl]="topicSearchControl" placeholderLabel="Select A Topic"
-                          noEntriesFoundLabel=""></ngx-mat-select-search>
-                      </mat-option>
-                      <mat-option *ngFor="let topic of topics" [value]="topic">
-                        {{topic.title}}
-                      </mat-option>
-                    </mat-select>
-                  </mat-form-field>
-                </div>
-              </div>
-              <mat-action-row>
-                <button mat-button color="primary" (click)="nextStep()">Next</button>
-              </mat-action-row>
-            </mat-expansion-panel>
+            <app-choose-service-topic
+              *ngIf="!feed"
+              [expanded]="step === 0"
+              (opened)="setStep(0)"
+              (serviceAndTopicSelected)="serviceAndTopicSelected($event)"
+              (noServicesExist)="noServicesExist()">
+            </app-choose-service-topic>
             <app-topic-configuration
               [topic]="selectedTopic"
+              [params]="constantParams"
               [expanded]="step === 1"
               (opened)="setStep(1)"
               (cancelled)="setStep(0)"
               (topicConfigured)="topicConfigured($event)"
               (topicConfigurationChanged)="topicConfigChanged($event)">
             </app-topic-configuration>
-            <app-feed-item-properties-configuration
+            <!-- <app-feed-item-properties-configuration
               [expanded]="step === 2" 
               (opened)="setStep(2)"
               (cancelled)="setStep(1)"
               (itemPropertiesUpdated)="itemPropertiesUpdated($event)"
               [itemProperties]="itemProperties">
-            </app-feed-item-properties-configuration>
+            </app-feed-item-properties-configuration> -->
             <app-feed-configuration
               [topic]="selectedTopic"
-              [itemProperties]="currentItemProperties"
-              [expanded]="step === 3 || feed"
-              (opened)="setStep(3)"
-              (cancelled)="setStep(2)"
+              [expanded]="step === 2 || feed"
+              (opened)="setStep(2)"
+              (cancelled)="setStep(1)"
               (feedConfigurationChanged)="feedConfigurationChanged($event)"
               (feedConfigurationSet)="feedConfigurationSet($event)">
             </app-feed-configuration>
-            </ng-container>
           </mat-accordion>
         </div>
         <div class="col-md-6">

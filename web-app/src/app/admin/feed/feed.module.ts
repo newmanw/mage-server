@@ -41,6 +41,7 @@ import { CreateServiceComponent } from './feed-edit/create-service/create-servic
 import { FeedItemPropertiesConfigurationComponent } from './feed-edit/feed-item-properties-configuration/feed-item-properties-configuration.component';
 import { TopicConfigurationComponent } from './feed-edit/topic-configuration/topic-configuration.component';
 import { FeedConfigurationComponent } from './feed-edit/feed-configuration/feed-configuration.component';
+import { ChooseServiceTopicComponent } from './feed-edit/choose-service-topic/choose-service-topic.component';
 
 @NgModule({
   declarations: [
@@ -53,7 +54,8 @@ import { FeedConfigurationComponent } from './feed-edit/feed-configuration/feed-
     CreateServiceComponent,
     FeedItemPropertiesConfigurationComponent,
     TopicConfigurationComponent,
-    FeedConfigurationComponent
+    FeedConfigurationComponent,
+    ChooseServiceTopicComponent
   ],
   imports: [
     FormsModule,
