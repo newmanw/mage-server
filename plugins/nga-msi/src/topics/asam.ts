@@ -27,82 +27,55 @@ export const topicDescriptor: FeedTopic = {
     // TODO: figure out dynamic url resolution
     iconUrl: 'https://mage-msi.geointservices.io/icons/asam.png'
   },
-  itemPropertiesSchema: [
-    {
-      key: "date",
-      schema: {
+  itemPropertiesSchema: {
+    type: 'object',
+    properties: {
+      date: {
         title: "Date Of Occurrence",
         type: "string",
         format: 'date',
         pattern: "\d\d\d\d-\d\d-\d\d"
-      }
-    },
-    {
-      key: "reference",
-      schema: {
+      },
+      reference: {
         title: "Reference Number",
         type: "string"
-      }
-    },
-    {
-      key: "subreg",
-      schema: {
+      },
+      subreg: {
         title: "Geographical Subregion",
         type: "number"
-      }
-    },
-    {
-      key: "description",
-      schema: {
+      },
+      description: {
         title: "Description",
         type: "string"
-      }
-    },
-    {
-      key: "hostilityVictim",
-      schema: {
+      },
+      hostilityVictim: {
         title: "Aggressor-Victim",
         type: "string"
-      }
-    },
-    {
-      key: "hostility",
-      schema: {
+      },
+      hostility: {
         title: "Agressor",
         type: "string"
-      }
-    },
-    {
-      key: "victim",
-      schema: {
+      },
+      victim: {
         title: "Victim",
         type: "string"
-      }
-    },
-    {
-      key: "navArea",
-      schema: {
+      },
+      navArea: {
         title: "Navigation Area",
         type: "string"
-      }
-    },
-    {
-      key: "position",
-      schema: {
+      },
+      position: {
         title: "Position",
         type: "string",
         format: "latlondeg"
-      }
-    },
-    {
-      key: "timestamp",
-      schema: {
+      },
+      timestamp: {
         title: "Date Of Occurrence",
         type: "number",
         format: "date"
       }
     }
-  ]
+  }
 }
 
 export interface AsamTopicParams {
