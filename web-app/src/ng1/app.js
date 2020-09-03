@@ -62,6 +62,7 @@ app
   .directive('bootstrap', downgradeComponent({ component: BootstrapComponent }));
 
 app
+  .factory('FeedService', downgradeInjectable(FeedService))
   .factory('FeedItemService', downgradeInjectable(FeedItemService))
   .factory('FeedItemPopupService', downgradeInjectable(FeedItemPopupService))
 
@@ -91,9 +92,6 @@ app
   .directive('adminFeed', downgradeComponent({ component: AdminFeedComponent }))
   .directive('feedEdit', downgradeComponent({ component: FeedEditComponent }))
   .directive('swagger', downgradeComponent({ component: SwaggerComponent }));
-
-app
-  .factory('FeedService', downgradeInjectable(FeedService));
 
 app
   .component('filterPanel', require('./filter/filter'))

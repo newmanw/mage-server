@@ -11,7 +11,7 @@ import { FeedService } from 'src/app/feed/feed.service';
 export class AdminFeedDeleteComponent implements OnInit {
 
   constructor(
-    @Inject(MAT_DIALOG_DATA) private feed: Feed, 
+    @Inject(MAT_DIALOG_DATA) public feed: Feed, 
     private feedService: FeedService) { 
   }
 

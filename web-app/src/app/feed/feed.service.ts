@@ -1,9 +1,8 @@
 import { Injectable } from '@angular/core';
-import { HttpClient, HttpErrorResponse, HttpResponse } from '@angular/common/http';
-import { Observable, BehaviorSubject, Subject, throwError } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Observable, BehaviorSubject, Subject } from 'rxjs';
 import { Feed, FeedContent, StyledFeature, Service, ServiceType, FeedTopic } from './feed.model';
 import { Feature } from 'geojson';
-import { catchError } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'

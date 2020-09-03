@@ -124,7 +124,7 @@ export class AdminFeedComponent implements OnInit {
     return this.events.filter(option => option.name.toLowerCase().indexOf(filterValue) === 0);
   }
 
-  addEventToFeed(): void {
+  addFeedToEvent(): void {
     this.eventResource.addFeed({ id: this.eventModel.id }, `"${this.feed.id}"`, event => {
       this.feedEvents.push(event);
       this.nonFeedEvents = _.reject(this.nonFeedEvents, e => {
