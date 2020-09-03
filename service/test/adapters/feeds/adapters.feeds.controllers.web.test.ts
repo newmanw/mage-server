@@ -5,15 +5,14 @@ import { expect } from 'chai'
 import supertest from 'supertest'
 import Substitute, { SubstituteOf, Arg } from '@fluffy-spoon/substitute'
 import uniqid from 'uniqid'
-import _, { uniq } from 'lodash'
+import _ from 'lodash'
 import { AppResponse, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeedsRoutes, FeedsAppLayer } from '../../../lib/adapters/feeds/adapters.feeds.controllers.web'
-import { CreateFeedServiceRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, CreateFeedRequest, ListServiceTopicsRequest, ListAllFeeds, PreviewFeedRequest, FeedPreview, FeedExpanded, DeleteFeedRequest } from '../../../lib/app.api/feeds/app.api.feeds'
-import { FeedService, Feed, FeedTopic, normalizeFeedMinimalAttrs, FeedMinimalAttrs, MapStyle, FeedUpdateAttrs } from '../../../lib/entities/feeds/entities.feeds'
+import { CreateFeedServiceRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, CreateFeedRequest, ListServiceTopicsRequest, PreviewFeedRequest, FeedPreview, FeedExpanded, DeleteFeedRequest } from '../../../lib/app.api/feeds/app.api.feeds'
+import { FeedService, Feed, FeedTopic, FeedMinimalAttrs, MapStyle, FeedUpdateAttrs } from '../../../lib/entities/feeds/entities.feeds'
 import { permissionDenied, PermissionDeniedError, InvalidInputError, invalidInput, EntityNotFoundError, entityNotFound } from '../../../lib/app.api/app.api.errors'
 import { WebAppRequestFactory } from '../../../lib/adapters/adapters.controllers.web'
 import { JSONSchema4 } from 'json-schema'
-import { json } from 'body-parser'
 
 declare module 'express-serve-static-core' {
   interface Request {
