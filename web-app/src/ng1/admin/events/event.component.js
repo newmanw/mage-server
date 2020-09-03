@@ -316,6 +316,10 @@ class AdminEventController {
     this.$state.go('admin.layer', { layerId: layer.id });
   }
 
+  gotoFeed(feed) {
+    this.$state.go('admin.feed', { feedId: feed.id });
+  }
+
   completeEvent(event) {
     event.complete = true;
     event.$save(updatedEvent => {
