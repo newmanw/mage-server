@@ -16,6 +16,7 @@ export class FeedEditComponent implements OnInit {
 
   selectedService: Service;
   selectedTopic: FeedTopic;
+  createdService: Service;
 
   itemProperties: any[];
 
@@ -60,6 +61,7 @@ export class FeedEditComponent implements OnInit {
   }
 
   serviceCreated(service: Service): void {
+    this.createdService = service;
     this.setStep(0);
   }
 

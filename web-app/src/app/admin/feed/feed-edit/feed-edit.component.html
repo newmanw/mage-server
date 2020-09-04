@@ -35,6 +35,7 @@
             </app-create-service>
             <app-choose-service-topic
               *ngIf="!feed"
+              [defaultService]="createdService"
               [expanded]="step === 0"
               (opened)="setStep(0)"
               (serviceAndTopicSelected)="serviceAndTopicSelected($event)"

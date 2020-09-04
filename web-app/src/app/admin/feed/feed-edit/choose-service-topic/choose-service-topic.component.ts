@@ -1,4 +1,4 @@
-import { Component, OnInit, OnChanges, Input, Output, ViewChild, EventEmitter, ViewContainerRef } from '@angular/core';
+import { Component, OnInit, OnChanges, Input, Output, ViewChild, EventEmitter, ViewContainerRef, SimpleChanges } from '@angular/core';
 import { Service, FeedTopic } from 'src/app/feed/feed.model';
 import { FeedService } from 'src/app/feed/feed.service';
 import { FormControl } from '@angular/forms';
@@ -11,6 +11,7 @@ import { FormControl } from '@angular/forms';
 export class ChooseServiceTopicComponent implements OnInit, OnChanges {
 
   @Input() expanded: boolean;
+  @Input() defaultService: Service;
   @Output() serviceAndTopicSelected = new EventEmitter<{service: Service, topic: FeedTopic}>();
   @Output() noServicesExist = new EventEmitter();
   @Output() cancelled = new EventEmitter();
@@ -47,8 +48,17 @@ export class ChooseServiceTopicComponent implements OnInit, OnChanges {
     });
   }
 
-  ngOnChanges(): void {
-
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes.defaultService) {
+      const existingService: Service = this.services.find(service => {
+        return service.id === this.defaultService.id;
+      });
+      if (!existingService) {
+        this.services.push(this.defaultService);
+      }
+      this.selectedService = this.defaultService;
+      this.serviceSelected();
+    }
   }
 
   serviceSelected(): void {

@@ -6,10 +6,7 @@ import {
   Output,
   ViewChild,
   ViewContainerRef,
-  EventEmitter,
-  KeyValueDiffers,
-  KeyValueDiffer, 
-  Query} from '@angular/core';
+  EventEmitter} from '@angular/core';
 import { FeedTopic } from 'src/app/feed/feed.model';
 
 @Component({
@@ -38,10 +35,8 @@ export class TopicConfigurationComponent implements OnInit, OnChanges {
   feed: any;
 
   finalProperties: any[];
-  paramDiffer: KeyValueDiffer<string, any>;
 
   constructor(
-    private differs: KeyValueDiffers,
     private viewContainerRef: ViewContainerRef
   ) { }
 
@@ -51,20 +46,14 @@ export class TopicConfigurationComponent implements OnInit, OnChanges {
     this.formOptions = {
       addSubmit: false
     };
-
-    this.paramDiffer = this.differs.find(this.params).create();
-
   }
 
   ngOnChanges(): void {
   }
 
   topicConfigChanged($event: any): void {
-    if (this.paramDiffer.diff($event)) {
-      console.log('changed', new Date());
-      this.currentConfiguration = $event;
-      this.topicConfigurationChanged.emit($event);
-    }
+    this.currentConfiguration = $event;
+    this.topicConfigurationChanged.emit($event);
   }
 
   finish(): void {
