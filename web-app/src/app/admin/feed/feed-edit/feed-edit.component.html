@@ -45,6 +45,7 @@
               [topic]="selectedTopic"
               [params]="constantParams"
               [expanded]="step === 1"
+              [showPrevious]="!feed"
               (opened)="setStep(1)"
               (cancelled)="setStep(0)"
               (topicConfigured)="topicConfigured($event)"
@@ -59,7 +60,8 @@
             </app-feed-item-properties-configuration> -->
             <app-feed-configuration
               [topic]="selectedTopic"
-              [expanded]="step === 2 || feed"
+              [expanded]="step === 2"
+              [buttonText]="feed ? 'Update Feed' : 'Create Feed'"
               (opened)="setStep(2)"
               (cancelled)="setStep(1)"
               (feedConfigurationChanged)="feedConfigurationChanged($event)"

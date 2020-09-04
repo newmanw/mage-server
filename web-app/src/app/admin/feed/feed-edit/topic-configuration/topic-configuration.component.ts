@@ -20,6 +20,7 @@ export class TopicConfigurationComponent implements OnInit, OnChanges {
   @Input() disabled: boolean;
   @Input() topic: FeedTopic;
   @Input() params: any;
+  @Input() showPrevious: boolean;
   @Output() topicConfigurationChanged = new EventEmitter<any>();
   @Output() topicConfigured = new EventEmitter<any>();
   @Output() cancelled = new EventEmitter();

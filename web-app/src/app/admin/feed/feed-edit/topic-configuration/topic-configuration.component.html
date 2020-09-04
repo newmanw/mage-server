@@ -14,7 +14,7 @@
       </div>
     </div>
     <mat-action-row *ngIf="!feed">
-      <button mat-button color="warn" (click)="cancel()">Previous</button>
+      <button *ngIf="showPrevious" mat-button color="warn" (click)="cancel()">Previous</button>
       <button mat-button color="primary" (click)="finish()">Next</button>
     </mat-action-row>
   </mat-expansion-panel>

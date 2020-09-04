@@ -11,6 +11,7 @@ export class FeedConfigurationComponent implements OnInit, OnChanges {
   @Input() expanded: boolean;
   @Input() itemProperties: Array<any>;
   @Input() topic: FeedTopic;
+  @Input() buttonText: string;
   @Output() feedConfigurationSet = new EventEmitter<any>();
   @Output() feedConfigurationChanged = new EventEmitter<any>();
   @Output() cancelled = new EventEmitter();
@@ -131,11 +132,7 @@ export class FeedConfigurationComponent implements OnInit, OnChanges {
     this.cancelled.emit();
   }
 
-  createFeed(): void {
-    this.feedConfigurationSet.emit(this.feedConfiguration);
-  }
-
-  updateFeed(): void {
+  setConfiguration(): void {
     this.feedConfigurationSet.emit(this.feedConfiguration);
   }
 
