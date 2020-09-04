@@ -1812,6 +1812,10 @@ class TestFeedRepository implements FeedRepository {
     return Array.from(this.db.values())
   }
 
+  async findFeedsForService(service: FeedServiceId): Promise<Feed[]> {
+    return Array.from(this.db.values()).filter(x => x.service === service)
+  }
+
   async update(feed: Omit<Feed, 'service' | 'topic'>): Promise<Feed | null> {
     const existing = this.db.get(feed.id)
     if (!existing) {

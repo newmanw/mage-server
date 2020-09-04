@@ -442,6 +442,89 @@ describe('feeds repositories', function() {
       expect(rawFetched).to.have.property('__v')
     })
 
+    describe('finding feeds that reference a service', async function() {
+
+      beforeEach(function() {
+        idFactory.nextId().mimicks(async () => uniqid())
+      })
+
+      it('finds the feeds with a service id', async function() {
+
+        const service = mongoose.Types.ObjectId().toHexString()
+        const serviceFeeds: Feed[] = await Promise.all([
+          repo.create({
+            service,
+            topic: uniqid(),
+            title: 'Feed 1',
+            itemsHaveIdentity: true,
+            itemsHaveSpatialDimension: true
+          }),
+          repo.create({
+            service,
+            topic: uniqid(),
+            title: 'Feed 2',
+            itemsHaveIdentity: true,
+            itemsHaveSpatialDimension: true
+          }),
+          repo.create({
+            service,
+            topic: uniqid(),
+            title: 'Feed 3',
+            itemsHaveIdentity: true,
+            itemsHaveSpatialDimension: true
+          })
+        ])
+        const otherFeeds: Feed[] = await Promise.all([
+          repo.create({
+            service: mongoose.Types.ObjectId().toHexString(),
+            topic: uniqid(),
+            title: 'Other 1',
+            itemsHaveIdentity: true,
+            itemsHaveSpatialDimension: true
+          }),
+          repo.create({
+            service: mongoose.Types.ObjectId().toHexString(),
+            topic: uniqid(),
+            title: 'Feed 2',
+            itemsHaveIdentity: true,
+            itemsHaveSpatialDimension: true
+          })
+        ])
+        const found = await repo.findFeedsForService(service)
+        const all = await repo.findAll()
+
+        expect(found).to.have.length(3)
+        expect(found).to.have.deep.members(serviceFeeds)
+        expect(found).not.to.have.deep.members(otherFeeds)
+        expect(all).to.have.deep.members([ ...otherFeeds, ...serviceFeeds ])
+      })
+
+      it('returns an empty list when no feeds reference the service', async function() {
+
+        const otherFeeds: Feed[] = await Promise.all([
+          repo.create({
+            service: mongoose.Types.ObjectId().toHexString(),
+            topic: uniqid(),
+            title: 'Other 1',
+            itemsHaveIdentity: true,
+            itemsHaveSpatialDimension: true
+          }),
+          repo.create({
+            service: mongoose.Types.ObjectId().toHexString(),
+            topic: uniqid(),
+            title: 'Feed 2',
+            itemsHaveIdentity: true,
+            itemsHaveSpatialDimension: true
+          })
+        ])
+        const all = await repo.findAll()
+        const found = await repo.findFeedsForService(mongoose.Types.ObjectId().toHexString())
+
+        expect(all).to.have.deep.members(otherFeeds)
+        expect(found).to.deep.equal([])
+      })
+    })
+
     describe('removing a feed by id', function() {
 
       it('removes the feed for the id', async function() {

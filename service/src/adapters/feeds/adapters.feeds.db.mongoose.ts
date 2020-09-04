@@ -1,7 +1,7 @@
 
 import mongoose, { Model, SchemaOptions } from 'mongoose'
 import { BaseMongooseRepository } from '../base/adapters.base.db.mongoose'
-import { FeedServiceType, FeedService, FeedServiceTypeId, RegisteredFeedServiceType, FeedRepository, Feed, FeedId } from '../../entities/feeds/entities.feeds'
+import { FeedServiceType, FeedService, FeedServiceTypeId, RegisteredFeedServiceType, FeedRepository, Feed, FeedId, FeedServiceId } from '../../entities/feeds/entities.feeds'
 import { FeedServiceTypeRepository, FeedServiceRepository } from '../../entities/feeds/entities.feeds'
 import { FeedServiceDescriptor } from '../../app.api/feeds/app.api.feeds'
 import { EntityIdFactory } from '../../entities/entities.global'
@@ -149,6 +149,11 @@ export class MongooseFeedRepository extends BaseMongooseRepository<FeedDocument,
 
   async findFeedsByIds(...feedIds: FeedId[]): Promise<Feed[]> {
     const docs = await this.model.find({ _id: { $in: feedIds }})
+    return docs.map(x => x.toJSON())
+  }
+
+  async findFeedsForService(service: FeedServiceId): Promise<Feed[]> {
+    const docs = await this.model.find({ service })
     return docs.map(x => x.toJSON())
   }
 }

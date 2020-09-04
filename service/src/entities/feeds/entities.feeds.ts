@@ -271,6 +271,7 @@ export interface FeedRepository {
   findById(id: FeedId): Promise<Feed | null>
   findFeedsByIds(...feedIds: FeedId[]): Promise<Feed[]>
   findAll(): Promise<Feed[]>
+  findFeedsForService(service: FeedServiceId): Promise<Feed[]>
   update(feed: FeedUpdateAttrs): Promise<Feed | null>
   removeById(feedId: FeedId): Promise<Feed | null>
 }
