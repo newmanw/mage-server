@@ -2,15 +2,15 @@ import { describe, it, beforeEach, Context } from 'mocha'
 import { expect } from 'chai'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
 import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedService, FeedServiceConnection, RegisteredFeedServiceType, Feed, FeedMinimalAttrs, normalizeFeedMinimalAttrs, FeedRepository, FeedId, FeedContent, FeedUpdateAttrs, FeedCreateAttrs } from '../../../lib/entities/feeds/entities.feeds'
-import { ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics, ListFeedServices, PreviewFeed, CreateFeed, ListAllFeeds, FetchFeedContent, GetFeed, UpdateFeed, DeleteFeed, GetFeedService, DeleteFeedService } from '../../../lib/app.impl/feeds/app.impl.feeds'
+import { ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics, ListFeedServices, PreviewFeed, CreateFeed, ListAllFeeds, FetchFeedContent, GetFeed, UpdateFeed, DeleteFeed, GetFeedService, DeleteFeedService, ListServiceFeeds } from '../../../lib/app.impl/feeds/app.impl.feeds'
 import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError, PermissionDeniedErrorData, KeyPathError } from '../../../lib/app.api/app.api.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
-import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, FeedPreview, FetchFeedContentRequest, FeedExpanded, GetFeedRequest, UpdateFeedRequest, DeleteFeedRequest, CreateFeedServiceRequest, GetFeedServiceRequest, DeleteFeedServiceRequest } from '../../../lib/app.api/feeds/app.api.feeds'
+import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, FeedPreview, FetchFeedContentRequest, FeedExpanded, GetFeedRequest, UpdateFeedRequest, DeleteFeedRequest, CreateFeedServiceRequest, GetFeedServiceRequest, DeleteFeedServiceRequest, ListServiceFeedsRequest } from '../../../lib/app.api/feeds/app.api.feeds'
 import uniqid from 'uniqid'
 import { AppRequestContext, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeatureCollection } from 'geojson'
 import { JsonObject, JsonSchemaService, JsonValidator } from '../../../lib/entities/entities.json_types'
-import _ from 'lodash'
+import _, { uniq } from 'lodash'
 import { MageEventRepository } from '../../../lib/entities/events/entities.events'
 
 
@@ -731,12 +731,6 @@ describe.only('feeds use case interactions', function() {
           const fetched = await app.listTopics(req).then(res => res.success)
 
           expect(fetched).to.deep.equal(topics)
-        })
-      })
-
-      describe('listing feeds that reference a service', function() {
-        it('works', async function() {
-          expect.fail('todo')
         })
       })
     })
@@ -1676,6 +1670,99 @@ describe.only('feeds use case interactions', function() {
         expect.fail('todo: this would probably be more useful; maybe even all service types, services, feeds, and even cached topic descriptors')
       })
     })
+
+    describe('listing feeds for a service', function() {
+
+      let targetService: FeedServiceId
+      let serviceFeeds: Feed[]
+      let otherFeed: Feed
+
+      beforeEach(function() {
+        targetService = uniqid()
+        serviceFeeds = [
+          {
+            id: uniqid(),
+            service: targetService,
+            topic: uniqid(),
+            title: 'Feed 1',
+            itemsHaveIdentity: true,
+            itemsHaveSpatialDimension: true
+          },
+          {
+            id: uniqid(),
+            service: targetService,
+            topic: uniqid(),
+            title: 'Feed 1',
+            itemsHaveIdentity: true,
+            itemsHaveSpatialDimension: true
+          }
+        ]
+        otherFeed = {
+          id: uniqid(),
+          service: uniqid(),
+          topic: uniqid(),
+          title: 'Other 1',
+          itemsHaveIdentity: true,
+          itemsHaveSpatialDimension: true
+        }
+        app.registerFeeds(...serviceFeeds, otherFeed)
+        app.registerServices(
+          {
+            id: targetService,
+            serviceType: uniqid(),
+            title: 'Service 1',
+            summary: null,
+            config: {},
+          },
+          {
+            id: uniqid(),
+            serviceType: uniqid(),
+            title: 'Service 2',
+            summary: null,
+            config: {}
+          })
+      })
+      it('returns all the feeds that reference a service', async function() {
+
+        const req: ListServiceFeedsRequest = requestBy(adminPrincipal, { service: targetService })
+        const res = await app.listServiceFeeds(req)
+
+        expect(res.error).to.be.null
+        expect(res.success).to.deep.equal(serviceFeeds)
+      })
+
+      it('checks permission for listing service feeds', async function() {
+
+        const req: ListServiceFeedsRequest = requestBy(bannedPrincipal, { service: targetService })
+        let res = await app.listServiceFeeds(req)
+
+        expect(res.success).to.be.null
+        expect(res.error).to.be.instanceOf(MageError)
+        expect(res.error?.code).to.equal(ErrPermissionDenied)
+        const err = res.error as PermissionDeniedError
+        expect(err.data.subject).to.equal(bannedPrincipal.user)
+        expect(err.data.permission).to.equal(ListAllFeeds.name)
+
+        app.permissionService.grantListFeeds(bannedPrincipal.user)
+        res = await app.listServiceFeeds(req)
+
+        expect(res.error).to.be.null
+        expect(res.success).to.deep.equal(serviceFeeds)
+      })
+
+      it('fails if the service does not exist', async function() {
+
+        const req: ListServiceFeedsRequest = requestBy(adminPrincipal, { service: uniqid() })
+        const res = await app.listServiceFeeds(req)
+
+        expect(res.success).to.be.null
+        expect(res.error).to.be.instanceOf(MageError)
+        expect(res.error?.code).to.equal(ErrEntityNotFound)
+        const err = res.error as EntityNotFoundError
+        expect(err.data.entityId).to.equal(req.service)
+        expect(err.data.entityType).to.equal('FeedService')
+      })
+    })
   })
 
   describe('fetching feed content', function() {
@@ -1799,6 +1886,7 @@ class TestApp {
   readonly previewFeed = PreviewFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.jsonSchemaService)
   readonly createFeed = CreateFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo, this.jsonSchemaService)
   readonly listFeeds = ListAllFeeds(this.permissionService, this.feedRepo)
+  readonly listServiceFeeds = ListServiceFeeds(this.permissionService, this.serviceRepo, this.feedRepo)
   readonly getFeed = GetFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo)
   readonly updateFeed = UpdateFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo)
   readonly deleteFeed = DeleteFeed(this.permissionService, this.feedRepo, this.eventRepo)

@@ -289,6 +289,21 @@ export function ListAllFeeds(permissionService: api.FeedsPermissionService, feed
   }
 }
 
+export function ListServiceFeeds(permissionService: api.FeedsPermissionService, serviceRepo: FeedServiceRepository, feedRepo: FeedRepository): api.ListServiceFeeds {
+  return async function listServiceFeeds(req: api.ListServiceFeedsRequest): ReturnType<api.ListServiceFeeds> {
+    return await withPermission<Feed[], KnownErrorsOf<api.ListServiceFeeds>>(
+      permissionService.ensureListAllFeedsPermissionFor(req.context),
+      async (): Promise<Feed[] | EntityNotFoundError> => {
+        const service = await serviceRepo.findById(req.service)
+        if (!service) {
+          return entityNotFound(req.service, 'FeedService')
+        }
+        return await feedRepo.findFeedsForService(req.service)
+      }
+    )
+  }
+}
+
 export function GetFeed(permissionService: api.FeedsPermissionService, serviceTypeRepo: FeedServiceTypeRepository, serviceRepo: FeedServiceRepository, feedRepo: FeedRepository): api.GetFeed {
   return async function getFeed(req: api.GetFeedRequest): ReturnType<api.GetFeed> {
     return await withPermission<api.FeedExpanded, KnownErrorsOf<api.GetFeed>>(
