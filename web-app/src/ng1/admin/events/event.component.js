@@ -1,9 +1,10 @@
 "use strict";
 
 import _ from 'underscore';
+import { take } from 'rxjs/operators';
 
 class AdminEventController {
-  constructor($state, $stateParams, $filter, $q, $uibModal, LocalStorageService, UserService, Event, Team, Layer, UserPagingService) {
+  constructor($state, $stateParams, $filter, $q, $uibModal, LocalStorageService, UserService, Event, Team, Layer, FeedService, UserPagingService) {
     this.$state = $state;
     this.$stateParams = $stateParams;
     this.$filter = $filter;
@@ -13,6 +14,7 @@ class AdminEventController {
     this.Event = Event;
     this.Team = Team;
     this.Layer = Layer;
+    this.FeedService = FeedService;
     this.UserPagingService = UserPagingService;
 
     this.token = LocalStorageService.getToken();
@@ -24,10 +26,17 @@ class AdminEventController {
 
     this.editLayers = false;
     this.eventLayers = [];
+
+    this.layers = [];
     this.layersPage = 0;
     this.layersPerPage = 10;
 
-    this.layers = [];
+    this.editFeeds = false;
+    this.eventFeeds = [];
+
+    this.feeds = [];
+    this.feedsPage = 0;
+    this.feedsPerPage = 10;
 
     this.nonMember = null;
 
@@ -39,18 +48,26 @@ class AdminEventController {
 
     // For some reason angular is not calling into filter function with correct context
     this.filterLayers = this._filterLayers.bind(this);
+    this.filterFeeds = this._filterFeeds.bind(this);
   }
 
   $onInit() {
-    this.$q.all({ teams: this.Team.query({ populate: false }).$promise, layers: this.Layer.query().$promise, event: this.Event.get({ id: this.$stateParams.eventId, populate: false }).$promise }).then(result => {
-      let teamsById = _.indexBy(result.teams, 'id');
+    this.$q.all({ 
+        teams: this.Team.query({ populate: false }).$promise, 
+        layers: this.Layer.query().$promise,
+        feeds: this.FeedService.fetchAllFeeds().pipe(take(1)).toPromise(),
+        event: this.Event.get({ id: this.$stateParams.eventId, populate: false }).$promise }).then(result => {
+      const teamsById = _.indexBy(result.teams, 'id');
 
       this.layers = result.layers;
-      let layersById = _.indexBy(result.layers, 'id');
+      const layersById = _.indexBy(result.layers, 'id');
+
+      this.feeds = result.feeds;
+      const feedsById = _.indexBy(result.feeds, 'id');
 
       this.event = result.event;
 
-      var eventTeamId = _.find(this.event.teamIds, teamId => {
+      const eventTeamId = _.find(this.event.teamIds, teamId => {
         if (teamsById[teamId]) {
           return teamsById[teamId].teamEventId === this.event.id;
         }
@@ -70,15 +87,22 @@ class AdminEventController {
 
       this.layer = {};
       this.eventLayers = _.chain(this.event.layerIds)
-        .filter(layerId => {
-          return layersById[layerId];
-        })
-        .map(layerId => {
-          return layersById[layerId];
-        }).value();
+        .filter(layerId => layersById[layerId])
+        .map(layerId => layersById[layerId])
+        .value();
 
       this.nonLayers = _.filter(this.layers, layer => {
         return this.event.layerIds.indexOf(layer.id) === -1;
+      });
+
+      this.feed = {};
+      this.eventFeeds = _.chain(this.event.feedIds)
+        .filter(id => feedsById[id])
+        .map(id => feedsById[id])
+        .value();
+
+      this.nonFeeds = _.filter(this.feeds, feed => {
+        return this.event.feedIds.indexOf(feed.id) === -1;
       });
 
       const myAccess = this.event.acl[this.UserService.myself.id];
@@ -88,7 +112,7 @@ class AdminEventController {
       this.hasUpdatePermission = _.contains(this.UserService.myself.role.permissions, 'UPDATE_EVENT') || _.contains(aclPermissions, 'update');
       this.hasDeletePermission = _.contains(this.UserService.myself.role.permissions, 'DELETE_EVENT') || _.contains(aclPermissions, 'delete');
 
-      let clone = JSON.parse(JSON.stringify(this.stateAndData[this.userState]));
+      const clone = JSON.parse(JSON.stringify(this.stateAndData[this.userState]));
       this.stateAndData[this.nonMemberUserState] = clone;
       delete this.stateAndData['active'];
       delete this.stateAndData['inactive'];
@@ -137,7 +161,7 @@ class AdminEventController {
 
   search() {
     this.UserPagingService.search(this.stateAndData[this.userState], this.memberSearch).then(users => {
-      let filteredTeams = this.$filter('filter')(this.teamsInEvent, this.memberSearch);
+      const filteredTeams = this.$filter('filter')(this.teamsInEvent, this.memberSearch);
       this.eventMembers = _.map(users.concat(filteredTeams), item => { return this.normalize(item); });
     });
   }
@@ -150,7 +174,7 @@ class AdminEventController {
     }
     
     return this.UserPagingService.search(this.stateAndData[this.nonMemberUserState], searchString).then(users => {
-      let filteredTeams = this.$filter('filter')(this.teamsNotInEvent, searchString);
+      const filteredTeams = this.$filter('filter')(this.teamsNotInEvent, searchString);
       this.nonMemberSearchResults = _.map(users.concat(filteredTeams), item => { return this.normalize(item); });
 
       if (this.nonMemberSearchResults.length == 0) {
@@ -168,6 +192,11 @@ class AdminEventController {
   _filterLayers(layer) {
     const filteredLayers = this.$filter('filter')([layer], this.layerSearch);
     return filteredLayers && filteredLayers.length;
+  }
+
+  _filterFeeds(feed) {
+    const filteredFeeds = this.$filter('filter')([feed], this.feedSearch);
+    return filteredFeeds && filteredFeeds.length;
   }
 
   normalize(item) {
@@ -213,20 +242,18 @@ class AdminEventController {
   addUser(user) {
     this.nonMember = null;
     this.eventTeam.userIds.push(user.id);
-    const self = this;
     this.eventTeam.$save(() => {
       this.event.$get({ populate: false }).then(() => {
-        self.refresh(self);
+        this.refresh(self);
       });
     });
   }
 
   removeUser(user) {
     this.eventTeam.userIds = _.reject(this.eventTeam.userIds, u => { return user.id === u; });
-    const self = this;
     this.eventTeam.$save(() => {
       this.event.$get({ populate: false }).then(() => {
-        self.refresh(self);
+        this.refresh(self);
       });
     });
   }
@@ -246,6 +273,23 @@ class AdminEventController {
     this.nonLayers.push(layer);
 
     this.Event.removeLayer({ id: this.event.id, layerId: layer.id });
+  }
+
+  addFeed(feed) {
+    this.feed = {};
+    this.event.feedIds.push(feed.id);
+    this.eventFeeds.push(feed);
+    this.nonFeeds = _.reject(this.nonFeeds, f => { return f.id === feed.id; });
+    
+    this.Event.addFeed({ id: this.event.id }, `"${feed.id}"`);
+  }
+
+  removeFeed(feed) {
+    this.event.feedIds = _.reject(this.event.feedIds, feedId => { return feedId === feed.id; });
+    this.eventFeeds = _.reject(this.eventFeeds, f => { return f.id === feed.id; });
+    this.nonFeeds.push(feed);
+
+    this.Event.removeFeed({ id: this.event.id, feedId: feed.id});
   }
 
   editEvent(event) {
@@ -270,6 +314,10 @@ class AdminEventController {
 
   gotoLayer(layer) {
     this.$state.go('admin.layer', { layerId: layer.id });
+  }
+
+  gotoFeed(feed) {
+    this.$state.go('admin.feed', { feedId: feed.id });
   }
 
   completeEvent(event) {
@@ -302,10 +350,10 @@ class AdminEventController {
   moveFormUp($event, form) {
     $event.stopPropagation();
 
-    let forms = this.event.forms;
+    const forms = this.event.forms;
 
-    let from = forms.indexOf(form);
-    let to = from - 1;
+    const from = forms.indexOf(form);
+    const to = from - 1;
     forms.splice(to, 0, forms.splice(from, 1)[0]);
 
     this.event.$save();
@@ -314,10 +362,10 @@ class AdminEventController {
   moveFormDown($event, form) {
     $event.stopPropagation();
 
-    let forms = this.event.forms;
+    const forms = this.event.forms;
 
-    let from = forms.indexOf(form);
-    let to = from + 1;
+    const from = forms.indexOf(form);
+    const to = from + 1;
     forms.splice(to, 0, forms.splice(from, 1)[0]);
 
     this.event.$save();
@@ -337,7 +385,7 @@ class AdminEventController {
   }
 
   deleteEvent() {
-    let modalInstance = this.$uibModal.open({
+    const modalInstance = this.$uibModal.open({
       resolve: {
         event: () => {
           return this.event;
@@ -352,7 +400,7 @@ class AdminEventController {
   }
 }
 
-AdminEventController.$inject = ['$state', '$stateParams', '$filter', '$q', '$uibModal', 'LocalStorageService', 'UserService', 'Event', 'Team', 'Layer', 'UserPagingService'];
+AdminEventController.$inject = ['$state', '$stateParams', '$filter', '$q', '$uibModal', 'LocalStorageService', 'UserService', 'Event', 'Team', 'Layer', 'FeedService', 'UserPagingService'];
 
 export default {
   template: require('./event.html'),

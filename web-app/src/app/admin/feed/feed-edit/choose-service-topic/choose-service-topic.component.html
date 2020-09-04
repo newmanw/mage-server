@@ -1,0 +1,48 @@
+<ng-template #template>
+  <mat-expansion-panel [expanded]="expanded" (opened)="this.opened.emit()" hideToggle>
+    <mat-expansion-panel-header>
+      <mat-panel-title>
+        Choose a Service and Topic
+      </mat-panel-title>
+      <mat-panel-description>
+        {{selectedService?.title}} : {{selectedTopic?.title}}
+      </mat-panel-description>
+    </mat-expansion-panel-header>
+    <div class="row">
+      <div class="col-md-12">
+        <mat-form-field appearance="outline">
+          <mat-label>Select A Service</mat-label>
+          <mat-select [(ngModel)]="selectedService" (selectionChange)="serviceSelected()">
+            <mat-option>
+              <ngx-mat-select-search [formControl]="serviceSearchControl" placeholderLabel="Select A Service"
+                noEntriesFoundLabel=""></ngx-mat-select-search>
+            </mat-option>
+            <mat-option *ngFor="let service of services" [value]="service">
+              {{service.title}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-md-12">
+        <mat-form-field appearance="outline">
+          <mat-label>Select A Topic</mat-label>
+          <mat-select [(ngModel)]="selectedTopic">
+            <mat-option>
+              <ngx-mat-select-search [formControl]="topicSearchControl" placeholderLabel="Select A Topic"
+                noEntriesFoundLabel=""></ngx-mat-select-search>
+            </mat-option>
+            <mat-option *ngFor="let topic of topics" [value]="topic">
+              {{topic.title}}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </div>
+    <mat-action-row>
+      <button mat-button color="primary" (click)="next()">Next</button>
+    </mat-action-row>
+  </mat-expansion-panel>
+</ng-template>

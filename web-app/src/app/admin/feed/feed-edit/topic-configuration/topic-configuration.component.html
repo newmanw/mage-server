@@ -9,12 +9,12 @@
     </mat-expansion-panel-header>
     <div class="row" *ngIf="topic">
       <div class="col-md-12">
-        <app-json-schema loadExternalAssets="true" [form]="topic.paramsSchema"
+        <app-json-schema loadExternalAssets="true" [schema]="topic.paramsSchema" [data]="topicConfiguration"
           [options]="formOptions" (onChanges)="topicConfigChanged($event)" framework="material-design"></app-json-schema>
       </div>
     </div>
     <mat-action-row *ngIf="!feed">
-      <button mat-button color="warn" (click)="cancel()">Previous</button>
+      <button *ngIf="showPrevious" mat-button color="warn" (click)="cancel()">Previous</button>
       <button mat-button color="primary" (click)="finish()">Next</button>
     </mat-action-row>
   </mat-expansion-panel>

@@ -33,8 +33,7 @@
       <div class="row">
         <div class="col-md-12">
           <div class="admin-table">
-            <ng-container *ngFor="let feed of feeds | slice:(page*itemsPerPage):((page+1)*itemsPerPage);">
-              <div class="well-item">
+              <div class="well-item" [@deleteAnimation] *ngFor="let feed of feeds | slice:(page*itemsPerPage):((page+1)*itemsPerPage);">
                 <div class="row pointer" (click)="goToFeed(feed)">
                   <div class="col-md-8">
                     <div class="right-gap pull-left">
@@ -44,12 +43,11 @@
                     <div class="muted"><span class="right-gap">{{feed.summary}}</span></div>
                   </div>
                   <div class="col-md-4">
-                    <button class="btn btn-sm btn-danger pull-right admin-user-button" *ngIf="hasFeedDeletePermission" (click)="deleteFeed(feed)">Delete</button>
+                    <button class="btn btn-sm btn-danger pull-right admin-user-button" *ngIf="hasFeedDeletePermission" (click)="deleteFeed($event, feed)">Delete</button>
                     <button class="btn btn-sm btn-default pull-right" *ngIf="hasFeedEditPermission" (click)="editFeed(feed)">Edit</button>
                   </div>
                 </div>
               </div>
-            </ng-container>
           </div>
           <div class="row">
             <div class="col-md-12">

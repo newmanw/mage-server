@@ -4,11 +4,19 @@ import { UserService } from '../../../upgrade/ajs-upgraded-providers';
 import { FeedService } from '../../../feed/feed.service';
 import { Feed } from 'src/app/feed/feed.model';
 import { StateService } from '@uirouter/angular';
+import { MatDialog } from '@angular/material';
+import { AdminFeedDeleteComponent } from '../admin-feed/admin-feed-delete.component';
+import { trigger, transition, style, animate } from '@angular/animations';
 
 @Component({
   selector: 'app-feeds',
   templateUrl: './feeds.component.html',
-  styleUrls: ['./feeds.component.scss']
+  styleUrls: ['./feeds.component.scss'],
+  animations: [trigger('deleteAnimation', [
+    transition(':leave',
+      [style({ opacity: 1 }), animate('250ms', style({ opacity: 0 }))]
+    )
+  ])]
 })
 export class FeedsComponent implements OnInit {
 
@@ -25,6 +33,7 @@ export class FeedsComponent implements OnInit {
   constructor(
     private feedService: FeedService,
     private stateService: StateService,
+    public dialog: MatDialog,
     @Inject(UserService) private userService: { myself: { role: {permissions: Array<string>}}}
   ) {
     this.hasFeedCreatePermission = _.contains(userService.myself.role.permissions, 'CREATE_LAYER');
@@ -66,17 +75,27 @@ export class FeedsComponent implements OnInit {
   }
 
   newFeed(): void {
-    console.log('new feed');
     this.stateService.go('admin.feedCreate');
   }
 
   editFeed(feed: Feed): void {
     
   }
-  
 
-  deleteFeed(feed: Feed): void {
-    
+  deleteFeed($event: MouseEvent, feed: Feed): void {
+    $event.stopPropagation();
+
+    this.dialog.open(AdminFeedDeleteComponent, {
+      data: feed,
+      autoFocus: false,
+      disableClose: true
+    }).afterClosed().subscribe(result => {
+      if (result === true) {
+        this.feedService.deleteFeed(feed).subscribe(() => {
+          this.feeds = _.without(this.feeds, feed);
+        });
+      }
+    });
   }
 
 }

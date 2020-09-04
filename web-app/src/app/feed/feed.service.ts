@@ -82,6 +82,10 @@ export class FeedService {
     return this.http.put<Feed>(`/api/feeds/${feed.id}`, feed);
   }
 
+  deleteFeed(feed: Feed): Observable<{}> {
+    return this.http.delete(`/api/feeds/${feed.id}`, {responseType: 'text'});
+  }
+
   fetchFeeds(eventId: number): Observable<Array<Feed>> {
     const subject = new Subject<Array<Feed>>();
     this.http.get<Array<Feed>>(`/api/events/${eventId}/feeds`).subscribe(feeds => {

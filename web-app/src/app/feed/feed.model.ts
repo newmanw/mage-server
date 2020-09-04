@@ -2,8 +2,8 @@ import { FeatureCollection, Feature } from 'geojson';
 
 export interface Feed {
   id: string;
-  service: string;
-  topic: string;
+  service: Service;
+  topic: FeedTopic;
   title: string;
   summary?: string;
   mapStyle?: Style;

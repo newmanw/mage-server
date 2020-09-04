@@ -12,7 +12,7 @@ export class FeedTabComponent implements OnInit {
 
   imageStyle: object;
 
-  ngOnInit(): void {
+  ngOnInit(): void {    
     if (this.tab.iconUrl) {
       this.imageStyle = { 
         'mask-image': `url(${this.tab.iconUrl})`, 

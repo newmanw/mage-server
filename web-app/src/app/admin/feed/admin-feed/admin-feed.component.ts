@@ -7,6 +7,8 @@ import { Feed, ServiceType, FeedTopic, Service } from 'src/app/feed/feed.model';
 import { StateService } from '@uirouter/angular';
 import { UserService, Event } from '../../../upgrade/ajs-upgraded-providers';
 import { FeedService } from 'src/app/feed/feed.service';
+import { AdminFeedDeleteComponent } from './admin-feed-delete.component';
+import { MatDialog } from '@angular/material';
 
 @Component({
   selector: 'app-admin-feed',
@@ -36,13 +38,11 @@ export class AdminFeedComponent implements OnInit {
   service: Service;
   feedServiceType: ServiceType;
   feedTopic: FeedTopic;
-  fullService: string;
-  fullServiceType: string;
-  fullTopic: string;
 
   constructor(
     private feedService: FeedService,
     private stateService: StateService,
+    public dialog: MatDialog,
     @Inject(UserService) private userService: { myself: { id: string, role: {permissions: Array<string>}}},
     @Inject(Event) private eventResource: any
     ) {
@@ -57,17 +57,10 @@ export class AdminFeedComponent implements OnInit {
       this.feed = feed;
       this.fullFeed = JSON.stringify(feed, null, 2);
       this.feedLoaded = Promise.resolve(true);
-      this.feedService.fetchService(this.feed.service).subscribe(service => {
-        this.service = service;
-        this.fullService = JSON.stringify(service, null, 2);
-        this.feedService.fetchServiceType(service.serviceType).subscribe(serviceType => {
-          this.feedServiceType = serviceType;
-          this.fullServiceType = JSON.stringify(serviceType, null, 2);
-        });
-      });
-      this.feedService.fetchTopic(feed.service, feed.topic).subscribe(topic => {
-        this.feedTopic = topic;
-        this.fullTopic = JSON.stringify(topic, null, 2);
+      this.service = this.feed.service;
+      this.feedTopic = this.feed.topic;
+      this.feedService.fetchServiceType(this.service.serviceType).subscribe(serviceType => {
+        this.feedServiceType = serviceType;
       });
     });
 
@@ -121,7 +114,7 @@ export class AdminFeedComponent implements OnInit {
     return this.events.filter(option => option.name.toLowerCase().indexOf(filterValue) === 0);
   }
 
-  addEventToFeed(): void {
+  addFeedToEvent(): void {
     this.eventResource.addFeed({ id: this.eventModel.id }, `"${this.feed.id}"`, event => {
       this.feedEvents.push(event);
       this.nonFeedEvents = _.reject(this.nonFeedEvents, e => {
@@ -144,6 +137,21 @@ export class AdminFeedComponent implements OnInit {
 
   editFeed(): void {
     this.stateService.go('admin.feedEdit', { feedId: this.feed.id });
+  }
+
+  deleteFeed(): void {
+
+    this.dialog.open(AdminFeedDeleteComponent, {
+      data: this.feed,
+      autoFocus: false,
+      disableClose: true
+    }).afterClosed().subscribe(result => {
+      if (result === true) {
+        this.feedService.deleteFeed(this.feed).subscribe(() => {
+          this.goToFeeds();
+        })
+      }
+    });
   }
 
   goToFeeds(): void {
