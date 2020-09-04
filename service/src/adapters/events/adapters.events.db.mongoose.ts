@@ -50,9 +50,8 @@ export class MongooseMageEventRepository extends BaseMongooseRepository<MageEven
     return updated?.toJSON() || null
   }
 
-  async removeFeedFromEvents(feed: FeedId): Promise<number> {
-    const filter = filterEventsWithFeed(feed)
-    const updated = await this.model.updateMany(filter, { $pull: { feedIds: feed }})
+  async removeFeedsFromEvents(...feeds: FeedId[]): Promise<number> {
+    const updated = await this.model.updateMany({}, { $pull: { feedIds: { $in: feeds }}})
     return updated.nModified
   }
 
@@ -71,6 +70,6 @@ export class MongooseMageEventRepository extends BaseMongooseRepository<MageEven
   }
 }
 
-function filterEventsWithFeed(feed: FeedId): any {
-  return { feedIds: { $elemMatch: { $eq: feed }}}
+function filterEventsWithFeeds(...feeds: FeedId[]): any {
+  return { feedIds: { $elemMatch: { $in: feeds }}}
 }

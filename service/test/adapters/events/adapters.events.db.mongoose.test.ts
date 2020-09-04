@@ -274,7 +274,7 @@ describe('event mongoose repository', function() {
           ]
         })
       ])
-      const updateCount = await repo.removeFeedFromEvents(feedId)
+      const updateCount = await repo.removeFeedsFromEvents(feedId)
       const updatedEventDocs = await model.find({ _id: { $in: eventDocs.map(x => x._id) }})
       expect(updateCount).to.equal(2)
       expect(updatedEventDocs).to.have.length(3)
@@ -303,6 +303,63 @@ describe('event mongoose repository', function() {
           feedIds: eventDocs[2].feedIds
         }
       )
+    })
+
+    it('removes multiple feeds from multiple events', async function() {
+
+      const feedIds = [ uniqid(), uniqid() ]
+      const created = await Promise.all([
+        createEvent({
+          name: 'Remove Feeds 1',
+          description: 'testing',
+          feedIds: [
+            feedIds[0],
+            uniqid(),
+            feedIds[1]
+          ]
+        }),
+        createEvent({
+          name: 'Remove Feeds 2',
+          description: 'testing',
+          feedIds: [
+            ...feedIds
+          ]
+        }),
+        createEvent({
+          name: 'Remove Feeds 3',
+          description: 'testing',
+          feedIds: [
+            uniqid(),
+            feedIds[1],
+            uniqid()
+          ]
+        }),
+        createEvent({
+          name: 'Remove Feeds 4',
+          description: 'testing',
+          feedIds: [
+            uniqid(),
+            uniqid()
+          ]
+        })
+      ]) as MageEventDocument[]
+      // re-fetch to get teamIds array populated
+      const idsFilter = { _id: { $in: created.map(x => x._id) }}
+      const fetched = _.keyBy((await model.find(idsFilter)).map(x => x.toJSON() as MageEvent), 'name')
+      expect(Object.keys(fetched)).to.have.length(4)
+
+      const updateCount = await repo.removeFeedsFromEvents(...feedIds)
+      expect(updateCount).to.equal(3)
+
+      const updated = _.keyBy((await model.find(idsFilter)).map(x => x.toJSON() as MageEvent), 'name')
+      for (const nameNum of [ 1, 2, 3, 4 ]) {
+        const name = `Remove Feeds ${nameNum}`
+        const createdEvent = fetched[name]
+        const updatedEvent = updated[name]
+        expect(createdEvent.feedIds, name).to.include.members(updatedEvent.feedIds)
+        expect(_.difference(createdEvent.feedIds, feedIds), name).to.deep.equal(updatedEvent.feedIds)
+        expect(_.omit(updatedEvent, 'feedIds')).to.deep.equal(_.omit(createdEvent, 'feedIds'))
+      }
     })
   })
 

@@ -112,6 +112,7 @@ export interface FeedServiceRepository {
   create(feedAttrs: FeedServiceCreateAttrs): Promise<FeedService>
   findAll(): Promise<FeedService[]>
   findById(serviceId: FeedServiceId): Promise<FeedService | null>
+  removeById(serviceId: FeedServiceId): Promise<FeedService | null>
 }
 
 /**
@@ -274,6 +275,7 @@ export interface FeedRepository {
   findFeedsForService(service: FeedServiceId): Promise<Feed[]>
   update(feed: FeedUpdateAttrs): Promise<Feed | null>
   removeById(feedId: FeedId): Promise<Feed | null>
+  removeByServiceId(serviceId: FeedServiceId): Promise<Feed[]>
 }
 
 type FeedCreateExcplicitNullKeys = 'itemTemporalProperty' | 'itemPrimaryProperty' | 'itemSecondaryProperty' | 'updateFrequencySeconds' | 'mapStyle'

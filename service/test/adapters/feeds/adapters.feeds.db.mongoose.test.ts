@@ -485,7 +485,7 @@ describe('feeds repositories', function() {
           repo.create({
             service: mongoose.Types.ObjectId().toHexString(),
             topic: uniqid(),
-            title: 'Feed 2',
+            title: 'Other 2',
             itemsHaveIdentity: true,
             itemsHaveSpatialDimension: true
           })
@@ -512,7 +512,7 @@ describe('feeds repositories', function() {
           repo.create({
             service: mongoose.Types.ObjectId().toHexString(),
             topic: uniqid(),
-            title: 'Feed 2',
+            title: 'Other 2',
             itemsHaveIdentity: true,
             itemsHaveSpatialDimension: true
           })
@@ -548,6 +548,83 @@ describe('feeds repositories', function() {
         fetched = await model.findById(created.id)
         expect(fetched).to.be.null
         expect(removed).to.deep.equal(created)
+      })
+    })
+
+    describe('removing feeds by service id', async function() {
+
+      beforeEach(function() {
+        idFactory.nextId().mimicks(async () => uniqid())
+      })
+
+      it('removes only the feeds that reference the service id and returns them', async function() {
+
+        const service = mongoose.Types.ObjectId().toHexString()
+        const serviceFeeds: Feed[] = await Promise.all([
+          repo.create({
+            service,
+            topic: uniqid(),
+            title: 'Feed 1',
+            itemsHaveIdentity: true,
+            itemsHaveSpatialDimension: true
+          }),
+          repo.create({
+            service,
+            topic: uniqid(),
+            title: 'Feed 2',
+            itemsHaveIdentity: true,
+            itemsHaveSpatialDimension: true
+          })
+        ])
+        const otherFeeds: Feed[] = await Promise.all([
+          repo.create({
+            service: mongoose.Types.ObjectId().toHexString(),
+            topic: uniqid(),
+            title: 'Other 1',
+            itemsHaveIdentity: true,
+            itemsHaveSpatialDimension: true
+          }),
+          repo.create({
+            service: mongoose.Types.ObjectId().toHexString(),
+            topic: uniqid(),
+            title: 'Other 2',
+            itemsHaveIdentity: true,
+            itemsHaveSpatialDimension: true
+          })
+        ])
+        const allBeforeRemove = await repo.findAll()
+        const removed = await repo.removeByServiceId(service)
+        const allAfterRemove = await repo.findAll()
+
+        expect(allBeforeRemove).to.have.deep.members([ ...serviceFeeds, ...otherFeeds ])
+        expect(removed).to.have.length(2)
+        expect(removed).to.have.deep.members(serviceFeeds)
+        expect(allAfterRemove).to.have.deep.members(otherFeeds)
+      })
+
+      it('removes nothing when no feeds reference the service', async function() {
+
+        const otherFeeds: Feed[] = await Promise.all([
+          repo.create({
+            service: mongoose.Types.ObjectId().toHexString(),
+            topic: uniqid(),
+            title: 'Other 1',
+            itemsHaveIdentity: true,
+            itemsHaveSpatialDimension: true
+          }),
+          repo.create({
+            service: mongoose.Types.ObjectId().toHexString(),
+            topic: uniqid(),
+            title: 'Other 2',
+            itemsHaveIdentity: true,
+            itemsHaveSpatialDimension: true
+          })
+        ])
+        const removed = await repo.removeByServiceId(mongoose.Types.ObjectId().toHexString())
+        const allAfterRemove = await repo.findAll()
+
+        expect(removed).to.deep.equal([])
+        expect(allAfterRemove).to.have.deep.members(otherFeeds)
       })
     })
   })

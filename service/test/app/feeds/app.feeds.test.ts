@@ -89,7 +89,7 @@ function requestBy<RequestType>(principal: TestPrincipal, params?: RequestType):
   )
 }
 
-describe('feeds use case interactions', function() {
+describe.only('feeds use case interactions', function() {
 
   let app: TestApp
   let someServiceTypes: SubstituteOf<RegisteredFeedServiceType>[]
@@ -540,15 +540,82 @@ describe('feeds use case interactions', function() {
         })
 
         it('removes related feeds and their event entries', async function() {
-          expect.fail('todo')
+
+          const service = someServices[0]
+          const feeds: Feed[] = [
+            {
+              id: uniqid(),
+              service: service.id,
+              topic: uniqid(),
+              title: 'Cascade Delete 1',
+              itemsHaveIdentity: true,
+              itemsHaveSpatialDimension: true
+            },
+            {
+              id: uniqid(),
+              service: service.id,
+              topic: uniqid(),
+              title: 'Cascade Delete 2',
+              itemsHaveIdentity: true,
+              itemsHaveSpatialDimension: true
+            }
+          ]
+          app.registerFeeds(...feeds)
+          app.eventRepo.removeFeedsFromEvents(Arg.all()).mimicks(async (...feeds: FeedId[]): Promise<number> => {
+            if (app.feedRepo.db.size > 0 || app.serviceRepo.db.has(service.id)) {
+              throw new Error('remove feeds from events first')
+            }
+            return 2
+          })
+          const req: DeleteFeedServiceRequest = requestBy(adminPrincipal, {
+            service: service.id
+          })
+          const res = await app.deleteService(req)
+
+          expect(res.error).to.be.null
+          expect(app.feedRepo.db.size).to.equal(0)
+          app.eventRepo.received(1).removeFeedsFromEvents(feeds[0].id, feeds[1].id)
         })
 
         it('fails if the service does not exist', async function() {
-          expect.fail('todo')
+
+          const req: DeleteFeedServiceRequest = requestBy(adminPrincipal, { service: uniqid() })
+          const res = await app.deleteService(req)
+
+          expect(res.success).to.be.null
+          expect(res.error?.code).to.equal(ErrEntityNotFound)
+          const err = res.error as EntityNotFoundError
+          expect(err.data.entityId).to.equal(req.service)
+          expect(err.data.entityType).to.equal('FeedService')
         })
 
         it('checks permission for deleting a service', async function() {
-          expect.fail('todo')
+
+          const service = someServices[1]
+          const req: DeleteFeedServiceRequest = requestBy(bannedPrincipal, {
+            service: service.id
+          })
+          let inDb = app.serviceRepo.db.get(service.id)
+          expect(inDb).to.deep.equal(service)
+
+          let res = await app.deleteService(req)
+
+          expect(res.success).to.be.null
+          expect(res.error?.code).to.equal(ErrPermissionDenied)
+          const err = res.error as PermissionDeniedError
+          expect(err.data.subject).to.equal(bannedPrincipal.user)
+          expect(err.data.permission).to.equal(CreateFeedService.name)
+          inDb = app.serviceRepo.db.get(service.id)
+          expect(inDb).to.deep.equal(service)
+          app.eventRepo.received(0).removeFeedsFromEvents(Arg.all())
+
+          app.permissionService.grantCreateService(bannedPrincipal.user)
+          res = await app.deleteService(req)
+
+          expect(res.error).to.be.null
+          expect(res.success).to.be.true
+          inDb = app.serviceRepo.db.get(service.id)
+          expect(inDb).to.be.undefined
         })
       })
 
@@ -664,6 +731,12 @@ describe('feeds use case interactions', function() {
           const fetched = await app.listTopics(req).then(res => res.success)
 
           expect(fetched).to.deep.equal(topics)
+        })
+      })
+
+      describe('listing feeds that reference a service', function() {
+        it('works', async function() {
+          expect.fail('todo')
         })
       })
     })
@@ -1495,7 +1568,7 @@ describe('feeds use case interactions', function() {
 
         it('deletes the feed id from referencing events then the feed', async function() {
 
-          app.eventRepo.removeFeedFromEvents(Arg.any()).mimicks(async (feed: FeedId): Promise<number> => {
+          app.eventRepo.removeFeedsFromEvents(Arg.any()).mimicks(async (feed: FeedId): Promise<number> => {
             if (!app.feedRepo.db.has(feed)) {
               throw new Error('remove feed from events before deleting')
             }
@@ -1508,7 +1581,7 @@ describe('feeds use case interactions', function() {
           expect(res.success).to.be.true
           const inDb = app.feedRepo.db.get(feeds[0].id)
           expect(inDb).to.be.undefined
-          app.eventRepo.received(1).removeFeedFromEvents(req.feed)
+          app.eventRepo.received(1).removeFeedsFromEvents(req.feed)
         })
 
         it('checks permission for deleting a feed', async function() {
@@ -1721,7 +1794,7 @@ class TestApp {
   readonly createService = CreateFeedService(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
   readonly listServices = ListFeedServices(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
   readonly getService = GetFeedService(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
-  readonly deleteService = DeleteFeedService(this.permissionService, this.serviceRepo)
+  readonly deleteService = DeleteFeedService(this.permissionService, this.serviceRepo, this.feedRepo, this.eventRepo)
   readonly listTopics = ListServiceTopics(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
   readonly previewFeed = PreviewFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.jsonSchemaService)
   readonly createFeed = CreateFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo, this.jsonSchemaService)
@@ -1787,6 +1860,14 @@ class TestFeedServiceRepository implements FeedServiceRepository {
   async findById(sourceId: string): Promise<FeedService | null> {
     return this.db.get(sourceId) || null
   }
+
+  async removeById(serviceId: FeedServiceId): Promise<FeedService | null> {
+    const removed = this.db.get(serviceId)
+    if (removed) {
+      this.db.delete(serviceId)
+    }
+    return removed || null
+  }
 }
 
 class TestFeedRepository implements FeedRepository {
@@ -1833,6 +1914,14 @@ class TestFeedRepository implements FeedRepository {
       return removed
     }
     return null
+  }
+
+  async removeByServiceId(serviceId: FeedServiceId): Promise<Feed[]> {
+    const removed = await this.findFeedsForService(serviceId)
+    for (const remove of removed) {
+      this.db.delete(remove.id)
+    }
+    return removed
   }
 }
 class TestPermissionService implements FeedsPermissionService {

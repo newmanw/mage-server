@@ -136,9 +136,9 @@ export interface MageEventRepository {
   findTeamsInEvent(event: MageEventId): Promise<Team[] | null>
   removeFeedsFromEvent(event: MageEventId, ...feeds: FeedId[]): Promise<MageEvent | null>
   /**
-   * Remove the given feed from any events that reference the feed.  Return the
+   * Remove the given feeds from any events that reference the feed.  Return the
    * count of events the operation modified.
    * @param feed the ID of the feed to remove from event
    */
-  removeFeedFromEvents(feed: FeedId): Promise<number>
+  removeFeedsFromEvents(...feed: FeedId[]): Promise<number>
 }

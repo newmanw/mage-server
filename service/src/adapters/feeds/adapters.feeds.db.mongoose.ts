@@ -156,4 +156,21 @@ export class MongooseFeedRepository extends BaseMongooseRepository<FeedDocument,
     const docs = await this.model.find({ service })
     return docs.map(x => x.toJSON())
   }
+
+  /**
+   * TODO: this exists primarily to support removing a service along with all
+   * its associated feeds.  this might indicate that a service should be an
+   * aggregate root (domain-driven design concept) because a feed should not
+   * exist without its service, and removing a feed and its services should be
+   * a transactionally consistent operation.  this would mean removing the
+   * feed repository and accessing feeds through their parent service, while
+   * the service respository is responsible for persisting and loading services
+   * along with all their feeds.
+   * @param service
+   */
+  async removeByServiceId(service: FeedServiceId): Promise<Feed[]> {
+    const removed = await this.findFeedsForService(service)
+    await this.model.remove({ service })
+    return removed
+  }
 }
