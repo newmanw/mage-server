@@ -89,7 +89,7 @@ function requestBy<RequestType>(principal: TestPrincipal, params?: RequestType):
   )
 }
 
-describe.only('feeds use case interactions', function() {
+describe('feeds use case interactions', function() {
 
   let app: TestApp
   let someServiceTypes: SubstituteOf<RegisteredFeedServiceType>[]
@@ -1722,6 +1722,7 @@ describe.only('feeds use case interactions', function() {
             config: {}
           })
       })
+
       it('returns all the feeds that reference a service', async function() {
 
         const req: ListServiceFeedsRequest = requestBy(adminPrincipal, { service: targetService })

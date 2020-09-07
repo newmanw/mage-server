@@ -8,7 +8,7 @@ declare global {
 }
 
 import express from 'express'
-import { ListFeedServiceTypes, ListServiceTopics, CreateFeedService, ListFeedServices, PreviewTopics, PreviewTopicsRequest, CreateFeed, CreateFeedRequest, ListServiceTopicsRequest, ListAllFeeds, PreviewFeedRequest, PreviewFeed, GetFeed, UpdateFeed, UpdateFeedRequest, DeleteFeed, DeleteFeedRequest, ListServiceFeeds, ListServiceFeedsRequest } from '../../app.api/feeds/app.api.feeds'
+import { ListFeedServiceTypes, ListServiceTopics, CreateFeedService, ListFeedServices, PreviewTopics, PreviewTopicsRequest, CreateFeed, CreateFeedRequest, ListServiceTopicsRequest, ListAllFeeds, PreviewFeedRequest, PreviewFeed, GetFeed, UpdateFeed, UpdateFeedRequest, DeleteFeed, DeleteFeedRequest, ListServiceFeeds, ListServiceFeedsRequest, DeleteFeedService, GetFeedService } from '../../app.api/feeds/app.api.feeds'
 import { ErrPermissionDenied, MageError, PermissionDeniedError, ErrInvalidInput, invalidInput, ErrEntityNotFound } from '../../app.api/app.api.errors'
 import { WebAppRequestFactory } from '../adapters.controllers.web'
 import { FeedServiceId, FeedTopicId } from '../../entities/feeds/entities.feeds'
@@ -17,12 +17,14 @@ export interface FeedsAppLayer {
   listServiceTypes: ListFeedServiceTypes
   createService: CreateFeedService
   listServices: ListFeedServices
+  getService: GetFeedService
   previewTopics: PreviewTopics
   listTopics: ListServiceTopics
   previewFeed: PreviewFeed
   createFeed: CreateFeed
   listAllFeeds: ListAllFeeds
   listServiceFeeds: ListServiceFeeds
+  deleteService: DeleteFeedService
   getFeed: GetFeed
   updateFeed: UpdateFeed
   deleteFeed: DeleteFeed
@@ -177,6 +179,25 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
       return next(appRes.error)
     })
 
+
+  routes.route('/services/:serviceId')
+    .get(async (req, res, next) => {
+      const appReq = createAppRequest(req, { service: req.params.serviceId })
+      const appRes = await appLayer.getService(appReq)
+      if (appRes.success) {
+        return res.json(appRes.success)
+      }
+      return next(appRes.error)
+    })
+    .delete(async (req, res, next) => {
+      const appReq = createAppRequest(req, { service: req.params.serviceId })
+      const appRes = await appLayer.deleteService(appReq)
+      if (appRes.success) {
+        return res.status(200).type('text').send()
+      }
+      return next(appRes.error)
+    })
+
   routes.route('/')
     .get(async (req, res, next) => {
       const appReq = createAppRequest(req)
@@ -188,18 +209,6 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
     })
 
   // Temporary
-
-  routes.route('/services/:serviceId')
-    .get(async (req, res, next) => {
-      const appReq = createAppRequest(req)
-      const appRes = await appLayer.listServices(appReq)
-      if (appRes.success) {
-        return res.json(appRes.success.filter(service => {
-          return service.id === req.params.serviceId;
-        })[0]);
-      }
-      return next(appRes.error)
-    })
 
   routes.route('/service_types/:serviceTypeId')
     .get(async (req, res, next) => {
@@ -251,7 +260,7 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
       const appReq: DeleteFeedRequest = createAppRequest(req, { feed: feedId })
       const appRes = await appLayer.deleteFeed(appReq)
       if (appRes.success) {
-        return res.sendStatus(200)
+        return res.status(200).type('text').send('')
       }
       return next(appRes.error)
     })

@@ -121,11 +121,13 @@ type AppLayer = {
     previewTopics: feedsApi.PreviewTopics
     createService: feedsApi.CreateFeedService
     listServices: feedsApi.ListFeedServices
+    getService: feedsApi.GetFeedService
     listTopics: feedsApi.ListServiceTopics
     previewFeed: feedsApi.PreviewFeed
     createFeed: feedsApi.CreateFeed
     listAllFeeds: feedsApi.ListAllFeeds
     listServiceFeeds: feedsApi.ListServiceFeeds
+    deleteService: feedsApi.DeleteFeedService
     getFeed: feedsApi.GetFeed
     updateFeed: feedsApi.UpdateFeed
     deleteFeed: feedsApi.DeleteFeed
@@ -222,11 +224,13 @@ function intializeFeedsAppLayer(repos: Repositories): AppLayer['feeds'] {
   const previewTopics = feedsImpl.PreviewTopics(permissionService, serviceTypeRepo)
   const createService = feedsImpl.CreateFeedService(permissionService, serviceTypeRepo, serviceRepo)
   const listServices = feedsImpl.ListFeedServices(permissionService, serviceTypeRepo, serviceRepo)
+  const getService = feedsImpl.GetFeedService(permissionService, serviceTypeRepo, serviceRepo)
   const listTopics = feedsImpl.ListServiceTopics(permissionService, serviceTypeRepo, serviceRepo)
   const previewFeed = feedsImpl.PreviewFeed(permissionService, serviceTypeRepo, serviceRepo, jsonSchemaService)
   const createFeed = feedsImpl.CreateFeed(permissionService, serviceTypeRepo, serviceRepo, feedRepo, jsonSchemaService)
   const listAllFeeds = feedsImpl.ListAllFeeds(permissionService, feedRepo)
   const listServiceFeeds = feedsImpl.ListServiceFeeds(permissionService, serviceRepo, feedRepo)
+  const deleteService = feedsImpl.DeleteFeedService(permissionService, serviceRepo, feedRepo, repos.events.eventRepo)
   const getFeed = feedsImpl.GetFeed(permissionService, serviceTypeRepo, serviceRepo, feedRepo)
   const updateFeed = feedsImpl.UpdateFeed(permissionService, serviceTypeRepo, serviceRepo, feedRepo)
   const deleteFeed = feedsImpl.DeleteFeed(permissionService, feedRepo, repos.events.eventRepo)
@@ -237,11 +241,13 @@ function intializeFeedsAppLayer(repos: Repositories): AppLayer['feeds'] {
     previewTopics,
     createService,
     listServices,
+    getService,
     listTopics,
     previewFeed,
     createFeed,
     listAllFeeds,
     listServiceFeeds,
+    deleteService,
     getFeed,
     updateFeed,
     deleteFeed,

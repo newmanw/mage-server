@@ -5,10 +5,10 @@ import { expect } from 'chai'
 import supertest from 'supertest'
 import Substitute, { SubstituteOf, Arg } from '@fluffy-spoon/substitute'
 import uniqid from 'uniqid'
-import _ from 'lodash'
+import _, { uniqueId } from 'lodash'
 import { AppResponse, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeedsRoutes, FeedsAppLayer } from '../../../lib/adapters/feeds/adapters.feeds.controllers.web'
-import { CreateFeedServiceRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, CreateFeedRequest, ListServiceTopicsRequest, PreviewFeedRequest, FeedPreview, FeedExpanded, DeleteFeedRequest, ListServiceFeedsRequest, ListFeedServices } from '../../../lib/app.api/feeds/app.api.feeds'
+import { CreateFeedServiceRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, CreateFeedRequest, ListServiceTopicsRequest, PreviewFeedRequest, FeedPreview, FeedExpanded, DeleteFeedRequest, ListServiceFeedsRequest, ListFeedServices, GetFeedServiceRequest, FeedServiceExpanded, DeleteFeedServiceRequest } from '../../../lib/app.api/feeds/app.api.feeds'
 import { FeedService, Feed, FeedTopic, FeedMinimalAttrs, MapStyle, FeedUpdateAttrs } from '../../../lib/entities/feeds/entities.feeds'
 import { permissionDenied, PermissionDeniedError, InvalidInputError, invalidInput, EntityNotFoundError, entityNotFound } from '../../../lib/app.api/app.api.errors'
 import { WebAppRequestFactory } from '../../../lib/adapters/adapters.controllers.web'
@@ -22,7 +22,7 @@ declare module 'express-serve-static-core' {
 
 const jsonMimeType = /^application\/json/
 
-describe.only('feeds web controller', function() {
+describe('feeds web controller', function() {
 
   const adminPrincipal = {
     user: 'admin'
@@ -394,20 +394,109 @@ invalid request
   })
 
   describe('GET /services/{serviceId}', function() {
-    it('has tests', async function() {
-      expect.fail('todo')
+
+    it('fetches the service for the service id in the path', async function() {
+
+      const service: FeedServiceExpanded = {
+        id: uniqid(),
+        serviceType: {
+          descriptorOf: 'FeedServiceType',
+          id: uniqueId(),
+          title: 'Test Service Type',
+          summary: null,
+          configSchema: {},
+        },
+        title: 'Get Service Test',
+        summary: null,
+        config: { test: true }
+      }
+      const appReq: GetFeedServiceRequest = createAdminRequest({ service: service.id })
+      appRequestFactory.createRequest(Arg.any(), Arg.deepEquals({ service: service.id })).returns(appReq)
+      appLayer.getService(Arg.requestTokenMatches(appReq)).resolves(AppResponse.success(service))
+      const res = await client.get(`${rootPath}/services/${service.id}`)
+
+      expect(res.status).to.equal(200)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.deep.equal(service)
+      appLayer.received(1).getService(Arg.any())
+    })
+
+    it('fails with 404 if the service is not found', async function() {
+
+      const service = uniqid()
+      const appReq: GetFeedServiceRequest = createAdminRequest({ service })
+      appRequestFactory.createRequest(Arg.any(), Arg.deepEquals({ service })).returns(appReq)
+      appLayer.getService(Arg.any()).resolves(AppResponse.error<FeedServiceExpanded, EntityNotFoundError>(entityNotFound(service, 'feed service')))
+      const res = await client.get(`${rootPath}/services/${service}`)
+
+      expect(res.status).to.equal(404)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.equal(`feed service not found: ${service}`)
+      appLayer.received(1).getService(Arg.any())
+    })
+
+    it('fails with 403 without permission', async function() {
+
+      const service = uniqid()
+      const appReq: GetFeedServiceRequest = createAdminRequest({ service })
+      appRequestFactory.createRequest(Arg.any(), Arg.deepEquals({ service })).returns(appReq)
+      appLayer.getService(Arg.any()).resolves(AppResponse.error<FeedServiceExpanded, PermissionDeniedError>(permissionDenied('get service', adminPrincipal.user, service)))
+      const res = await client.get(`${rootPath}/services/${service}`)
+
+      expect(res.status).to.equal(403)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.equal(`permission denied: get service`)
+      appLayer.received(1).getService(Arg.any())
     })
   })
 
   describe('PUT /services/{serviceId}', function() {
+
     it('has tests', async function() {
       expect.fail('todo')
     })
   })
 
   describe('DELETE /services/{serviceId}', function() {
-    it('has tests', async function() {
-      expect.fail('todo')
+
+    it('deletes the service for the service id in the path', async function() {
+
+      const service = uniqid()
+      const appReq = createAdminRequest({ service })
+      appLayer.deleteService(Arg.requestTokenMatches(appReq)).resolves(AppResponse.success(true))
+      const res = await client.delete(`${rootPath}/services/abc123`)
+
+      expect(res.status).to.equal(200)
+      expect(res.type).to.match(/text/)
+      expect(res.text).to.equal('')
+    })
+
+    it('fails with 404 if the service is not found', async function() {
+
+      const service = uniqid()
+      const appReq: DeleteFeedServiceRequest = createAdminRequest({ service })
+      appRequestFactory.createRequest(Arg.any(), Arg.deepEquals({ service })).returns(appReq)
+      appLayer.deleteService(Arg.any()).resolves(AppResponse.error<true, EntityNotFoundError>(entityNotFound(service, 'feed service')))
+      const res = await client.delete(`${rootPath}/services/${service}`)
+
+      expect(res.status).to.equal(404)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.equal(`feed service not found: ${service}`)
+      appLayer.received(1).deleteService(Arg.any())
+    })
+
+    it('fails with 403 without permission', async function() {
+
+      const service = uniqid()
+      const appReq: DeleteFeedServiceRequest = createAdminRequest({ service })
+      appRequestFactory.createRequest(Arg.any(), Arg.deepEquals({ service })).returns(appReq)
+      appLayer.deleteService(Arg.any()).resolves(AppResponse.error<true, PermissionDeniedError>(permissionDenied('delete service', adminPrincipal.user, service)))
+      const res = await client.delete(`${rootPath}/services/${service}`)
+
+      expect(res.status).to.equal(403)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.equal(`permission denied: delete service`)
+      appLayer.received(1).deleteService(Arg.any())
     })
   })
 
@@ -953,8 +1042,8 @@ invalid request
       const res = await client.delete(`${rootPath}/${feedId}`)
 
       expect(res.status).to.equal(200)
-      expect(res.status).to.not.match(jsonMimeType)
-      expect(res.body).to.be.empty
+      expect(res.type).to.match(/text/)
+      expect(res.text).to.equal('')
     })
 
     it('fails with 403 without permission', async function() {
