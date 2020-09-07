@@ -8,7 +8,7 @@ import uniqid from 'uniqid'
 import _ from 'lodash'
 import { AppResponse, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeedsRoutes, FeedsAppLayer } from '../../../lib/adapters/feeds/adapters.feeds.controllers.web'
-import { CreateFeedServiceRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, CreateFeedRequest, ListServiceTopicsRequest, PreviewFeedRequest, FeedPreview, FeedExpanded, DeleteFeedRequest } from '../../../lib/app.api/feeds/app.api.feeds'
+import { CreateFeedServiceRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, CreateFeedRequest, ListServiceTopicsRequest, PreviewFeedRequest, FeedPreview, FeedExpanded, DeleteFeedRequest, ListServiceFeedsRequest, ListFeedServices } from '../../../lib/app.api/feeds/app.api.feeds'
 import { FeedService, Feed, FeedTopic, FeedMinimalAttrs, MapStyle, FeedUpdateAttrs } from '../../../lib/entities/feeds/entities.feeds'
 import { permissionDenied, PermissionDeniedError, InvalidInputError, invalidInput, EntityNotFoundError, entityNotFound } from '../../../lib/app.api/app.api.errors'
 import { WebAppRequestFactory } from '../../../lib/adapters/adapters.controllers.web'
@@ -22,7 +22,7 @@ declare module 'express-serve-static-core' {
 
 const jsonMimeType = /^application\/json/
 
-describe('feeds web controller', function() {
+describe.only('feeds web controller', function() {
 
   const adminPrincipal = {
     user: 'admin'
@@ -711,6 +711,60 @@ invalid request
 
     it('returns 500 when the service type is not found', async function() {
       expect.fail('todo')
+    })
+  })
+
+  describe('GET /services/{serviceId}/feeds', function() {
+
+    it('returns the list of feeds that reference the service', async function() {
+
+      const service = uniqid()
+      const feeds: Feed[] = [
+        {
+          id: uniqid(),
+          service,
+          topic: uniqid(),
+          title: 'Turtles',
+          itemsHaveIdentity: true,
+          itemsHaveSpatialDimension: true
+        },
+        {
+          id: uniqid(),
+          service,
+          topic: uniqid(),
+          title: 'Snakes',
+          itemsHaveIdentity: true,
+          itemsHaveSpatialDimension: true
+        }
+      ]
+      const appReq: ListServiceFeedsRequest = createAdminRequest({ service })
+      appRequestFactory.createRequest(Arg.any(), Arg.deepEquals({ service })).returns(appReq)
+      appLayer.listServiceFeeds(Arg.requestTokenMatches(appReq)).resolves(AppResponse.success(feeds))
+      const res = await client.get(`${rootPath}/services/${service}/feeds`)
+
+      expect(res.status).to.equal(200)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.deep.equal(feeds)
+    })
+
+    it('returns 404 if the service is not found', async function() {
+
+      appLayer.listServiceFeeds(Arg.any()).resolves(AppResponse.error<Feed[], EntityNotFoundError>(entityNotFound('404', 'feed service')))
+      const res = await client.get(`${rootPath}/services/404/feeds`)
+
+      expect(res.status).to.equal(404)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.equal('feed service not found: 404')
+    })
+
+    it('returns 403 without permission', async function() {
+
+      appLayer.listServiceFeeds(Arg.any()).resolves(AppResponse.error<Feed[], PermissionDeniedError>(permissionDenied('list feeds', adminPrincipal.user, 'abc123')))
+      const res = await client.get(`${rootPath}/services/abc123/feeds`)
+
+      expect(res.status).to.equal(403)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.equal('permission denied: list feeds')
     })
   })
 

@@ -125,6 +125,7 @@ type AppLayer = {
     previewFeed: feedsApi.PreviewFeed
     createFeed: feedsApi.CreateFeed
     listAllFeeds: feedsApi.ListAllFeeds
+    listServiceFeeds: feedsApi.ListServiceFeeds
     getFeed: feedsApi.GetFeed
     updateFeed: feedsApi.UpdateFeed
     deleteFeed: feedsApi.DeleteFeed
@@ -225,6 +226,7 @@ function intializeFeedsAppLayer(repos: Repositories): AppLayer['feeds'] {
   const previewFeed = feedsImpl.PreviewFeed(permissionService, serviceTypeRepo, serviceRepo, jsonSchemaService)
   const createFeed = feedsImpl.CreateFeed(permissionService, serviceTypeRepo, serviceRepo, feedRepo, jsonSchemaService)
   const listAllFeeds = feedsImpl.ListAllFeeds(permissionService, feedRepo)
+  const listServiceFeeds = feedsImpl.ListServiceFeeds(permissionService, serviceRepo, feedRepo)
   const getFeed = feedsImpl.GetFeed(permissionService, serviceTypeRepo, serviceRepo, feedRepo)
   const updateFeed = feedsImpl.UpdateFeed(permissionService, serviceTypeRepo, serviceRepo, feedRepo)
   const deleteFeed = feedsImpl.DeleteFeed(permissionService, feedRepo, repos.events.eventRepo)
@@ -239,6 +241,7 @@ function intializeFeedsAppLayer(repos: Repositories): AppLayer['feeds'] {
     previewFeed,
     createFeed,
     listAllFeeds,
+    listServiceFeeds,
     getFeed,
     updateFeed,
     deleteFeed,
