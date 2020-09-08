@@ -78,12 +78,12 @@ export const boot = async function(config: BootConfig): Promise<MageService> {
     throw err
   }
 
-  const models = await initializeDatabase()
-  const repos = await intializeRepositories(models)
-  const appLayer = await intitializeAppLayer(repos)
+  const models = await initDatabase()
+  const repos = await initRepositories(models)
+  const appLayer = await initAppLayer(repos)
 
   // load routes the old way
-  const app = await intializeRestInterface(repos, appLayer)
+  const app = await initRestInterface(repos, appLayer)
 
   await loadPlugins(config.plugins, { feeds: { serviceTypeRepo: repos.feeds.serviceTypeRepo }})
 
@@ -140,7 +140,7 @@ type AppLayer = {
   }
 }
 
-async function initializeDatabase(): Promise<DatabaseModels> {
+async function initDatabase(): Promise<DatabaseModels> {
   const { uri, connectRetryDelay, connectTimeout, options } = environment.mongo
   const conn = await waitForDefaultMongooseConnection(mongoose, uri, connectTimeout, connectRetryDelay, options).then(() => mongoose.connection)
   // TODO: transition legacy model initialization
@@ -182,7 +182,7 @@ const jsonSchemaService: JsonSchemaService = {
   }
 }
 
-async function intializeRepositories(models: DatabaseModels): Promise<Repositories> {
+async function initRepositories(models: DatabaseModels): Promise<Repositories> {
   const serviceTypeRepo = new MongooseFeedServiceTypeRepository(models.feeds.feedServiceTypeIdentity)
   const serviceRepo = new MongooseFeedServiceRepository(models.feeds.feedService)
   const feedRepo = new MongooseFeedRepository(models.feeds.feed, new SimpleIdFactory())
@@ -197,16 +197,16 @@ async function intializeRepositories(models: DatabaseModels): Promise<Repositori
   }
 }
 
-async function intitializeAppLayer(repos: Repositories): Promise<AppLayer> {
-  const feeds = await intializeFeedsAppLayer(repos)
-  const events = await intializeEventsAppLayer(repos)
+async function initAppLayer(repos: Repositories): Promise<AppLayer> {
+  const feeds = await initFeedsAppLayer(repos)
+  const events = await initEventsAppLayer(repos)
   return {
     events,
     feeds,
   }
 }
 
-async function intializeEventsAppLayer(repos: Repositories): Promise<AppLayer['events']> {
+async function initEventsAppLayer(repos: Repositories): Promise<AppLayer['events']> {
   const eventPermissions = await import('./permissions/permissions.events')
   const eventFeedsPermissions = new eventPermissions.EventFeedsPermissionService(repos.events.eventRepo, eventPermissions.defaultEventPermissionsSevice)
   return {
@@ -217,7 +217,7 @@ async function intializeEventsAppLayer(repos: Repositories): Promise<AppLayer['e
   }
 }
 
-function intializeFeedsAppLayer(repos: Repositories): AppLayer['feeds'] {
+function initFeedsAppLayer(repos: Repositories): AppLayer['feeds'] {
   const { serviceTypeRepo, serviceRepo, feedRepo } = repos.feeds
   const permissionService = new PreFetchedUserRoleFeedsPermissionService()
   const listServiceTypes = feedsImpl.ListFeedServiceTypes(permissionService, serviceTypeRepo)
@@ -254,7 +254,7 @@ function intializeFeedsAppLayer(repos: Repositories): AppLayer['feeds'] {
   }
 }
 
-async function intializeRestInterface(repos: Repositories, app: AppLayer): Promise<express.Application> {
+async function initRestInterface(repos: Repositories, app: AppLayer): Promise<express.Application> {
   const webLayer = await import('./express')
   const webApp = webLayer.app
   const webAuth = webLayer.auth
