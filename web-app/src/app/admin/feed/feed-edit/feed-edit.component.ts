@@ -16,7 +16,7 @@ export class FeedEditComponent implements OnInit {
 
   selectedService: Service;
   selectedTopic: FeedTopic;
-  configuredTopic: FeedTopic;
+  configuredTopic: any;
   createdService: Service;
 
   itemPropertiesSchema: any;
@@ -39,6 +39,7 @@ export class FeedEditComponent implements OnInit {
     this.debouncedPreview = _.debounce(this.previewFeed, 500);
 
     this.constantParams = {};
+    this.configuredTopic = {};
   }
 
   ngOnInit(): void {
@@ -48,9 +49,9 @@ export class FeedEditComponent implements OnInit {
         this.constantParams = this.configuredParams = feed.constantParams;
         this.selectedService = this.feed.service;
         this.selectedTopic = this.feed.topic;
-        this.configuredTopic = this.feed;
         this.step = 1;
         this.serviceAndTopicSelected({service: this.selectedService, topic: this.selectedTopic});
+        this.configuredTopic = this.feed;
         this.debouncedPreview();
       });
     }
@@ -80,7 +81,7 @@ export class FeedEditComponent implements OnInit {
   }
 
   serviceAndTopicSelected(serviceAndTopic: {service: Service, topic: FeedTopic}): void {
-    this.selectedTopic = serviceAndTopic.topic;
+    this.selectedTopic = this.configuredTopic = serviceAndTopic.topic;
     this.selectedService = serviceAndTopic.service;
     if (this.feed) {
       this.itemPropertiesSchema = this.feed.itemPropertiesSchema;
@@ -92,7 +93,7 @@ export class FeedEditComponent implements OnInit {
 
   topicConfigured(topicParameters: any): void {
     this.configuredParams = topicParameters;
-    Object.assign(this.configuredTopic, topicParameters);
+    this.configuredTopic.constantParams = topicParameters;
     this.previewFeed();
     this.nextStep();
   }
