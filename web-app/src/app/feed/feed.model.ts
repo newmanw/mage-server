@@ -15,6 +15,7 @@ export interface Feed {
   constantParams?: any;
   variableParamsSchema?: JSON;
   updateFrequencySeconds: number;
+  itemPropertiesSchema?: JSON;
 }
 
 export interface Style {
@@ -59,5 +60,5 @@ export interface FeedTopic {
   itemTemporalProperty?: string;
   itemPrimaryProperty?: string;
   itemSecondaryProperty?: string;
-  itemPropertiesSchema?: Array<any>;
+  itemPropertiesSchema?: JSON;
 }

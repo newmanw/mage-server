@@ -1,5 +1,5 @@
 <ng-template #template>
-  <mat-expansion-panel [disabled]="disabled" [expanded]="expanded" (opened)="opened.emit()" (closed)="closed()" hideToggle>
+  <mat-expansion-panel [expanded]="expanded" (opened)="opened.emit()" (closed)="closed()" hideToggle>
     <mat-expansion-panel-header>
       <mat-panel-title>
         Configure The Content Fetch Parameters
@@ -9,7 +9,7 @@
     </mat-expansion-panel-header>
     <div class="row" *ngIf="topic">
       <div class="col-md-12">
-        <app-json-schema loadExternalAssets="true" [schema]="topic.paramsSchema" [data]="topicConfiguration"
+        <app-json-schema loadExternalAssets="true" [schema]="topic.paramsSchema" [data]="params"
           [options]="formOptions" (onChanges)="topicConfigChanged($event)" framework="material-design"></app-json-schema>
       </div>
     </div>

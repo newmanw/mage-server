@@ -51,19 +51,21 @@
               (topicConfigured)="topicConfigured($event)"
               (topicConfigurationChanged)="topicConfigChanged($event)">
             </app-topic-configuration>
-            <!-- <app-feed-item-properties-configuration
+            <app-feed-item-properties-configuration
               [expanded]="step === 2" 
               (opened)="setStep(2)"
               (cancelled)="setStep(1)"
               (itemPropertiesUpdated)="itemPropertiesUpdated($event)"
-              [itemProperties]="itemProperties">
-            </app-feed-item-properties-configuration> -->
-            <app-feed-configuration
               [topic]="selectedTopic"
-              [expanded]="step === 2"
+              [itemPropertiesSchema]="itemPropertiesSchema">
+            </app-feed-item-properties-configuration>
+            <app-feed-configuration
+              [topic]="configuredTopic"
+              [itemPropertiesSchema]="currentItemProperties"
+              [expanded]="step === 3"
               [buttonText]="feed ? 'Update Feed' : 'Create Feed'"
-              (opened)="setStep(2)"
-              (cancelled)="setStep(1)"
+              (opened)="setStep(3)"
+              (cancelled)="setStep(2)"
               (feedConfigurationChanged)="feedConfigurationChanged($event)"
               (feedConfigurationSet)="feedConfigurationSet($event)">
             </app-feed-configuration>

@@ -1,7 +1,7 @@
-import { Component, OnInit, OnChanges, Input, Output, ViewChild, EventEmitter, ViewContainerRef, SimpleChanges } from '@angular/core';
-import { Service, FeedTopic } from 'src/app/feed/feed.model';
-import { FeedService } from 'src/app/feed/feed.service';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, ViewContainerRef } from '@angular/core';
 import { FormControl } from '@angular/forms';
+import { FeedTopic, Service } from 'src/app/feed/feed.model';
+import { FeedService } from 'src/app/feed/feed.service';
 
 @Component({
   selector: 'app-choose-service-topic',
@@ -31,7 +31,7 @@ export class ChooseServiceTopicComponent implements OnInit, OnChanges {
     private feedService: FeedService,
     private viewContainerRef: ViewContainerRef
   ) {
-
+    this.services = [];
   }
 
   ngOnInit(): void {
@@ -49,11 +49,15 @@ export class ChooseServiceTopicComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes.defaultService) {
-      const existingService: Service = this.services.find(service => {
-        return service.id === this.defaultService.id;
-      });
-      if (!existingService) {
+    if (changes.defaultService && changes.defaultService.currentValue !== undefined) {
+      if (this.services) {
+        const existingService: Service = this.services.find(service => {
+          return service.id === this.defaultService.id;
+        });
+        if (!existingService) {
+          this.services.push(this.defaultService);
+        }
+      } else if (this.defaultService) {
         this.services.push(this.defaultService);
       }
       this.selectedService = this.defaultService;
@@ -62,12 +66,14 @@ export class ChooseServiceTopicComponent implements OnInit, OnChanges {
   }
 
   serviceSelected(): void {
-    this.feedService.fetchTopics(this.selectedService.id).subscribe(topics => {
-      this.topics = topics;
-      if (this.topics.length === 1) {
-        this.selectedTopic = this.topics[0];
-      }
-    });
+    if (this.selectedService) {
+      this.feedService.fetchTopics(this.selectedService.id).subscribe(topics => {
+        this.topics = topics;
+        if (this.topics.length === 1) {
+          this.selectedTopic = this.topics[0];
+        }
+      });
+    }
   }
 
   next(): void {

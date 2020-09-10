@@ -1,12 +1,18 @@
 import {
   Component,
-  OnInit,
-  OnChanges,
-  Input,
+
+
+
+
+
+
+  EventEmitter, Input, OnChanges, OnInit,
+
+
   Output,
   ViewChild,
-  ViewContainerRef,
-  EventEmitter} from '@angular/core';
+  ViewContainerRef
+} from '@angular/core';
 import { FeedTopic } from 'src/app/feed/feed.model';
 
 @Component({
@@ -39,14 +45,16 @@ export class TopicConfigurationComponent implements OnInit, OnChanges {
 
   constructor(
     private viewContainerRef: ViewContainerRef
-  ) { }
+  ) {
+    this.formOptions = {
+      addSubmit: false
+    };
+  }
 
   ngOnInit(): void {
     this.viewContainerRef.createEmbeddedView(this.template);
 
-    this.formOptions = {
-      addSubmit: false
-    };
+
   }
 
   ngOnChanges(): void {
