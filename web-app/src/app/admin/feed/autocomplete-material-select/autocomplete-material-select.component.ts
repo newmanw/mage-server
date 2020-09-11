@@ -52,6 +52,7 @@ export class AutocompleteMaterialSelectComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.layoutNode = this.layoutNode || {};
     this.options = this.layoutNode.options || {};
     if (this.options.titleMap || this.options.enumNames || this.options.enum) {
       this.selectList = buildTitleMap(

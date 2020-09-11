@@ -1,6 +1,6 @@
-import { AbstractControl } from '@angular/forms';
-import {Component, Inject, Input, OnInit, Optional} from '@angular/core';
 import { JsonSchemaFormService } from '@ajsf/core';
+import { Component, Inject, Input, OnInit, Optional } from '@angular/core';
+import { AbstractControl, FormControl } from '@angular/forms';
 import { MAT_LABEL_GLOBAL_OPTIONS } from '@angular/material/core';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
 
@@ -11,13 +11,13 @@ import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
   styleUrls: ['./map-select-widget.component.scss']
 })
 export class MapSelectWidgetComponent implements OnInit {
-  formControl: AbstractControl;
   controlName: string;
   controlValue: string;
   controlDisabled = false;
   boundControl = false;
   options: any;
   autoCompleteList: string[] = [];
+  formControl: AbstractControl = new FormControl();
   @Input() layoutNode: any;
   @Input() layoutIndex: number[];
   @Input() dataIndex: number[];
@@ -29,15 +29,17 @@ export class MapSelectWidgetComponent implements OnInit {
   ) {
   }
 
-  ngOnInit() {
+  ngOnInit(): void {
+    this.layoutNode = this.layoutNode || { options: {} };
     this.options = this.layoutNode.options || {};
-    this.jsf.initializeControl(this);
     if (!this.options.notitle && !this.options.description && this.options.placeholder) {
       this.options.description = this.options.placeholder;
     }
+    this.jsf.initializeControl(this);
+    this.formControl = new FormControl();
   }
 
-  updateValue(event) {
+  updateValue(event: any): void {
     this.jsf.updateValue(this, event.target.value);
   }
 

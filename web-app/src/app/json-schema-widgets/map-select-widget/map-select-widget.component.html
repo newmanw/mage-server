@@ -38,6 +38,7 @@
   <input
     matInput
     *ngIf="!boundControl"
+    [formControl]="formControl"
     [attr.aria-describedby]="'control' + layoutNode?._id + 'Status'"
     [attr.list]="'control' + layoutNode?._id + 'Autocomplete'"
     [attr.maxlength]="options?.maxLength"
