@@ -1,15 +1,33 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
-import { async, ComponentFixture, inject, TestBed } from '@angular/core/testing';
+import { Component, ViewChild } from '@angular/core';
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatExpansionModule, MatSelectModule } from '@angular/material';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
+import { Service } from 'src/app/feed/feed.model';
 import { ChooseServiceTopicComponent } from './choose-service-topic.component';
 
 
 describe('ChooseServiceTopicComponent', () => {
+  @Component({
+    selector: 'app-host-component',
+    template: '<app-choose-service-topic [defaultService]="defaultService"></app-choose-service-topic>'
+  })
+  class TestHostComponent {
+    defaultService: Service;
+
+    @ViewChild(ChooseServiceTopicComponent, { static: true })
+    public chooseServiceTopicComponent: ChooseServiceTopicComponent;
+  }
+
+  let httpMock: HttpTestingController;
+  let hostComponent: TestHostComponent;
+  let fixture: ComponentFixture<TestHostComponent>;
+  // let testElement: HTMLElement;
   let component: ChooseServiceTopicComponent;
-  let fixture: ComponentFixture<ChooseServiceTopicComponent>;
+  // let fixture: ComponentFixture<ChooseServiceTopicComponent>;
+  let element: HTMLElement;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
@@ -23,32 +41,73 @@ describe('ChooseServiceTopicComponent', () => {
         NoopAnimationsModule
       ],
       declarations: [
-        ChooseServiceTopicComponent
+        ChooseServiceTopicComponent,
+        TestHostComponent
       ]
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(ChooseServiceTopicComponent);
-    component = fixture.componentInstance;
+    fixture = TestBed.createComponent(TestHostComponent);
+    hostComponent = fixture.componentInstance;
     fixture.detectChanges();
+    component = hostComponent.chooseServiceTopicComponent;
+    element = fixture.nativeElement;
+    httpMock = TestBed.get(HttpTestingController);
   });
 
   it('should create', () => {
-    inject([HttpTestingController], (httpMock: HttpTestingController) => {
-      const serviceReq = httpMock.expectOne('http://.../api/feeds/services');
-      expect(serviceReq.request.method).toEqual('GET');
-      serviceReq.flush([]);
+    const serviceReq = httpMock.expectOne('/api/feeds/services');
+    expect(serviceReq.request.method).toEqual('GET');
+    serviceReq.flush([{
+      id: 'serviceId',
+      serviceType: 'type',
+      summary: 'summary',
+      title: 'Hello',
+      config: {}
+    }, {
+      id: 'serviceId2',
+      serviceType: 'type2',
+      summary: 'summary2',
+      title: 'Hello2',
+      config: {}
+    }]);
 
-      const serviceTypesReq = httpMock.expectOne('http://.../api/feeds/serviceTypes');
-      expect(serviceTypesReq.request.method).toEqual('GET');
-      serviceTypesReq.flush([]);
-
-      const feedsReq = httpMock.expectOne('http://.../api/feeds');
-      expect(feedsReq.request.method).toEqual('GET');
-      feedsReq.flush([]);
-    });
     expect(component).toBeTruthy();
   });
+
+  it('should set the service if a default is passed in', async(() => {
+
+    const serviceReq = httpMock.expectOne('/api/feeds/services');
+    expect(serviceReq.request.method).toEqual('GET');
+    serviceReq.flush([{
+      id: 'serviceId',
+      serviceType: 'type',
+      summary: 'summary',
+      title: 'Hello',
+      config: {}
+    }, {
+      id: 'serviceId2',
+      serviceType: 'type2',
+      summary: 'summary2',
+      title: 'Hello2',
+      config: {}
+    }]);
+
+    const service: Service = {
+      id: 'serviceId2',
+      serviceType: 'type2',
+      summary: 'summary2',
+      title: 'Hello2',
+      config: {}
+    };
+
+    hostComponent.defaultService = service;
+
+    fixture.detectChanges();
+    fixture.whenStable().then(() => {
+    expect(element.querySelector('mat-panel-description').innerHTML).toEqual('Hello2 : ');
+    });
+  }));
 });

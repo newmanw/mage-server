@@ -38,8 +38,14 @@ export class ChooseServiceTopicComponent implements OnInit, OnChanges {
     this.viewContainerRef.createEmbeddedView(this.template);
     this.feedService.fetchServices().subscribe(services => {
       this.services = services;
-      if (!this.services || this.services.length === 0) {
+      if (this.services.length === 0) {
         this.noServicesExist.emit();
+        return;
+      }
+      if (this.defaultService) {
+        this.selectedService = this.defaultService;
+        this.serviceSelected();
+        return;
       }
       if (this.services.length === 1) {
         this.selectedService = this.services[0];
@@ -50,16 +56,6 @@ export class ChooseServiceTopicComponent implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes.defaultService && changes.defaultService.currentValue !== undefined) {
-      if (this.services) {
-        const existingService: Service = this.services.find(service => {
-          return service.id === this.defaultService.id;
-        });
-        if (!existingService) {
-          this.services.push(this.defaultService);
-        }
-      } else if (this.defaultService) {
-        this.services.push(this.defaultService);
-      }
       this.selectedService = this.defaultService;
       this.serviceSelected();
     }

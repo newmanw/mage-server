@@ -1,14 +1,14 @@
-import _ from 'underscore';
-import { Component, OnInit, Inject } from '@angular/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { FormControl } from '@angular/forms';
+import { MatDialog } from '@angular/material';
+import { StateService } from '@uirouter/angular';
 import { Observable } from 'rxjs';
 import { map, startWith } from 'rxjs/operators';
-import { Feed, ServiceType, FeedTopic, Service } from 'src/app/feed/feed.model';
-import { StateService } from '@uirouter/angular';
-import { UserService, Event } from '../../../upgrade/ajs-upgraded-providers';
+import { Feed, FeedTopic, Service, ServiceType } from 'src/app/feed/feed.model';
 import { FeedService } from 'src/app/feed/feed.service';
+import _ from 'underscore';
+import { Event, UserService } from '../../../upgrade/ajs-upgraded-providers';
 import { AdminFeedDeleteComponent } from './admin-feed-delete.component';
-import { MatDialog } from '@angular/material';
 
 @Component({
   selector: 'app-admin-feed',
@@ -53,16 +53,18 @@ export class AdminFeedComponent implements OnInit {
     }
 
   ngOnInit(): void {
-    this.feedService.fetchFeed(this.stateService.params.feedId).subscribe(feed => {
-      this.feed = feed;
-      this.fullFeed = JSON.stringify(feed, null, 2);
-      this.feedLoaded = Promise.resolve(true);
-      this.service = this.feed.service;
-      this.feedTopic = this.feed.topic;
-      this.feedService.fetchServiceType(this.service.serviceType).subscribe(serviceType => {
-        this.feedServiceType = serviceType;
+    if (this.stateService.params.feedId) {
+      this.feedService.fetchFeed(this.stateService.params.feedId).subscribe(feed => {
+        this.feed = feed;
+        this.fullFeed = JSON.stringify(feed, null, 2);
+        this.feedLoaded = Promise.resolve(true);
+        this.service = this.feed.service;
+        this.feedTopic = this.feed.topic;
+        this.feedService.fetchServiceType(this.service.serviceType).subscribe(serviceType => {
+          this.feedServiceType = serviceType;
+        });
       });
-    });
+    }
 
     this.eventResource.query(events => {
       this.events = events.sort((a: {name: string}, b: {name: string}) => {
