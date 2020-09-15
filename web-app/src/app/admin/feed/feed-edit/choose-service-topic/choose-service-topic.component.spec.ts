@@ -9,7 +9,7 @@ import { FeedTopic, Service } from 'src/app/feed/feed.model';
 import { ChooseServiceTopicComponent } from './choose-service-topic.component';
 
 
-fdescribe('ChooseServiceTopicComponent', () => {
+describe('ChooseServiceTopicComponent', () => {
   @Component({
     selector: 'app-host-component',
     template: '<app-choose-service-topic [defaultService]="defaultService"></app-choose-service-topic>'

@@ -1,6 +1,27 @@
+import { JsonSchemaFormModule } from '@ajsf/core';
+import { HttpClientTestingModule } from '@angular/common/http/testing';
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { MatCardModule, MatDialogModule, MatDialogRef, MatIconModule, MatListModule, MatPaginatorModule, MAT_DIALOG_DATA } from '@angular/material';
+import { StateService } from '@uirouter/angular';
+import { UserService } from 'src/app/upgrade/ajs-upgraded-providers';
+import { JsonSchemaComponent } from '../feed/json-schema/json-schema.component';
 import { AdminServiceComponent } from './admin-service.component';
+
+class MockStateService {
+  get params(): any {
+    return {};
+  }
+}
+
+class MockUserService {
+  get myself(): any {
+    return {
+      role: {
+        permissions: []
+      }
+    };
+  }
+}
 
 describe('AdminServiceComponent', () => {
   let component: AdminServiceComponent;
@@ -8,7 +29,30 @@ describe('AdminServiceComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ AdminServiceComponent ]
+      providers: [{
+        provide: StateService,
+        useClass: MockStateService
+      }, {
+        provide: MatDialogRef, useValue: {}
+      }, {
+        provide: MAT_DIALOG_DATA, useValue: {}
+      }, {
+        provide: UserService,
+        useClass: MockUserService
+      }],
+      imports: [
+        MatDialogModule,
+        MatIconModule,
+        MatCardModule,
+        MatListModule,
+        MatPaginatorModule,
+        HttpClientTestingModule,
+        JsonSchemaFormModule
+      ],
+      declarations: [
+        JsonSchemaComponent,
+        AdminServiceComponent
+      ]
     })
     .compileComponents();
   }));

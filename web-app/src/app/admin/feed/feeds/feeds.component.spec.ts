@@ -1,7 +1,8 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { async, ComponentFixture, inject, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
+import { MatDialogModule, MatDialogRef, MatFormFieldModule, MatIconModule, MatInputModule, MatListModule, MatPaginatorModule, MatTabsModule, MAT_DIALOG_DATA } from '@angular/material';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { StateService } from '@uirouter/angular';
 import { UserService } from 'src/app/upgrade/ajs-upgraded-providers';
 import { FeedsComponent } from './feeds.component';
@@ -34,9 +35,16 @@ describe('FeedsComponent', () => {
       }],
       imports: [
         MatDialogModule,
+        MatIconModule,
+        MatFormFieldModule,
+        MatInputModule,
+        MatListModule,
+        MatPaginatorModule,
+        MatTabsModule,
         FormsModule,
         ReactiveFormsModule,
-        HttpClientTestingModule
+        HttpClientTestingModule,
+        NoopAnimationsModule
       ],
       declarations: [ FeedsComponent ]
     })

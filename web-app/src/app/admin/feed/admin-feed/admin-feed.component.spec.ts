@@ -1,7 +1,7 @@
 import { HttpClientModule } from '@angular/common/http';
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { MatDialogModule, MatDialogRef, MatFormFieldModule, MatSelectModule, MAT_DIALOG_DATA } from '@angular/material';
+import { MatAutocompleteModule, MatCardModule, MatDialogModule, MatDialogRef, MatFormFieldModule, MatIconModule, MatListModule, MatPaginatorModule, MatSelectModule, MatSnackBarModule, MAT_DIALOG_DATA } from '@angular/material';
 import { StateService } from '@uirouter/angular';
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
 import { Event, UserService } from 'src/app/upgrade/ajs-upgraded-providers';
@@ -52,6 +52,12 @@ describe('AdminFeedComponent', () => {
       imports: [
         MatDialogModule,
         MatFormFieldModule,
+        MatIconModule,
+        MatCardModule,
+        MatAutocompleteModule,
+        MatListModule,
+        MatPaginatorModule,
+        MatSnackBarModule,
         FormsModule,
         MatSelectModule,
         NgxMatSelectSearchModule,
