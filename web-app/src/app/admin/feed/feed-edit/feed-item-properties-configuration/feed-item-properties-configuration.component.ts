@@ -24,6 +24,7 @@ export class FeedItemPropertiesConfigurationComponent implements OnInit, OnChang
   topicItemPropertiesSchema: Array<any>;
   formOptions: any;
   feed: any;
+  valid: boolean;
 
   itemProperties: Array<any> = [];
 
@@ -171,6 +172,11 @@ export class FeedItemPropertiesConfigurationComponent implements OnInit, OnChang
 
   closed(): void {
     console.log('panel closed')
+  }
+
+  isValid(valid: boolean): void {
+    console.log('valid', valid);
+    this.valid = valid;
   }
 
   addProperty(): void {

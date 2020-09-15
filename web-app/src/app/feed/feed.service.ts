@@ -1,8 +1,8 @@
-import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, Subject } from 'rxjs';
-import { Feed, FeedContent, StyledFeature, Service, ServiceType, FeedTopic } from './feed.model';
+import { Injectable } from '@angular/core';
 import { Feature } from 'geojson';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { Feed, FeedContent, FeedTopic, Service, ServiceType, StyledFeature } from './feed.model';
 
 @Injectable({
   providedIn: 'root'
@@ -48,7 +48,7 @@ export class FeedService {
   }
 
   fetchTopics(serviceId: string): Observable<Array<FeedTopic>> {
-    return this.http.get<Array<FeedTopic>>(`api/feeds/services/${serviceId}/topics`);
+    return this.http.get<Array<FeedTopic>>(`/api/feeds/services/${serviceId}/topics`);
   }
 
   previewFeed(serviceId: string, topicId: string, topicConfiguration: any): Observable<{content: FeedContent}> {

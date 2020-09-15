@@ -33,11 +33,12 @@
           <mat-card-content>
             <app-json-schema loadExternalAssets="true"
               [options]="formOptions" [(data)]="newProperty"
+              (isValid)="isValid($event)"
               [schema]="itemPropertySchema" framework="material-design" [layout]="itemPropertySchemaLayout">
             </app-json-schema>
           </mat-card-content>
           <mat-card-actions align="end">
-              <button mat-button color="primary" (click)="addProperty()">Add Property</button>
+              <button mat-button color="primary" [disabled]="!valid" (click)="addProperty()">Add Property</button>
           </mat-card-actions>
         </mat-card>
       </div>
