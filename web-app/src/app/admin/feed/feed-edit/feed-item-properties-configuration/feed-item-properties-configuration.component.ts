@@ -161,7 +161,7 @@ export class FeedItemPropertiesConfigurationComponent implements OnInit, OnChang
     }
 
     if (this.initialProperties) {
-      this.itemProperties = this.itemProperties.map(value => {
+      this.itemProperties = this.initialProperties.map(value => {
         return {
           key: value.key,
           schema: value.schema
@@ -175,7 +175,7 @@ export class FeedItemPropertiesConfigurationComponent implements OnInit, OnChang
   }
 
   isValid(valid: boolean): void {
-    console.log('valid', valid);
+    // console.log('valid', valid);
     this.valid = valid;
   }
 
