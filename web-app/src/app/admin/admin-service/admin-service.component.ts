@@ -53,6 +53,21 @@ export class AdminServiceComponent implements OnInit {
       const serviceType: ServiceType = this.service.serviceType as ServiceType
       this.feedService.fetchServiceType(serviceType.id).subscribe(serviceType => {
         this.serviceType = serviceType;
+
+        // Need to wrap non object schemas, ajsf bug: https://github.com/hamzahamidi/ajsf/issues/234
+        if (this.serviceType.configSchema.hasOwnProperty('type') && this.serviceType.configSchema.type !== 'object') { // is object with type property and type not 'object'
+          this.serviceType.configSchema = {
+            type: 'object',
+            properties: { 
+              wrapped: this.serviceType.configSchema 
+            }
+          };
+
+          this.service.config = {
+            wrapped: this.service.config
+          }
+        } 
+
         this.serviceLoaded = Promise.resolve(true)
       });
     })
