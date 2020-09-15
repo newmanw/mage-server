@@ -11,9 +11,6 @@ export class FeedService {
 
   constructor(private http: HttpClient) { }
 
-  private _allFeeds = new BehaviorSubject<Array<Feed>>([]);
-  readonly allFeeds = this._allFeeds.asObservable();
-
   private _feeds = new BehaviorSubject<Array<Feed>>([]);
   readonly feeds = this._feeds.asObservable();
 
@@ -23,17 +20,7 @@ export class FeedService {
   }
 
   fetchAllFeeds(): Observable<Array<Feed>> {
-    const subject = new Subject<Array<Feed>>();
-    this.http.get<Array<Feed>>(`/api/feeds`).subscribe(feeds => {
-      feeds.map(feed => {
-        feed.id = feed.id.toString();
-        return feed;
-      });
-      subject.next(feeds);
-      this._allFeeds.next(feeds);
-    });
-
-    return subject;
+    return this.http.get<Array<Feed>>('/api/feeds/');
   }
 
   fetchFeed(feedId: string): Observable<Feed> {
@@ -50,6 +37,10 @@ export class FeedService {
 
   fetchServices(): Observable<Array<Service>> {
     return this.http.get<Array<Service>>(`/api/feeds/services`);
+  }
+
+  fetchServiceFeeds(serviceId: string): Observable<Array<Feed>> {
+    return this.http.get<Array<Feed>>(`/api/feeds/services/${serviceId}/feeds`);
   }
 
   fetchServiceType(serviceTypeId: string): Observable<ServiceType> {
@@ -84,6 +75,10 @@ export class FeedService {
 
   deleteFeed(feed: Feed): Observable<{}> {
     return this.http.delete(`/api/feeds/${feed.id}`, {responseType: 'text'});
+  }
+
+  deleteService(service: Service): Observable<{}> {
+    return this.http.delete(`/api/feeds/services/${service.id}`, { responseType: 'text' });
   }
 
   fetchFeeds(eventId: number): Observable<Array<Feed>> {

@@ -2,7 +2,7 @@ import { FeatureCollection, Feature } from 'geojson';
 
 export interface Feed {
   id: string;
-  service: Service;
+  service: Service | string;
   topic: FeedTopic;
   title: string;
   summary?: string;
@@ -44,7 +44,7 @@ export interface ServiceType {
 export interface Service {
   id: string;
   title: string;
-  serviceType: string;
+  serviceType: ServiceType | string;
   summary: string | null;
   config: any;
 }

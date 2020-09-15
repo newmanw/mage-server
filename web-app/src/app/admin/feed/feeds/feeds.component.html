@@ -1,68 +1,91 @@
-<div class="admin-nav-gap">
-  <div class="container-fluid">
-    <ol class="breadcrumb">
-      <li class="active"><i class="fa fa-rss"></i> Feeds</li>
-    </ol>
+<div class="page">
+  <div class="heading__breadcrumb">
+    <div><i class="fa fa-rss admin-dashboard"></i>Feeds</div>
   </div>
-</div>
 
-<div class="container">
-  <div class="row">
-    <div class="col-md-3">
-      <form class="form">
-        <div class="form-group">
-          <label>Search</label>
-          <input name="feedSearch" type="text" class="form-control" placeholder="feed name, description" [(ngModel)]="feedSearch" (keyup)="searchChanged()">
-        </div>
-      </form>
-      <hr>
-      <button class="btn btn-default pull-right" (click)="reset()">Reset</button>
-    </div>
-    <div class="col-md-9">
-      <nav class="navbar navbar-default admin-dashboard-navbar">
-        <div class="container-fluid">
-          <div class="navbar-header">
-            <a class="navbar-brand">Feeds</a>
-          </div>
-
-          <form class="navbar-form navbar-right" role="search" *ngIf="hasFeedCreatePermission">
-            <button type="submit" class="btn btn-default" (click)="newFeed()">New Feed</button>
-          </form>
-        </div>
-      </nav>
-      <div class="row">
-        <div class="col-md-12">
-          <div class="admin-table">
-              <div class="well-item" [@deleteAnimation] *ngFor="let feed of feeds | slice:(page*itemsPerPage):((page+1)*itemsPerPage);">
-                <div class="row pointer" (click)="goToFeed(feed)">
-                  <div class="col-md-8">
-                    <div class="right-gap pull-left">
-                      <i class="fa fa-rss admin-layer-icon"></i>
-                    </div>
-                    <div class="strong">{{feed.title}}</div>
-                    <div class="muted"><span class="right-gap">{{feed.summary}}</span></div>
-                  </div>
-                  <div class="col-md-4">
-                    <button class="btn btn-sm btn-danger pull-right admin-user-button" *ngIf="hasFeedDeletePermission" (click)="deleteFeed($event, feed)">Delete</button>
-                    <button class="btn btn-sm btn-default pull-right" *ngIf="hasFeedEditPermission" (click)="editFeed(feed)">Edit</button>
-                  </div>
-                </div>
+  <div class="page-container">
+    <div class="content">
+      <mat-tab-group color="primary" mat-stretch-tabs>
+        <mat-tab label="Feeds">
+          <ng-template matTabContent>
+  
+            <div class="actions">
+              <div class="feed__action--search">
+                <mat-form-field appearance="outline" class="search">
+                  <input matInput type="text" placeholder="Search Feeds" [(ngModel)]="feedSearch" (input)="onFeedSearchChange()">
+                  <mat-icon matPrefix>search</mat-icon>
+                  <button class="cancel" mat-icon-button matSuffix (click)="clearFeedSearch()" *ngIf="feedSearch">
+                    <mat-icon>cancel</mat-icon>
+                  </button>
+                </mat-form-field>
               </div>
-          </div>
-          <div class="row">
-            <div class="col-md-12">
-              <ul class="pager pull-right">
-                <li [ngClass]="{'disabled': page == 0}">
-                  <a href="javascript:void(0);" (click)="page == 0 || (page=page-1)">&larr; Previous</a>
-                </li>
-                <li [ngClass]="{'disabled': page >= (feeds.length/itemsPerPage) - 1}">
-                  <a href="javascript:void(0);" (click)="page >= (feeds.length/itemsPerPage) - 1 || (page=page+1)">Next&rarr;</a>
-                </li>
-              </ul>
+              <div class="feed__action--new" >
+                <button mat-flat-button color="primary" (click)="newFeed()">
+                  <mat-icon>add</mat-icon>
+                  <span>New Feed</span>
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-      </div>
+  
+            <mat-nav-list>
+              <ng-container *ngFor="let feed of feeds | slice:(feedPage*itemsPerPage):((feedPage+1)*itemsPerPage);">
+  
+                <mat-list-item (click)="goToFeed(feed)">
+                  <mat-icon class="feed__icon" mat-list-icon>rss_feed</mat-icon>
+                  <div mat-line>{{feed.title}}</div>
+                  <div mat-line>{{feed.summary}}</div>
+                  <button mat-icon-button (click)="deleteFeed($event, feed)" *ngIf="hasFeedDeletePermission">
+                    <mat-icon class="action__icon">delete_outline</mat-icon>
+                  </button>
+                </mat-list-item>
+  
+                <mat-divider></mat-divider>
+  
+              </ng-container>
+  
+              <mat-paginator class="feed__action--paging" [length]="feeds.length" [pageSize]="itemsPerPage"
+                (page)="feedPage = $event.pageIndex"></mat-paginator>
+            </mat-nav-list>
+          </ng-template>
+        </mat-tab>
+        <mat-tab label="Services">
+          <ng-template matTabContent>
+
+            <div class="actions">
+              <mat-form-field appearance="outline" class="feed__action--search">
+                <input matInput type="text" placeholder="Search Services" [(ngModel)]="serviceSearch"
+                  (input)="onServiceSearchChange()">
+                <mat-icon matPrefix>search</mat-icon>
+                <button class="cancel" mat-icon-button matSuffix (click)="clearServiceSearch()" *ngIf="serviceSearch">
+                  <mat-icon>cancel</mat-icon>
+                </button>
+              </mat-form-field>
+            </div>
+  
+            <mat-nav-list>
+              <ng-container
+                *ngFor="let service of services | slice:(servicePage*itemsPerPage):((servicePage+1)*itemsPerPage);">
+  
+                <mat-list-item (click)="goToService(service)">
+                  <mat-icon class="feed__icon" mat-list-icon>cloud_queue</mat-icon>
+                  <div mat-line>{{service.title}}</div>
+                  <div mat-line>{{service.summary}}</div>
+                  <button mat-icon-button (click)="deleteService($event, service)" *ngIf="hasFeedDeletePermission">
+                    <mat-icon class="action__icon">delete_outline</mat-icon>
+                  </button>
+                </mat-list-item>
+  
+                <mat-divider></mat-divider>
+  
+              </ng-container>
+            </mat-nav-list>
+  
+            <mat-paginator [length]="services.length" [pageSize]="itemsPerPage" (page)="servicePage = $event.pageIndex">
+            </mat-paginator>
+          </ng-template>
+        </mat-tab>
+      </mat-tab-group>
     </div>
   </div>
 </div>
+

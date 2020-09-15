@@ -1,70 +1,90 @@
-import { Component, Inject, OnInit } from '@angular/core';
-import { FormControl } from '@angular/forms';
-import { MatDialog } from '@angular/material';
-import { StateService } from '@uirouter/angular';
-import { Observable } from 'rxjs';
-import { map, startWith } from 'rxjs/operators';
-import { Feed, FeedTopic, Service, ServiceType } from 'src/app/feed/feed.model';
-import { FeedService } from 'src/app/feed/feed.service';
-import _ from 'underscore';
-import { Event, UserService } from '../../../upgrade/ajs-upgraded-providers';
-import { AdminFeedDeleteComponent } from './admin-feed-delete.component';
+import _ from 'underscore'
+import { Component, OnInit, Inject, ElementRef, ViewChild } from '@angular/core'
+import { FormControl } from '@angular/forms'
+import { Observable } from 'rxjs'
+import { map, startWith } from 'rxjs/operators'
+import { Feed, ServiceType, FeedTopic, Service } from 'src/app/feed/feed.model'
+import { StateService } from '@uirouter/angular'
+import { UserService, Event } from '../../../upgrade/ajs-upgraded-providers'
+import { FeedService } from 'src/app/feed/feed.service'
+import { AdminFeedDeleteComponent } from './admin-feed-delete.component'
+import { MatDialog, MatAutocompleteSelectedEvent, MatSnackBar } from '@angular/material'
+import { trigger, state, transition, style, animate } from '@angular/animations'
 
 @Component({
   selector: 'app-admin-feed',
   templateUrl: './admin-feed.component.html',
-  styleUrls: ['./admin-feed.component.scss']
+  styleUrls: ['./admin-feed.component.scss'],
+  animations: [
+    trigger('slide', [
+      state('1', style({ height: '*', opacity: 1, })),
+      state('0', style({ height: '0', opacity: 0 })),
+      transition('1 => 0', animate('400ms ease-in-out')),
+      transition('0 => 1', animate('400ms ease-in-out'))
+    ]),
+    trigger('rotate', [
+      state('0', style({ transform: 'rotate(0)' })),
+      state('1', style({ transform: 'rotate(45deg)' })),
+      transition('1 => 0', animate('250ms ease-out')),
+      transition('0 => 1', animate('250ms ease-in'))
+    ])
+  ]
 })
 export class AdminFeedComponent implements OnInit {
-  feedLoaded: Promise<boolean>;
-  feed: Feed;
-  fullFeed: string;
-  hasFeedCreatePermission: boolean;
-  hasFeedEditPermission: boolean;
-  hasFeedDeletePermission: boolean;
-  hasUpdateEventPermission: boolean;
+  feedLoaded: Promise<boolean>
+  feed: Feed
+  fullFeed: string
+  hasFeedCreatePermission: boolean
+  hasFeedEditPermission: boolean
+  hasFeedDeletePermission: boolean
+  hasUpdateEventPermission: boolean
 
-  eventsPerPage = 10;
-  eventsPage = 0;
-  editEvent = false;
+  eventsPerPage = 10
+  eventsPage = 0
+  editEvent = false
+  addEvent = false
+  selectedEvent: string
 
-  searchControl: FormControl = new FormControl();
-  eventModel: any;
-  filteredChoices: Observable<any[]>;
-  events = [];
-  nonFeedEvents: Array<Event> = [];
-  feedEvents = [];
+  searchControl: FormControl = new FormControl()
+  eventModel: any
+  filteredChoices: Observable<any[]>
+  events = []
+  nonFeedEvents: Array<Event> = []
+  feedEvents = []
 
-  service: Service;
-  feedServiceType: ServiceType;
-  feedTopic: FeedTopic;
+  service: Service
+  feedServiceType: ServiceType
+  feedTopic: FeedTopic
+
+  @ViewChild("eventSelect", { static: false }) eventSelect: ElementRef
 
   constructor(
     private feedService: FeedService,
     private stateService: StateService,
     public dialog: MatDialog,
+    private snackBar: MatSnackBar,
     @Inject(UserService) private userService: { myself: { id: string, role: {permissions: Array<string>}}},
     @Inject(Event) private eventResource: any
     ) {
-      this.hasFeedCreatePermission = _.contains(userService.myself.role.permissions, 'CREATE_LAYER');
-      this.hasFeedEditPermission = _.contains(userService.myself.role.permissions, 'UPDATE_LAYER');
-      this.hasFeedDeletePermission = _.contains(userService.myself.role.permissions, 'DELETE_LAYER');
-      this.hasUpdateEventPermission = _.contains(userService.myself.role.permissions, 'UPDATE_EVENT');
+      this.hasFeedCreatePermission = _.contains(userService.myself.role.permissions, 'CREATE_LAYER') 
+      this.hasFeedEditPermission = _.contains(userService.myself.role.permissions, 'UPDATE_LAYER')
+      this.hasFeedDeletePermission = _.contains(userService.myself.role.permissions, 'DELETE_LAYER')
+      this.hasUpdateEventPermission = _.contains(userService.myself.role.permissions, 'UPDATE_EVENT')
     }
 
   ngOnInit(): void {
-    if (this.stateService.params.feedId) {
+  if (this.stateService.params.feedId) {
       this.feedService.fetchFeed(this.stateService.params.feedId).subscribe(feed => {
-        this.feed = feed;
-        this.fullFeed = JSON.stringify(feed, null, 2);
-        this.feedLoaded = Promise.resolve(true);
-        this.service = this.feed.service;
-        this.feedTopic = this.feed.topic;
-        this.feedService.fetchServiceType(this.service.serviceType).subscribe(serviceType => {
-          this.feedServiceType = serviceType;
+        this.feed = feed
+       this.fullFeed = JSON.stringify(feed, null, 2)
+        this.feedLoaded = Promise.resolve(true)
+        this.service = this.feed.service as Service
+        this.feedTopic = this.feed.topic
+        this.feedService.fetchServiceType(this.service.serviceType as string).subscribe(serviceType => {
+          this.feedServiceType = serviceType
         });
       });
-    }
+  }
 
     this.eventResource.query(events => {
       this.events = events.sort((a: {name: string}, b: {name: string}) => {
@@ -90,13 +110,13 @@ export class AdminFeedComponent implements OnInit {
         });
       }
 
-      chain = chain.reject(event => {
-        return _.some(event.feedIds, feedId => {
-          return this.feed.id === feedId;
+      this.nonFeedEvents = chain.reject(event => {
+        return _.some(event.feedIds, (feedId: string) => {
+          return this.feed.id === feedId
         });
-      });
-
-      this.nonFeedEvents = chain.value();
+      })
+      .value()
+      .sort((a: any, b:any) => a.name < b.name ? -1 : 1)
 
       this.filteredChoices = this.searchControl.valueChanges.pipe(
         startWith(''),
@@ -104,45 +124,66 @@ export class AdminFeedComponent implements OnInit {
           return !value || typeof value === 'string' ? value : value.title
         }),
         map(title => {
-          return title ? this.filter(title) : this.events.slice()
+          return title ? this.filter(title) : this.nonFeedEvents.slice()
         })
       );
     });
   }
 
   private filter(title: string): Event[] {
-    const filterValue = title.toLowerCase();
-
-    return this.events.filter(option => option.name.toLowerCase().indexOf(filterValue) === 0);
+    const filterValue = title.toLowerCase()
+    return this.nonFeedEvents.filter((event: any) => event.name.toLowerCase().indexOf(filterValue) === 0)
   }
 
-  addFeedToEvent(): void {
-    this.eventResource.addFeed({ id: this.eventModel.id }, `"${this.feed.id}"`, event => {
+  toggleNewEvent(): void {
+    this.addEvent = !this.addEvent
+
+    if (this.addEvent) {
+      setTimeout(() => {
+        this.eventSelect.nativeElement.focus()
+      })
+    }
+  }
+
+  addFeedToEvent($event: MatAutocompleteSelectedEvent): void {
+    this.eventResource.addFeed({ id: $event.option.id }, `"${this.feed.id}"`, event => {
       this.feedEvents.push(event);
       this.nonFeedEvents = _.reject(this.nonFeedEvents, e => {
-        return e.id === event.id;
-      });
+        return e.id === event.id
+      })
+      this.searchControl.reset()
 
-      this.eventModel = null;
+      this.eventModel = null
+      this.addEvent = false
+
+      this.snackBar.open(`Feed added to event ${event.name}`, null, {
+        duration: 5 * 1000,
+      });
     });
   }
 
-  removeEventFromFeed(event: any): void {
+  removeFeedFromEvent($event: MouseEvent, event: any): void {
+    $event.stopPropagation();
+
     this.eventResource.removeFeed({ id: event.id, feedId: this.feed.id }, removed => {
-      console.log('removed event', removed);
       this.feedEvents = _.reject(this.feedEvents, e => {
-        return e.id === event.id;
+        return e.id === event.id
       });
-      this.nonFeedEvents.push(event);
+      this.nonFeedEvents.push(event)
+      this.nonFeedEvents = this.nonFeedEvents.sort((a: any, b: any) => a.name < b.name ? -1 : 1)
+      this.searchControl.reset()
+
+      this.snackBar.open(`Feed removed from event ${event.name}`, null, {
+        duration: 5 * 1000,
+      });
     });
   }
 
   editFeed(): void {
-    this.stateService.go('admin.feedEdit', { feedId: this.feed.id });
+    this.stateService.go('admin.feedEdit', { feedId: this.feed.id })
   }
 
   deleteFeed(): void {
-
     this.dialog.open(AdminFeedDeleteComponent, {
       data: this.feed,
       autoFocus: false,
@@ -150,18 +191,18 @@ export class AdminFeedComponent implements OnInit {
     }).afterClosed().subscribe(result => {
       if (result === true) {
         this.feedService.deleteFeed(this.feed).subscribe(() => {
-          this.goToFeeds();
+          this.goToFeeds()
         })
       }
     });
   }
 
   goToFeeds(): void {
-    this.stateService.go('admin.feeds');
+    this.stateService.go('admin.feeds')
   }
 
   goToEvent(event: any): void {
-    this.stateService.go('admin.event', { eventId: event.id });
+    this.stateService.go('admin.event', { eventId: event.id })
   }
 
 }

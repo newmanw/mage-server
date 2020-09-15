@@ -47,7 +47,7 @@ export class FeedEditComponent implements OnInit {
       this.feedService.fetchFeed(this.stateService.params.feedId).subscribe(feed => {
         this.feed = feed;
         this.constantParams = this.configuredParams = feed.constantParams;
-        this.selectedService = this.feed.service;
+        this.selectedService = this.feed.service as Service;
         this.selectedTopic = this.feed.topic;
         this.step = 1;
         this.serviceAndTopicSelected({service: this.selectedService, topic: this.selectedTopic});

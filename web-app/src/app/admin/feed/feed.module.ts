@@ -2,15 +2,27 @@ import { CommonModule } from '@angular/common';
 import { NgModule } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import {
-  MatAutocompleteModule, MatButtonModule,
+  MatAutocompleteModule,
+  MatButtonModule,
   MatCardModule,
-  MatCheckboxModule, MatChipsModule,
-  MatDialogModule, MatExpansionModule, MatFormFieldModule, MatIconModule,
+  MatCheckboxModule,
+  MatChipsModule,
+  MatDialogModule,
+  MatExpansionModule,
+  MatFormFieldModule,
+  MatIconModule,
   MatInputModule,
-  MatListModule, MatProgressSpinnerModule,
-  MatRadioModule, MatRippleModule, MatSelectModule,
+  MatListModule,
+  MatPaginatorModule,
+  MatProgressSpinnerModule,
+  MatRadioModule,
+  MatRippleModule,
+  MatSelectModule,
   MatSidenavModule,
-  MatSliderModule, MatToolbarModule,
+  MatSliderModule,
+  MatSnackBarModule,
+  MatTabsModule,
+  MatToolbarModule,
   MatTooltipModule
 } from '@angular/material';
 import { UpgradeModule } from '@angular/upgrade/static';
@@ -18,8 +30,10 @@ import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
 import { FeedItemSummaryModule } from 'src/app/feed/feed-item/feed-item-summary/feed-item-summary.module';
 import { MomentModule } from 'src/app/moment/moment.module';
 import { JsonSchemaWidgetsModule } from '../../json-schema-widgets/json-schema-widgets.module';
+import { AdminServiceComponent } from '../admin-service/admin-service.component';
 import { AdminFeedDeleteComponent } from './admin-feed/admin-feed-delete.component';
 import { AdminFeedComponent } from './admin-feed/admin-feed.component';
+import { AdminServiceDeleteComponent } from './admin-feed/admin-service-delete.component';
 import { AutocompleteMaterialSelectComponent } from './autocomplete-material-select/autocomplete-material-select.component';
 import { ChooseServiceTopicComponent } from './feed-edit/choose-service-topic/choose-service-topic.component';
 import { CreateServiceComponent } from './feed-edit/create-service/create-service.component';
@@ -29,8 +43,6 @@ import { FeedItemPropertiesConfigurationComponent } from './feed-edit/feed-item-
 import { TopicConfigurationComponent } from './feed-edit/topic-configuration/topic-configuration.component';
 import { FeedsComponent } from './feeds/feeds.component';
 import { JsonSchemaComponent } from './json-schema/json-schema.component';
-
-
 
 @NgModule({
   declarations: [
@@ -44,7 +56,9 @@ import { JsonSchemaComponent } from './json-schema/json-schema.component';
     FeedItemPropertiesConfigurationComponent,
     TopicConfigurationComponent,
     FeedConfigurationComponent,
-    ChooseServiceTopicComponent
+    ChooseServiceTopicComponent,
+    AdminServiceComponent,
+    AdminServiceDeleteComponent
   ],
   imports: [
     FormsModule,
@@ -52,6 +66,9 @@ import { JsonSchemaComponent } from './json-schema/json-schema.component';
     CommonModule,
     JsonSchemaWidgetsModule,
     UpgradeModule,
+    MatAutocompleteModule,
+    MatTabsModule,
+    MatSnackBarModule,
     MatToolbarModule,
     MatIconModule,
     MatTooltipModule,
@@ -69,6 +86,7 @@ import { JsonSchemaComponent } from './json-schema/json-schema.component';
     MatExpansionModule,
     MatListModule,
     MatRippleModule,
+    MatPaginatorModule,
     NgxMatSelectSearchModule,
     MatChipsModule,
     MatSidenavModule,
@@ -79,7 +97,9 @@ import { JsonSchemaComponent } from './json-schema/json-schema.component';
     FeedsComponent,
     AdminFeedComponent,
     AdminFeedDeleteComponent,
+    AdminServiceDeleteComponent,
     FeedEditComponent,
+    AdminServiceComponent,
     AutocompleteMaterialSelectComponent
   ],
   exports: [
