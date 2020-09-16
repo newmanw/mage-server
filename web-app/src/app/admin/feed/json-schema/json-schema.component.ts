@@ -38,9 +38,7 @@ export class JsonSchemaComponent implements OnInit, OnChanges {
   constructor(
     widgetLibrary: WidgetLibraryService,
     ) {
-      console.log('register the autocomplete widget');
     widgetLibrary.registerWidget('autocomplete', AutocompleteMaterialSelectComponent);
-    console.log('widgets', widgetLibrary.getAllWidgets());
   }
 
   ngOnInit(): void {
