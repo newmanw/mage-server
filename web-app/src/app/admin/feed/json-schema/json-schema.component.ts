@@ -38,7 +38,9 @@ export class JsonSchemaComponent implements OnInit, OnChanges {
   constructor(
     widgetLibrary: WidgetLibraryService,
     ) {
+      console.log('register the autocomplete widget');
     widgetLibrary.registerWidget('autocomplete', AutocompleteMaterialSelectComponent);
+    console.log('widgets', widgetLibrary.getAllWidgets());
   }
 
   ngOnInit(): void {
@@ -49,7 +51,13 @@ export class JsonSchemaComponent implements OnInit, OnChanges {
     this.taskOptions = this.options;
   }
 
-  ngOnChanges(): void {}
+  ngOnChanges(): void {
+    this.taskSchema = this.schema;
+    this.taskForm = this.form;
+    this.taskLayout = this.layout;
+    this.taskData = this.data;
+    this.taskOptions = this.options;
+  }
 
   submitUserTaskForm($event): void {
     this.onSubmit.emit($event);
