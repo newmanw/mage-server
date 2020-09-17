@@ -3,6 +3,7 @@ import { StateService } from '@uirouter/angular';
 import { Feed, FeedTopic, Service } from 'src/app/feed/feed.model';
 import { FeedService } from 'src/app/feed/feed.service';
 import * as _ from 'underscore';
+import { Breadcrumb } from '../../admin-breadcrumb/admin-breadcrumb.model';
 
 @Component({
   selector: 'app-feed-edit',
@@ -10,6 +11,14 @@ import * as _ from 'underscore';
   styleUrls: ['./feed-edit.component.scss']
 })
 export class FeedEditComponent implements OnInit {
+  breadcrumbs: Breadcrumb[] = [{
+    title: 'Feeds',
+    icon: 'rss_feed',
+    state: {
+      name: 'admin.feeds'
+    }
+  }]
+  
   feed: Feed;
   currentItemProperties: any;
   hasFeedDeletePermission: boolean;
@@ -37,14 +46,35 @@ export class FeedEditComponent implements OnInit {
     private stateService: StateService
   ) {
     this.debouncedPreview = _.debounce(this.previewFeed, 500);
-
     this.constantParams = {};
     this.configuredTopic = {};
+
+    if (this.stateService.params.feedId) {
+      this.breadcrumbs = this.breadcrumbs.concat([{
+        title: ''
+      },{
+        title: 'Edit'
+      }]);
+    } else {
+      this.breadcrumbs.push({
+        title: 'New'
+      })
+    }
   }
 
   ngOnInit(): void {
     if (this.stateService.params.feedId) {
       this.feedService.fetchFeed(this.stateService.params.feedId).subscribe(feed => {
+        this.breadcrumbs[1] = {
+          title: feed.title,
+          state: {
+            name: 'admin.feed',
+            params: {
+              feedId: feed.id
+            }
+          }
+        }
+        
         this.feed = feed;
         this.constantParams = this.configuredParams = feed.constantParams;
         this.selectedService = this.feed.service as Service;

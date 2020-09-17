@@ -8,6 +8,7 @@ import { MatDialog } from '@angular/material'
 import { forkJoin } from 'rxjs'
 import { AdminFeedDeleteComponent } from '../admin-feed/admin-feed-delete.component'
 import { AdminServiceDeleteComponent } from '../admin-feed/admin-service-delete.component'
+import { Breadcrumb } from '../../admin-breadcrumb/admin-breadcrumb.model'
 
 @Component({
   selector: 'app-feeds',
@@ -15,7 +16,11 @@ import { AdminServiceDeleteComponent } from '../admin-feed/admin-service-delete.
   styleUrls: ['./feeds.component.scss']
 })
 export class FeedsComponent implements OnInit {
-
+  breadcrumbs: Breadcrumb[] = [{
+    title: 'Feeds',
+    icon: 'rss_feed'
+  }]
+  
   services: Service[] = []
   private _services: Service[] = []
 

@@ -43,6 +43,7 @@ import { FeedItemPropertiesConfigurationComponent } from './feed-edit/feed-item-
 import { TopicConfigurationComponent } from './feed-edit/topic-configuration/topic-configuration.component';
 import { FeedsComponent } from './feeds/feeds.component';
 import { JsonSchemaComponent } from './json-schema/json-schema.component';
+import { AdminBreadcrumbModule } from '../admin-breadcrumb/admin-breadcrumb.module';
 
 @NgModule({
   declarations: [
@@ -66,6 +67,7 @@ import { JsonSchemaComponent } from './json-schema/json-schema.component';
     CommonModule,
     JsonSchemaWidgetsModule,
     UpgradeModule,
+    AdminBreadcrumbModule,
     MatAutocompleteModule,
     MatTabsModule,
     MatSnackBarModule,

@@ -10,6 +10,7 @@ import { FeedService } from 'src/app/feed/feed.service'
 import { AdminFeedDeleteComponent } from './admin-feed-delete.component'
 import { MatDialog, MatAutocompleteSelectedEvent, MatSnackBar } from '@angular/material'
 import { trigger, state, transition, style, animate } from '@angular/animations'
+import { Breadcrumb } from '../../admin-breadcrumb/admin-breadcrumb.model'
 
 @Component({
   selector: 'app-admin-feed',
@@ -31,6 +32,14 @@ import { trigger, state, transition, style, animate } from '@angular/animations'
   ]
 })
 export class AdminFeedComponent implements OnInit {
+  breadcrumbs: Breadcrumb[] = [{
+    title: 'Feeds',
+    icon: 'rss_feed',
+    state: {
+      name: 'admin.feeds'
+    }
+  }]
+
   feedLoaded: Promise<boolean>
   feed: Feed
   fullFeed: string
@@ -73,10 +82,15 @@ export class AdminFeedComponent implements OnInit {
     }
 
   ngOnInit(): void {
-  if (this.stateService.params.feedId) {
+    if (this.stateService.params.feedId) {
       this.feedService.fetchFeed(this.stateService.params.feedId).subscribe(feed => {
         this.feed = feed
-       this.fullFeed = JSON.stringify(feed, null, 2)
+
+        this.breadcrumbs.push({
+          title: this.feed.title
+        })
+
+        this.fullFeed = JSON.stringify(feed, null, 2)
         this.feedLoaded = Promise.resolve(true)
         this.service = this.feed.service as Service
         this.feedTopic = this.feed.topic

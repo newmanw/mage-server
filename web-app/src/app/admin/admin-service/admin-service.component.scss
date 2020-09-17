@@ -11,11 +11,11 @@
   overflow-y: auto;
 }
 
-.heading__breadcrumb {
+.mat-breadcrumb {
   display: flex;
   flex-direction: row;
   padding: 16px;
-  background-color: #F0F0F0;
+  background-color: white;
 }
 
 .heading {
@@ -26,6 +26,7 @@
   position: sticky;
   top: 0;
   z-index: 1;
+  margin-top: 16px;
 }
 
 .heading__content {

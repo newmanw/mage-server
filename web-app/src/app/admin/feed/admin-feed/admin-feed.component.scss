@@ -11,20 +11,21 @@
   background-color: #F0F0F0;
 }
 
-.heading__breadcrumb {
+.mat-breadcrumb {
   display: flex;
   flex-direction: row;
   padding: 16px;
-  background-color: #F0F0F0;
+  background-color: white;
 }
 
 .heading {
   display: flex;
   flex-direction: column;
-  background-color: white;
   position: sticky;
   top: 0;
   z-index: 1;
+  background-color: white;
+  margin-top: 16px;
 }
 
 .heading__content {

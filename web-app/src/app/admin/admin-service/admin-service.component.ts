@@ -7,6 +7,7 @@ import { UserService } from 'src/app/upgrade/ajs-upgraded-providers';
 import { MatDialog } from '@angular/material';
 import { AdminServiceDeleteComponent } from '../feed/admin-feed/admin-service-delete.component';
 import { forkJoin } from 'rxjs';
+import { Breadcrumb } from '../admin-breadcrumb/admin-breadcrumb.model';
 
 @Component({
   selector: 'app-admin-service',
@@ -14,6 +15,13 @@ import { forkJoin } from 'rxjs';
   styleUrls: ['./admin-service.component.scss']
 })
 export class AdminServiceComponent implements OnInit {
+  breadcrumbs: Breadcrumb[] = [{
+    title: 'Feeds',
+    icon: 'rss_feed',
+    state: {
+      name: 'admin.feeds'
+    }
+  }]
 
   serviceLoaded: Promise<boolean>
   service: Service
@@ -49,6 +57,10 @@ export class AdminServiceComponent implements OnInit {
     ).subscribe(result => {
       this.service = result[0]
       this.feeds = result[1]
+
+      this.breadcrumbs.push({
+        title: this.service.title
+      })
 
       const serviceType: ServiceType = this.service.serviceType as ServiceType
       this.feedService.fetchServiceType(serviceType.id).subscribe(serviceType => {

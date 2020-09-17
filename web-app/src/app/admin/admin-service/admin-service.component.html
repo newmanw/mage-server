@@ -1,11 +1,7 @@
 <div class="page" *ngIf="service && serviceType">
-  <div class="heading">
-    <div class="heading__breadcrumb">
-      <div><i class="fa fa-rss admin-dashboard"></i><a href="javascript:void(0);" (click)="goToFeeds()">Services</a></div>
-      &nbsp;/&nbsp;
-      <div class="">{{service.title}}</div>
-    </div>
+  <admin-breadcrumb [breadcrumbs]="breadcrumbs"></admin-breadcrumb>
 
+  <div class="heading">
     <div class="heading__content"> 
       <mat-icon class="heading__icon">cloud_queue</mat-icon>
       <div class="heading__info">
@@ -56,7 +52,7 @@
                   <div mat-line>{{feed.summary}}</div>
                 </mat-list-item>
       
-                <mat-divider></mat-divider>
+                <mat-divider [inset]="true"></mat-divider>
       
               </ng-container>
             </mat-nav-list>

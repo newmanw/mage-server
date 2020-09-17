@@ -1,11 +1,8 @@
 <div class="page" *ngIf="feedLoaded | async; else loading">
+
+  <admin-breadcrumb [breadcrumbs]="breadcrumbs"></admin-breadcrumb>
+
   <div class="heading">
-    <div class="heading__breadcrumb">
-      <div><i class="fa fa-rss admin-dashboard"></i><a href="javascript:void(0);" (click)="goToFeeds()">Feeds</a></div>
-      &nbsp;/&nbsp;
-      <div class="">{{feed.title}}</div>
-    </div>
-  
     <div class="heading__content">
       <mat-icon class="heading__icon">rss_feed</mat-icon>
       <div class="heading__info">
@@ -13,6 +10,7 @@
         <div class="heading__summary">{{feed.summary}}</div>
       </div>
     </div>
+
     <div class="heading__actions">
       <button mat-button color="primary" class="heading__action" (click)="editFeed()">
         <mat-icon>edit</mat-icon>Edit
