@@ -46,8 +46,8 @@ export class AdminServiceComponent implements OnInit {
     private stateService: StateService,
     public dialog: MatDialog,
     @Inject(UserService) userService: { myself: { id: string, role: { permissions: Array<string> } } }) { 
-    this.hasServiceEditPermission = _.contains(userService.myself.role.permissions, 'UPDATE_LAYER')
-    this.hasServiceDeletePermission = _.contains(userService.myself.role.permissions, 'DELETE_LAYER')
+    this.hasServiceEditPermission = _.contains(userService.myself.role.permissions, 'FEEDS_CREATE_SERVICE')
+    this.hasServiceDeletePermission = _.contains(userService.myself.role.permissions, 'FEEDS_CREATE_SERVICE')
   }
 
   ngOnInit(): void {
@@ -91,10 +91,6 @@ export class AdminServiceComponent implements OnInit {
 
   goToFeed(feed: Feed): void {
     this.stateService.go('admin.feed', { feedId: feed.id })
-  }
-
-  editService(): void {
-    this.stateService.go('admin.serviceEdit')
   }
 
   deleteService(): void {

@@ -75,9 +75,9 @@ export class AdminFeedComponent implements OnInit {
     @Inject(UserService) private userService: { myself: { id: string, role: {permissions: Array<string>}}},
     @Inject(Event) private eventResource: any
     ) {
-      this.hasFeedCreatePermission = _.contains(userService.myself.role.permissions, 'CREATE_LAYER') 
-      this.hasFeedEditPermission = _.contains(userService.myself.role.permissions, 'UPDATE_LAYER')
-      this.hasFeedDeletePermission = _.contains(userService.myself.role.permissions, 'DELETE_LAYER')
+      this.hasFeedCreatePermission = _.contains(userService.myself.role.permissions, 'FEEDS_CREATE_FEED') 
+      this.hasFeedEditPermission = _.contains(userService.myself.role.permissions, 'FEEDS_CREATE_FEED')
+      this.hasFeedDeletePermission = _.contains(userService.myself.role.permissions, 'FEEDS_CREATE_FEED')
       this.hasUpdateEventPermission = _.contains(userService.myself.role.permissions, 'UPDATE_EVENT')
     }
 

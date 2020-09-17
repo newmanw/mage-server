@@ -421,12 +421,6 @@ function config($httpProvider, $stateProvider, $urlRouterProvider, $urlServicePr
     resolve: resolveAdmin()
   });
 
-  $stateProvider.state('admin.serviceEdit', {
-    url: '/services/:serviceId/edit',
-    component: "serviceEdit",
-    resolve: resolveAdmin()
-  });
-
   // Admin settings routes
   $stateProvider.state('admin.settings', {
     url: '/settings',

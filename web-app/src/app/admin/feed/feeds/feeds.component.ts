@@ -45,10 +45,10 @@ export class FeedsComponent implements OnInit {
     public dialog: MatDialog,
     @Inject(UserService) userService: { myself: { role: {permissions: Array<string>}}}
   ) {
-    this.hasServiceDeletePermission = _.contains(userService.myself.role.permissions, 'DELETE_LAYER')
-    this.hasFeedCreatePermission = _.contains(userService.myself.role.permissions, 'CREATE_LAYER')
-    this.hasFeedEditPermission = _.contains(userService.myself.role.permissions, 'UPDATE_LAYER')
-    this.hasFeedDeletePermission = _.contains(userService.myself.role.permissions, 'DELETE_LAYER')
+    this.hasServiceDeletePermission = _.contains(userService.myself.role.permissions, 'FEEDS_CREATE_SERVICE')
+    this.hasFeedCreatePermission = _.contains(userService.myself.role.permissions, 'FEEDS_CREATE_FEED')
+    this.hasFeedEditPermission = _.contains(userService.myself.role.permissions, 'FEEDS_CREATE_FEED')
+    this.hasFeedDeletePermission = _.contains(userService.myself.role.permissions, 'FEEDS_CREATE_FEED')
   }
 
   ngOnInit(): void {
