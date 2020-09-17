@@ -24,9 +24,7 @@ describe('ChooseServiceTopicComponent', () => {
   let httpMock: HttpTestingController;
   let hostComponent: TestHostComponent;
   let fixture: ComponentFixture<TestHostComponent>;
-  // let testElement: HTMLElement;
   let component: ChooseServiceTopicComponent;
-  // let fixture: ComponentFixture<ChooseServiceTopicComponent>;
   let element: HTMLElement;
 
   beforeEach(async(() => {

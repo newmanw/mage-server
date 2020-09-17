@@ -18,7 +18,7 @@ export class FeedEditComponent implements OnInit {
       name: 'admin.feeds'
     }
   }]
-  
+
   feed: Feed;
   currentItemProperties: any;
   hasFeedDeletePermission: boolean;
@@ -52,7 +52,7 @@ export class FeedEditComponent implements OnInit {
     if (this.stateService.params.feedId) {
       this.breadcrumbs = this.breadcrumbs.concat([{
         title: ''
-      },{
+      }, {
         title: 'Edit'
       }]);
     } else {
@@ -74,7 +74,7 @@ export class FeedEditComponent implements OnInit {
             }
           }
         }
-        
+
         this.feed = feed;
         this.constantParams = this.configuredParams = feed.constantParams;
         this.selectedService = this.feed.service as Service;

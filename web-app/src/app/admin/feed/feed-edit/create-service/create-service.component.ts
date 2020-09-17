@@ -1,7 +1,8 @@
-import { Component, OnInit, OnChanges, Input, Output, EventEmitter, ViewChild, ViewContainerRef } from '@angular/core';
-import { FeedService } from 'src/app/feed/feed.service';
-import { ServiceType, Service } from 'src/app/feed/feed.model';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild, ViewContainerRef } from '@angular/core';
 import { FormControl } from '@angular/forms';
+import { forkJoin } from 'rxjs';
+import { Service, ServiceType } from 'src/app/feed/feed.model';
+import { FeedService } from 'src/app/feed/feed.service';
 
 @Component({
   selector: 'app-create-service',
@@ -39,13 +40,12 @@ export class CreateServiceComponent implements OnInit, OnChanges {
   ngOnInit(): void {
     this.viewContainerRef.createEmbeddedView(this.template);
 
-    this.feedService.fetchServiceTypes().subscribe(serviceTypes => {
-      this.serviceTypes = serviceTypes;
-    });
-
-    this.feedService.fetchServices().subscribe(services => {
-      this.services = services;
-
+    forkJoin(
+      this.feedService.fetchServiceTypes(),
+      this.feedService.fetchServices()
+    ).subscribe(result => {
+      this.serviceTypes = result[0]
+      this.services = result[1]
     });
   }
 
@@ -74,7 +74,6 @@ export class CreateServiceComponent implements OnInit, OnChanges {
         default: this.selectedServiceType.summary
       }
     };
-    this.serviceConfigurationSchema = { ...this.selectedServiceType.configSchema };
     this.serviceFormReady = true;
   }
 
