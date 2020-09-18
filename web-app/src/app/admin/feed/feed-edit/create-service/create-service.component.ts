@@ -58,7 +58,7 @@ export class CreateServiceComponent implements OnInit, OnChanges {
     this.serviceTitleSummary.serviceType = this.selectedServiceType.id;
     this.feedService.createService(this.serviceTitleSummary).subscribe(service => {
       this.serviceCreated.emit(service);
-    });
+    })
   }
 
   serviceTypeSelected(): void {

@@ -9,6 +9,7 @@ import { StateService } from '@uirouter/angular';
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
 import { FeedItemSummaryComponent } from 'src/app/feed/feed-item/feed-item-summary/feed-item-summary.component';
 import { MomentModule } from 'src/app/moment/moment.module';
+import { AdminBreadcrumbModule } from '../../admin-breadcrumb/admin-breadcrumb.module';
 import { AutocompleteMaterialSelectComponent } from '../autocomplete-material-select/autocomplete-material-select.component';
 import { JsonSchemaComponent } from '../json-schema/json-schema.component';
 import { ChooseServiceTopicComponent } from './choose-service-topic/choose-service-topic.component';
@@ -51,7 +52,8 @@ describe('FeedEditComponent', () => {
         HttpClientTestingModule,
         NoopAnimationsModule,
         MomentModule,
-        MatAutocompleteModule
+        MatAutocompleteModule,
+        AdminBreadcrumbModule
       ],
       declarations: [
         FeedEditComponent,

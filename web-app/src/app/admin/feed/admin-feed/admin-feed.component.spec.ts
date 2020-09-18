@@ -5,6 +5,7 @@ import { MatAutocompleteModule, MatCardModule, MatDialogModule, MatDialogRef, Ma
 import { StateService } from '@uirouter/angular';
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
 import { Event, UserService } from 'src/app/upgrade/ajs-upgraded-providers';
+import { AdminBreadcrumbModule } from '../../admin-breadcrumb/admin-breadcrumb.module';
 import { AdminFeedComponent } from './admin-feed.component';
 
 class MockUserService {
@@ -62,7 +63,8 @@ describe('AdminFeedComponent', () => {
         MatSelectModule,
         NgxMatSelectSearchModule,
         ReactiveFormsModule,
-        HttpClientModule
+        HttpClientModule,
+        AdminBreadcrumbModule
       ],
       declarations: [ AdminFeedComponent ]
     })

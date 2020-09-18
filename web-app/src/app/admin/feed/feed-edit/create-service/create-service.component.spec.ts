@@ -11,7 +11,7 @@ import { JsonSchemaComponent } from '../../json-schema/json-schema.component';
 import { CreateServiceComponent } from './create-service.component';
 
 
-fdescribe('CreateServiceComponent', () => {
+describe('CreateServiceComponent', () => {
   @Component({
     selector: 'app-host-component',
     template: `<app-create-service
