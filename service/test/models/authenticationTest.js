@@ -1,7 +1,7 @@
 const sinon = require('sinon')
   , expect = require('chai').expect
   , mongoose = require('mongoose')
-  , Authentication = require('../../models/authentication');
+  , Authentication = require('../../lib/models/authentication');
 
 const AuthenticationModel = mongoose.model('Authentication');
 

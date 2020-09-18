@@ -3,25 +3,25 @@ var request = require('supertest')
   , mongoose = require('mongoose')
   , mockfs = require('mock-fs')
   , MockToken = require('../mockToken')
-  , app = require('../../express')
+  , app = require('../../lib/express')
   , TokenModel = mongoose.model('Token');
 
 require('chai').should();
 require('sinon-mongoose');
 
-require('../../models/user');
+require('../../lib/models/user');
 var UserModel = mongoose.model('User');
 
-require('../../models/event');
+require('../../lib/models/event');
 const EventModel = mongoose.model('Event');
 
-require('../../models/icon');
+require('../../lib/models/icon');
 const IconModel = mongoose.model('Icon');
 
-require('../../models/device');
+require('../../lib/models/device');
 var DeviceModel = mongoose.model('Device');
 
-var Observation = require('../../models/observation');
+var Observation = require('../../lib/models/observation');
 var observationModel = Observation.observationModel;
 
 describe("export tests", function() {
