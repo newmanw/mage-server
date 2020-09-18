@@ -5,7 +5,7 @@
       <span class="admin-breadcrumb" [ngClass]="{'admin-breadcrumb--active': breadcrumb.state === undefined}" (click)="goToBreadcrumb(breadcrumb)">{{breadcrumb.title}}</span>
     </div>
     <div *ngIf="i < breadcrumbs.length - 1">
-      <span class="admin-breadcrumb__seperator">/</span>
+      <span class="admin-breadcrumb__separator">/</span>
     </div>
   </ng-container>
 </div>
