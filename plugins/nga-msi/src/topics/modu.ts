@@ -1,8 +1,8 @@
-import { Feature } from 'geojson'
+import { JsonObject } from '@ngageoint/mage.service/lib/entities/entities.json_types'
 import { FeedTopic, FeedTopicContent } from '@ngageoint/mage.service/lib/entities/feeds/entities.feeds'
+import { Feature } from 'geojson'
 import { ParsedUrlQuery } from 'querystring'
 import { MsiRequest, MsiResponse } from '../nga-msi'
-import { JsonObject } from '@ngageoint/mage.service/lib/entities/entities.json_types'
 
 export const topicDescriptor: FeedTopic = {
   id: 'modu',
@@ -31,6 +31,63 @@ export const topicDescriptor: FeedTopic = {
   mapStyle: {
     // TODO: figure out dynamic url resolution
     iconUrl: 'https://magefeed.geointservices.io/icons/asam.png'
+  },
+  itemPropertiesSchema: {
+    type: 'object',
+    properties: {
+      date: {
+        title: "Entry Date String",
+        type: "string",
+        format: 'date',
+        pattern: "\d\d\d\d-\d\d-\d\d"
+      },
+      distance: {
+        title: "Distance",
+        type: "number"
+      },
+      latitude: {
+        title: "Latitude",
+        type: "number"
+      },
+      longitude: {
+        title: "Longitude",
+        type: "number"
+      },
+      name: {
+        title: "Rig Name",
+        type: "string"
+      },
+      navArea: {
+        title: "Navigational Area",
+        type: "string"
+      },
+      position: {
+        title: "Position",
+        type: "string",
+        format: "latlondeg"
+      },
+      region: {
+        title: "Charting Subregion",
+        type: "number"
+      },
+      rigStatus: {
+        title: "Rig Status",
+        type: "string"
+      },
+      specialStatus: {
+        title: "Special Status",
+        type: "string"
+      },
+      subregion: {
+        title: "Geographical Subregion",
+        type: "number"
+      },
+      timestamp: {
+        title: "Entry Date",
+        type: "number",
+        format: "date"
+      }
+    }
   }
 }
 

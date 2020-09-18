@@ -1,94 +1,55 @@
-<div class="admin-nav-gap">
-  <div class="container-fluid">
-    <ol class="breadcrumb" *ngIf="feed; else elseBlock">
-      <li><i class="fa fa-rss admin-dashboard"></i><a href="javascript:void(0);" (click)="goToFeeds()">Feeds</a></li>
-      <li class="active">{{feed.title}}</li>
-    </ol>
-    <ng-template #elseBlock>
-      <ol class="breadcrumb">
-        <li><i class="fa fa-rss admin-dashboard"></i><a href="javascript:void(0);" (click)="goToFeeds()">Feeds</a></li>
-        <li class="active">New</li>
-      </ol>
-    </ng-template>
+<div class="page">
+  <admin-breadcrumb [breadcrumbs]="breadcrumbs"></admin-breadcrumb>
 
-  </div>
-</div>
+  <div class="page-container">
+    <div class="header" *ngIf="feed">
+      <img class="icon" *ngIf="feed.mapStyle?.iconUrl" [src]="feed.mapStyle?.iconUrl"/>
+      <span class="header__title">{{feed.title}}</span>
+    </div>
 
-<div class="container-fluid">
-  <div class="row">
-    <div class="col-md-offset-1 col-md-10">
-      <div class="row">
-        <div class="col-md-10" *ngIf="feed">
-          <h2><img style="width: 24px; height: 24px;" *ngIf="feed.mapStyle?.iconUrl" [src]="feed.mapStyle?.iconUrl"/>{{feed.title}}</h2>
-        </div>
+    <div class="page-content">
+      <div class="feed__configuration">
+        <mat-accordion class="example-headers-align" [multi]="feed">
+          <app-create-service *ngIf="!feed" [expanded]="step === -1" (opened)="setStep(-1)"
+            (cancelled)="serviceCreationCancelled()" (serviceCreated)="serviceCreated($event)">
+          </app-create-service>
+          <app-choose-service-topic *ngIf="!feed" [defaultService]="createdService" [expanded]="step === 0"
+            (opened)="setStep(0)" (serviceAndTopicSelected)="serviceAndTopicSelected($event)"
+            (noServicesExist)="noServicesExist()">
+          </app-choose-service-topic>
+          <app-topic-configuration [topic]="selectedTopic" [params]="constantParams" [expanded]="step === 1"
+            [showPrevious]="!feed" (opened)="setStep(1)" (cancelled)="setStep(0)" (topicConfigured)="topicConfigured($event)"
+            (topicConfigurationChanged)="topicConfigChanged($event)">
+          </app-topic-configuration>
+          <app-feed-item-properties-configuration [expanded]="step === 2" (opened)="setStep(2)" (cancelled)="setStep(1)"
+            (itemPropertiesUpdated)="itemPropertiesUpdated($event)" [topic]="selectedTopic"
+            [itemPropertiesSchema]="itemPropertiesSchema">
+          </app-feed-item-properties-configuration>
+          <app-feed-configuration [topic]="configuredTopic" [itemPropertiesSchema]="currentItemProperties"
+            [expanded]="step === 3" [buttonText]="feed ? 'Update Feed' : 'Create Feed'" (opened)="setStep(3)"
+            (cancelled)="setStep(2)" (feedConfigurationChanged)="feedConfigurationChanged($event)"
+            (feedConfigurationSet)="feedConfigurationSet($event)">
+          </app-feed-configuration>
+        </mat-accordion>
       </div>
-
-      <div class="row">
-        <div class="col-md-6">
-          <mat-accordion class="example-headers-align" [multi]="feed">
-            <app-create-service
-              *ngIf="!feed"
-              [expanded]="step === -1" 
-              (opened)="setStep(-1)" 
-              (cancelled)="serviceCreationCancelled()" 
-              (serviceCreated)="serviceCreated($event)">
-            </app-create-service>
-            <app-choose-service-topic
-              *ngIf="!feed"
-              [defaultService]="createdService"
-              [expanded]="step === 0"
-              (opened)="setStep(0)"
-              (serviceAndTopicSelected)="serviceAndTopicSelected($event)"
-              (noServicesExist)="noServicesExist()">
-            </app-choose-service-topic>
-            <app-topic-configuration
-              [topic]="selectedTopic"
-              [params]="constantParams"
-              [expanded]="step === 1"
-              [showPrevious]="!feed"
-              (opened)="setStep(1)"
-              (cancelled)="setStep(0)"
-              (topicConfigured)="topicConfigured($event)"
-              (topicConfigurationChanged)="topicConfigChanged($event)">
-            </app-topic-configuration>
-            <!-- <app-feed-item-properties-configuration
-              [expanded]="step === 2" 
-              (opened)="setStep(2)"
-              (cancelled)="setStep(1)"
-              (itemPropertiesUpdated)="itemPropertiesUpdated($event)"
-              [itemProperties]="itemProperties">
-            </app-feed-item-properties-configuration> -->
-            <app-feed-configuration
-              [topic]="selectedTopic"
-              [expanded]="step === 2"
-              [buttonText]="feed ? 'Update Feed' : 'Create Feed'"
-              (opened)="setStep(2)"
-              (cancelled)="setStep(1)"
-              (feedConfigurationChanged)="feedConfigurationChanged($event)"
-              (feedConfigurationSet)="feedConfigurationSet($event)">
-            </app-feed-configuration>
-          </mat-accordion>
-        </div>
-        <div class="col-md-6">
-          <div *ngIf="preview else elseBlockPreview">
-            <div class="preview--list">
-              <mat-nav-list>
-                <div *ngFor="let feature of preview?.content?.items?.features | slice:0:10">
-                  <feed-item-summary [item]="feature" [feed]="preview.feed"></feed-item-summary>
-                  <mat-divider></mat-divider>
-                </div>
-              </mat-nav-list>
-            </div>
+      <div class="feed__preview">
+        <div *ngIf="preview else elseBlockPreview">
+          <div class="preview--list">
+            <mat-nav-list>
+              <div *ngFor="let feature of preview?.content?.items?.features | slice:0:10">
+                <feed-item-summary [item]="feature" [feed]="preview.feed"></feed-item-summary>
+                <mat-divider></mat-divider>
+              </div>
+            </mat-nav-list>
           </div>
-          <ng-template #elseBlockPreview>
-            <div class="preview--empty">
-              <i class="material-icons preview__img--empty">list</i>
-              <span class="preview__span--empty">Feed Preview</span>
-            </div>
-          </ng-template>
         </div>
+        <ng-template #elseBlockPreview>
+          <div class="preview--empty">
+            <i class="material-icons preview__img--empty">list</i>
+            <span class="preview__span--empty">Feed Preview</span>
+          </div>
+        </ng-template>
       </div>
-  
     </div>
   </div>
 </div>

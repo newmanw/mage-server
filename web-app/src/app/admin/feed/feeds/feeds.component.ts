@@ -1,90 +1,137 @@
-import _ from 'underscore';
-import { Component, OnInit, Inject } from '@angular/core';
-import { UserService } from '../../../upgrade/ajs-upgraded-providers';
-import { FeedService } from '../../../feed/feed.service';
-import { Feed } from 'src/app/feed/feed.model';
-import { StateService } from '@uirouter/angular';
-import { MatDialog } from '@angular/material';
-import { AdminFeedDeleteComponent } from '../admin-feed/admin-feed-delete.component';
-import { trigger, transition, style, animate } from '@angular/animations';
+import _ from 'underscore'
+import { Component, OnInit, Inject } from '@angular/core'
+import { UserService } from '../../../upgrade/ajs-upgraded-providers'
+import { FeedService } from '../../../feed/feed.service'
+import { Feed, Service } from 'src/app/feed/feed.model'
+import { StateService } from '@uirouter/angular'
+import { MatDialog } from '@angular/material'
+import { forkJoin } from 'rxjs'
+import { AdminFeedDeleteComponent } from '../admin-feed/admin-feed-delete.component'
+import { AdminServiceDeleteComponent } from '../admin-feed/admin-service-delete.component'
+import { Breadcrumb } from '../../admin-breadcrumb/admin-breadcrumb.model'
 
 @Component({
   selector: 'app-feeds',
   templateUrl: './feeds.component.html',
-  styleUrls: ['./feeds.component.scss'],
-  animations: [trigger('deleteAnimation', [
-    transition(':leave',
-      [style({ opacity: 1 }), animate('250ms', style({ opacity: 0 }))]
-    )
-  ])]
+  styleUrls: ['./feeds.component.scss']
 })
 export class FeedsComponent implements OnInit {
+  breadcrumbs: Breadcrumb[] = [{
+    title: 'Feeds',
+    icon: 'rss_feed'
+  }]
+  
+  services: Service[] = []
+  private _services: Service[] = []
 
-  allFeeds: Array<Feed> = [];
-  feeds: Array<Feed> = [];
-  feedSearch = '';
-  page = 0;
-  itemsPerPage = 10;
+  private _feeds: Feed[] = []
+  feeds: Feed[] = []
 
-  hasFeedCreatePermission: boolean;
-  hasFeedEditPermission: boolean;
-  hasFeedDeletePermission: boolean;
+  feedSearch = ''
+  serviceSearch = ''
+
+  feedPage = 0
+  servicePage = 0
+  itemsPerPage = 10
+
+  hasServiceDeletePermission: boolean
+  hasFeedCreatePermission: boolean
+  hasFeedEditPermission: boolean
+  hasFeedDeletePermission: boolean
 
   constructor(
     private feedService: FeedService,
     private stateService: StateService,
     public dialog: MatDialog,
-    @Inject(UserService) private userService: { myself: { role: {permissions: Array<string>}}}
+    @Inject(UserService) userService: { myself: { role: {permissions: Array<string>}}}
   ) {
-    this.hasFeedCreatePermission = _.contains(userService.myself.role.permissions, 'CREATE_LAYER');
-    this.hasFeedEditPermission = _.contains(userService.myself.role.permissions, 'UPDATE_LAYER');
-    this.hasFeedDeletePermission = _.contains(userService.myself.role.permissions, 'DELETE_LAYER');
+    this.hasServiceDeletePermission = _.contains(userService.myself.role.permissions, 'FEEDS_CREATE_SERVICE')
+    this.hasFeedCreatePermission = _.contains(userService.myself.role.permissions, 'FEEDS_CREATE_FEED')
+    this.hasFeedEditPermission = _.contains(userService.myself.role.permissions, 'FEEDS_CREATE_FEED')
+    this.hasFeedDeletePermission = _.contains(userService.myself.role.permissions, 'FEEDS_CREATE_FEED')
   }
 
   ngOnInit(): void {
-    this.feedService.fetchAllFeeds().subscribe(feeds => {
-      this.allFeeds = feeds;
-      this.updateFilteredFeeds();
-    });
+    forkJoin(
+      this.feedService.fetchServices(),
+      this.feedService.fetchAllFeeds()
+    ).subscribe(result => {
+      this._services = result[0].sort(this.sortByTitle)
+      this.services = this._services.slice()
+
+      this._feeds = result[1].sort(this.sortByTitle)
+      this.feeds = this._feeds.slice()
+    })
   }
 
-  searchChanged(): void {
-    this.page = 0;
-    this.updateFilteredFeeds();
+  onFeedSearchChange(): void {
+    this.feedPage = 0
+    this.updateFilteredFeeds()
   }
 
-  reset(): void {
-    this.page = 0;
-    this.feedSearch = '';
-    this.updateFilteredFeeds();
+  onServiceSearchChange(): void {
+    this.servicePage = 0
+    this.updateFilteredServices()
+  }
+
+  clearFeedSearch(): void {
+    this.feedPage = 0
+    this.feedSearch = ''
+    this.feeds = this._feeds.slice()
+  }
+
+  clearServiceSearch(): void {
+    this.servicePage = 0
+    this.serviceSearch = ''
+    this.services = this._services.slice()
   }
 
   updateFilteredFeeds(): void {
-    this.feeds = this.allFeeds.filter((feed) => {
-      return feed.title.toLowerCase().indexOf(this.feedSearch.toLowerCase()) !== -1
-      || feed.summary.toLowerCase().indexOf(this.feedSearch.toLowerCase()) !== -1;
-    }).sort((a: Feed, b: Feed) => {
-      if (a.title < b.title) { return -1; }
-      if (a.title > b.title) { return 1; }
-      return 0;
-    });
+    this.feeds = this._feeds.filter(this.filterByTitleAndSummary(this.feedSearch))
+  }
+
+  updateFilteredServices(): void {
+    this.services = this._services.filter(this.filterByTitleAndSummary(this.serviceSearch))
+  }
+
+  goToService(service: Service): void {
+    this.stateService.go('admin.service', { serviceId: service.id })
   }
 
   goToFeed(feed: Feed): void {
-    this.stateService.go('admin.feed', { feedId: feed.id });
+    this.stateService.go('admin.feed', { feedId: feed.id })
   }
 
   newFeed(): void {
-    this.stateService.go('admin.feedCreate');
+    this.stateService.go('admin.feedCreate')
   }
 
   editFeed(feed: Feed): void {
     
   }
 
-  deleteFeed($event: MouseEvent, feed: Feed): void {
-    $event.stopPropagation();
+  deleteService($event: MouseEvent, service: Service): void {
+    $event.stopPropagation()
 
+    this.dialog.open(AdminServiceDeleteComponent, {
+      data: service,
+      autoFocus: false,
+      disableClose: true
+    }).afterClosed().subscribe(result => {
+      if (result === true) {
+        this.feedService.deleteService(service).subscribe(() => {
+          this.services = this.services.filter(s => s.id !== service.id)
+          this._feeds = this._feeds.filter(feed => feed.service === service.id)
+          this.updateFilteredFeeds()
+          this.updateFilteredServices()
+        });
+      }
+    });
+  }
+
+  deleteFeed($event: MouseEvent, feed: Feed): void {
+    $event.stopPropagation()
+    
     this.dialog.open(AdminFeedDeleteComponent, {
       data: feed,
       autoFocus: false,
@@ -92,10 +139,22 @@ export class FeedsComponent implements OnInit {
     }).afterClosed().subscribe(result => {
       if (result === true) {
         this.feedService.deleteFeed(feed).subscribe(() => {
-          this.feeds = _.without(this.feeds, feed);
+          this._feeds = this._feeds.filter(f => f.id !== feed.id)
+          this.updateFilteredFeeds()
         });
       }
     });
+  }
+
+  private sortByTitle(a: {title: string}, b: {title: string}): number {
+    return a.title < b.title ? -1 : 1
+  }
+
+  private filterByTitleAndSummary(text: string): (item: {title: string, summary?: string}) => boolean {
+    return (item: { title: string, summary?: string }): boolean => {
+      return item.title.toLowerCase().indexOf(text.toLowerCase()) !== -1
+        || item.summary.toLowerCase().indexOf(text.toLowerCase()) !== -1
+    }
   }
 
 }

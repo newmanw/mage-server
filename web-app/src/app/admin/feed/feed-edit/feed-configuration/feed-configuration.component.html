@@ -7,13 +7,11 @@
       <mat-panel-description>
       </mat-panel-description>
     </mat-expansion-panel-header>
-    <div class="row">
-      <div class="col-md-12" *ngIf="topic">
-        <app-json-schema loadExternalAssets="true" (onChanges)="feedConfigChanged($event)"
-         [options]="formOptions" [data]="topic"
-         [schema]="feedConfigurationSchema" framework="material-design" [layout]="formLayout">
-        </app-json-schema>
-      </div>
+    <div *ngIf="topic">
+      <app-json-schema (onChanges)="feedConfigChanged($event)"
+        [options]="formOptions" [data]="topic"
+        [schema]="feedConfigurationSchema" framework="material-design" [layout]="formLayout">
+      </app-json-schema>
     </div>
     <mat-action-row>
       <button mat-button color="warn" (click)="prevStep()">Previous</button>

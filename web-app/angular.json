@@ -127,7 +127,8 @@
                 "node_modules"
               ]
             },
-            "scripts": []
+            "scripts": [],
+            "codeCoverage": true
           }
         },
         "lint": {

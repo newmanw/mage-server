@@ -1,8 +1,8 @@
-import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Observable, BehaviorSubject, Subject } from 'rxjs';
-import { Feed, FeedContent, StyledFeature, Service, ServiceType, FeedTopic } from './feed.model';
+import { Injectable } from '@angular/core';
 import { Feature } from 'geojson';
+import { BehaviorSubject, Observable, Subject } from 'rxjs';
+import { Feed, FeedContent, FeedTopic, Service, ServiceType, StyledFeature } from './feed.model';
 
 @Injectable({
   providedIn: 'root'
@@ -10,9 +10,6 @@ import { Feature } from 'geojson';
 export class FeedService {
 
   constructor(private http: HttpClient) { }
-
-  private _allFeeds = new BehaviorSubject<Array<Feed>>([]);
-  readonly allFeeds = this._allFeeds.asObservable();
 
   private _feeds = new BehaviorSubject<Array<Feed>>([]);
   readonly feeds = this._feeds.asObservable();
@@ -23,17 +20,7 @@ export class FeedService {
   }
 
   fetchAllFeeds(): Observable<Array<Feed>> {
-    const subject = new Subject<Array<Feed>>();
-    this.http.get<Array<Feed>>(`/api/feeds`).subscribe(feeds => {
-      feeds.map(feed => {
-        feed.id = feed.id.toString();
-        return feed;
-      });
-      subject.next(feeds);
-      this._allFeeds.next(feeds);
-    });
-
-    return subject;
+    return this.http.get<Array<Feed>>('/api/feeds/');
   }
 
   fetchFeed(feedId: string): Observable<Feed> {
@@ -52,12 +39,16 @@ export class FeedService {
     return this.http.get<Array<Service>>(`/api/feeds/services`);
   }
 
+  fetchServiceFeeds(serviceId: string): Observable<Array<Feed>> {
+    return this.http.get<Array<Feed>>(`/api/feeds/services/${serviceId}/feeds`);
+  }
+
   fetchServiceType(serviceTypeId: string): Observable<ServiceType> {
     return this.http.get<ServiceType>(`/api/feeds/service_types/${serviceTypeId}`);
   }
 
   fetchTopics(serviceId: string): Observable<Array<FeedTopic>> {
-    return this.http.get<Array<FeedTopic>>(`api/feeds/services/${serviceId}/topics`);
+    return this.http.get<Array<FeedTopic>>(`/api/feeds/services/${serviceId}/topics`);
   }
 
   previewFeed(serviceId: string, topicId: string, topicConfiguration: any): Observable<{content: FeedContent}> {
@@ -84,6 +75,10 @@ export class FeedService {
 
   deleteFeed(feed: Feed): Observable<{}> {
     return this.http.delete(`/api/feeds/${feed.id}`, {responseType: 'text'});
+  }
+
+  deleteService(service: Service): Observable<{}> {
+    return this.http.delete(`/api/feeds/services/${service.id}`, { responseType: 'text' });
   }
 
   fetchFeeds(eventId: number): Observable<Array<Feed>> {

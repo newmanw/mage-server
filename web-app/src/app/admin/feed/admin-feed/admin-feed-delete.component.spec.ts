@@ -1,6 +1,8 @@
+import { HttpClientModule } from '@angular/common/http';
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material';
 import { AdminFeedDeleteComponent } from './admin-feed-delete.component';
+
 
 describe('AdminFeedDeleteComponent', () => {
   let component: AdminFeedDeleteComponent;
@@ -8,6 +10,12 @@ describe('AdminFeedDeleteComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
+      imports: [MatDialogModule, HttpClientModule],
+      providers: [{
+        provide: MatDialogRef, useValue: {}
+      }, {
+        provide: MAT_DIALOG_DATA, useValue:{}
+      }],
       declarations: [ AdminFeedDeleteComponent ]
     })
     .compileComponents();

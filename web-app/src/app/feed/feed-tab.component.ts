@@ -1,4 +1,4 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { FeedTab } from './feed.model';
 
 @Component({
@@ -12,7 +12,10 @@ export class FeedTabComponent implements OnInit {
 
   imageStyle: object;
 
-  ngOnInit(): void {    
+  ngOnInit(): void {
+    if (!this.tab) {
+      return;
+    }
     if (this.tab.iconUrl) {
       this.imageStyle = { 
         'mask-image': `url(${this.tab.iconUrl})`, 

@@ -1,4 +1,4 @@
-import { Component, OnInit, Input, EventEmitter, Output, ViewChild, ViewContainerRef, OnChanges } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild, ViewContainerRef } from '@angular/core';
 import { FeedTopic } from 'src/app/feed/feed.model';
 
 @Component({
@@ -9,7 +9,7 @@ import { FeedTopic } from 'src/app/feed/feed.model';
 export class FeedConfigurationComponent implements OnInit, OnChanges {
 
   @Input() expanded: boolean;
-  @Input() itemProperties: Array<any>;
+  @Input() itemPropertiesSchema: any;
   @Input() topic: FeedTopic;
   @Input() buttonText: string;
   @Output() feedConfigurationSet = new EventEmitter<any>();
@@ -20,7 +20,7 @@ export class FeedConfigurationComponent implements OnInit, OnChanges {
 
   formOptions: any;
   formLayout: any;
-  itemPropertiesSchema: Array<any>;
+  itemPropertiesTitleMap: Array<any>;
   feedConfigurationSchema: any;
 
   feedConfiguration: any;
@@ -36,8 +36,16 @@ export class FeedConfigurationComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(): void {
-    if (this.itemProperties) {
-      this.itemPropertiesSchema = this.itemProperties.map(this.itemPropertiesSchemaToTitleMap);
+    if (this.itemPropertiesSchema) {
+      this.itemPropertiesTitleMap = [];
+      for (const key in this.itemPropertiesSchema) {
+        if (this.itemPropertiesSchema.hasOwnProperty(key)) {
+          this.itemPropertiesTitleMap.push({
+            name: this.itemPropertiesSchema[key].title || this.itemPropertiesSchema[key].key,
+            value: key
+          });
+        }
+      }
       this.resetFormLayout();
     }
   }
@@ -87,40 +95,30 @@ export class FeedConfigurationComponent implements OnInit, OnChanges {
       'title',
       'itemsHaveIdentity',
       'itemsHaveSpatialDimension',
-      'itemTemporalProperty',
-      'itemPrimaryProperty',
-      'itemSecondaryProperty',
-      // {
-      //   key: 'itemTemporalProperty',
-      //   type: 'autocomplete',
-      //   titleMap: this.itemPropertiesSchema
-      // },
-      // {
-      //   key: 'itemPrimaryProperty',
-      //   type: 'autocomplete',
-      //   titleMap: this.itemPropertiesSchema
-      // },
-      // {
-      //   key: 'itemSecondaryProperty',
-      //   type: 'autocomplete',
-      //   titleMap: this.itemPropertiesSchema
-      // },
+      // 'itemTemporalProperty',
+      // 'itemPrimaryProperty',
+      // 'itemSecondaryProperty',
+      {
+        key: 'itemTemporalProperty',
+        type: 'autocomplete',
+        titleMap: this.itemPropertiesTitleMap
+      },
+      {
+        key: 'itemPrimaryProperty',
+        type: 'autocomplete',
+        titleMap: this.itemPropertiesTitleMap
+      },
+      {
+        key: 'itemSecondaryProperty',
+        type: 'autocomplete',
+        titleMap: this.itemPropertiesTitleMap
+      },
       {
         type: 'text',
         key: 'mapStyle.iconUrl',
         title: 'Feed Icon URL'
       }
     ];
-  }
-
-  itemPropertiesSchemaToTitleMap(value: any): any {
-    if (!value.schema) {
-      return;
-    }
-    return {
-      name: value.schema.title,
-      value: value.key
-    };
   }
 
   feedConfigChanged($event: any): void {

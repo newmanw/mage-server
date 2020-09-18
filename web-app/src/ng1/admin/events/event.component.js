@@ -53,9 +53,9 @@ class AdminEventController {
 
   $onInit() {
     this.$q.all({ 
-        teams: this.Team.query({ populate: false }).$promise, 
+        teams: this.Team.query({ populate: false }).$promise,
         layers: this.Layer.query().$promise,
-        feeds: this.FeedService.fetchAllFeeds().pipe(take(1)).toPromise(),
+        feeds: this.FeedService.fetchAllFeeds().toPromise(),
         event: this.Event.get({ id: this.$stateParams.eventId, populate: false }).$promise }).then(result => {
       const teamsById = _.indexBy(result.teams, 'id');
 

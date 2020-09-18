@@ -1,13 +1,14 @@
 import {
   Component,
-  OnInit,
-  OnChanges,
+  EventEmitter,
   Input,
+  OnChanges,
+  OnInit,
   Output,
   ViewChild,
-  ViewContainerRef,
-  EventEmitter} from '@angular/core';
-import { FeedTopic } from 'src/app/feed/feed.model';
+  ViewContainerRef
+} from '@angular/core';
+import { Feed, FeedTopic } from 'src/app/feed/feed.model';
 
 @Component({
   selector: 'app-topic-configuration',
@@ -17,8 +18,8 @@ import { FeedTopic } from 'src/app/feed/feed.model';
 export class TopicConfigurationComponent implements OnInit, OnChanges {
 
   @Input() expanded: boolean;
-  @Input() disabled: boolean;
   @Input() topic: FeedTopic;
+  @Input() feed: Feed;
   @Input() params: any;
   @Input() showPrevious: boolean;
   @Output() topicConfigurationChanged = new EventEmitter<any>();
@@ -28,25 +29,18 @@ export class TopicConfigurationComponent implements OnInit, OnChanges {
   @ViewChild('template', {static: true}) template: any;
 
   currentConfiguration: any;
-
-  newProperty: any;
-  itemPropertySchemaLayout: any;
-  itemPropertySchema: any;
   formOptions: any;
-  feed: any;
-
-  finalProperties: any[];
 
   constructor(
     private viewContainerRef: ViewContainerRef
-  ) { }
-
-  ngOnInit(): void {
-    this.viewContainerRef.createEmbeddedView(this.template);
-
+  ) {
     this.formOptions = {
       addSubmit: false
     };
+  }
+
+  ngOnInit(): void {
+    this.viewContainerRef.createEmbeddedView(this.template);
   }
 
   ngOnChanges(): void {
@@ -63,10 +57,6 @@ export class TopicConfigurationComponent implements OnInit, OnChanges {
 
   cancel(): void {
     this.cancelled.emit();
-  }
-
-  closed(): void {
-    console.log('closed happens even if the finish button is pressed');
   }
 
 }

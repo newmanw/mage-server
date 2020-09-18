@@ -1,7 +1,7 @@
-import { Component, OnInit, OnChanges, Input, Output, ViewChild, EventEmitter, ViewContainerRef, SimpleChanges } from '@angular/core';
-import { Service, FeedTopic } from 'src/app/feed/feed.model';
-import { FeedService } from 'src/app/feed/feed.service';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, ViewContainerRef } from '@angular/core';
 import { FormControl } from '@angular/forms';
+import { FeedTopic, Service } from 'src/app/feed/feed.model';
+import { FeedService } from 'src/app/feed/feed.service';
 
 @Component({
   selector: 'app-choose-service-topic',
@@ -31,15 +31,21 @@ export class ChooseServiceTopicComponent implements OnInit, OnChanges {
     private feedService: FeedService,
     private viewContainerRef: ViewContainerRef
   ) {
-
+    this.services = [];
   }
 
   ngOnInit(): void {
     this.viewContainerRef.createEmbeddedView(this.template);
     this.feedService.fetchServices().subscribe(services => {
       this.services = services;
-      if (!this.services || this.services.length === 0) {
+      if (this.services.length === 0) {
         this.noServicesExist.emit();
+        return;
+      }
+      if (this.defaultService) {
+        this.selectedService = this.defaultService;
+        this.serviceSelected();
+        return;
       }
       if (this.services.length === 1) {
         this.selectedService = this.services[0];
@@ -49,25 +55,21 @@ export class ChooseServiceTopicComponent implements OnInit, OnChanges {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes.defaultService) {
-      const existingService: Service = this.services.find(service => {
-        return service.id === this.defaultService.id;
-      });
-      if (!existingService) {
-        this.services.push(this.defaultService);
-      }
+    if (changes.defaultService && changes.defaultService.currentValue !== undefined) {
       this.selectedService = this.defaultService;
       this.serviceSelected();
     }
   }
 
   serviceSelected(): void {
-    this.feedService.fetchTopics(this.selectedService.id).subscribe(topics => {
-      this.topics = topics;
-      if (this.topics.length === 1) {
-        this.selectedTopic = this.topics[0];
-      }
-    });
+    if (this.selectedService) {
+      this.feedService.fetchTopics(this.selectedService.id).subscribe(topics => {
+        this.topics = topics;
+        if (this.topics.length === 1) {
+          this.selectedTopic = this.topics[0];
+        }
+      });
+    }
   }
 
   next(): void {

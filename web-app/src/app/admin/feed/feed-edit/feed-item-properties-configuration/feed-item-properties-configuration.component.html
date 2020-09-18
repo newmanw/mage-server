@@ -7,42 +7,41 @@
       <mat-panel-description>
       </mat-panel-description>
     </mat-expansion-panel-header>
-    <div class="row">
-      <div class="col-md-12">
-        <mat-accordion class="example-headers-align" multi>
-          <mat-expansion-panel *ngFor="let itemProperty of itemProperties; index as i;">
-            <mat-expansion-panel-header>
-              <mat-panel-title>
-                {{finalProperties[i].key}}
-              </mat-panel-title>
-              <mat-panel-description>
-                {{finalProperties[i].schema.title}} : {{finalProperties[i].schema.type}}
-              </mat-panel-description>
-            </mat-expansion-panel-header>
-            <app-json-schema loadExternalAssets="true" (onChanges)="propertiesChanged($event, i)"
-              [options]="formOptions" [data]="itemProperties[i]"
-              [schema]="itemPropertySchema" framework="material-design" [layout]="itemPropertySchemaLayout">
-            </app-json-schema>
-          </mat-expansion-panel>
-        </mat-accordion>
-        <mat-divider style="padding: 16px;"></mat-divider>
-        <mat-card>
-            <mat-card-title>
-              Add A New Property
-            </mat-card-title>
-            <mat-card-content>
+    <div>
+      <mat-accordion class="example-headers-align" multi>
+        <mat-expansion-panel *ngFor="let itemProperty of initialProperties; index as i;">
+          <mat-expansion-panel-header>
+            <mat-panel-title>
+              {{itemProperties[i].key}}
+            </mat-panel-title>
+            <mat-panel-description>
+              {{itemProperties[i].schema.title}} : {{itemProperties[i].schema.type}}
+            </mat-panel-description>
+          </mat-expansion-panel-header>
+          <app-json-schema loadExternalAssets="true" (onChanges)="propertiesChanged($event, i)"
+            [options]="formOptions" [data]="initialProperties[i]"
+            [schema]="itemPropertySchema" framework="material-design" [layout]="itemPropertySchemaLayout">
+          </app-json-schema>
+        </mat-expansion-panel>
+      </mat-accordion>
+      <mat-divider style="padding: 16px;"></mat-divider>
+      <mat-card>
+        <mat-card-title>
+          Add A New Property
+        </mat-card-title>
+        <mat-card-content>
           <app-json-schema loadExternalAssets="true"
             [options]="formOptions" [(data)]="newProperty"
+            (isValid)="isValid($event)"
             [schema]="itemPropertySchema" framework="material-design" [layout]="itemPropertySchemaLayout">
           </app-json-schema>
         </mat-card-content>
         <mat-card-actions align="end">
-            <button mat-button color="primary" (click)="addProperty()">Add Property</button>
+            <button mat-button color="primary" [disabled]="!valid" (click)="addProperty()">Add Property</button>
         </mat-card-actions>
-        </mat-card>
-      </div>
+      </mat-card>
     </div>
-    <mat-action-row *ngIf="!feed">
+    <mat-action-row>
       <button mat-button color="warn" (click)="prevStep()">Previous</button>
       <button mat-button color="primary" (click)="nextStep()">Next</button>
     </mat-action-row>

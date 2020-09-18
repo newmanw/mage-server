@@ -40,6 +40,7 @@ import { FeedItemPopupService } from '../app/feed/feed-item/feed-item-map/feed-i
 import { FeedItemMapPopupComponent } from '../app/feed/feed-item/feed-item-map/feed-item-map-popup.component'
 import { FeedsComponent } from '../app/admin/feed/feeds/feeds.component';
 import { AdminFeedComponent } from '../app/admin/feed/admin-feed/admin-feed.component';
+import { AdminServiceComponent } from '../app/admin/admin-service/admin-service.component';
 import { FeedEditComponent } from '../app/admin/feed/feed-edit/feed-edit.component';
 
 require('angular-minicolors');
@@ -90,6 +91,7 @@ app
   .directive('feedItemMapPopup', downgradeComponent({ component: FeedItemMapPopupComponent }))
   .directive('feeds', downgradeComponent({ component: FeedsComponent }))
   .directive('adminFeed', downgradeComponent({ component: AdminFeedComponent }))
+  .directive('adminService', downgradeComponent({ component: AdminServiceComponent }))
   .directive('feedEdit', downgradeComponent({ component: FeedEditComponent }))
   .directive('swagger', downgradeComponent({ component: SwaggerComponent }));
 
@@ -409,6 +411,13 @@ function config($httpProvider, $stateProvider, $urlRouterProvider, $urlServicePr
   $stateProvider.state('admin.feedEdit', {
     url: '/feeds/:feedId/edit',
     component: "feedEdit",
+    resolve: resolveAdmin()
+  });
+
+  // Admin service routes
+  $stateProvider.state('admin.service', {
+    url: '/services/:serviceId',
+    component: "adminService",
     resolve: resolveAdmin()
   });
 

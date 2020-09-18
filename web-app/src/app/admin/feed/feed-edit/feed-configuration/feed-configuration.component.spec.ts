@@ -1,6 +1,10 @@
+import { JsonSchemaFormModule } from '@ajsf/core';
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { MatExpansionModule } from '@angular/material';
+import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { JsonSchemaComponent } from '../../json-schema/json-schema.component';
 import { FeedConfigurationComponent } from './feed-configuration.component';
+
 
 describe('FeedConfigurationComponent', () => {
   let component: FeedConfigurationComponent;
@@ -8,7 +12,15 @@ describe('FeedConfigurationComponent', () => {
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
-      declarations: [ FeedConfigurationComponent ]
+      imports: [
+        MatExpansionModule,
+        JsonSchemaFormModule,
+        NoopAnimationsModule
+      ],
+      declarations: [
+        JsonSchemaComponent,
+        FeedConfigurationComponent
+      ]
     })
     .compileComponents();
   }));

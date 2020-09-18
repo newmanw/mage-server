@@ -1,4 +1,5 @@
-import { Component, OnInit, OnChanges, EventEmitter, ViewContainerRef, Input, Output, ViewChild } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange, SimpleChanges, ViewChild, ViewContainerRef } from '@angular/core';
+import { FeedTopic } from 'src/app/feed/feed.model';
 
 @Component({
   selector: 'app-feed-item-properties-configuration',
@@ -9,7 +10,8 @@ export class FeedItemPropertiesConfigurationComponent implements OnInit, OnChang
 
   @Input() expanded: boolean;
   @Input() disabled: boolean;
-  @Input() itemProperties: Array<any>;
+  @Input() itemPropertiesSchema: JSON;
+  @Input() topic: FeedTopic;
   @Output() itemPropertiesUpdated = new EventEmitter<any>();
   @Output() cancelled = new EventEmitter();
   @Output() opened = new EventEmitter();
@@ -18,10 +20,13 @@ export class FeedItemPropertiesConfigurationComponent implements OnInit, OnChang
   newProperty: any;
   itemPropertySchemaLayout: any;
   itemPropertySchema: any;
+  initialProperties: Array<any> = [];
+  topicItemPropertiesSchema: Array<any>;
   formOptions: any;
   feed: any;
+  valid: boolean;
 
-  finalProperties: any[];
+  itemProperties: Array<any> = [];
 
   constructor(
     private viewContainerRef: ViewContainerRef
@@ -89,38 +94,74 @@ export class FeedItemPropertiesConfigurationComponent implements OnInit, OnChang
         items: [{
           type: 'text',
           key: 'key',
-          title: 'Property Key'
+          title: 'Property Key',
+          description: 'GeoJSON property key'
         }, {
           type: 'text',
           key: 'schema.title',
-          title: 'Property Title'
+          title: 'Property Title',
+          description: 'Display title'
         },
         {
           key: 'schema.type',
           title: 'Type',
-          type: 'select'
+          type: 'select',
+          description: 'GeoJSON data type'
         }]
       }, {
         type: 'div',
         display: 'flex',
         'flex-direction': 'row',
         fxLayoutGap: '8px',
-        items: [
-          'schema.format',
-       {
+        items: [{
+          key: 'schema.format',
+          type: 'select',
+          title: 'Format',
+          description: 'Semantic validation format'
+        }, {
           type: 'text',
           key: 'schema.pattern',
-          title: 'Pattern'
+          title: 'Pattern',
+          description: 'Regular expression to restrict strings'
         }]
       }]
     }];
-
-
   }
 
-  ngOnChanges(): void {
-    if (this.itemProperties) {
-      this.finalProperties = this.itemProperties.map(value => {
+  ngOnChanges(changes: SimpleChanges): void {
+    const change: SimpleChange = changes.itemPropertiesSchema;
+    if (change && !change.previousValue && change.currentValue) {
+      for (const key in this.itemPropertiesSchema) {
+        if (this.itemPropertiesSchema.hasOwnProperty(key)) {
+          this.initialProperties.push({
+            key,
+            schema: this.itemPropertiesSchema[key]
+          });
+        }
+      }
+    }
+    const topicChange: SimpleChange = changes.topic;
+    if (!this.topicItemPropertiesSchema && topicChange.currentValue) {
+      this.topicItemPropertiesSchema = [];
+      for (const key in topicChange.currentValue.itemPropertiesSchema.properties) {
+        if (topicChange.currentValue.itemPropertiesSchema.properties.hasOwnProperty(key)) {
+          this.topicItemPropertiesSchema.push({
+            key,
+            schema: topicChange.currentValue.itemPropertiesSchema.properties[key]
+          });
+          if (this.itemPropertiesSchema && !this.itemPropertiesSchema.hasOwnProperty(key)
+          || !this.itemPropertiesSchema) {
+            this.initialProperties.push({
+              key,
+              schema: topicChange.currentValue.itemPropertiesSchema.properties[key]
+            });
+          }
+        }
+      }
+    }
+
+    if (this.initialProperties) {
+      this.itemProperties = this.initialProperties.map(value => {
         return {
           key: value.key,
           schema: value.schema
@@ -133,10 +174,14 @@ export class FeedItemPropertiesConfigurationComponent implements OnInit, OnChang
     console.log('panel closed')
   }
 
+  isValid(valid: boolean): void {
+    // console.log('valid', valid);
+    this.valid = valid;
+  }
+
   addProperty(): void {
-    console.log('add the property', this.newProperty);
-    this.itemProperties.push(this.newProperty);
-    this.propertiesChanged(this.newProperty, this.itemProperties.length - 1);
+    this.initialProperties.push(this.newProperty);
+    this.propertiesChanged(this.newProperty, this.initialProperties.length - 1);
     this.newProperty = {};
   }
 
@@ -145,11 +190,15 @@ export class FeedItemPropertiesConfigurationComponent implements OnInit, OnChang
   }
 
   nextStep(): void {
-    this.itemPropertiesUpdated.emit(this.finalProperties);
+    const schema = {};
+    this.itemProperties.forEach(value => {
+      schema[value.key] = value.schema;
+    });
+    this.itemPropertiesUpdated.emit(schema);
   }
 
   propertiesChanged($event: any, $index: any): void {
-    this.finalProperties[$index] = $event;
+    this.itemProperties[$index] = $event;
   }
 
 }

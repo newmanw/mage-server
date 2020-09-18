@@ -928,6 +928,7 @@ admin {
 .admin-main-content {
   overflow-y: auto;
   height: 100%;
+  position: relative;
 }
 
 .admin-actions {
@@ -1025,7 +1026,7 @@ admin {
 }
 
 .admin-nav-gap {
-  margin: 20px 0 20px;
+  padding: 20px 0 20px;
 }
 
 .admin-fab--absolute {

@@ -1,7 +1,7 @@
-import { Component, OnInit, Input } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
+import { Feature } from 'geojson';
 import { Feed } from '../../feed.model';
 import { FeedItemService } from '../feed-item.service';
-import { Feature } from 'geojson';
 
 @Component({
   selector: 'feed-item-map-popup',
@@ -20,7 +20,7 @@ export class FeedItemMapPopupComponent implements OnInit {
   constructor(private feedItemService: FeedItemService) { }
 
   ngOnInit(): void {
-    if (!this.item.properties) return;
+    if (!this.item || !this.item.properties) return;
 
     if (this.feed.itemTemporalProperty && this.item.properties[this.feed.itemTemporalProperty] != null) {
       this.timestamp = this.item.properties[this.feed.itemTemporalProperty];

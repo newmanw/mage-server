@@ -1,8 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-
 import { FeedItemPopupService } from './feed-item-map-popup.service';
 
-describe('ItemPopupService', () => {
+
+describe('FeedItemPopupService', () => {
   beforeEach(() => TestBed.configureTestingModule({}));
 
   it('should be created', () => {

@@ -111,6 +111,7 @@ import { GeometryModule } from './geometry/geometry.module';
     ReactiveFormsModule,
     BrowserAnimationsModule,
     DragDropModule,
+    NgxMatSelectSearchModule,
     MatToolbarModule,
     MatIconModule,
     MatTooltipModule,
