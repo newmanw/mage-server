@@ -20,6 +20,8 @@ of leakage throughout the code that needs to be cleaned.  Further, pretty much
 the entire codebase lacks any dependency injection.
  */
 
+ "use strict";
+
 const request = require('supertest')
   , sinon = require('sinon')
   , chai = require('chai')
@@ -28,14 +30,13 @@ const request = require('supertest')
   , mockfs = require('mock-fs')
   , mongoose = require('mongoose');
 
-const should = chai.should();
-const expect = chai.expect;
-
 require('../../lib/models/token');
 const TokenModel = mongoose.model('Token');
 
 require('../../lib/models/user');
 const UserModel = mongoose.model('User');
+
+require('../../lib/models/authentication');
 
 require('sinon-mongoose');
 
@@ -45,7 +46,7 @@ describe("user read tests", function() {
     sinon.restore();
   });
 
-  var userId = mongoose.Types.ObjectId();
+  const userId = mongoose.Types.ObjectId();
   function mockTokenWithPermission(permission) {
     sinon.mock(TokenModel)
       .expects('findOne')
@@ -79,7 +80,7 @@ describe("user read tests", function() {
   it('should get all users', function(done) {
     mockTokenWithPermission('READ_USER');
 
-    var mockUsers = [{
+    const mockUsers = [{
       username: 'test1'
     },{
       username: 'test2'
@@ -97,7 +98,7 @@ describe("user read tests", function() {
       .expect(200)
       .expect('Content-Type', /json/)
       .expect(function(res) {
-        var users = res.body;
+        const users = res.body;
         should.exist(users);
         users.should.be.an('array');
         users.should.have.lengthOf(2);
@@ -204,8 +205,8 @@ describe("user read tests", function() {
 
     sinon.mock(UserModel)
       .expects('find')
-      .chain('populate')
-      .withArgs([{ path: "roleId" }])
+      .chain('populate', 'authenticationId')
+      .chain('populate', 'roleId')
       .chain('exec')
       .yields(null, [{
         username: 'test1'
@@ -227,12 +228,13 @@ describe("user read tests", function() {
   it('should get user by id', function(done) {
     mockTokenWithPermission('READ_USER');
 
-    var id = mongoose.Types.ObjectId();
+    const id = mongoose.Types.ObjectId();
 
     sinon.mock(UserModel)
       .expects('findById')
       .withArgs(id.toHexString())
-      .chain('populate')
+      .chain('populate', 'roleId')
+      .chain('populate', 'authenticationId')
       .resolves(new UserModel({
         _id: id,
         username: 'test'
@@ -245,7 +247,7 @@ describe("user read tests", function() {
       .expect(200)
       .expect('Content-Type', /json/)
       .expect(function(res) {
-        var user = res.body;
+        const user = res.body;
         should.exist(user);
         user.should.have.property('id').that.equals(id.toString());
         user.should.have.property('username').that.equals('test');
@@ -277,8 +279,8 @@ describe("user read tests", function() {
       '/var/lib/mage/users/mock/path/avatar.jpeg': new Buffer([8, 6, 7, 5, 3, 0, 9])
     });
 
-    var id = mongoose.Types.ObjectId();
-    var mockUser = new UserModel({
+    const id = mongoose.Types.ObjectId();
+    const mockUser = new UserModel({
       _id: id,
       username: 'test1',
       avatar: {
@@ -291,7 +293,8 @@ describe("user read tests", function() {
     sinon.mock(UserModel)
       .expects('findById')
       .withArgs(id.toHexString())
-      .chain('populate')
+      .chain('populate', 'roleId')
+      .chain('populate', 'authenticationId')
       .resolves(mockUser);
 
     request(app)
@@ -309,8 +312,8 @@ describe("user read tests", function() {
   it('should fail to get non existant user avatar', function(done) {
     mockTokenWithPermission('READ_USER');
 
-    var id = mongoose.Types.ObjectId();
-    var mockUser = new UserModel({
+    const id = mongoose.Types.ObjectId();
+    const mockUser = new UserModel({
       _id: id,
       username: 'test1',
       avatar: {
@@ -323,7 +326,8 @@ describe("user read tests", function() {
     sinon.mock(UserModel)
       .expects('findById')
       .withArgs(id.toHexString())
-      .chain('populate')
+      .chain('populate', 'roleId')
+      .chain('populate', 'authenticationId')
       .resolves(mockUser);
 
     request(app)
@@ -341,8 +345,8 @@ describe("user read tests", function() {
       '/var/lib/mage/users/mock/path/icon.png': new Buffer([8, 6, 7, 5, 3, 0, 9])
     });
 
-    var id = mongoose.Types.ObjectId();
-    var mockUser = new UserModel({
+    const id = mongoose.Types.ObjectId();
+    const mockUser = new UserModel({
       _id: id,
       username: 'test1',
       icon: {
@@ -355,7 +359,8 @@ describe("user read tests", function() {
     sinon.mock(UserModel)
       .expects('findById')
       .withArgs(id.toString())
-      .chain('populate')
+      .chain('populate', 'roleId')
+      .chain('populate', 'authenticationId')
       .resolves(mockUser);
 
     request(app)

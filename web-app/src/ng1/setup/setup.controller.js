@@ -1,8 +1,9 @@
-import { textField, linearProgress } from 'material-components-web';
-import zxcvbn from 'zxcvbn';
-import _ from 'underscore';
+"use strict";
 
-var passwordStrengthMap = {
+import { textField, linearProgress, snackbar } from 'material-components-web';
+import zxcvbn from 'zxcvbn';
+
+const passwordStrengthMap = {
   0: {
     type: 'danger',
     text: 'Weak'
@@ -27,20 +28,19 @@ var passwordStrengthMap = {
 
 
 class SetupController {
-  constructor($q, $http, $element, UserService, Settings) {
+  constructor($q, $http, $element, UserService) {
     this.$q = $q;
     this._$http = $http;
     this._UserService = UserService;
     this._$element = $element;
-    this.Settings = Settings;
 
     this.account = {};
     this.pages = ['account', 'device'];
     this.page = this.pages[0];
 
-    this.passwordRequirements = {};
-
     this.form = {};
+    this.status = null;
+    this.statusMessage = null;
   }
 
   $postLink() {
@@ -50,23 +50,11 @@ class SetupController {
     this.deviceIdField = new textField.MDCTextField(this._$element.find('.mdc-text-field')[3]);
     this.passwordStrengthProgress = new linearProgress.MDCLinearProgress(this._$element.find('.mdc-linear-progress')[0]);
     this.passwordConfirmField.useNativeValidation = false;
-  }
-
-  $onInit() {
-    this.$q.all({
-      settings: this.Settings.query().$promise
-    }).then(result => {
-      const settings = settings = _.indexBy(result.settings, 'type');
-      const security = settings.security ? settings.security.settings : {};
-
-      if (security['local'] && security['local'].passwordPolicy && security['local'].passwordPolicy.passwordMinLengthEnabled) {
-        this.passwordRequirements.minLength = security['local'].passwordPolicy.passwordMinLength;
-      }
-    });
+    this.snackbar = new snackbar.MDCSnackbar(this._$element.find('.mdc-snackbar')[0]);
   }
 
   onPasswordChange() {
-    var score = this.account.password && this.account.password.length ? zxcvbn(this.account.password, [this.account.username]).score : 0;
+    const score = this.account.password && this.account.password.length ? zxcvbn(this.account.password, [this.account.username]).score : 0;
     this.passwordStrengthScore = score + 1;
     this.passwordStrengthType = passwordStrengthMap[score].type;
     this.passwordStrength = passwordStrengthMap[score].text;
@@ -82,40 +70,40 @@ class SetupController {
       return;
     }
 
-    var index = this.pages.indexOf(this.page);
+    const index = this.pages.indexOf(this.page);
     this.page = this.pages[index + 1];
   }
 
   finish() {
-    this._$http.post('/api/setup', this.account, { headers: { 'Content-Type': 'application/json' } }).success(() => {
-      // login the user
-      this._UserService.signin({ username: this.account.username, password: this.account.password }).then(response => {
-        var user = response.user;
-
-        this._UserService.authorize('local', user, false, { uid: this.account.uid }).success(data => {
-          if (data.device.registered) {
-            this.onSetupComplete({ device: data });
-          }
-        });
+    this._$http.post('/api/setup', this.account, {headers: { 'Content-Type': 'application/json' }}).success(() => {
+      // Login the user after setup is complete
+      this._UserService.signin({username: this.account.username, password: this.account.password}).then(response => {
+        this._UserService.authorize(response.token, this.account.uid).success(data => {
+          this.onSetupComplete({device: data});
+        })
       }, response => {
-        this.showStatus = true;
-        this.statusTitle = 'Error signing in';
-        this.statusMessage = response.data || 'Please check your username and password and try again.';
-        this.statusLevel = 'alert-danger';
+        this.showError(response.data || 'Please check server logs for more information.')
       });
-    }).error(function () {
+    }).error(data => {
+      this.showError(data || 'Please check server logs for more information.')
     });
+  }
+
+  showError(message) {
+    this.statusTitle = 'Setup Error';
+    this.statusMessage = message || 'Please check server logs for more information.';
+    this.snackbar.open();
   }
 }
 
-SetupController.$inject = ['$q', '$http', '$element', 'UserService', 'Settings'];
+SetupController.$inject = ['$q', '$http', '$element', 'UserService'];
 
-var template = require('./setup.html');
-var bindings = {
+const template = require('./setup.html');
+const bindings = {
   api: '<',
   onSetupComplete: '&'
 };
-var controller = SetupController;
+const controller = SetupController;
 
 export {
   template,
