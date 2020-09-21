@@ -4,9 +4,8 @@ import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatExpansionModule } from '@angular/material';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { Feed, FeedTopic } from 'src/app/feed/feed.model';
-import { AdminFeedEditTopicConfigurationComponent } from './admin-feed-edit-topic-configuration.component';
 import { JsonSchemaModule } from 'src/app/json-schema/json-schema.module';
-import { JsonSchemaComponent } from 'src/app/json-schema/json-schema.component';
+import { AdminFeedEditTopicConfigurationComponent } from './admin-feed-edit-topic-configuration.component';
 
 describe('TopicConfigurationComponent', () => {
 
@@ -45,7 +44,6 @@ describe('TopicConfigurationComponent', () => {
       declarations: [
         TestHostComponent,
         AdminFeedEditTopicConfigurationComponent,
-        JsonSchemaComponent
       ]
     })
     .compileComponents();

@@ -9,8 +9,7 @@ import { FeedTopic } from 'src/app/feed/feed.model';
 export class AdminFeedEditItemPropertiesComponent implements OnInit, OnChanges {
 
   @Input() expanded: boolean;
-  @Input() disabled: boolean;
-  @Input() itemPropertiesSchema: JSON;
+  @Input() itemPropertiesSchema: any;
   @Input() topic: FeedTopic;
   @Output() itemPropertiesUpdated = new EventEmitter<any>();
   @Output() cancelled = new EventEmitter();
@@ -130,32 +129,35 @@ export class AdminFeedEditItemPropertiesComponent implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     const change: SimpleChange = changes.itemPropertiesSchema;
+    console.log('item properties schema change', change);
     if (change && !change.previousValue && change.currentValue) {
-      for (const key in this.itemPropertiesSchema) {
-        if (this.itemPropertiesSchema.hasOwnProperty(key)) {
+      this.initialProperties = [];
+      for (const key in this.itemPropertiesSchema.properties) {
+        if (this.itemPropertiesSchema.properties.hasOwnProperty(key)) {
           this.initialProperties.push({
             key,
-            schema: this.itemPropertiesSchema[key]
+            schema: this.itemPropertiesSchema.properties[key]
           });
         }
       }
     }
     const topicChange: SimpleChange = changes.topic;
-    if (!this.topicItemPropertiesSchema && topicChange.currentValue) {
-      this.topicItemPropertiesSchema = [];
+    console.log('topic change', topicChange);
+    if (topicChange && (!this.initialProperties || !this.initialProperties.length) && topicChange.currentValue) {
+      this.initialProperties = [];
       for (const key in topicChange.currentValue.itemPropertiesSchema.properties) {
         if (topicChange.currentValue.itemPropertiesSchema.properties.hasOwnProperty(key)) {
-          this.topicItemPropertiesSchema.push({
-            key,
-            schema: topicChange.currentValue.itemPropertiesSchema.properties[key]
-          });
-          if (this.itemPropertiesSchema && !this.itemPropertiesSchema.hasOwnProperty(key)
-          || !this.itemPropertiesSchema) {
+          // this.topicItemPropertiesSchema.push({
+          //   key,
+          //   schema: topicChange.currentValue.itemPropertiesSchema.properties[key]
+          // });
+          // if (!this.initialProperties.hasOwnProperty(key)
+          // || !this.itemPropertiesSchema) {
             this.initialProperties.push({
               key,
               schema: topicChange.currentValue.itemPropertiesSchema.properties[key]
             });
-          }
+          // }
         }
       }
     }
@@ -168,6 +170,8 @@ export class AdminFeedEditItemPropertiesComponent implements OnInit, OnChanges {
         };
       });
     }
+    console.log('itemProperties', this.itemProperties);
+    console.log('initialproperties', this.initialProperties);
   }
 
   closed(): void {
