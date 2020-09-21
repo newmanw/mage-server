@@ -1,12 +1,12 @@
 import { RawParams, StateOrName } from '@uirouter/angular';
 
-export interface Breadcrumb {
+export interface AdminBreadcrumb {
   title: string
   icon?: string
-  state?: BreadcrumbState
+  state?: AdminBreadcrumbState
 }
 
-export interface BreadcrumbState {
+export interface AdminBreadcrumbState {
   name: StateOrName,
   params?: RawParams
 }

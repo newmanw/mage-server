@@ -1,0 +1,11 @@
+<json-schema-form framework="material-design" 
+  [schema]="taskSchema" 
+  [form]="taskForm" 
+  [layout]="taskLayout"
+  [data]="taskData" 
+  [options]="taskOptions" 
+  (onSubmit)="submitUserTaskForm($event)"
+  (onChanges)="userTaskFormChanges($event)" 
+  (isValid)="isValidTask($event)" 
+  (dataChange)="taskDataChange($event)">
+</json-schema-form>
