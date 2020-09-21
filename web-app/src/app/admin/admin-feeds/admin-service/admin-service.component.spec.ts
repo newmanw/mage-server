@@ -4,6 +4,7 @@ import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatCardModule, MatDialogModule, MatDialogRef, MatIconModule, MatListModule, MatPaginatorModule, MAT_DIALOG_DATA } from '@angular/material';
 import { StateService } from '@uirouter/angular';
 import { UserService } from 'src/app/upgrade/ajs-upgraded-providers';
+import { AdminBreadcrumbModule } from '../admin-breadcrumb/admin-breadcrumb.module';
 import { JsonSchemaComponent } from '../feed/json-schema/json-schema.component';
 import { AdminServiceComponent } from './admin-service.component';
 
@@ -47,7 +48,8 @@ describe('AdminServiceComponent', () => {
         MatListModule,
         MatPaginatorModule,
         HttpClientTestingModule,
-        JsonSchemaFormModule
+        JsonSchemaFormModule,
+        AdminBreadcrumbModule
       ],
       declarations: [
         JsonSchemaComponent,

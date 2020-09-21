@@ -42,9 +42,7 @@ describe("device create tests", function() {
       .expects('getUserById').withArgs(userId.toHexString())
       .resolves(new UserModel({
         _id: userId,
-        authentication: {
-          type: 'local'
-        }
+        authenticationId: mongoose.Types.ObjectId()
       }));
 
     const reqDevice = {
@@ -87,11 +85,12 @@ describe("device create tests", function() {
       displayName: 'Unregistered Device Test',
       roleId: mongoose.Types.ObjectId(),
       active: true,
-      authentication: {
-        type: 'local'
-      },
-      security: {}
+      authenticationId: mongoose.Types.ObjectId()
     });
+    user.authentication = {
+      _id: user.authenticationId,
+      security: {}
+    }
 
     const reqDevice = {
       uid: '12345',
@@ -144,17 +143,20 @@ describe("device create tests", function() {
   it("should skip create unregistered device if exists", function(done) {
     mockTokenWithPermission('NO_PERMISSION');
 
-    var userId = mongoose.Types.ObjectId();
-    var mockUser = new UserModel({
+    const userId = mongoose.Types.ObjectId();
+    const mockUser = new UserModel({
       _id: userId,
       username: 'test',
       displayName: 'test',
       active: true,
       roleId: mongoose.Types.ObjectId(),
-      authentication: {
-        type: this.test.title
-      }
+      authenticationId: mongoose.Types.ObjectId()
     });
+    mockUser.authentication = {
+      _id: mockUser.authenticationId,
+      type: this.test.title,
+      security: {}
+    }
 
     sinon.mock(mockUser)
       .expects('validPassword')
@@ -163,7 +165,8 @@ describe("device create tests", function() {
     sinon.mock(UserModel)
       .expects('findOne')
       .withArgs({username: 'test'})
-      .chain('populate')
+      .chain('populate', 'roleId')
+      .chain('populate', 'authenticationId')
       .chain('exec')
       .yields(null, mockUser);
 
@@ -196,7 +199,7 @@ describe("device create tests", function() {
       .expect(200)
       .expect('Content-Type', /json/)
       .expect(function(res) {
-        var device = res.body;
+        const device = res.body;
         should.exist(device);
         device.should.have.property('uid').that.equals('12345');
       })

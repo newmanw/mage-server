@@ -18,6 +18,7 @@ import { AdminFeedEditItemPropertiesComponent } from './admin-feed-edit-item-pro
 import { JsonSchemaComponent } from 'src/app/json-schema/json-schema.component';
 import { JsonSchemaModule } from 'src/app/json-schema/json-schema.module';
 import { JsonSchemaWidgetAutocompleteComponent } from 'src/app/json-schema/json-schema-widget/json-schema-widget-autocomplete.component';
+import { AdminBreadcrumbModule } from 'src/app/admin/admin-breadcrumb/admin-breadcrumb.module';
 
 class MockStateService {
   get params(): any {
@@ -53,7 +54,8 @@ describe('FeedEditComponent', () => {
         HttpClientTestingModule,
         NoopAnimationsModule,
         MomentModule,
-        MatAutocompleteModule
+        MatAutocompleteModule,
+        AdminBreadcrumbModule
       ],
       declarations: [
         AdminFeedEditComponent,

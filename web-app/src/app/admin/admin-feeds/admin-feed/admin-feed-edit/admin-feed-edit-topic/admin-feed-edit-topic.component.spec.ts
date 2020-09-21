@@ -8,7 +8,6 @@ import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
 import { FeedTopic, Service } from 'src/app/feed/feed.model';
 import { AdminFeedEditTopicComponent } from './admin-feed-edit-topic.component';
 
-
 describe('ChooseServiceTopicComponent', () => {
   @Component({
     selector: 'app-host-component',
@@ -24,9 +23,7 @@ describe('ChooseServiceTopicComponent', () => {
   let httpMock: HttpTestingController;
   let hostComponent: TestHostComponent;
   let fixture: ComponentFixture<TestHostComponent>;
-  // let testElement: HTMLElement;
   let component: AdminFeedEditTopicComponent;
-  // let fixture: ComponentFixture<ChooseServiceTopicComponent>;
   let element: HTMLElement;
 
   beforeEach(async(() => {

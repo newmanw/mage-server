@@ -242,11 +242,6 @@ export interface Feed {
   readonly itemPropertiesSchema?: JSONSchema4
 }
 
-export interface PropertiesSchema {
-  key: string
-  schema: JSONSchema4
-}
-
 /**
  * TODO: This could move outside of feeds to be used for other map-able
  * elements.

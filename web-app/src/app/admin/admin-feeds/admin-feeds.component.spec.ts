@@ -1,11 +1,12 @@
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { async, ComponentFixture, inject, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { MatDialogModule, MatDialogRef, MatFormFieldModule, MatIconModule, MatInputModule, MatListModule, MatPaginatorModule, MatTabsModule, MAT_DIALOG_DATA } from '@angular/material';
+import { MatCardModule, MatDialogModule, MatDialogRef, MatFormFieldModule, MatIconModule, MatInputModule, MatListModule, MatPaginatorModule, MatTabsModule, MAT_DIALOG_DATA } from '@angular/material';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { StateService } from '@uirouter/angular';
 import { UserService } from 'src/app/upgrade/ajs-upgraded-providers';
 import { AdminFeedsComponent } from './admin-feeds.component';
+import { AdminBreadcrumbModule } from '../admin-breadcrumb/admin-breadcrumb.module';
 
 class MockUserService {
   get myself(): any {
@@ -34,6 +35,7 @@ describe('FeedsComponent', () => {
         provide: MAT_DIALOG_DATA, useValue: {}
       }],
       imports: [
+        MatCardModule,
         MatDialogModule,
         MatIconModule,
         MatFormFieldModule,
@@ -44,7 +46,8 @@ describe('FeedsComponent', () => {
         FormsModule,
         ReactiveFormsModule,
         HttpClientTestingModule,
-        NoopAnimationsModule
+        NoopAnimationsModule,
+        AdminBreadcrumbModule
       ],
       declarations: [AdminFeedsComponent ]
     })
