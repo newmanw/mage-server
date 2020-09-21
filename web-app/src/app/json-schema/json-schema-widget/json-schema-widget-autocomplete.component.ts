@@ -1,5 +1,5 @@
 import { buildTitleMap, isArray, JsonSchemaFormService } from '@ajsf/core';
-import { Component, Inject, Input, OnChanges, OnInit, Optional } from '@angular/core';
+import { Component, Inject, Input, OnInit, Optional } from '@angular/core';
 import { AbstractControl, FormControl } from '@angular/forms';
 import { MAT_LABEL_GLOBAL_OPTIONS } from '@angular/material/core';
 import { MAT_FORM_FIELD_DEFAULT_OPTIONS } from '@angular/material/form-field';
@@ -12,7 +12,7 @@ import { map, startWith } from 'rxjs/operators';
   styleUrls: ['./json-schema-widget-autocomplete.component.scss']
 })
 
-export class JsonSchemaWidgetAutocompleteComponent implements OnInit, OnChanges {
+export class JsonSchemaWidgetAutocompleteComponent implements OnInit {
   formControl: AbstractControl = new FormControl();
   controlName: string;
   controlValue: any;
@@ -48,9 +48,6 @@ export class JsonSchemaWidgetAutocompleteComponent implements OnInit, OnChanges 
       }
       return option.name.toLowerCase().includes(filterValue);
     });
-  }
-
-  ngOnChanges(): void {
   }
 
   ngOnInit(): void {
