@@ -1,4 +1,4 @@
-var moment = require('moment')
+const moment = require('moment')
   , Event = require('../models/event')
   , User = require('../models/user')
   , Device = require('../models/device')

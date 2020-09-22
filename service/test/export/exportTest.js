@@ -1,16 +1,16 @@
-var request = require('supertest')
-  , sinon = require('sinon')
-  , mongoose = require('mongoose')
-  , mockfs = require('mock-fs')
-  , MockToken = require('../mockToken')
-  , app = require('../../lib/express')
-  , TokenModel = mongoose.model('Token');
+const request = require('supertest')
+const sinon = require('sinon')
+const mongoose = require('mongoose')
+const mockfs = require('mock-fs')
+const MockToken = require('../mockToken')
+const { app } = require('../../lib/express')
+const TokenModel = mongoose.model('Token');
 
 require('chai').should();
 require('sinon-mongoose');
 
 require('../../lib/models/user');
-var UserModel = mongoose.model('User');
+const UserModel = mongoose.model('User');
 
 require('../../lib/models/event');
 const EventModel = mongoose.model('Event');
@@ -19,15 +19,16 @@ require('../../lib/models/icon');
 const IconModel = mongoose.model('Icon');
 
 require('../../lib/models/device');
-var DeviceModel = mongoose.model('Device');
-
-var Observation = require('../../lib/models/observation');
-var observationModel = Observation.observationModel;
+const DeviceModel = mongoose.model('Device');
+const Observation = require('../../lib/models/observation');
+const { expect } = require('chai')
+const observationModel = Observation.observationModel;
 
 describe("export tests", function() {
 
   afterEach(function() {
     sinon.restore();
+    mockfs.restore();
   });
 
   function mockTokenWithPermission(permission) {
@@ -41,7 +42,7 @@ describe("export tests", function() {
 
   const userId = mongoose.Types.ObjectId();
 
-  it("should export observations as kml", function(done) {
+  it("should export observations as kml", async function() {
 
     mockTokenWithPermission('READ_OBSERVATION_ALL');
 
@@ -111,18 +112,13 @@ describe("export tests", function() {
     };
     mockfs(fs);
 
-    request(app)
+    const res = await request(app)
       .get('/api/kml?eventId=1&observations=true&locations=false&attachments=false')
       .set('Accept', 'application/json')
       .set('Authorization', 'Bearer 12345')
-      .expect(200)
-      .expect(function (res) {
-        res.headers.should.have.property('content-type').that.equals('application/zip');
-        res.headers.should.have.property('content-disposition').that.equals('attachment; filename="mage-kml.zip"');
-      })
-      .end(function(err) {
-        mockfs.restore();
-        done(err);
-      });
+
+    expect(res.status).to.equal(200)
+    res.headers.should.have.property('content-type').that.equals('application/zip');
+    res.headers.should.have.property('content-disposition').that.equals('attachment; filename="mage-kml.zip"');
   });
 });

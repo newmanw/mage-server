@@ -1,7 +1,7 @@
 const moment = require('moment')
   , path = require('path')
   , mgrs = require('mgrs')
-  , turfCentroid = require('@turf/centroid');
+  , turfCentroid = require('@turf/centroid').default;
 
 function KmlWriter() {}
 module.exports = new KmlWriter();
@@ -92,7 +92,7 @@ KmlWriter.prototype.generateObservationPlacemark = function(name, observation, e
     };
   });
 
-  gpsProperties = [];
+  const gpsProperties = [];
   const {provider, accuracy} = observation.properties;
   if (provider) gpsProperties.push({ key: 'Location Provider', value: provider });
   if (accuracy) gpsProperties.push({ key: 'Location Accuracy +/- (meters)', value: accuracy });
