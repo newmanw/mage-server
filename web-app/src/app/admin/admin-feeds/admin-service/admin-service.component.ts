@@ -1,11 +1,11 @@
-import _ from 'underscore';
-import { Component, OnInit, Inject } from '@angular/core';
-import { FeedService } from 'src/app/feed/feed.service';
-import { StateService } from '@uirouter/angular';
-import { Service, ServiceType, Feed } from 'src/app/feed/feed.model';
-import { UserService } from 'src/app/upgrade/ajs-upgraded-providers';
+import { Component, Inject, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material';
+import { StateService } from '@uirouter/angular';
 import { forkJoin } from 'rxjs';
+import { Feed, Service, ServiceType } from 'src/app/feed/feed.model';
+import { FeedService } from 'src/app/feed/feed.service';
+import { UserService } from 'src/app/upgrade/ajs-upgraded-providers';
+import _ from 'underscore';
 import { AdminBreadcrumb } from '../../admin-breadcrumb/admin-breadcrumb.model';
 import { AdminServiceDeleteComponent } from './admin-service-delete/admin-service-delete.component';
 
@@ -42,7 +42,7 @@ export class AdminServiceComponent implements OnInit {
   }
 
   constructor(
-    private feedService: FeedService, 
+    private feedService: FeedService,
     private stateService: StateService,
     public dialog: MatDialog,
     @Inject(UserService) userService: { myself: { id: string, role: { permissions: Array<string> } } }) { 
@@ -70,15 +70,15 @@ export class AdminServiceComponent implements OnInit {
         if (this.serviceType.configSchema.hasOwnProperty('type') && this.serviceType.configSchema.type !== 'object') { // is object with type property and type not 'object'
           this.serviceType.configSchema = {
             type: 'object',
-            properties: { 
-              wrapped: this.serviceType.configSchema 
+            properties: {
+              wrapped: this.serviceType.configSchema
             }
           };
 
           this.service.config = {
             wrapped: this.service.config
           }
-        } 
+        }
 
         this.serviceLoaded = Promise.resolve(true)
       });
@@ -94,6 +94,7 @@ export class AdminServiceComponent implements OnInit {
   }
 
   deleteService(): void {
+    console.log('open the dialog')
     this.dialog.open(AdminServiceDeleteComponent, {
       data: {
         service: this.service,

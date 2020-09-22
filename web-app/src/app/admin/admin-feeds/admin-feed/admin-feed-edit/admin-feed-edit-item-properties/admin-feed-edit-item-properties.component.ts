@@ -129,7 +129,6 @@ export class AdminFeedEditItemPropertiesComponent implements OnInit, OnChanges {
 
   ngOnChanges(changes: SimpleChanges): void {
     const change: SimpleChange = changes.itemPropertiesSchema;
-    console.log('item properties schema change', change);
     if (change && !change.previousValue && change.currentValue) {
       this.initialProperties = [];
       for (const key in this.itemPropertiesSchema.properties) {
@@ -142,22 +141,14 @@ export class AdminFeedEditItemPropertiesComponent implements OnInit, OnChanges {
       }
     }
     const topicChange: SimpleChange = changes.topic;
-    console.log('topic change', topicChange);
     if (topicChange && (!this.initialProperties || !this.initialProperties.length) && topicChange.currentValue) {
       this.initialProperties = [];
       for (const key in topicChange.currentValue.itemPropertiesSchema.properties) {
         if (topicChange.currentValue.itemPropertiesSchema.properties.hasOwnProperty(key)) {
-          // this.topicItemPropertiesSchema.push({
-          //   key,
-          //   schema: topicChange.currentValue.itemPropertiesSchema.properties[key]
-          // });
-          // if (!this.initialProperties.hasOwnProperty(key)
-          // || !this.itemPropertiesSchema) {
-            this.initialProperties.push({
-              key,
-              schema: topicChange.currentValue.itemPropertiesSchema.properties[key]
-            });
-          // }
+          this.initialProperties.push({
+            key,
+            schema: topicChange.currentValue.itemPropertiesSchema.properties[key]
+          });
         }
       }
     }
@@ -170,8 +161,6 @@ export class AdminFeedEditItemPropertiesComponent implements OnInit, OnChanges {
         };
       });
     }
-    console.log('itemProperties', this.itemProperties);
-    console.log('initialproperties', this.initialProperties);
   }
 
   closed(): void {

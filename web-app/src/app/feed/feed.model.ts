@@ -11,11 +11,12 @@ export interface Feed {
   itemPrimaryProperty?: string;
   itemSecondaryProperty?: string;
   itemsHaveSpatialDimension?: boolean;
+  itemsHaveIdentity?: boolean;
   updateFrequency?: number;
   constantParams?: any;
-  variableParamsSchema?: JSON;
+  variableParamsSchema?: any;
   updateFrequencySeconds: number;
-  itemPropertiesSchema?: JSON;
+  itemPropertiesSchema?: any;
 }
 
 export interface Style {
