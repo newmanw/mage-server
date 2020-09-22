@@ -78,6 +78,7 @@ export class FeedService {
   }
 
   deleteService(service: Service): Observable<{}> {
+    console.log('delete')
     return this.http.delete(`/api/feeds/services/${service.id}`, { responseType: 'text' });
   }
 

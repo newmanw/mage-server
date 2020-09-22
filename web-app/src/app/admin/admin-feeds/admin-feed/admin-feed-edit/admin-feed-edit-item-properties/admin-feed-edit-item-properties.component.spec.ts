@@ -99,13 +99,7 @@ describe('FeedItemPropertiesConfigurationComponent', () => {
     }
   };
 
-  const service = {
-    serviceType: '5f2873266119c2e49d0348af',
-    title: 'NGA MSI',
-    summary: 'NGA Maritime Safety Information service',
-    config: 'https://msi.gs.mil/',
-    id: '5f355e6e03e1e98f081f9f4e'
-  };
+
 
   const topic = {
     id: 'asam',
@@ -130,26 +124,6 @@ describe('FeedItemPropertiesConfigurationComponent', () => {
       iconUrl: 'https://mage-msi.geointservices.io/icons/asam.png'
     },
     itemPropertiesSchema: topicItemPropertiesSchema
-  };
-
-  const feed = {
-    service,
-    topic,
-    title: 'ASAMsasdfasdf',
-    summary:
-      'Anti-Shipping Acitivty Messages (ASAMs) include the locations and descriptive accounts of specific hostile acts against ships and mariners and may be useful for recognition, prevention and avoidance of potential hostile activity.',
-    itemPropertiesSchema: feedItemPropertiesSchema,
-    constantParams: { newerThanDays: 56 },
-    itemsHaveIdentity: true,
-    itemsHaveSpatialDimension: true,
-    itemPrimaryProperty: 'hostilityVictim',
-    itemSecondaryProperty: 'navArea',
-    itemTemporalProperty: 'timestamp',
-    updateFrequencySeconds: 915,
-    mapStyle: {
-      iconUrl: 'https://mage-msi.geointservices.io/icons/asam.png'
-    },
-    id: '127wk7mrkelrqg49'
   };
 
   beforeEach(async(() => {
@@ -205,5 +179,61 @@ describe('FeedItemPropertiesConfigurationComponent', () => {
     hostComponent.itemPropertiesSchema = feedItemPropertiesSchema;
     fixture.detectChanges();
     expect(component.itemProperties.length).toEqual(Object.keys(feedItemPropertiesSchema.properties).length);
+  });
+
+  it('should update the itemProperties when a new property is added', () => {
+    fixture.detectChanges();
+    hostComponent.topic = topic;
+    fixture.detectChanges();
+    expect(component.itemProperties.length).toEqual(Object.keys(topic.itemPropertiesSchema.properties).length);
+
+    const newProperty = {
+      key: 'new',
+      schema: {
+        title: 'The New Property',
+        type: 'string'
+      }
+    };
+    component.newProperty = newProperty;
+    component.addProperty();
+
+    expect(component.itemProperties).toContain(newProperty);
+  });
+
+  it('should emit itemPropertiesUpdated', () => {
+    spyOn(component.itemPropertiesUpdated, 'emit');
+
+    fixture.detectChanges();
+    hostComponent.topic = topic;
+    fixture.detectChanges();
+    expect(component.itemProperties.length).toEqual(Object.keys(topic.itemPropertiesSchema.properties).length);
+
+    const newProperty = {
+      key: 'new',
+      schema: {
+        title: 'The New Property',
+        type: 'string'
+      }
+    };
+    component.newProperty = newProperty;
+    component.addProperty();
+
+    expect(component.itemProperties).toContain(newProperty);
+
+    component.nextStep();
+
+    expect(component.itemPropertiesUpdated.emit).toHaveBeenCalledWith(
+      {...topic.itemPropertiesSchema.properties,
+         ...{new: { title: 'The New Property', type: 'string'}}
+      });
+  });
+
+  it('should emit cancelled', () => {
+    spyOn(component.cancelled, 'emit');
+
+    fixture.detectChanges();
+    component.prevStep();
+
+    expect(component.cancelled.emit).toHaveBeenCalled();
   });
 });
