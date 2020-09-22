@@ -23,12 +23,13 @@ the entire codebase lacks any dependency injection.
  "use strict";
 
 const request = require('supertest')
-  , sinon = require('sinon')
-  , chai = require('chai')
-  , MockToken = require('../mockToken')
-  , { app } = require('../../lib/express')
-  , mockfs = require('mock-fs')
-  , mongoose = require('mongoose');
+const sinon = require('sinon')
+const should = require('chai').should()
+const { expect } = require('chai')
+const MockToken = require('../mockToken')
+const { app } = require('../../lib/express')
+const mockfs = require('mock-fs')
+const mongoose = require('mongoose');
 
 require('../../lib/models/token');
 const TokenModel = mongoose.model('Token');

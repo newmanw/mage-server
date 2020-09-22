@@ -1,13 +1,13 @@
 "use strict";
 
-const request = require('supertest')
-  , sinon = require('sinon')
-  , should = require('chai').should()
-  , expect = require('chai').expect
-  , MockToken = require('../mockToken')
-  , app = require('../../lib/express')
-  , mongoose = require('mongoose')
-  , hasher = require('../../lib/utilities/pbkdf2')();
+const request = require('supertest');
+const sinon = require('sinon')
+const should = require('chai').should()
+const { expect } = require('chai')
+const MockToken = require('../mockToken')
+const mongoose = require('mongoose')
+const hasher = require('../../lib/utilities/pbkdf2')();
+const { app } = require('../../lib/express')
 
 require('../../lib/models/token');
 const TokenModel = mongoose.model('Token');
