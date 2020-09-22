@@ -1,5 +1,5 @@
 import { Component, Input } from '@angular/core';
-import { Breadcrumb } from './admin-breadcrumb.model';
+import { AdminBreadcrumb } from './admin-breadcrumb.model';
 import { StateService } from '@uirouter/angular';
 
 @Component({
@@ -9,11 +9,11 @@ import { StateService } from '@uirouter/angular';
 })
 export class AdminBreadcrumbComponent {
   @Input() icon: string
-  @Input() breadcrumbs: Breadcrumb[]
+  @Input() breadcrumbs: AdminBreadcrumb[]
 
   constructor(private stateService: StateService) {}
 
-  goToBreadcrumb(breadcrumb: Breadcrumb): void {
+  goToBreadcrumb(breadcrumb: AdminBreadcrumb): void {
     if (breadcrumb.state) {
       this.stateService.go(breadcrumb.state.name, breadcrumb.state.params)
     }

@@ -10,8 +10,6 @@ import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
 import { ScrollingModule } from '@angular/cdk/scrolling';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 
-import { JsonSchemaWidgetsModule } from './json-schema-widgets/json-schema-widgets.module';
-
 import { SaturationModule, HueModule, CheckboardModule, AlphaModule } from 'ngx-color';
 import {
   MatIcon,
@@ -69,7 +67,6 @@ import { FeedItemComponent } from './feed/feed-item/feed-item.component';
 import { FeedItemService } from './feed/feed-item/feed-item.service';
 import { FeedItemPopupService } from './feed/feed-item/feed-item-map/feed-item-map-popup.service';
 import { FeedItemMapPopupComponent } from './feed/feed-item/feed-item-map/feed-item-map-popup.component';
-import { FeedModule } from './admin/feed/feed.module';
 import { FeedItemSummaryModule } from './feed/feed-item/feed-item-summary/feed-item-summary.module';
 
 import { MapClipComponent } from './map/clip/clip.component';
@@ -77,6 +74,7 @@ import { MapClipComponent } from './map/clip/clip.component';
 import { FeedTabComponent } from './feed/feed-tab.component';
 import { MomentModule } from './moment/moment.module';
 import { GeometryModule } from './geometry/geometry.module';
+import { AdminFeedsModule } from './admin/admin-feeds/admin-feeds.module';
 
 @NgModule({
   declarations: [
@@ -136,10 +134,9 @@ import { GeometryModule } from './geometry/geometry.module';
     HueModule,
     AlphaModule,
     CheckboardModule,
-    JsonSchemaWidgetsModule,
     MomentModule,
     GeometryModule,
-    FeedModule,
+    AdminFeedsModule,
     FeedItemSummaryModule
   ],
   providers: [

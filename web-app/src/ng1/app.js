@@ -38,10 +38,10 @@ import { FeedItemComponent } from '../app/feed/feed-item/feed-item.component'
 import { FeedItemService } from '../app/feed/feed-item/feed-item.service';
 import { FeedItemPopupService } from '../app/feed/feed-item/feed-item-map/feed-item-map-popup.service';
 import { FeedItemMapPopupComponent } from '../app/feed/feed-item/feed-item-map/feed-item-map-popup.component'
-import { FeedsComponent } from '../app/admin/feed/feeds/feeds.component';
-import { AdminFeedComponent } from '../app/admin/feed/admin-feed/admin-feed.component';
-import { AdminServiceComponent } from '../app/admin/admin-service/admin-service.component';
-import { FeedEditComponent } from '../app/admin/feed/feed-edit/feed-edit.component';
+import { AdminFeedsComponent } from '../app/admin/admin-feeds/admin-feeds.component';
+import { AdminFeedComponent } from '../app/admin/admin-feeds/admin-feed/admin-feed.component';
+import { AdminServiceComponent } from '../app/admin/admin-feeds/admin-service/admin-service.component'
+import { AdminFeedEditComponent } from '../app/admin/admin-feeds/admin-feed/admin-feed-edit/admin-feed-edit.component';
 
 require('angular-minicolors');
 require('select2');
@@ -89,10 +89,10 @@ app
   .directive('feedTab', downgradeComponent({ component: FeedTabComponent }))
   .directive('feedItem', downgradeComponent({ component: FeedItemComponent }))
   .directive('feedItemMapPopup', downgradeComponent({ component: FeedItemMapPopupComponent }))
-  .directive('feeds', downgradeComponent({ component: FeedsComponent }))
+  .directive('feeds', downgradeComponent({ component: AdminFeedsComponent }))
   .directive('adminFeed', downgradeComponent({ component: AdminFeedComponent }))
   .directive('adminService', downgradeComponent({ component: AdminServiceComponent }))
-  .directive('feedEdit', downgradeComponent({ component: FeedEditComponent }))
+  .directive('feedEdit', downgradeComponent({ component: AdminFeedEditComponent }))
   .directive('swagger', downgradeComponent({ component: SwaggerComponent }));
 
 app

@@ -1,4 +1,4 @@
-import { FeatureCollection, Feature } from 'geojson';
+import { Feature, FeatureCollection } from 'geojson';
 
 export interface Feed {
   id: string;
@@ -60,5 +60,5 @@ export interface FeedTopic {
   itemTemporalProperty?: string;
   itemPrimaryProperty?: string;
   itemSecondaryProperty?: string;
-  itemPropertiesSchema?: JSON;
+  itemPropertiesSchema?: any;
 }

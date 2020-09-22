@@ -3,7 +3,7 @@ import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatIconModule } from '@angular/material';
 import { RawParams, StateOrName, StateService, TransitionOptions, TransitionPromise } from '@uirouter/angular';
 import { AdminBreadcrumbComponent } from './admin-breadcrumb.component';
-import { Breadcrumb } from './admin-breadcrumb.model';
+import { AdminBreadcrumb } from './admin-breadcrumb.model';
 
 class MockStateService {
   go(to: StateOrName, params?: RawParams, options?: TransitionOptions): TransitionPromise {
@@ -20,7 +20,7 @@ describe('AdminBreadcrumbComponent', () => {
                </admin-breadcrumb>`
   })
   class TestHostComponent {
-    breadcrumbs: Breadcrumb[];
+    breadcrumbs: AdminBreadcrumb[];
 
     @ViewChild(AdminBreadcrumbComponent, { static: true })
     public adminBreadcrumbComponent: AdminBreadcrumbComponent;
@@ -65,7 +65,7 @@ describe('AdminBreadcrumbComponent', () => {
     const stateService: StateService = fixture.debugElement.injector.get(StateService);
     spyOn(stateService, 'go');
 
-    const breadcrumb: Breadcrumb = {
+    const breadcrumb: AdminBreadcrumb = {
       title: 'Title',
       state: {
         name: 'name',
@@ -84,7 +84,7 @@ describe('AdminBreadcrumbComponent', () => {
     const stateService: StateService = fixture.debugElement.injector.get(StateService);
     spyOn(stateService, 'go');
 
-    const breadcrumb: Breadcrumb = {
+    const breadcrumb: AdminBreadcrumb = {
       title: 'Title'
     }
     component.goToBreadcrumb(breadcrumb);
