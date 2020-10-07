@@ -1,8 +1,4 @@
-"use strict";
-
 import _ from 'underscore';
-
-var PasswordHelpBuilder = require('./passwordHelpBuilder');
 
 class AdminSettingsController {
   constructor($q, $timeout, Api, Settings, LocalStorageService, Event, Team) {
@@ -16,14 +12,9 @@ class AdminSettingsController {
     this.token = LocalStorageService.getToken();
     this.pill = 'security';
 
-    this.events = [{
-      name: 'foo',
-      description: 'bar'
-    }];
-
     this.teams = [];
     this.strategies = [];
-    this.authConfig = {};
+    this.authenticationStrategies = {};
 
     this.usersReqAdminChoices = [{
       title: 'Enabled',
@@ -79,40 +70,6 @@ class AdminSettingsController {
       footerTextColor: '#000000',
       footerBackgroundColor: 'FFFFFF'
     };
-
-    this.defaultPasswordPolicySettings = {
-      minCharsEnabled: false,
-      minChars: 0,
-      maxConCharsEnabled: false,
-      maxConChars: 0,
-      lowLettersEnabled: false,
-      lowLetters: 0,
-      highLettersEnabled: false,
-      highLetters: 0,
-      numbersEnabled: false,
-      numbers: 0,
-      specialCharsEnabled: false,
-      specialChars: 0,
-      restrictSpecialCharsEnabled: false,
-      restrictSpecialChars: "",
-      passwordMinLength: 0,
-      passwordMinLengthEnabled: false,
-      passwordHistoryCount: 0,
-      passwordHistoryCountEnabled: false,
-      customizeHelpText: false,
-      helpText: null,
-      helpTextTemplate: {
-        minChars: 'have at least # letters',
-        maxConChars: 'not contain more than # consecutive letters',
-        lowLetters: 'have a minimum of # lowercase letters',
-        highLetters: 'have a minimum of # uppercase letters',
-        numbers: 'have at least # numbers',
-        specialChars: 'have at least # special characters',
-        restrictSpecialChars: 'be restricted to these special characters: #',
-        passwordMinLength: 'be at least # characters in length',
-        passwordHistoryCount: 'not be any of the past # previous passwords'
-      }
-    }
   }
 
   $onInit() {
@@ -121,89 +78,82 @@ class AdminSettingsController {
       settings: this.Settings.query().$promise,
       teams: this.Team.query({ state: 'all', populate: false, projection: JSON.stringify(this.projection) }).$promise,
       events: this.Event.query({ state: 'all', populate: false, projection: JSON.stringify(this.projection) }).$promise
-    })
-      .then(result => {
-        const api = result.api;
-        this.teams = _.reject(result.teams, team => { return team.teamEventId; });
-        this.events = result.events;
+    }).then(result => {
+      const api = result.api;
+      this.teams = _.reject(result.teams, team => { return team.teamEventId; });
+      this.events = result.events;
 
-        this.authConfig = api.authenticationStrategies || {};
-        this.pill = this.authConfig.local ? 'security' : 'banner';
+      this.authenticationStrategies = api.authenticationStrategies || {};
+      this.pill = Object.keys(this.authenticationStrategies).length ? 'security' : 'banner';
 
-        let strategy = {};
-        for (strategy in this.authConfig) {
-          this.strategies.push(strategy);
-        }
+      let strategy = {};
+        for (strategy in this.authenticationStrategies) {
+        this.strategies.push(strategy);
+      }
 
-        this.settings = _.indexBy(result.settings, 'type');
+      this.settings = _.indexBy(result.settings, 'type');
 
-        this.banner = this.settings.banner ? this.settings.banner.settings : {};
-        this.disclaimer = this.settings.disclaimer ? this.settings.disclaimer.settings : {};
-        this.security = this.settings.security ? this.settings.security.settings : {};
+      this.banner = this.settings.banner ? this.settings.banner.settings : {};
+      this.disclaimer = this.settings.disclaimer ? this.settings.disclaimer.settings : {};
+      this.security = this.settings.security ? this.settings.security.settings : {};
 
-        if (!this.security.accountLock) {
-          this.security.accountLock = {
-            enabled: false
-          };
-        }
+      if (!this.security.local.accountLock) {
+        this.security.local.accountLock = {
+          enabled: false
+        };
+      }
+      
+      this.buildPasswordHelp();
 
-        this.strategies.forEach(strategy => {
-          if (!this.security[strategy]) {
-            this.security[strategy] = {
-              devicesReqAdmin: { enabled: true },
-              usersReqAdmin: { enabled: true },
-              newUserEvents: [],
-              newUserTeams: []
-            }
+      this.strategies.forEach(strategy => {
+        if (!this.security[strategy]) {
+          this.security[strategy] = {
+            devicesReqAdmin: { enabled: true },
+            usersReqAdmin: { enabled: true },
+            newUserEvents: [],
+            newUserTeams: []
+          }
+        } else {
+          if (this.security[strategy].devicesReqAdmin === undefined) {
+            this.security[strategy].devicesReqAdmin = { enabled: true };
+          }
+          if (this.security[strategy].usersReqAdmin === undefined) {
+            this.security[strategy].usersReqAdmin = { enabled: true };
+          }
+
+          if (this.security[strategy].newUserTeams) {
+            // Remove any teams and events that no longer exist
+            this.security[strategy].newUserTeams = this.security[strategy].newUserTeams.filter(id => {
+              return this.teams.some(team => team.id === id)
+            });
           } else {
-            if (this.security[strategy].devicesReqAdmin === undefined) {
-              this.security[strategy].devicesReqAdmin = { enabled: true };
-            }
-            if (this.security[strategy].usersReqAdmin === undefined) {
-              this.security[strategy].usersReqAdmin = { enabled: true };
-            }
-
-            if (this.security[strategy].newUserTeams) {
-              // Remove any teams and events that no longer exist
-              this.security[strategy].newUserTeams = this.security[strategy].newUserTeams.filter(id => {
-                return this.teams.some(team => team.id === id)
-              });
-            } else {
-              this.security[strategy].newUserTeams = [];
-            }
-
-            if (this.security[strategy].newUserEvents) {
-              this.security[strategy].newUserEvents = this.security[strategy].newUserEvents.filter(id => {
-                return this.events.some(event => event.id === id)
-              });
-            } else {
-              this.security[strategy].newUserEvents = [];
-            }
+            this.security[strategy].newUserTeams = [];
           }
 
-          if (!this.security[strategy].passwordPolicy) {
-            this.security[strategy].passwordPolicy = this.defaultPasswordPolicySettings;
-          }
-
-          if (_.isEqual(this.security[strategy].passwordPolicy.helpTextTemplate, this.defaultPasswordPolicySettings.helpTextTemplate)) {
-            this.security[strategy].passwordPolicy.helpTextTemplate = this.defaultPasswordPolicySettings.helpTextTemplate;
-            this.buildPasswordHelp(strategy);
+          if (this.security[strategy].newUserEvents) {
+            this.security[strategy].newUserEvents = this.security[strategy].newUserEvents.filter(id => {
+              return this.events.some(event => event.id === id)
+            });
           } else {
-            //TODO the template has changed...so handle this?? We need to save 
-            //the modified help text after the password help is built.
-            throw 'Help Text Template Modifications Are Not Supported';
+            this.security[strategy].newUserEvents = [];
           }
-
-        });
-
-        this.maxLock.enabled = this.security.accountLock && this.security.accountLock.max !== undefined;
+        }
       });
+
+      this.maxLock.enabled = this.security.local.accountLock && this.security.local.accountLock.max !== undefined;
+    });
   }
 
-  buildPasswordHelp(strategy) {
-    if (!this.security[strategy].passwordPolicy.customizeHelpText) {
-      this.security[strategy].passwordPolicy.helpText =
-        PasswordHelpBuilder.build(this.security[strategy].passwordPolicy);
+  buildPasswordHelp() {
+    if (!this.security.local.passwordPolicy.customizeHelpText) {
+      const policy = this.security.local.passwordPolicy
+      const templates = Object.entries(policy.helpTextTemplate)
+        .filter(([key]) => policy[`${key}Enabled`] === true)
+        .map(([key, value]) => {
+          return value.replace('#', policy[key])
+        });
+
+      this.security.local.passwordPolicy.helpText = `Password is invalid, must ${templates.join(' and ')}.`;
     }
   }
 
@@ -233,7 +183,7 @@ class AdminSettingsController {
 
   saveSecurity() {
     if (!this.maxLock.enabled) {
-      delete this.security.accountLock.max;
+      delete this.security.local.accountLock.max;
     }
 
     this.strategies.forEach(strategy => {

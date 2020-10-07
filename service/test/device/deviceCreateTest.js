@@ -18,6 +18,9 @@ const DeviceModel = mongoose.model('Device');
 const UserOperations = require('../../lib/models/user');
 const UserModel = UserOperations.Model;
 
+require('../../models/authentication');
+const AuthenticationModel = mongoose.model('Authentication');
+
 describe("device create tests", function() {
 
   afterEach(function() {
@@ -85,12 +88,13 @@ describe("device create tests", function() {
       displayName: 'Unregistered Device Test',
       roleId: mongoose.Types.ObjectId(),
       active: true,
-      authenticationId: mongoose.Types.ObjectId()
+      authenticationId: new AuthenticationModel({
+        _id: mongoose.Types.ObjectId(),
+        type: 'local',
+        password: 'password',
+        security: {}
+      })
     });
-    user.authentication = {
-      _id: user.authenticationId,
-      security: {}
-    }
 
     const reqDevice = {
       uid: '12345',
@@ -104,8 +108,8 @@ describe("device create tests", function() {
       ...reqDevice
     });
 
-    sinon.mock(user)
-      .expects('validPassword').withArgs('test')
+    sinon.mock(user.authentication)
+      .expects('validatePassword').withArgs('test')
       .yields(null, true);
 
     const mockUserOps = sinon.mock(UserOperations);
@@ -150,16 +154,16 @@ describe("device create tests", function() {
       displayName: 'test',
       active: true,
       roleId: mongoose.Types.ObjectId(),
-      authenticationId: mongoose.Types.ObjectId()
+      authenticationId: new AuthenticationModel({
+        _id: mongoose.Types.ObjectId(),
+        type: 'local',
+        password: 'password',
+        security: {}
+      })
     });
-    mockUser.authentication = {
-      _id: mockUser.authenticationId,
-      type: this.test.title,
-      security: {}
-    }
 
-    sinon.mock(mockUser)
-      .expects('validPassword')
+    sinon.mock(mockUser.authentication)
+      .expects('validatePassword')
       .yields(null, true);
 
     sinon.mock(UserModel)
@@ -170,9 +174,9 @@ describe("device create tests", function() {
       .chain('exec')
       .yields(null, mockUser);
 
-    sinon.mock(mockUser)
+    sinon.mock(mockUser.authentication)
       .expects('save')
-      .resolves(mockUser);
+      .resolves(mockUser.authentication);
 
     sinon.mock(DeviceModel)
       .expects('findOne')
