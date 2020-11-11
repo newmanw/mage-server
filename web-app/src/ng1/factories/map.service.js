@@ -96,7 +96,7 @@ function MapService(EventService, LocationService, FeatureService, FeedItemPopup
         },
         popup: {
           html: function(observation) {
-            const el = angular.element('<div class="foo" observation-popup="observation" observation-popup-info="onInfo(observation)" observation-zoom="onZoom(observation)"></div>');
+            const el = angular.element('<div observation-popup="observation" observation-popup-info="onInfo(observation)" observation-zoom="onZoom(observation)"></div>');
             const compiled = $compile(el);
             const newScope = $rootScope.$new(true);
             newScope.observation = observation;

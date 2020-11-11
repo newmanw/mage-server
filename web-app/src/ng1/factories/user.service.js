@@ -17,6 +17,7 @@ function UserService($rootScope, $q, $http, $httpParamSerializer, $location, $st
     acceptDisclaimer,
     logout,
     getMyself,
+    updatePassword,
     updateMyPassword,
     updateMyself,
     checkLoggedInUser,
@@ -155,9 +156,15 @@ function UserService($rootScope, $q, $http, $httpParamSerializer, $location, $st
     return theDeferred.promise;
   }
 
+  function updatePassword(userId, authentication) {
+    return $http.put(`/api/users/${userId}/password`, authentication, {
+      headers: { "Content-Type": "application/json" }
+    });
+  }
+
   function updateMyPassword(authentication) {
-    var promise = $http.put('/api/users/myself/password', $httpParamSerializer(authentication), {
-      headers: {"Content-Type": "application/x-www-form-urlencoded"},
+    const promise = $http.put('/api/users/myself/password', authentication, {
+      headers: {"Content-Type": "application/json"},
       ignoreAuthModule:true
     });
 
@@ -192,16 +199,15 @@ function UserService($rootScope, $q, $http, $httpParamSerializer, $location, $st
   function getUser(id, options) {
     options = options || {};
 
-    var deferred = $q.defer();
+    const deferred = $q.defer();
 
-    var parameters = {};
+    const parameters = {};
     if (options.populate) {
-       parameters.populate = options.populate;
+      parameters.populate = options.populate;
     }
 
-    // Go get user again
-     $http.get('/api/users/' + id, {params: parameters}).success(function(user) {
-       deferred.resolve(user);
+    $http.get('/api/users/' + id, { params: parameters }).success(function (user) {
+      deferred.resolve(user);
     });
 
     return deferred.promise;
@@ -209,7 +215,7 @@ function UserService($rootScope, $q, $http, $httpParamSerializer, $location, $st
 
   function getAllUsers(options) {
     options = options || {};
-    var deferredUsers = $q.defer();
+    const deferredUsers = $q.defer();
 
     $http.get('/api/users', {params: options})
       .success(function(data) {

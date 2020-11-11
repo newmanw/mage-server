@@ -44,7 +44,7 @@ var AttachmentSchema = new Schema({
 var ObservationSchema = new Schema({
   type: {type: String, required: true},
   lastModified: {type: Date, required: false},
-  userId: {type: Schema.Types.ObjectId, required: false, sparse: true},
+  userId: {type: Schema.Types.ObjectId, ref: 'User', required: false, sparse: true},
   deviceId: {type: Schema.Types.ObjectId, required: false, sparse: true},
   geometry: Schema.Types.Mixed,
   properties: Schema.Types.Mixed,
@@ -101,7 +101,7 @@ function transform(observation, ret, options) {
 
     ret.eventId = options.eventId;
 
-    var path = options.path ? options.path : "";
+    const path = options.path ? options.path : "";
     ret.url = [path, observation.id].join("/");
 
     if (observation.attachments) {
@@ -113,6 +113,19 @@ function transform(observation, ret, options) {
     if (observation.states && observation.states.length) {
       ret.state = transformState(ret.states[0], ret);
       delete ret.states;
+    }
+
+    if (observation.populated('userId')) {
+      ret.user = ret.userId;
+
+      // TODO Update mobile clients to handle observation.userId or observation.user.id
+      // Leave userId as mobile clients depend on it for observation create/update,
+      ret.userId =  ret.user.id;
+    }
+
+    if (ret.important && observation.populated('important.userId')) {
+      ret.important.user = ret.important.userId
+      delete ret.important.userId;
     }
   }
 }
@@ -189,9 +202,9 @@ function observationModel(event) {
 exports.observationModel = observationModel;
 
 exports.getObservations = function(event, o, callback) {
-  var conditions = {};
+  const conditions = {};
 
-  var filter = o.filter || {};
+  const filter = o.filter || {};
   // Filter by geometry
   if (filter.geometry) {
     conditions.geometry = {
@@ -235,17 +248,30 @@ exports.getObservations = function(event, o, callback) {
     conditions['important'] = {$exists: true};
   }
 
-  var options = {};
+  const options = {};
   if (o.sort) {
     options.sort = o.sort;
   }
 
-  var fields = parseFields(o.fields);
+  const fields = parseFields(o.fields);
   if (filter.attachments === true) {
     fields.attachments = {$slice: 0};
   }
 
-  observationModel(event).find(conditions, fields, options, callback);
+  let query = observationModel(event).find(conditions, fields, options);
+
+  if (o.populate) {
+    query = query
+      .populate({
+        path: 'userId', 
+        select: 'displayName' })
+      .populate({
+        path: 'important.userId',
+        select: 'displayName'
+      });
+  }
+
+  query.exec(callback);
 };
 
 exports.createObservationId = function(callback) {
@@ -269,7 +295,11 @@ exports.getObservationById = function(event, observationId, options, callback) {
 };
 
 exports.updateObservation = function(event, observationId, observation, callback) {
-  observationModel(event).findByIdAndUpdate(observationId, observation, {new: true, upsert: true}, callback);
+  observationModel(event)
+    .findByIdAndUpdate(observationId, observation, { new: true, upsert: true })
+    .populate({ path: 'userId', select: 'displayName' })
+    .populate({ path: 'important.userId', select: 'displayName' })
+    .exec(callback);
 };
 
 exports.removeObservation = function(event, observationId, callback) {

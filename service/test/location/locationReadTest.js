@@ -162,12 +162,12 @@ describe("location read tests", function() {
 
     sinon.mock(CappedLocationModel)
       .expects('find')
-      .chain('lean')
       .chain('exec')
       .yields(null, [{
+        userId: mongoose.Types.ObjectId(),
         locations:[{
           type: "Feature",
-          userId: "56a8d5be03c39d15241f86df",
+          userId: mongoose.Types.ObjectId(),
           properties: {
             timestamp: "2016-02-02T14:42:13.811Z",
             accuracy: 39,

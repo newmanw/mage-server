@@ -1,18 +1,14 @@
 #! /usr/bin/env node
-
 /* eslint-disable @typescript-eslint/no-use-before-define */
-
 const path = require('path');
 const fs = require('fs');
 const { program: prog } = require('commander');
 const env = require('../lib/environment/env');
 const mongoose = require('mongoose');
+
 mongoose.set('debug', true)
-
 const srcMigrationsDir = path.resolve(__dirname, '..', 'src', 'migrations');
-
 prog.version('0');
-
 prog.command('create <name>')
   .description('generate a new migration script in the migrations directory')
   .action(name => {
@@ -30,7 +26,6 @@ prog.command('create <name>')
     fs.writeFileSync(migrationPath, stub);
     console.log(`created migration stub ${migrationPath}`);
   });
-
 prog.command('run')
   .description('apply all the migrations in lib/migrations directory.  make sure you npm run build first!')
   .action(async () => {
@@ -41,14 +36,12 @@ prog.command('run')
     await runDatabaseMigrations(env.mongo.uri, env.mongo.options)
     return mongoose.connection.close()
   });
-
 prog.parse(process.argv);
-
 function parseMigrationFileNames() {
   const files = fs.readdirSync(srcMigrationsDir);
-  return files.filter(function(f) {
+  return files.filter(function (f) {
     return path.extname(f) === '.js' && !f.startsWith('.');
-  }).map(function(f) {
+  }).map(function (f) {
     let ordinal = null;
     const numericPrefix = f.match(/^(\d+)/);
     if (numericPrefix) {
@@ -61,7 +54,7 @@ function parseMigrationFileNames() {
       ordinal,
       name: f
     };
-  }).sort(function(f1, f2) {
+  }).sort(function (f1, f2) {
     return f1.ordinal - f2.ordinal;
   })
 }

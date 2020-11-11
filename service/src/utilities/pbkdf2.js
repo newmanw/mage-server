@@ -1,11 +1,11 @@
 module.exports = function(options) {
 
-  var crypto = require('crypto');
+  const crypto = require('crypto');
 
   options = options || {};
-  var iterations = options.iterations || 12000;
-  var saltLength = options.saltLength || 128;
-  var derivedKeyLength = options.derivedKeyLength || 256;
+  const iterations = options.iterations || 12000;
+  const saltLength = options.saltLength || 128;
+  const derivedKeyLength = options.derivedKeyLength || 256;
 
   /**
    * Serialize a password object containing all the information needed to check a password into a string
@@ -23,7 +23,7 @@ module.exports = function(options) {
    * The info is salt, derivedKey, derivedKey length and number of iterations
    */
   function deserializePassword(password) {
-    var items = password.split('::');
+    const items = password.split('::');
 
     return {
       salt: items[0],
@@ -38,45 +38,45 @@ module.exports = function(options) {
    * Description here: http://en.wikipedia.org/wiki/PBKDF2
    * Number of iterations are saved in case we change the setting in the future
    * @param {String} password
-   * @param {Funtion} callback Signature: err, encryptedPassword
+   * @param {Funtion} callback Signature: err, hashedPassword
    */
   function hashPassword(password, callback) {
-    var salt = crypto.randomBytes(saltLength).toString('base64');
+    const salt = crypto.randomBytes(saltLength).toString('base64');
 
     crypto.pbkdf2(password, salt, iterations, derivedKeyLength, 'sha1', function (err, derivedKey) {
       if (err) { return callback(err); }
 
-      var encryptedPassword = serializePassword({
+      const hashedPassword = serializePassword({
         salt: salt,
         iterations: iterations,
         derivedKeyLength: derivedKeyLength,
         derivedKey: derivedKey.toString('base64')
       });
 
-      callback(null, encryptedPassword);
+      callback(null, hashedPassword);
     });
   }
 
   /**
-   * Compare a password to an encrypted password
+   * Compare a password to a hashed password
    * @param {String} password
-   * @param {String} encryptedPassword
+   * @param {String} hashedPassword
    * @param {Function} callback Signature: err, true/false
    */
-  function validPassword(password, encryptedPassword, callback) {
-    if (!encryptedPassword) return callback(false);
+  function validPassword(password, hashedPassword, callback) {
+    if (!hashedPassword) return callback(false);
 
-    encryptedPassword = deserializePassword(encryptedPassword);
+    hashedPassword = deserializePassword(hashedPassword);
 
-    if (!encryptedPassword.salt || !encryptedPassword.derivedKey || !encryptedPassword.iterations || !encryptedPassword.derivedKeyLength) {
-      return callback("encryptedPassword doesn't have the right format");
+    if (!hashedPassword.salt || !hashedPassword.derivedKey || !hashedPassword.iterations || !hashedPassword.derivedKeyLength) {
+      return callback(new Error("hashedPassword doesn't have the right format"));
     }
 
-    // Use the encrypted password's parameter to hash the candidate password
-    crypto.pbkdf2(password, encryptedPassword.salt, encryptedPassword.iterations, encryptedPassword.derivedKeyLength, 'sha1', function (err, derivedKey) {
+    // Use the hashedPassword password's parameters to hash the candidate password
+    crypto.pbkdf2(password, hashedPassword.salt, hashedPassword.iterations, hashedPassword.derivedKeyLength, 'sha1', function (err, derivedKey) {
       if (err) { return callback(err); }
 
-      callback(null, derivedKey.toString('base64') === encryptedPassword.derivedKey);
+      callback(null, derivedKey.toString('base64') === hashedPassword.derivedKey);
     });
   }
 
