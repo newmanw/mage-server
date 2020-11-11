@@ -8,11 +8,12 @@ MAGE adheres to [Semantic Versioning](http://semver.org/).
 ##### Features
 
 ##### Bug Fixes
+* Web should not prompt for device uid, if device admin aprroval is not enabled.
 
 ## [5.4.3](https://github.com/ngageoint/mage-server/releases/tag/5.4.3)
 
 #### Release Notes
-* This release include database migrations, please remember to backup your database before upgrading.
+* This release includes database migrations, please remember to backup your database before upgrading.
 
 ##### Features
 * Optimize observation and user location responses.  Created new APIs to populate observation and location user information and removed individual calls to get users.
