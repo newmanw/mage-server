@@ -4,21 +4,21 @@ const chai = require('chai')
   , expect = require("chai").expect
   , util = require('util')
   , mongoose = require('mongoose')
-  , PasswordValidator = require('../../utilities/passwordValidator')
-  , hasher = require('../../utilities/pbkdf2')();
+  , PasswordValidator = require('../../lib/utilities/passwordValidator')
+  , hasher = require('../../lib/utilities/pbkdf2')();
 
 chai.use(sinonChai);
 
-require('../../models/setting');
+require('../../lib/models/setting');
 var SettingModel = mongoose.model('Setting');
 
-require('../../models/user');
+require('../../lib/models/user');
 var UserModel = mongoose.model('User');
 
-require('../../models/token');
+require('../../lib/models/token');
 var TokenModel = mongoose.model('Token');
 
-require('../../models/authentication');
+require('../../lib/models/authentication');
 const AuthenticationModel = mongoose.model('Authentication');
 
 describe("Password Validator Tests", function() {
@@ -31,7 +31,7 @@ describe("Password Validator Tests", function() {
     const authentication = {
       password: null
     }
-    
+
     const validationStatus = await PasswordValidator.validate({}, authentication);
     expect(validationStatus.valid).to.be.false;
   });
@@ -484,7 +484,7 @@ describe("Password Validator Tests", function() {
     }
 
     const proxyquire = require('proxyquire');
-    proxyquire('../../models/authentication', {
+    proxyquire('../../lib/models/authentication', {
       '../utilities/pbkdf2': function () {
         return {
           hashPassword: hasherStub
@@ -492,7 +492,7 @@ describe("Password Validator Tests", function() {
       }
     });
 
-    require('../../models/authentication');
+    require('../../lib/models/authentication');
     const AuthenticationModel = mongoose.model('Authentication');
 
     sinon.mock(SettingModel)

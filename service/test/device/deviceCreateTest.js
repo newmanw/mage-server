@@ -18,7 +18,7 @@ const DeviceModel = mongoose.model('Device');
 const UserOperations = require('../../lib/models/user');
 const UserModel = UserOperations.Model;
 
-require('../../models/authentication');
+require('../../lib/models/authentication');
 const AuthenticationModel = mongoose.model('Authentication');
 
 describe("device create tests", function() {

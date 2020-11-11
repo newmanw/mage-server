@@ -10,7 +10,7 @@ import { Substitute as Sub, SubstituteOf } from '@fluffy-spoon/substitute'
 import { EntityIdFactory } from '../../../lib/entities/entities.global'
 
 
-describe.only('static icon mongoose repository', function() {
+describe('static icon mongoose repository', function() {
 
   let mongo: MongoMemoryServer
   let uri: string
@@ -32,6 +32,7 @@ describe.only('static icon mongoose repository', function() {
     model = StaticIconModel(conn, 'test_static_icons')
     idFactory = Sub.for<EntityIdFactory>()
     repo = new MongooseStaticIconRepository(model, idFactory)
+    model.findOne({})
   })
 
   afterEach(async function() {

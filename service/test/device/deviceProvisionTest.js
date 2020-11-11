@@ -20,7 +20,7 @@ const DeviceModel = mongoose.model('Device');
 require('../../lib/models/user');
 const UserModel = mongoose.model('User');
 
-require('../../models/authentication');
+require('../../lib/models/authentication');
 const AuthenticationModel = mongoose.model('Authentication');
 
 let userId = mongoose.Types.ObjectId();
