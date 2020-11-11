@@ -3,11 +3,18 @@ import { FeedTopic, FeedTopicContent } from '@ngageoint/mage.service/lib/entitie
 import { ParsedUrlQuery } from 'querystring'
 import { MsiRequest, MsiResponse } from '../nga-msi'
 import { JsonObject } from '@ngageoint/mage.service/lib/entities/entities.json_types'
+import { PluginResourceUrl } from '@ngageoint/mage.service/lib/entities/icons/entities.icons'
+
+/*
+TODO: for icon urls, injecting the base url here would be preferable, then the
+topics would append the icon name to the base url.
+*/
 
 export const topicDescriptor: FeedTopic = {
   id: 'asam',
   title: 'ASAMs',
   summary: 'Anti-Shipping Acitivty Messages (ASAMs) include the locations and descriptive accounts of specific hostile acts against ships and mariners and may be useful for recognition, prevention and avoidance of potential hostile activity.',
+  icon: new PluginResourceUrl('@ngageoint/mage.nga-msi', 'icons/asam.png'),
   paramsSchema: {
     type: 'object',
     properties: {
@@ -24,8 +31,7 @@ export const topicDescriptor: FeedTopic = {
   itemTemporalProperty: 'timestamp',
   updateFrequencySeconds: 61 * 15,
   mapStyle: {
-    // TODO: figure out dynamic url resolution
-    iconUrl: 'https://mage-msi.geointservices.io/icons/asam.png'
+    iconUrl: new PluginResourceUrl('@ngageoint/mage.nga-msi', 'icons/asam.png')
   },
   itemPropertiesSchema: {
     type: 'object',

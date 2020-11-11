@@ -8,6 +8,12 @@ declare global {
   }
 }
 
+declare module 'express-serve-static-core' {
+  interface Request {
+
+  }
+}
+
 import express from 'express'
 import { PluginRepository } from "../application/plugins.app.contracts"
 import { PluginDescriptor } from '../entities/plugins.entities'

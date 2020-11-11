@@ -22,6 +22,8 @@ import { JsonSchemaService, JsonValidator, JSONSchema4 } from './entities/entiti
 import { MageEventModel, MongooseMageEventRepository } from './adapters/events/adapters.events.db.mongoose'
 import { MageEventRepository } from './entities/events/entities.events'
 import { EventFeedsRoutes } from './adapters/events/adapters.events.controllers.web'
+import { MongooseStaticIconRepository, StaticIconModel } from './adapters/icons/adapters.icons.db.mongoose'
+import { StaticIconRepository } from './entities/icons/entities.icons'
 
 
 export interface MageService {
@@ -85,7 +87,14 @@ export const boot = async function(config: BootConfig): Promise<MageService> {
   // load routes the old way
   const app = await initRestInterface(repos, appLayer)
 
-  await loadPlugins(config.plugins, { feeds: { serviceTypeRepo: repos.feeds.serviceTypeRepo }})
+  await loadPlugins(config.plugins, {
+    feeds: {
+      serviceTypeRepo: repos.feeds.serviceTypeRepo
+    },
+    icons: {
+      staticIconRepo: repos.icons.staticIconRepo
+    }
+  })
 
   const server = http.createServer(app)
   service = {
@@ -110,6 +119,9 @@ type DatabaseModels = {
   }
   events: {
     event: MageEventModel
+  }
+  icons: {
+    staticIcon: StaticIconModel
   }
 }
 
@@ -158,6 +170,9 @@ async function initDatabase(): Promise<DatabaseModels> {
     },
     events: {
       event: require('./models/event').Model
+    },
+    icons: {
+      staticIcon: StaticIconModel(conn)
     }
   }
 }
@@ -170,6 +185,9 @@ type Repositories = {
     serviceTypeRepo: FeedServiceTypeRepository,
     serviceRepo: FeedServiceRepository,
     feedRepo: FeedRepository
+  },
+  icons: {
+    staticIconRepo: StaticIconRepository
   }
 }
 
@@ -187,12 +205,16 @@ async function initRepositories(models: DatabaseModels): Promise<Repositories> {
   const serviceRepo = new MongooseFeedServiceRepository(models.feeds.feedService)
   const feedRepo = new MongooseFeedRepository(models.feeds.feed, new SimpleIdFactory())
   const eventRepo = new MongooseMageEventRepository(models.events.event)
+  const staticIconRepo = new MongooseStaticIconRepository(models.icons.staticIcon, new SimpleIdFactory())
   return {
     feeds: {
       serviceTypeRepo, serviceRepo, feedRepo
     },
     events: {
       eventRepo
+    },
+    icons: {
+      staticIconRepo
     }
   }
 }

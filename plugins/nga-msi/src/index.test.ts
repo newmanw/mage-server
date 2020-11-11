@@ -1,18 +1,35 @@
+import { PluginStaticIcon } from '@ngageoint/mage.service/lib/entities/icons/entities.icons'
 import hooks from './index'
 import { MsiServiceType } from './nga-msi'
 
-describe('msi feeds plugin hooks', function() {
+describe('msi mage plugin hooks', function() {
 
-  it('provides the service type', async function() {
+  describe('feeds hook', function() {
 
-    const serviceTypes = await hooks.feeds.loadServiceTypes()
+    it('provides the service type', async function() {
 
-    expect(serviceTypes).toHaveLength(1)
-    expect(serviceTypes[0]).toBeInstanceOf(MsiServiceType)
+      const serviceTypes = await hooks.feeds.loadServiceTypes()
+
+      expect(serviceTypes).toHaveLength(1)
+      expect(serviceTypes[0]).toBeInstanceOf(MsiServiceType)
+    })
+  })
+
+  describe('icons hook', function() {
+
+    it('provides the bundled msi icons', async function() {
+
+      const icons = await hooks.icons.loadPluginStaticIcons()
+
+      expect(icons).toHaveLength(1)
+      expect(icons[0]).toMatchObject({
+        pluginRelativePath: 'icons/asam.png'
+      })
+    })
   })
 })
 
-describe('end to end', function() {
+xdescribe('end to end', function() {
 
   it('fetches asam', async function() {
 

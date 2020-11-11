@@ -21,9 +21,9 @@ export class BaseMongooseRepository<D extends mongoose.Document, M extends mongo
    */
   private readonly docToEntity: DocumentMapping<D, E>
 
-  constructor(model: M) {
+  constructor(model: M, docToEntity?: DocumentMapping<D, E>) {
     this.model = model
-    this.docToEntity = createDefaultDocMapping()
+    this.docToEntity = docToEntity || createDefaultDocMapping()
   }
 
   async create(attrs: Partial<E>): Promise<E> {

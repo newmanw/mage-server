@@ -12,6 +12,7 @@ import { FeedServiceTypeIdentityModel, FeedsModels, FeedServiceTypeIdentitySchem
 import { FeedServiceType } from '../../../lib/entities/feeds/entities.feeds'
 import { Json, JsonObject } from '../../../src/entities/entities.json_types'
 import { EntityIdFactory } from '../../../lib/entities/entities.global'
+import { URL } from 'url'
 
 describe('feeds repositories', function() {
 
@@ -280,6 +281,7 @@ describe('feeds repositories', function() {
           topic: uniqid(),
           title: uniqid(),
           summary: 'everything is required',
+          icon: uniqid(),
           itemsHaveIdentity: true,
           itemsHaveSpatialDimension: true,
           updateFrequencySeconds: 60,
@@ -300,7 +302,7 @@ describe('feeds repositories', function() {
             strokeWidth: 1,
             fill: 'abc123',
             fillOpacity: 0.5,
-            iconUrl: 'test.png'
+            iconUrl: new URL('mage:///test.png')
           },
           itemPropertiesSchema: {
             title: 'Save Me',

@@ -2,6 +2,8 @@
 import { Json, JsonObject } from '../entities.json_types'
 import { FeatureCollection } from 'geojson'
 import { JSONSchema4 } from 'json-schema'
+import { URL } from 'url'
+import { StaticIconId } from '../icons/entities.icons'
 
 interface LoadFeedServiceTypes {
   (): Promise<FeedServiceType[]>
@@ -125,6 +127,13 @@ export interface FeedTopic {
   readonly title: string
   readonly summary?: string
   /**
+   * This icon represents the overall topic, such as in a list of available
+   * topics.  This icon may also potentially represent the content items in the
+   * topic on a map or in a list if no item style assigns an icon to content
+   * items.
+   */
+  readonly icon?: URL
+  /**
    * The paramters schema defines the parameters MAGE can use to fetch and
    * filter content from the topic.
    */
@@ -196,6 +205,7 @@ export interface Feed {
   readonly topic: FeedTopicId
   readonly title: string
   readonly summary?: string
+  readonly icon?: StaticIconId
   /**
    * The constant paramters are a subset of a topic's parameters that an
    * administrative user defines and that MAGE will apply to every fetch
@@ -252,7 +262,7 @@ export interface MapStyle {
   strokeWidth?: number
   fill?: HexRgb
   fillOpacity?: number
-  iconUrl?: string
+  iconUrl?: URL
 }
 
 /**

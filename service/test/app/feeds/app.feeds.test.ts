@@ -10,8 +10,9 @@ import uniqid from 'uniqid'
 import { AppRequestContext, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeatureCollection } from 'geojson'
 import { JsonObject, JsonSchemaService, JsonValidator } from '../../../lib/entities/entities.json_types'
-import _, { uniq } from 'lodash'
+import _ from 'lodash'
 import { MageEventRepository } from '../../../lib/entities/events/entities.events'
+import { URL } from 'url'
 
 
 function mockServiceType(descriptor: FeedServiceTypeDescriptor): SubstituteOf<RegisteredFeedServiceType> {
@@ -1311,6 +1312,7 @@ describe('feeds use case interactions', function() {
                 id: uniqid(),
                 title: 'News 1 Politics',
                 summary: 'News on politics 1',
+                icon: iconUrl(),
                 itemPrimaryProperty: 'topic1:primary',
                 itemSecondaryProperty: 'topic1:secondary',
                 itemTemporalProperty: 'topic1:published',
@@ -1320,7 +1322,7 @@ describe('feeds use case interactions', function() {
                   title: 'Topic 1 Params'
                 },
                 mapStyle: {
-                  iconUrl: 'topic1.png'
+                  iconUrl: new URL('test:///topic1.png')
                 },
                 updateFrequencySeconds: 5 * 60,
                 itemPropertiesSchema: {
@@ -1344,6 +1346,7 @@ describe('feeds use case interactions', function() {
                 id: uniqid(),
                 title: 'News 2 Sports',
                 summary: 'News on sports 2',
+                icon: iconUrl(),
                 itemPrimaryProperty: 'topic2:primary',
                 itemSecondaryProperty: 'topic2:secondary',
                 itemTemporalProperty: 'topic2:published',
@@ -1353,7 +1356,7 @@ describe('feeds use case interactions', function() {
                   title: 'Topic 2 Params'
                 },
                 mapStyle: {
-                  iconUrl: 'topic2.png'
+                  iconUrl: new URL('test:///topic2.png')
                 },
                 updateFrequencySeconds: 15 * 60,
                 itemPropertiesSchema: {
@@ -1445,6 +1448,7 @@ describe('feeds use case interactions', function() {
             id: feeds[1].id,
             title: 'Updated Feed',
             summary: 'Test updateds',
+            icon: uniqid(),
             itemPrimaryProperty: 'updated1',
             itemSecondaryProperty: 'updated2',
             itemTemporalProperty: 'updatedTemporal',
@@ -2137,4 +2141,8 @@ class TestPermissionService implements FeedsPermissionService {
     }
     return permissionDenied(privilege, principal.user, service)
   }
+}
+
+function iconUrl(): URL {
+  return new URL(`test://icons/${uniqid()}`)
 }

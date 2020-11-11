@@ -1,6 +1,7 @@
 import uniqid from 'uniqid'
 import { normalizeFeedMinimalAttrs, FeedTopic, FeedMinimalAttrs } from '../../../lib/entities/feeds/entities.feeds'
 import { expect } from 'chai'
+import { URL } from 'url'
 
 describe('feed-create attribute factory', function() {
 
@@ -34,6 +35,7 @@ describe('feed-create attribute factory', function() {
       topic: topic.id,
       title: 'Feed Title',
       summary: 'About the feed',
+      icon: uniqid(),
       itemsHaveIdentity: false,
       itemsHaveSpatialDimension: false,
       itemPrimaryProperty: null,
@@ -89,6 +91,7 @@ describe('feed-create attribute factory', function() {
       id: uniqid(),
       title: 'Topic Title',
       summary: 'About the topic',
+      icon: new URL('test://icons/topic.png'),
       itemsHaveIdentity: true,
       itemsHaveSpatialDimension: true,
       itemPrimaryProperty: 'topicPrimary',
@@ -104,7 +107,7 @@ describe('feed-create attribute factory', function() {
         required: [ 'key' ]
       },
       mapStyle: {
-        iconUrl: 'https://icons.net/building.png'
+        iconUrl: new URL('https://icons.net/building.png')
       },
       itemPropertiesSchema: {
         title: 'Topic Properties'

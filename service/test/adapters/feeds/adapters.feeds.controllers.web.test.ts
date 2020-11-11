@@ -13,6 +13,7 @@ import { FeedService, Feed, FeedTopic, FeedMinimalAttrs, MapStyle, FeedUpdateAtt
 import { permissionDenied, PermissionDeniedError, InvalidInputError, invalidInput, EntityNotFoundError, entityNotFound } from '../../../lib/app.api/app.api.errors'
 import { WebAppRequestFactory } from '../../../lib/adapters/adapters.controllers.web'
 import { JSONSchema4 } from 'json-schema'
+import { URL } from 'url'
 
 declare module 'express-serve-static-core' {
   interface Request {
@@ -588,6 +589,7 @@ invalid request
           topic,
           title: 'Title of Feed',
           summary: 'Testing the feed preview',
+          icon: uniqid(),
           itemsHaveIdentity: false,
           itemsHaveSpatialDimension: true,
           itemTemporalProperty: 'when',
@@ -624,6 +626,7 @@ invalid request
           topic,
           title: appReqParams.feed.title,
           summary: appReqParams.feed.summary,
+          icon: uniqid(),
           itemsHaveIdentity: appReqParams.feed.itemsHaveIdentity,
           itemsHaveSpatialDimension: appReqParams.feed.itemsHaveSpatialDimension,
           itemPrimaryProperty: appReqParams.feed.itemTemporalProperty as string,
@@ -963,6 +966,7 @@ invalid request
         id: uniqid(),
         title: 'Update Title',
         summary: 'Update summary',
+        icon: uniqid(),
         itemsHaveIdentity: true,
         itemsHaveSpatialDimension: true,
         itemPrimaryProperty: 'updated1',
@@ -973,7 +977,7 @@ invalid request
           properties: { updated: { type: 'object' }}
         },
         mapStyle: {
-          iconUrl: 'http://static.test/updated.png'
+          iconUrl: new URL('http://static.test/updated.png')
         },
         updateFrequencySeconds: 987,
         itemPropertiesSchema: {
@@ -1002,7 +1006,7 @@ invalid request
           properties: { updated: { type: 'object' }}
         },
         mapStyle: {
-          iconUrl: 'http://static.test/updated.png'
+          iconUrl: new URL('http://static.test/updated.png')
         },
         updateFrequencySeconds: 987,
         service: {
