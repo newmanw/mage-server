@@ -13,7 +13,7 @@ export interface IconPluginHooks {
  * `PluginStaticIcon` defines properties necessary for plugin packages to
  * provide bundled static icon assets for use in MAGE.
  */
-export type PluginStaticIcon = Pick<StaticIconStub, 'imageType' | 'mediaType' | 'sizePixels' | 'sizeBytes' | 'contentHash' | 'fileName' | 'title' | 'summary' | 'tags'> & {
+export type PluginStaticIcon = Required<StaticIconStub> & {
   /**
    * The module relative path of a plugin icon points to an image file within
    * the plugin package.  The path is relative to the root of the plugin
@@ -22,34 +22,7 @@ export type PluginStaticIcon = Pick<StaticIconStub, 'imageType' | 'mediaType' | 
   pluginRelativePath: string
 }
 
-export interface StaticIconStub {
-  /**
-   * The source URL of an icon is a persistent, cache-friendly URL that exists
-   * outside the URL namespace of a particular MAGE server.  For example, this
-   * could be an HTTP URL that MAGE can use to retrieve and cache the icon.
-   */
-  sourceUrl: URL
-  imageType: 'raster' | 'vector'
-  /**
-   * The icons's media type is a standard [IANA media/MIME](https://www.iana.org/assignments/media-types/media-types.xhtml)
-   * type strings, such as `image/jpeg`.
-   */
-  mediaType: string
-  /**
-   * The size in pixels is the width and height
-   */
-  sizePixels: ImageSize
-  sizeBytes: number
-  contentHash: string
-  tags: string[]
-  title?: string
-  summary?: string
-  /**
-   * The icon's file name is the original file name of an uploaded icon, and/or
-   * the default file name provided to download the icon.
-   */
-  fileName?: string
-}
+export type StaticIconStub = Omit<StaticIcon, 'sourceUrl' | 'id' | 'registered' | 'resolved' | 'getContent'>
 
 export interface ImageSize {
   width: number,
@@ -63,10 +36,42 @@ export interface ImageSize {
  * may be dynamically generated based on the attributes of the feature the icon
  * represents.
  */
-export interface StaticIcon extends StaticIconStub {
+export interface StaticIcon {
+  /**
+   * The source URL of an icon is a persistent, cache-friendly URL that exists
+   * outside the URL namespace of a particular MAGE server.  For example, this
+   * could be an HTTP URL that MAGE can use to retrieve and cache the icon.
+   */
+  sourceUrl: URL
   id: StaticIconId
-  contentTimestamp: number
+  registered: Date
+  resolved: Date | null
+  imageType?: 'raster' | 'vector'
+  /**
+   * The icons's media type is a standard [IANA media/MIME](https://www.iana.org/assignments/media-types/media-types.xhtml)
+   * type strings, such as `image/jpeg`.
+   */
+  mediaType?: string
+  /**
+   * The size in pixels is the width and height
+   */
+  sizePixels?: ImageSize
+  sizeBytes?: number
+  contentHash?: string
+  contentTimestamp?: Date
+  title?: string
+  summary?: string
+  /**
+   * The icon's file name is the original file name of an uploaded icon, and/or
+   * the default file name provided to download the icon.
+   */
+  fileName?: string
+  tags: string[]
   getContent(): Promise<NodeJS.ReadableStream>
+}
+
+const iconIsResolved = (icon: StaticIcon): boolean => {
+  return typeof icon.contentHash === 'string' && typeof icon.contentTimestamp === 'number'
 }
 
 export const UnregisteredStaticIcon = Symbol()
@@ -74,7 +79,7 @@ export const UnregisteredStaticIcon = Symbol()
 export type StaticIconId = string | typeof UnregisteredStaticIcon
 
 export interface StaticIconRepository {
-  registerBySourceUrl(attrs: StaticIconStub): Promise<StaticIcon>
+  registerBySourceUrl(sourceUrl: URL, attrs?: Omit<StaticIconStub, 'sourceUrl'>): Promise<StaticIcon>
   findById(id: StaticIconId): Promise<StaticIcon | null>
   saveContent(id: StaticIconId, content: NodeJS.ReadableStream): Promise<boolean>
   loadContent(id: StaticIconId): Promise<NodeJS.ReadableStream | null>

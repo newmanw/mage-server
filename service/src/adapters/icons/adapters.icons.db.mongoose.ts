@@ -1,4 +1,5 @@
 
+import { URL } from 'url'
 import mongoose from 'mongoose'
 import mongodb from 'mongodb'
 import { EntityIdFactory } from '../../entities/entities.global'
@@ -52,26 +53,27 @@ export class MongooseStaticIconRepository extends BaseMongooseRepository<StaticI
     super(model)
   }
 
-  async create(stub: StaticIconStub): Promise<StaticIcon> {
+  async create(stub: StaticIconStub & Pick<StaticIcon, 'sourceUrl'>): Promise<StaticIcon> {
     const _id = await this.idFactory.nextId()
     const withId = Object.assign({ ...stub }, { _id })
     return super.create(withId)
   }
 
-  async registerBySourceUrl(stub: StaticIconStub): Promise<StaticIcon> {
+  async registerBySourceUrl(sourceUrl: URL, attrs?: StaticIconStub): Promise<StaticIcon> {
     const validKeys: { [valid in keyof StaticIconStub]: true } = {
       contentHash: true,
+      contentTimestamp: true,
       fileName: true,
       imageType: true,
       mediaType: true,
       sizeBytes: true,
       sizePixels: true,
-      sourceUrl: true,
       summary: true,
       tags: true,
       title: true
     }
-    let registered = await this.findDocBySourceUrl(stub.sourceUrl)
+    const stub: StaticIconStub = attrs || { tags: [] }
+    let registered = await this.findDocBySourceUrl(sourceUrl)
     if (registered && registered.contentHash !== stub.contentHash) {
       const update: Partial<StaticIcon> & mongodb.UpdateQuery<StaticIcon> = {}
       const $unset: { [key in keyof StaticIcon]?: true } = {}
@@ -86,7 +88,9 @@ export class MongooseStaticIconRepository extends BaseMongooseRepository<StaticI
       if (Object.keys($unset).length > 0) {
         update.$unset = $unset as mongodb.UpdateQuery<StaticIcon>['$unset']
       }
-      update.contentTimestamp = Date.now()
+      if (!update.contentTimestamp) {
+        update.contentTimestamp = new Date()
+      }
       registered = await this.model.findByIdAndUpdate(registered.id, update, { new: true })
     }
     else if (!registered) {

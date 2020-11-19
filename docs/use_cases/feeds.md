@@ -96,26 +96,36 @@ The new feed service is saved and available to configure new feeds.
 
 #### Main Flow
 1. A1 requests to configure a new feed.
-1. The app presents a list of registered feed services.
-1. A1 selects the desired feed service.
-1. The app presents the list of topics the feed service provides.
-1. A1 selects the desired topic.
-1. The app presents the content fetch parameters for the topic.
-1. A1 groups the fetch parameters according to parameters that the user can change when fetching feed content and parameters that remain constant across all fetches by all users.
+2. The app presents a list of registered feed services.
+3. A1 selects the desired feed service.
+4. The app presents the list of topics the feed service provides.
+5. A1 selects the desired topic.
+6. The app presents the content fetch parameters for the topic.
+7. A1 groups the fetch parameters according to parameters that the user can change when fetching feed content and parameters that remain constant across all fetches by all users.
    * Potential parameters could be geographic bounding box, maximum age of content, maximum number of items to fetch, caching options, etc.
-1. A1 enters the desired values for the constant fetch parameters.
-1. A1 enters sample values for the variable fetch parameters and requests a preview of the feed content with the configured parameters.
-1. The app begins fetching preview content from the feed service with the configured options.
-1. The fetch completes and the app presents the preview content.
-1. A1 examines the preview and confirms the configuration for the new feed.
-1. The app stores the configuration for the new feed and prompts whether to add the feed to an event.
-1. A1 requests to add the new feed to an event.
-1. The app begins the `Assign feed to event` flow assuming the selection of the newly configured feed.
+8. A1 enters the desired values for the constant fetch parameters.
+9. A1 enters sample values for the variable fetch parameters and requests a preview of the feed content with the configured parameters.
+10. The app begins fetching preview content from the feed service with the configured options.
+11. The fetch completes and the app presents the preview content.
+12. A1 examines the preview and confirms the configuration for the new feed.
+13. The app stores the configuration for the new feed and prompts whether to add the feed to an event.
+14. A1 requests to add the new feed to an event.
+15. The app begins the `Assign feed to event` flow assuming the selection of the newly configured feed.
 
 #### Result
 The new feed configuration is saved and the feed is available to add to events.
 
 #### Variations
+
+##### Assign an icon to the feed
+The app uses a feed's icon to visually represent and distinguish the feed from other feeds in a list.  The app can also use the feed's icon as a map marker for feeds whose items have a geospatial dimension.
+1. In step 6. of the main flow, the app will also present the icon the topic specifies along an option to use the topic's icon, or to assign a new icon to the feed.
+   * This may include fetching and importing an icon from a remote service if the topic's icon reference is a remote URL.
+2. A1 indicates they want to modify the icon for the feed.
+3. The app presents the available choices of registered icons and an option to supply a new icon.
+4. A1 selects a registered icon, or supplies a new icon via upload, or by URL.
+5. The app replaces the previously presented icon with the selected icon for the new feed.
+A1 continues to complete the Main Flow.
 
 ### Assign feed to event
 

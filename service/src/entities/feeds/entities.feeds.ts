@@ -283,7 +283,7 @@ export interface FeedRepository {
   removeByServiceId(serviceId: FeedServiceId): Promise<Feed[]>
 }
 
-type FeedCreateExcplicitNullKeys = 'itemTemporalProperty' | 'itemPrimaryProperty' | 'itemSecondaryProperty' | 'updateFrequencySeconds' | 'mapStyle'
+type FeedCreateExcplicitNullKeys = 'itemTemporalProperty' | 'itemPrimaryProperty' | 'itemSecondaryProperty' | 'updateFrequencySeconds' | 'icon' | 'mapStyle'
 
 export type FeedMinimalAttrs = Partial<Omit<Feed, 'id' | FeedCreateExcplicitNullKeys>> & Pick<Feed, 'topic' | 'service'> & {
   readonly [nullable in keyof Pick<Feed, FeedCreateExcplicitNullKeys>]: Feed[nullable] | null
@@ -317,6 +317,7 @@ export const normalizeFeedMinimalAttrs = (topic: FeedTopic, feedAttrs: FeedMinim
     itemSecondaryProperty: true,
     itemTemporalProperty: true,
     updateFrequencySeconds: true,
+    icon: true,
     mapStyle: true
   }
   for (const explicitNullKey in explicitNullKeys) {

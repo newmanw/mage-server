@@ -10,7 +10,7 @@ import { Substitute as Sub, SubstituteOf } from '@fluffy-spoon/substitute'
 import { EntityIdFactory } from '../../../lib/entities/entities.global'
 
 
-describe('static icon mongoose repository', function() {
+describe.only('static icon mongoose repository', function() {
 
   let mongo: MongoMemoryServer
   let uri: string
@@ -51,11 +51,11 @@ describe('static icon mongoose repository', function() {
 
       const sourceUrl = new URL('mage:///test/icons/new.png')
       const stub: Required<StaticIconStub> = {
-        sourceUrl,
         imageType: 'raster',
         sizeBytes: 100,
         sizePixels: { width: 200, height: 200 },
         contentHash: uniqid(),
+        contentTimestamp: new Date(),
         mediaType: 'image/png',
         tags: [ 'test' ],
         fileName: 'new.png',
@@ -64,7 +64,7 @@ describe('static icon mongoose repository', function() {
       }
       const id = uniqid()
       idFactory.nextId().resolves(id)
-      const registered = await repo.registerBySourceUrl(stub)
+      const registered = await repo.registerBySourceUrl(sourceUrl, stub)
       const found = await model.find({})
 
       expect(found).to.have.length(1)
@@ -78,11 +78,11 @@ describe('static icon mongoose repository', function() {
 
       const sourceUrl = new URL('mage:///test/replace.png')
       const origAttrs: Required<StaticIconStub> = {
-        sourceUrl,
         imageType: 'raster',
         sizeBytes: 1000,
         sizePixels: { width: 120, height: 120 },
         contentHash: uniqid(),
+        contentTimestamp: new Date(Date.now() - 10000),
         mediaType: 'image/png',
         tags: [],
         fileName: 'orig.png',
@@ -90,11 +90,11 @@ describe('static icon mongoose repository', function() {
         summary: 'replace me'
       }
       const updatedAttrs: Required<StaticIconStub> = {
-        sourceUrl,
         imageType: 'vector',
         sizeBytes: 1100,
         sizePixels: { width: 220, height: 220 },
         contentHash: uniqid(),
+        contentTimestamp: new Date(),
         mediaType: 'svg',
         tags: [ 'test' ],
         fileName: 'updated.png',
@@ -103,18 +103,16 @@ describe('static icon mongoose repository', function() {
       }
       const id = uniqid()
       idFactory.nextId().resolves(id)
-      const orig = await repo.registerBySourceUrl(origAttrs)
+      const orig = await repo.registerBySourceUrl(sourceUrl, origAttrs)
       const origFound = await model.find({})
 
       expect(orig).to.deep.include({ id, ...origAttrs })
       expect(orig.contentTimestamp).to.be.closeTo(Date.now(), 100)
 
-      await new Promise(resolve => setTimeout(resolve, 20))
-      const updated = await repo.registerBySourceUrl(updatedAttrs)
+      const updated = await repo.registerBySourceUrl(sourceUrl, updatedAttrs)
       const updatedFound = await model.find({})
 
       expect(updated).to.deep.include({ id, ...updatedAttrs })
-      expect(updated.contentTimestamp).to.be.greaterThan(orig.contentTimestamp + 20)
       expect(origFound).to.have.length(1)
       expect(updatedFound).to.have.length(1)
       expect(_.omit(origFound[0].toJSON(), 'contentTimestamp')).to.deep.equal({ id, ...origAttrs })
@@ -126,11 +124,11 @@ describe('static icon mongoose repository', function() {
 
       const sourceUrl = new URL('mage:///test/replace.png')
       const origAttrs: Required<StaticIconStub> = {
-        sourceUrl,
         imageType: 'raster',
         sizeBytes: 1000,
         sizePixels: { width: 120, height: 120 },
         contentHash: uniqid(),
+        contentTimestamp: new Date(Date.now() - 10000),
         mediaType: 'image/png',
         tags: [],
         fileName: 'orig.png',
@@ -138,7 +136,6 @@ describe('static icon mongoose repository', function() {
         summary: 'replace me'
       }
       const updatedAttrs: StaticIconStub = {
-        sourceUrl,
         imageType: 'vector',
         sizeBytes: 1100,
         sizePixels: { width: 220, height: 220 },
@@ -148,9 +145,9 @@ describe('static icon mongoose repository', function() {
       }
       const id = uniqid()
       idFactory.nextId().resolves(id)
-      const orig = await repo.registerBySourceUrl(origAttrs)
+      const orig = await repo.registerBySourceUrl(sourceUrl, origAttrs)
       const origFound = await model.find({})
-      const updated = await repo.registerBySourceUrl(updatedAttrs)
+      const updated = await repo.registerBySourceUrl(sourceUrl, updatedAttrs)
       const updatedFound = await model.find({})
 
       expect(_.omit(orig, 'contentTimestamp')).to.deep.equal({ id, ...origAttrs })
@@ -166,7 +163,6 @@ describe('static icon mongoose repository', function() {
 
       const sourceUrl = new URL('mage:///test/replace.png')
       const origAttrs: StaticIconStub = {
-        sourceUrl,
         imageType: 'raster',
         sizeBytes: 1000,
         sizePixels: { width: 120, height: 120 },
@@ -175,7 +171,6 @@ describe('static icon mongoose repository', function() {
         tags: [],
       }
       const updatedAttrs: StaticIconStub = {
-        sourceUrl,
         imageType: 'vector',
         sizeBytes: 1100,
         sizePixels: { width: 220, height: 220 },
@@ -188,9 +183,9 @@ describe('static icon mongoose repository', function() {
       }
       const id = uniqid()
       idFactory.nextId().resolves(id)
-      const orig = await repo.registerBySourceUrl(origAttrs)
+      const orig = await repo.registerBySourceUrl(sourceUrl, origAttrs)
       const origFound = await model.find({})
-      const updated = await repo.registerBySourceUrl(updatedAttrs)
+      const updated = await repo.registerBySourceUrl(sourceUrl, updatedAttrs)
       const updatedFound = await model.find({})
 
       expect(_.omit(orig, 'contentTimestamp')).to.deep.equal({ id, ...origAttrs })
@@ -204,8 +199,8 @@ describe('static icon mongoose repository', function() {
 
     it('does not update the icon properties when the content hash did not change', async function() {
 
+      const sourceUrl = new URL('test:///icons/nochange.png')
       const stub: StaticIconStub = {
-        sourceUrl: new URL('test:///icons/nochange.png'),
         contentHash: 'nochange',
         imageType: 'raster',
         mediaType: 'image/png',
@@ -214,7 +209,6 @@ describe('static icon mongoose repository', function() {
         tags: []
       }
       const sameHashStub: StaticIconStub = {
-        sourceUrl: stub.sourceUrl,
         contentHash: stub.contentHash,
         imageType: 'vector',
         mediaType: 'image/svg+xml',
@@ -227,12 +221,12 @@ describe('static icon mongoose repository', function() {
       }
       const id = uniqid()
       idFactory.nextId().resolves(id)
-      const registered = await repo.registerBySourceUrl(stub)
+      const registered = await repo.registerBySourceUrl(sourceUrl, stub)
 
       expect(registered).to.deep.include({ id,  ...stub })
       expect(registered.contentTimestamp).to.be.closeTo(Date.now(), 100)
 
-      const sameHashRegistered = await repo.registerBySourceUrl(sameHashStub)
+      const sameHashRegistered = await repo.registerBySourceUrl(sourceUrl, sameHashStub)
 
       expect(sameHashRegistered).to.deep.equal(registered)
     })
@@ -241,9 +235,10 @@ describe('static icon mongoose repository', function() {
   it('enforces unique source url', async function() {
 
     const sourceUrl = new URL('must:///be/unique')
-    const attrs: Required<StaticIconStub> = Object.freeze({
+    const attrs: Required<StaticIconStub> & { sourceUrl: URL } = Object.freeze({
       sourceUrl,
       contentHash: '1',
+      contentTimestamp: new Date(),
       fileName: 'unique.png',
       imageType: 'raster',
       mediaType: 'image/png',

@@ -5,7 +5,7 @@ import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, FeedServiceRepos
 import { ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics, ListFeedServices, PreviewFeed, CreateFeed, ListAllFeeds, FetchFeedContent, GetFeed, UpdateFeed, DeleteFeed, GetFeedService, DeleteFeedService, ListServiceFeeds } from '../../../lib/app.impl/feeds/app.impl.feeds'
 import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError, PermissionDeniedErrorData, KeyPathError } from '../../../lib/app.api/app.api.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
-import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, FeedPreview, FetchFeedContentRequest, FeedExpanded, GetFeedRequest, UpdateFeedRequest, DeleteFeedRequest, CreateFeedServiceRequest, GetFeedServiceRequest, DeleteFeedServiceRequest, ListServiceFeedsRequest } from '../../../lib/app.api/feeds/app.api.feeds'
+import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, FeedPreview, FetchFeedContentRequest, FeedExpanded, GetFeedRequest, UpdateFeedRequest, DeleteFeedRequest, CreateFeedServiceRequest, GetFeedServiceRequest, DeleteFeedServiceRequest, ListServiceFeedsRequest, PreviewFeedRequest, CreateFeedRequest } from '../../../lib/app.api/feeds/app.api.feeds'
 import uniqid from 'uniqid'
 import { AppRequestContext, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeatureCollection } from 'geojson'
@@ -13,6 +13,7 @@ import { JsonObject, JsonSchemaService, JsonValidator } from '../../../lib/entit
 import _ from 'lodash'
 import { MageEventRepository } from '../../../lib/entities/events/entities.events'
 import { URL } from 'url'
+import { StaticIcon, StaticIconRepository } from '../../../lib/entities/icons/entities.icons'
 
 
 function mockServiceType(descriptor: FeedServiceTypeDescriptor): SubstituteOf<RegisteredFeedServiceType> {
@@ -90,7 +91,7 @@ function requestBy<RequestType>(principal: TestPrincipal, params?: RequestType):
   )
 }
 
-describe('feeds use case interactions', function() {
+describe.only('feeds use case interactions', function() {
 
   let app: TestApp
   let someServiceTypes: SubstituteOf<RegisteredFeedServiceType>[]
@@ -1221,6 +1222,39 @@ describe('feeds use case interactions', function() {
           expect(app.feedRepo.db).to.be.empty
         })
 
+        it('translates the topic icon url', async function() {
+
+          const iconUrl = new URL('test:///translate/this/for/feed')
+          const topic = {
+            ...topics[0],
+            icon: iconUrl
+          }
+          serviceConn.fetchAvailableTopics().resolves([ topic ])
+          const registeredIcon: StaticIcon = {
+            id: uniqid(),
+            sourceUrl: iconUrl,
+            registered: new Date(),
+            resolved: null,
+            tags: [],
+            getContent() {
+              throw new Error('do not call')
+            }
+          }
+          app.iconRepo.registerBySourceUrl(iconUrl).resolves(registeredIcon)
+          const feed = {
+            service: service.id,
+            topic: topic.id
+          }
+          const req: PreviewFeedRequest = requestBy(adminPrincipal, { feed })
+          const res = await app.previewFeed(req)
+
+          expect(res.error).to.be.null
+          const preview = res.success!
+          expect(preview.feed.icon).to.equal('tbd')
+
+          expect.fail('todo')
+        })
+
         describe('behaviors shared with creating a feed', function() {
           testSharedBehaviorFor.call(this.ctx, 'previewFeed')
         })
@@ -1284,6 +1318,34 @@ describe('feeds use case interactions', function() {
           expect(createRes.success).to.be.an('object')
           expect(createRes.success).to.deep.include(feed)
           expect(app.feedRepo.db.get(createRes.success!.id)).to.deep.include(feed)
+        })
+
+        it('registers the topic icon url', async function() {
+
+          const topic: FeedTopic = {
+            ...topics[0],
+            icon: new URL('test:///external/icon.png')
+          }
+          const feed: FeedMinimalAttrs = {
+            service: service.id,
+            topic: topics[1].id,
+            title: 'Save From Preview',
+            constantParams: {
+              limit: 50
+            },
+            itemsHaveIdentity: true,
+            itemsHaveSpatialDimension: true
+          }
+          serviceConn.fetchAvailableTopics().resolves([ topic ])
+          const req: CreateFeedRequest = requestBy(adminPrincipal, {
+            feed: {
+              service: service.id,
+              topic: topic.id
+            }
+          })
+          const res = await app.createFeed(req)
+
+          expect.fail('finish me')
         })
 
         describe('behaviors shared with previewing a feed', function() {
@@ -1423,7 +1485,7 @@ describe('feeds use case interactions', function() {
           someServiceTypes[1].received(1).redactServiceConfig(Arg.deepEquals(services[0].service.config))
         })
 
-        it('checks permission for fetting the feed', async function() {
+        it('checks permission for getting the feed', async function() {
 
           app.permissionService.revokeListFeeds(adminPrincipal.user)
           const req: GetFeedRequest = requestBy(adminPrincipal, { feed: feeds[0].id })
@@ -1880,6 +1942,7 @@ class TestApp {
   readonly permissionService = new TestPermissionService()
   readonly jsonSchemaService = Sub.for<JsonSchemaService>()
   readonly eventRepo = Sub.for<MageEventRepository>()
+  readonly iconRepo = Sub.for<StaticIconRepository>()
 
   readonly listServiceTypes = ListFeedServiceTypes(this.permissionService, this.serviceTypeRepo)
   readonly previewTopics = PreviewTopics(this.permissionService, this.serviceTypeRepo)
