@@ -15,25 +15,26 @@ export const StaticIconSchema = new mongoose.Schema(
   {
     _id: { type: String, required: true },
     sourceUrl: { type: String, required: true, unique: true },
-    contentHash: { type: String, required: true },
-    contentTimestamp: { type: Number, required: true, default: Date.now },
-    imageType: { type: String, required: true },
-    mediaType: { type: String, required: true },
+    registeredTimestamp: { type: Number, required: true },
+    resolvedTimestamp: { type: Number, required: false },
+    contentHash: { type: String, required: false },
+    contentTimestamp: { type: Number, required: false },
+    imageType: { type: String, required: false },
+    mediaType: { type: String, required: false },
     sizePixels: {
-      width: { type: Number, required: true },
-      height: { type: Number, required: true }
+      type: {
+        width: { type: Number, required: true },
+        height: { type: Number, required: true }
+      },
+      required: false
     },
-    sizeBytes: { type: Number, required: true },
-    tags: [{ type: String, required: true }],
+    sizeBytes: { type: Number, required: false },
+    tags: [ String ],
     title: { type: String, required: false },
     summary: { type: String, required: false },
     fileName: { type: String, required: false },
   },
   {
-    timestamps: {
-      createdAt: false,
-      updatedAt: 'contentTimestamp'
-    },
     toJSON: {
       getters: true,
       versionKey: false,
@@ -53,16 +54,17 @@ export class MongooseStaticIconRepository extends BaseMongooseRepository<StaticI
     super(model)
   }
 
-  async create(stub: StaticIconStub & Pick<StaticIcon, 'sourceUrl'>): Promise<StaticIcon> {
+  async create(attrs: StaticIconStub & { sourceUrl: URL }): Promise<StaticIcon> {
     const _id = await this.idFactory.nextId()
-    const withId = Object.assign({ ...stub }, { _id })
+    const withId = { _id, registeredTimestamp: Date.now(), ...attrs }
     return super.create(withId)
   }
 
-  async registerBySourceUrl(sourceUrl: URL, attrs?: StaticIconStub): Promise<StaticIcon> {
-    const validKeys: { [valid in keyof StaticIconStub]: true } = {
-      contentHash: true,
-      contentTimestamp: true,
+  async registerBySourceUrl(stub: StaticIconStub | URL): Promise<StaticIcon> {
+    const writableKeys: { [valid in keyof StaticIconStub]: boolean } = {
+      sourceUrl: false,
+      contentHash: false,
+      contentTimestamp: false,
       fileName: true,
       imageType: true,
       mediaType: true,
@@ -72,30 +74,36 @@ export class MongooseStaticIconRepository extends BaseMongooseRepository<StaticI
       tags: true,
       title: true
     }
-    const stub: StaticIconStub = attrs || { tags: [] }
-    let registered = await this.findDocBySourceUrl(sourceUrl)
-    if (registered && registered.contentHash !== stub.contentHash) {
+    if (!('sourceUrl' in stub)) {
+      stub = { sourceUrl: stub }
+    }
+    let registered = await this.findDocBySourceUrl(stub.sourceUrl)
+    if (registered && typeof stub.contentHash === 'string' && registered.contentHash !== stub.contentHash) {
       const update: Partial<StaticIcon> & mongodb.UpdateQuery<StaticIcon> = {}
       const $unset: { [key in keyof StaticIcon]?: true } = {}
-      for (const key of Object.keys(validKeys) as (keyof StaticIconStub)[]) {
-        if (key in stub && stub[key]) {
+      for (const key of Object.keys(writableKeys) as (keyof StaticIconStub)[]) {
+        if (key in stub && stub[key] && writableKeys[key]) {
           update[key] = stub[key] as any
         }
-        else {
+        else if (writableKeys[key]) {
           $unset[key] = true
         }
       }
       if (Object.keys($unset).length > 0) {
         update.$unset = $unset as mongodb.UpdateQuery<StaticIcon>['$unset']
       }
-      if (!update.contentTimestamp) {
-        update.contentTimestamp = new Date()
+      update.contentHash = stub.contentHash
+      update.contentTimestamp = Date.now()
+      if (stub.contentTimestamp) {
+        if (!registered.contentTimestamp || stub.contentTimestamp > Number(registered.contentTimestamp)) {
+          update.contentTimestamp = stub.contentTimestamp
+        }
       }
       registered = await this.model.findByIdAndUpdate(registered.id, update, { new: true })
     }
     else if (!registered) {
       const _id = await this.idFactory.nextId()
-      registered = await this.model.create({ _id, ...stub })
+      registered = await this.model.create({ _id, registeredTimestamp: Date.now(), ...stub })
     }
     return registered?.toJSON()
   }

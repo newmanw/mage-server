@@ -10,6 +10,7 @@ export async function loadIconsHooks(pluginModuleName: string, repo: StaticIconR
   await Promise.all(pluginIcons.map(pluginIcon => {
     const sourceUrl = new PluginResourceUrl(pluginModuleName, pluginIcon.pluginRelativePath)
     const iconInfo: StaticIconStub = {
+      sourceUrl,
       imageType: pluginIcon.imageType,
       mediaType: pluginIcon.mediaType,
       sizePixels: pluginIcon.sizePixels,
@@ -21,6 +22,6 @@ export async function loadIconsHooks(pluginModuleName: string, repo: StaticIconR
       title: pluginIcon.title,
       summary: pluginIcon.summary,
     }
-    return repo.registerBySourceUrl(sourceUrl, iconInfo)
+    return repo.registerBySourceUrl(iconInfo)
   }))
 }

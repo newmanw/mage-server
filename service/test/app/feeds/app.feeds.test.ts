@@ -91,7 +91,7 @@ function requestBy<RequestType>(principal: TestPrincipal, params?: RequestType):
   )
 }
 
-describe.only('feeds use case interactions', function() {
+describe('feeds use case interactions', function() {
 
   let app: TestApp
   let someServiceTypes: SubstituteOf<RegisteredFeedServiceType>[]
@@ -1233,12 +1233,9 @@ describe.only('feeds use case interactions', function() {
           const registeredIcon: StaticIcon = {
             id: uniqid(),
             sourceUrl: iconUrl,
-            registered: new Date(),
-            resolved: null,
-            tags: [],
-            getContent() {
-              throw new Error('do not call')
-            }
+            registeredTimestamp: Date.now(),
+            resolvedTimestamp: Date.now(),
+            tags: []
           }
           app.iconRepo.registerBySourceUrl(iconUrl).resolves(registeredIcon)
           const feed = {

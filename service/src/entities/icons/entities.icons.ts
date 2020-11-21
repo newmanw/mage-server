@@ -22,7 +22,7 @@ export type PluginStaticIcon = Required<StaticIconStub> & {
   pluginRelativePath: string
 }
 
-export type StaticIconStub = Omit<StaticIcon, 'sourceUrl' | 'id' | 'registered' | 'resolved' | 'getContent'>
+export type StaticIconStub = Omit<StaticIcon, 'id' | 'registeredTimestamp' | 'resolvedTimestamp'>
 
 export interface ImageSize {
   width: number,
@@ -44,8 +44,8 @@ export interface StaticIcon {
    */
   sourceUrl: URL
   id: StaticIconId
-  registered: Date
-  resolved: Date | null
+  registeredTimestamp: number
+  resolvedTimestamp?: number
   imageType?: 'raster' | 'vector'
   /**
    * The icons's media type is a standard [IANA media/MIME](https://www.iana.org/assignments/media-types/media-types.xhtml)
@@ -58,7 +58,7 @@ export interface StaticIcon {
   sizePixels?: ImageSize
   sizeBytes?: number
   contentHash?: string
-  contentTimestamp?: Date
+  contentTimestamp?: number
   title?: string
   summary?: string
   /**
@@ -66,8 +66,7 @@ export interface StaticIcon {
    * the default file name provided to download the icon.
    */
   fileName?: string
-  tags: string[]
-  getContent(): Promise<NodeJS.ReadableStream>
+  tags?: string[]
 }
 
 const iconIsResolved = (icon: StaticIcon): boolean => {
@@ -79,7 +78,7 @@ export const UnregisteredStaticIcon = Symbol()
 export type StaticIconId = string | typeof UnregisteredStaticIcon
 
 export interface StaticIconRepository {
-  registerBySourceUrl(sourceUrl: URL, attrs?: Omit<StaticIconStub, 'sourceUrl'>): Promise<StaticIcon>
+  registerBySourceUrl(stub: StaticIconStub | URL): Promise<StaticIcon>
   findById(id: StaticIconId): Promise<StaticIcon | null>
   saveContent(id: StaticIconId, content: NodeJS.ReadableStream): Promise<boolean>
   loadContent(id: StaticIconId): Promise<NodeJS.ReadableStream | null>
