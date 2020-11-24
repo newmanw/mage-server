@@ -61,47 +61,20 @@ export class MongooseStaticIconRepository extends BaseMongooseRepository<StaticI
   }
 
   async registerBySourceUrl(stub: StaticIconStub | URL): Promise<StaticIcon> {
-    const writableKeys: { [valid in keyof StaticIconStub]: boolean } = {
-      sourceUrl: false,
-      contentHash: false,
-      contentTimestamp: false,
-      fileName: true,
-      imageType: true,
-      mediaType: true,
-      sizeBytes: true,
-      sizePixels: true,
-      summary: true,
-      tags: true,
-      title: true
-    }
     if (!('sourceUrl' in stub)) {
       stub = { sourceUrl: stub }
     }
-    let registered = await this.findDocBySourceUrl(stub.sourceUrl)
-    if (registered && typeof stub.contentHash === 'string' && registered.contentHash !== stub.contentHash) {
-      const update: Partial<StaticIcon> & mongodb.UpdateQuery<StaticIcon> = {}
-      const $unset: { [key in keyof StaticIcon]?: true } = {}
-      for (const key of Object.keys(writableKeys) as (keyof StaticIconStub)[]) {
-        if (key in stub && stub[key] && writableKeys[key]) {
-          update[key] = stub[key] as any
-        }
-        else if (writableKeys[key]) {
-          $unset[key] = true
-        }
-      }
-      if (Object.keys($unset).length > 0) {
-        update.$unset = $unset as mongodb.UpdateQuery<StaticIcon>['$unset']
-      }
-      update.contentHash = stub.contentHash
-      update.contentTimestamp = Date.now()
-      if (stub.contentTimestamp) {
-        if (!registered.contentTimestamp || stub.contentTimestamp > Number(registered.contentTimestamp)) {
-          update.contentTimestamp = stub.contentTimestamp
-        }
-      }
-      registered = await this.model.findByIdAndUpdate(registered.id, update, { new: true })
+    else {
+      stub = { ...stub }
     }
-    else if (!registered) {
+    if (typeof stub.contentHash === 'string' && typeof stub.contentTimestamp !== 'number') {
+      stub.contentTimestamp = Date.now()
+    }
+    let registered = await this.findDocBySourceUrl(stub.sourceUrl)
+    if (registered) {
+      registered = await updateRegisteredIconIfChanged.call(this, registered, stub)
+    }
+    else {
       const _id = await this.idFactory.nextId()
       registered = await this.model.create({ _id, registeredTimestamp: Date.now(), ...stub })
     }
@@ -123,4 +96,51 @@ export class MongooseStaticIconRepository extends BaseMongooseRepository<StaticI
   private async findDocBySourceUrl(url: URL): Promise<StaticIconDocument | null> {
     return await this.model.findOne({ sourceUrl: url.toString() })
   }
+}
+
+async function updateRegisteredIconIfChanged(this: MongooseStaticIconRepository, registered: StaticIconDocument, stub: StaticIconStub): Promise<StaticIconDocument> {
+  /*
+  TODO: some of this logic could potentially be captured as an entity layer
+  function, such as which properties a client is allowed to update when
+  registering icon properties.  obviously the bit that builds the $unset
+  operator is Mongo-specific.
+  */
+  if (stub.contentHash === registered.contentHash || typeof stub.contentHash !== 'string') {
+    return registered
+  }
+  const writableKeys: { [valid in keyof StaticIconStub]: boolean } = {
+    sourceUrl: false,
+    contentHash: false,
+    contentTimestamp: false,
+    fileName: true,
+    imageType: true,
+    mediaType: true,
+    sizeBytes: true,
+    sizePixels: true,
+    summary: true,
+    tags: true,
+    title: true
+  }
+  const update: Partial<StaticIcon> & mongodb.UpdateQuery<StaticIcon> = {}
+  const $unset: { [key in keyof StaticIcon]?: true } = {}
+  for (const key of Object.keys(writableKeys) as (keyof StaticIconStub)[]) {
+    if (key in stub && stub[key] && writableKeys[key]) {
+      update[key] = stub[key] as any
+    }
+    else if (writableKeys[key]) {
+      $unset[key] = true
+    }
+  }
+  if (Object.keys($unset).length > 0) {
+    update.$unset = $unset as mongodb.UpdateQuery<StaticIcon>['$unset']
+  }
+  update.contentHash = stub.contentHash
+  update.contentTimestamp = Date.now()
+  if (stub.contentTimestamp) {
+    if (!registered.contentTimestamp || stub.contentTimestamp > Number(registered.contentTimestamp)) {
+      update.contentTimestamp = stub.contentTimestamp
+    }
+  }
+  const updated = await this.model.findByIdAndUpdate(registered.id, update, { new: true })
+  return updated!
 }
