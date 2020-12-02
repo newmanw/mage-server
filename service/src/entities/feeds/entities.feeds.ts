@@ -4,6 +4,7 @@ import { FeatureCollection } from 'geojson'
 import { JSONSchema4 } from 'json-schema'
 import { URL } from 'url'
 import { StaticIconId } from '../icons/entities.icons'
+import { create } from 'lodash'
 
 interface LoadFeedServiceTypes {
   (): Promise<FeedServiceType[]>
@@ -200,12 +201,12 @@ export interface FeedTopicContent {
 export type FeedId = string
 
 export interface Feed {
-  readonly id: FeedId
-  readonly service: FeedServiceId
-  readonly topic: FeedTopicId
-  readonly title: string
-  readonly summary?: string
-  readonly icon?: StaticIconId
+  id: FeedId
+  service: FeedServiceId
+  topic: FeedTopicId
+  title: string
+  summary?: string
+  icon?: StaticIconId
   /**
    * The constant paramters are a subset of a topic's parameters that an
    * administrative user defines and that MAGE will apply to every fetch
@@ -213,7 +214,7 @@ export interface Feed {
    * might be `apiKey`.  MAGE does not expose constant parameters to the end-
    * user consumer of the feed.
    */
-  readonly constantParams?: FeedContentParams
+  constantParams?: FeedContentParams
   /**
    * The variable parameters schema of a feed is a schema an administrative user
    * can define to advertise the parameters feed consumers can pass when
@@ -221,7 +222,7 @@ export interface Feed {
    * source  {@linkcode FeedTopic} or could be a more restrictive subset of the
    * topic schema.
    */
-  readonly variableParamsSchema?: JSONSchema4
+  variableParamsSchema?: JSONSchema4
   /**
    * A feed's update frequency is similar to the like-named property on its
    * underlying topic.  While a topic's update frequency would come from the
@@ -231,25 +232,25 @@ export interface Feed {
    * plugins that are too generic to know what an appropriate update interval
    * would be for particular service's topics.
    */
-  readonly updateFrequencySeconds?: number
+  updateFrequencySeconds?: number
   /**
    * This flag is similar to the like-named property on its source
    * {@linkcode FeedTopic}, but as with {@linkcode Feed.updateFrequency}, allows
    * configuration by an administrative user.
    */
-  readonly itemsHaveIdentity: boolean
-  readonly itemsHaveSpatialDimension: boolean
-  readonly itemTemporalProperty?: string
+  itemsHaveIdentity: boolean
+  itemsHaveSpatialDimension: boolean
+  itemTemporalProperty?: string
   /**
    * A feed that does not have a primary property (implying there is no
    * secondary as well) covers the case that a data set might provide only
    * spatial geometries, and the feed/topic context provides the implicit
    * meaning of the geometry data.
    */
-  readonly itemPrimaryProperty?: string
-  readonly itemSecondaryProperty?: string
-  readonly mapStyle?: MapStyle
-  readonly itemPropertiesSchema?: JSONSchema4
+  itemPrimaryProperty?: string
+  itemSecondaryProperty?: string
+  mapStyle?: ResolvedMapStyle
+  itemPropertiesSchema?: JSONSchema4
 }
 
 /**
@@ -262,7 +263,11 @@ export interface MapStyle {
   strokeWidth?: number
   fill?: HexRgb
   fillOpacity?: number
-  iconUrl?: URL
+  icon?: URL
+}
+
+export type ResolvedMapStyle = Omit<MapStyle, 'icon'> & {
+  icon?: StaticIconId
 }
 
 /**
@@ -270,7 +275,7 @@ export interface MapStyle {
  */
 export type HexRgb = string
 
-export type FeedCreateAttrs = Omit<Feed, 'id'> & { id?: FeedId }
+export type FeedCreateAttrs = Omit<Feed, 'id'> & Partial<Pick<Feed, 'id'>>
 
 export interface FeedRepository {
   create(attrs: FeedCreateAttrs): Promise<Feed>
@@ -283,50 +288,66 @@ export interface FeedRepository {
   removeByServiceId(serviceId: FeedServiceId): Promise<Feed[]>
 }
 
-type FeedCreateExcplicitNullKeys = 'itemTemporalProperty' | 'itemPrimaryProperty' | 'itemSecondaryProperty' | 'updateFrequencySeconds' | 'icon' | 'mapStyle'
+type FeedOverrideTopicNullableKeys = 'itemTemporalProperty' | 'itemPrimaryProperty' | 'itemSecondaryProperty' | 'updateFrequencySeconds' | 'icon' | 'mapStyle'
 
-export type FeedMinimalAttrs = Partial<Omit<Feed, 'id' | FeedCreateExcplicitNullKeys>> & Pick<Feed, 'topic' | 'service'> & {
-  readonly [nullable in keyof Pick<Feed, FeedCreateExcplicitNullKeys>]: Feed[nullable] | null
-}
+/**
+ * Keys that are not present or hae an `undefined` value will receive the value
+ * from the topic's corresponding key. Keys with a `null` value (where allowed)
+ * explicitly instruct that the resulting feed will not receive the
+ * correspondingvalues from the topic.
+ */
+export type FeedCreateMinimal = Partial<Omit<Feed, 'id' | FeedOverrideTopicNullableKeys>> & Pick<Feed, 'topic' | 'service'> &
+  {
+    [nullable in keyof Pick<Feed, FeedOverrideTopicNullableKeys>]: Feed[nullable] | null
+  }
 
-export type FeedUpdateAttrs = Omit<FeedMinimalAttrs, 'service' | 'topic'> & Pick<Feed, 'id'>
+export type FeedUpdateAttrs = Omit<FeedCreateMinimal, 'service' | 'topic'> & Pick<Feed, 'id'>
 
-export const normalizeFeedMinimalAttrs = (topic: FeedTopic, feedAttrs: FeedMinimalAttrs): FeedCreateAttrs => {
-  const createAttrs: { -readonly [mutable in keyof FeedCreateAttrs]: FeedCreateAttrs[mutable] } = {
-    service: feedAttrs.service,
+export const FeedCreateAttrs = (topic: FeedTopic, feedMinimal: Readonly<FeedCreateMinimal>, icons?: { [url: string]: StaticIconId }): FeedCreateAttrs => {
+  type NonNullableCreateAttrs = Omit<FeedCreateAttrs, FeedOverrideTopicNullableKeys>
+  const nonNullable: NonNullableCreateAttrs = {
+    service: feedMinimal.service,
     topic: topic.id,
-    title: feedAttrs.title || topic.title,
-    summary: feedAttrs.summary || topic.summary,
-    constantParams: feedAttrs.constantParams,
-    variableParamsSchema: feedAttrs.variableParamsSchema,
-    itemsHaveIdentity: feedAttrs.itemsHaveIdentity === undefined ? topic.itemsHaveIdentity || false : feedAttrs.itemsHaveIdentity,
-    itemsHaveSpatialDimension: feedAttrs.itemsHaveSpatialDimension === undefined ? topic.itemsHaveSpatialDimension || false : feedAttrs.itemsHaveSpatialDimension,
-    itemPropertiesSchema: feedAttrs.itemPropertiesSchema || topic.itemPropertiesSchema,
+    title: feedMinimal.title || topic.title,
+    summary: feedMinimal.summary || topic.summary,
+    constantParams: feedMinimal.constantParams,
+    variableParamsSchema: feedMinimal.variableParamsSchema,
+    itemsHaveIdentity: feedMinimal.itemsHaveIdentity === undefined ? topic.itemsHaveIdentity || false : feedMinimal.itemsHaveIdentity,
+    itemsHaveSpatialDimension: feedMinimal.itemsHaveSpatialDimension === undefined ? topic.itemsHaveSpatialDimension || false : feedMinimal.itemsHaveSpatialDimension,
+    itemPropertiesSchema: feedMinimal.itemPropertiesSchema || topic.itemPropertiesSchema,
   }
-  if (!createAttrs.constantParams) {
-    delete createAttrs.constantParams
+  type IconsOmittedNullableKeys = Exclude<FeedOverrideTopicNullableKeys, 'icon' | 'mapStyle'>
+  const nullable: { [key in IconsOmittedNullableKeys]: FeedCreateAttrs[key] } = {
+    itemPrimaryProperty: feedMinimal.itemPrimaryProperty === null ? undefined : feedMinimal.itemPrimaryProperty || topic.itemPrimaryProperty,
+    itemSecondaryProperty: feedMinimal.itemSecondaryProperty === null ? undefined : feedMinimal.itemSecondaryProperty || topic.itemSecondaryProperty,
+    itemTemporalProperty: feedMinimal.itemTemporalProperty === null ? undefined : feedMinimal.itemTemporalProperty || topic.itemTemporalProperty,
+    updateFrequencySeconds: feedMinimal.updateFrequencySeconds === null ? undefined : feedMinimal.updateFrequencySeconds || topic.updateFrequencySeconds,
   }
-  if (!createAttrs.variableParamsSchema) {
-    delete createAttrs.variableParamsSchema
+  icons = icons || {}
+  const resolvedIcons = {
+    icon: feedMinimal.icon === null ? undefined : icons[String(topic.icon)]
+  } as Pick<Feed, 'icon' | 'mapStyle'>
+  if (feedMinimal.mapStyle) {
+    resolvedIcons.mapStyle = { ...feedMinimal.mapStyle }
   }
-  if (!createAttrs.itemPropertiesSchema) {
-    delete createAttrs.itemPropertiesSchema
+  else if (feedMinimal.mapStyle !== null && topic.mapStyle) {
+    const { icon, ...other } = topic.mapStyle
+    const resolvedStyle = other as ResolvedMapStyle
+    const resolvedIcon = icons[String(icon)]
+    if (resolvedIcon) {
+      resolvedStyle.icon = resolvedIcon
+    }
+    resolvedIcons.mapStyle = resolvedStyle
   }
-  const explicitNullKeys: { [key in FeedCreateExcplicitNullKeys]: true } = {
-    itemPrimaryProperty: true,
-    itemSecondaryProperty: true,
-    itemTemporalProperty: true,
-    updateFrequencySeconds: true,
-    icon: true,
-    mapStyle: true
+  const createAttrs = {
+    ...nonNullable,
+    ...nullable,
+    ...resolvedIcons
   }
-  for (const explicitNullKey in explicitNullKeys) {
-    const override = (feedAttrs as any)[explicitNullKey]
-    const topicDefault = (topic as any)[explicitNullKey]
-    if (override !== null) {
-      if (topicDefault) {
-        (createAttrs as any)[explicitNullKey] = override || (topic as any)[explicitNullKey]
-      }
+  for (const key in createAttrs) {
+    const attr = key as keyof typeof createAttrs
+    if (typeof createAttrs[attr] === 'undefined') {
+      delete createAttrs[attr]
     }
   }
   return createAttrs

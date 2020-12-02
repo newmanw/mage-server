@@ -1,5 +1,5 @@
 import { AppRequest, AppResponse, Descriptor, AppRequestContext, KnownErrorsOf } from '../app.api.global'
-import { FeedService, FeedTopic, FeedContent, FeedId, FeedServiceTypeId, FeedServiceId, Feed, FeedServiceType, FeedContentParams, FeedMinimalAttrs, FeedUpdateAttrs, FeedCreateAttrs } from '../../entities/feeds/entities.feeds'
+import { FeedService, FeedTopic, FeedContent, FeedId, FeedServiceTypeId, FeedServiceId, Feed, FeedServiceType, FeedContentParams, FeedCreateMinimal, FeedUpdateAttrs, FeedCreateAttrs } from '../../entities/feeds/entities.feeds'
 import { Json, JsonObject } from '../../entities/entities.json_types'
 import { PermissionDeniedError, EntityNotFoundError, InvalidInputError } from '../app.api.errors'
 
@@ -59,7 +59,7 @@ export interface ListServiceTopics {
 }
 
 export interface CreateFeedRequest extends AppRequest {
-  feed: FeedMinimalAttrs
+  feed: FeedCreateMinimal
 }
 
 export interface PreviewFeedRequest extends CreateFeedRequest {

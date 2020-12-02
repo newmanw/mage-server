@@ -73,9 +73,7 @@ const iconIsResolved = (icon: StaticIcon): boolean => {
   return typeof icon.contentHash === 'string' && typeof icon.contentTimestamp === 'number'
 }
 
-export const UnregisteredStaticIcon = Symbol()
-
-export type StaticIconId = string | typeof UnregisteredStaticIcon
+export type StaticIconId = string
 
 export interface StaticIconRepository {
   registerBySourceUrl(stub: StaticIconStub | URL): Promise<StaticIcon>

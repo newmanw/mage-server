@@ -1,9 +1,10 @@
 import uniqid from 'uniqid'
-import { normalizeFeedMinimalAttrs, FeedTopic, FeedMinimalAttrs } from '../../../lib/entities/feeds/entities.feeds'
+import { FeedCreateAttrs, FeedTopic, FeedCreateMinimal, MapStyle, ResolvedMapStyle } from '../../../lib/entities/feeds/entities.feeds'
 import { expect } from 'chai'
 import { URL } from 'url'
+import { min } from 'lodash'
 
-describe('feed-create attribute factory', function() {
+describe.only('feed-create attribute factory', function() {
 
   it('applies the feed attribute when present', function() {
 
@@ -11,6 +12,7 @@ describe('feed-create attribute factory', function() {
       id: uniqid(),
       title: 'Topic Title',
       summary: 'About the topic',
+      icon: new URL('test:///topic.png'),
       itemsHaveIdentity: true,
       itemsHaveSpatialDimension: true,
       itemPrimaryProperty: 'topicPrimary',
@@ -30,7 +32,7 @@ describe('feed-create attribute factory', function() {
         strokeOpacity: 0.5
       }
     }
-    const feed: Required<FeedMinimalAttrs> = {
+    const minimal: Required<FeedCreateMinimal> & { mapStyle: Required<ResolvedMapStyle> } = {
       service: uniqid(),
       topic: topic.id,
       title: 'Feed Title',
@@ -53,7 +55,11 @@ describe('feed-create attribute factory', function() {
       },
       mapStyle: {
         stroke: 'abcddd',
-        strokeOpacity: 0.4
+        strokeOpacity: 0.4,
+        strokeWidth: 1.5,
+        fill: 'aaa111',
+        fillOpacity: 0.2,
+        icon: uniqid()
       },
       itemPropertiesSchema: {
         type: 'object',
@@ -66,20 +72,22 @@ describe('feed-create attribute factory', function() {
         }
       }
     }
-    const createAttrs = normalizeFeedMinimalAttrs(topic, feed)
+    const icons = { [String(topic.icon)]: minimal.icon! }
+    const createAttrs = FeedCreateAttrs(topic, minimal, icons)
     expect(createAttrs).to.deep.equal({
-      service: feed.service,
+      service: minimal.service,
       topic: topic.id,
-      title: feed.title,
-      summary: feed.summary,
+      title: minimal.title,
+      summary: minimal.summary,
+      icon: minimal.icon,
       itemsHaveIdentity: false,
       itemsHaveSpatialDimension: false,
-      itemTemporalProperty: feed.itemTemporalProperty,
-      updateFrequencySeconds: feed.updateFrequencySeconds,
-      constantParams: feed.constantParams,
-      variableParamsSchema: feed.variableParamsSchema,
-      mapStyle: feed.mapStyle,
-      itemPropertiesSchema: feed.itemPropertiesSchema
+      itemTemporalProperty: minimal.itemTemporalProperty,
+      updateFrequencySeconds: minimal.updateFrequencySeconds,
+      constantParams: minimal.constantParams,
+      variableParamsSchema: minimal.variableParamsSchema,
+      mapStyle: minimal.mapStyle,
+      itemPropertiesSchema: minimal.itemPropertiesSchema
     })
     expect(createAttrs).to.not.have.property('itemPrimaryProperty')
     expect(createAttrs).to.not.have.property('itemSecondaryProperty')
@@ -107,33 +115,91 @@ describe('feed-create attribute factory', function() {
         required: [ 'key' ]
       },
       mapStyle: {
-        iconUrl: new URL('https://icons.net/building.png')
+        icon: new URL('https://icons.net/building.png'),
+        stroke: 'abcabc',
+        strokeOpacity: 0.5
       },
       itemPropertiesSchema: {
         title: 'Topic Properties'
       }
     }
-    const feed: FeedMinimalAttrs = {
+    const icons = {
+      [String(topic.icon)]: uniqid(),
+      [String(topic.mapStyle.icon)]: uniqid()
+    }
+    const minimal: FeedCreateMinimal = {
       service: uniqid(),
       topic: topic.id,
       summary: 'About the feed',
       itemTemporalProperty: null
     }
-    const createAttrs = normalizeFeedMinimalAttrs(topic, feed)
+    const createAttrs = FeedCreateAttrs(topic, minimal, icons)
 
     expect(createAttrs).to.deep.equal({
-      service: feed.service,
+      service: minimal.service,
       topic: topic.id,
       title: topic.title,
-      summary: feed.summary,
+      summary: minimal.summary,
       itemsHaveIdentity: topic.itemsHaveIdentity,
       itemsHaveSpatialDimension: topic.itemsHaveSpatialDimension,
       itemPrimaryProperty: topic.itemPrimaryProperty,
       itemSecondaryProperty: topic.itemSecondaryProperty,
       updateFrequencySeconds: topic.updateFrequencySeconds,
-      mapStyle: topic.mapStyle,
-      itemPropertiesSchema: topic.itemPropertiesSchema
+      mapStyle: {
+        icon: icons[String(topic.mapStyle.icon)],
+        stroke: topic.mapStyle.stroke,
+        strokeOpacity: topic.mapStyle.strokeOpacity
+      },
+      itemPropertiesSchema: topic.itemPropertiesSchema,
+      icon: icons[String(topic.icon)]
     })
-    expect(createAttrs).to.not.have.property('itemTemporalProperty')
+  })
+
+  it('deep copies the map style', function() {
+
+    const topic: Required<FeedTopic> = {
+      id: uniqid(),
+      title: 'Topic Title',
+      summary: 'About the topic',
+      icon: new URL('test:///topic.png'),
+      itemsHaveIdentity: true,
+      itemsHaveSpatialDimension: true,
+      itemPrimaryProperty: 'topicPrimary',
+      itemSecondaryProperty: 'topicSecondary',
+      itemTemporalProperty: 'topicTemporal',
+      updateFrequencySeconds: 3600,
+      paramsSchema: {
+        type: 'object',
+        properties: {
+          limit: { type: 'number' },
+          key: { type: 'string' }
+        },
+        required: [ 'key' ]
+      },
+      mapStyle: {
+        icon: new URL('https://icons.net/building.png'),
+        fill: 'abc123'
+      },
+      itemPropertiesSchema: {
+        title: 'Topic Properties'
+      }
+    }
+    const icons = {
+      [String(topic.mapStyle.icon)]: uniqid()
+    }
+    const minimal: FeedCreateMinimal = {
+      service: uniqid(),
+      topic: topic.id,
+      summary: 'About the feed',
+      itemTemporalProperty: null
+    }
+    const createAttrs = FeedCreateAttrs(topic, minimal, icons)
+
+    expect(topic.mapStyle.icon).to.be.instanceOf(URL)
+    expect(createAttrs.mapStyle).to.deep.equal({
+      icon: icons[String(topic.mapStyle.icon)],
+      fill: topic.mapStyle.fill
+    })
+    expect(createAttrs.mapStyle).to.not.equal(topic.mapStyle)
   })
 })

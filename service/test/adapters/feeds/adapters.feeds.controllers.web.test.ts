@@ -9,7 +9,7 @@ import _, { uniqueId } from 'lodash'
 import { AppResponse, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeedsRoutes, FeedsAppLayer } from '../../../lib/adapters/feeds/adapters.feeds.controllers.web'
 import { CreateFeedServiceRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, CreateFeedRequest, ListServiceTopicsRequest, PreviewFeedRequest, FeedPreview, FeedExpanded, DeleteFeedRequest, ListServiceFeedsRequest, ListFeedServices, GetFeedServiceRequest, FeedServiceExpanded, DeleteFeedServiceRequest } from '../../../lib/app.api/feeds/app.api.feeds'
-import { FeedService, Feed, FeedTopic, FeedMinimalAttrs, MapStyle, FeedUpdateAttrs } from '../../../lib/entities/feeds/entities.feeds'
+import { FeedService, Feed, FeedTopic, FeedCreateMinimal, MapStyle, FeedUpdateAttrs } from '../../../lib/entities/feeds/entities.feeds'
 import { permissionDenied, PermissionDeniedError, InvalidInputError, invalidInput, EntityNotFoundError, entityNotFound } from '../../../lib/app.api/app.api.errors'
 import { WebAppRequestFactory } from '../../../lib/adapters/adapters.controllers.web'
 import { JSONSchema4 } from 'json-schema'
@@ -635,7 +635,7 @@ invalid request
           updateFrequencySeconds: appReqParams.feed.updateFrequencySeconds as number,
           constantParams: appReqParams.feed.constantParams,
           variableParamsSchema: appReqParams.feed.variableParamsSchema,
-          mapStyle: appReqParams.feed.mapStyle as MapStyle,
+          mapStyle: appReqParams.feed.mapStyle!,
           itemPropertiesSchema: appReqParams.feed.itemPropertiesSchema
         },
         content: {
@@ -664,7 +664,7 @@ invalid request
 
       const service = uniqid()
       const topic = uniqid()
-      const minimalFeed: FeedMinimalAttrs = Object.freeze({
+      const minimalFeed: FeedCreateMinimal = Object.freeze({
         service,
         topic,
         title: undefined,
@@ -977,7 +977,7 @@ invalid request
           properties: { updated: { type: 'object' }}
         },
         mapStyle: {
-          iconUrl: new URL('http://static.test/updated.png')
+          icon: uniqid()
         },
         updateFrequencySeconds: 987,
         itemPropertiesSchema: {
@@ -1006,7 +1006,7 @@ invalid request
           properties: { updated: { type: 'object' }}
         },
         mapStyle: {
-          iconUrl: new URL('http://static.test/updated.png')
+          icon: body.mapStyle?.icon
         },
         updateFrequencySeconds: 987,
         service: {

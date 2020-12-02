@@ -248,7 +248,7 @@ function initFeedsAppLayer(repos: Repositories): AppLayer['feeds'] {
   const listServices = feedsImpl.ListFeedServices(permissionService, serviceTypeRepo, serviceRepo)
   const getService = feedsImpl.GetFeedService(permissionService, serviceTypeRepo, serviceRepo)
   const listTopics = feedsImpl.ListServiceTopics(permissionService, serviceTypeRepo, serviceRepo)
-  const previewFeed = feedsImpl.PreviewFeed(permissionService, serviceTypeRepo, serviceRepo, jsonSchemaService)
+  const previewFeed = feedsImpl.PreviewFeed(permissionService, serviceTypeRepo, serviceRepo, jsonSchemaService, repos.icons.staticIconRepo)
   const createFeed = feedsImpl.CreateFeed(permissionService, serviceTypeRepo, serviceRepo, feedRepo, jsonSchemaService)
   const listAllFeeds = feedsImpl.ListAllFeeds(permissionService, feedRepo)
   const listServiceFeeds = feedsImpl.ListServiceFeeds(permissionService, serviceRepo, feedRepo)

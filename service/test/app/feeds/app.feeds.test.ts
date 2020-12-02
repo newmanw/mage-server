@@ -1,7 +1,7 @@
 import { describe, it, beforeEach, Context } from 'mocha'
 import { expect } from 'chai'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
-import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedService, FeedServiceConnection, RegisteredFeedServiceType, Feed, FeedMinimalAttrs, normalizeFeedMinimalAttrs, FeedRepository, FeedId, FeedContent, FeedUpdateAttrs, FeedCreateAttrs } from '../../../lib/entities/feeds/entities.feeds'
+import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedService, FeedServiceConnection, RegisteredFeedServiceType, Feed, FeedCreateMinimal, FeedCreateAttrs, FeedRepository, FeedId, FeedContent, FeedUpdateAttrs } from '../../../lib/entities/feeds/entities.feeds'
 import { ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics, ListFeedServices, PreviewFeed, CreateFeed, ListAllFeeds, FetchFeedContent, GetFeed, UpdateFeed, DeleteFeed, GetFeedService, DeleteFeedService, ListServiceFeeds } from '../../../lib/app.impl/feeds/app.impl.feeds'
 import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError, PermissionDeniedErrorData, KeyPathError } from '../../../lib/app.api/app.api.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
@@ -737,7 +737,7 @@ describe('feeds use case interactions', function() {
       })
     })
 
-    describe('creating a feed', function() {
+    describe.only('creating a feed', function() {
 
       const service: FeedService = Object.freeze({
         id: uniqid(),
@@ -787,7 +787,7 @@ describe('feeds use case interactions', function() {
               config: null
             }
             app.registerServices(service)
-            const feed: FeedMinimalAttrs = {
+            const feed: FeedCreateMinimal = {
               service: service.id,
               topic: topics[0].id
             }
@@ -808,7 +808,7 @@ describe('feeds use case interactions', function() {
         [
           'fails if the service does not exist',
           async function(appOperation: PreviewOrCreateOp) {
-            const feed: FeedMinimalAttrs = {
+            const feed: FeedCreateMinimal = {
               service: 'not there',
               topic: topics[0].id
             }
@@ -829,7 +829,7 @@ describe('feeds use case interactions', function() {
         [
           'fails if the topic does not exist',
           async function(appOperation: PreviewOrCreateOp) {
-            const feed: FeedMinimalAttrs = {
+            const feed: FeedCreateMinimal = {
               service: service.id,
               topic: 'not there'
             }
@@ -850,7 +850,7 @@ describe('feeds use case interactions', function() {
         [
           'checks permission for creating a feed',
           async function(appOperation: PreviewOrCreateOp) {
-            const feed: FeedMinimalAttrs = {
+            const feed: FeedCreateMinimal = {
               service: service.id,
               topic: topics[0].id
             }
@@ -879,7 +879,7 @@ describe('feeds use case interactions', function() {
         [
           'validates the variable params schema',
           async function(appOperation: PreviewOrCreateOp) {
-            const feed: FeedMinimalAttrs = {
+            const feed: FeedCreateMinimal = {
               service: service.id,
               topic: topics[0].id,
               variableParamsSchema: {
@@ -917,7 +917,7 @@ describe('feeds use case interactions', function() {
         [
           'does not validate the variable params schema when the schema is undefined',
           async function(appOperation: PreviewOrCreateOp) {
-            const feed: FeedMinimalAttrs = {
+            const feed: FeedCreateMinimal = {
               service: service.id,
               topic: topics[0].id,
             }
@@ -943,7 +943,7 @@ describe('feeds use case interactions', function() {
 
         it('fetches items and creates feed preview with minimal inputs', async function() {
 
-          const feed: FeedMinimalAttrs = {
+          const feed: FeedCreateMinimal = {
             service: service.id,
             topic: topics[0].id,
           }
@@ -992,7 +992,7 @@ describe('feeds use case interactions', function() {
 
         it('applies request inputs to the feed preview', async function() {
 
-          const feed: FeedMinimalAttrs = {
+          const feed: FeedCreateMinimal = {
             service: service.id,
             topic: topics[1].id,
             title: 'My Tornadoes',
@@ -1039,7 +1039,7 @@ describe('feeds use case interactions', function() {
 
         it('validates the variable params against the variable params schema', async function() {
 
-          const feed: FeedMinimalAttrs = {
+          const feed: FeedCreateMinimal = {
             service: service.id,
             topic: topics[0].id,
             variableParamsSchema: {
@@ -1097,7 +1097,7 @@ describe('feeds use case interactions', function() {
               }
             }
           }
-          const feed: FeedMinimalAttrs = {
+          const feed: FeedCreateMinimal = {
             service: service.id,
             topic: topic.id,
             constantParams: {
@@ -1138,7 +1138,7 @@ describe('feeds use case interactions', function() {
 
         it('does not validate merged params if topic params schema is undefined', async function() {
 
-          const feed: FeedMinimalAttrs = {
+          const feed: FeedCreateMinimal = {
             service: service.id,
             topic: topics[0].id,
             variableParamsSchema: {
@@ -1173,7 +1173,7 @@ describe('feeds use case interactions', function() {
               }
             }
           }, topics[0])
-          const feed: FeedMinimalAttrs = {
+          const feed: FeedCreateMinimal = {
             service: service.id,
             topic: topics[0].id,
             constantParams,
@@ -1222,9 +1222,9 @@ describe('feeds use case interactions', function() {
           expect(app.feedRepo.db).to.be.empty
         })
 
-        it('translates the topic icon url', async function() {
+        it('registers icon for the topic', async function() {
 
-          const iconUrl = new URL('test:///translate/this/for/feed')
+          const iconUrl = new URL('test:///register/for/preview')
           const topic = {
             ...topics[0],
             icon: iconUrl
@@ -1234,7 +1234,6 @@ describe('feeds use case interactions', function() {
             id: uniqid(),
             sourceUrl: iconUrl,
             registeredTimestamp: Date.now(),
-            resolvedTimestamp: Date.now(),
             tags: []
           }
           app.iconRepo.registerBySourceUrl(iconUrl).resolves(registeredIcon)
@@ -1247,9 +1246,80 @@ describe('feeds use case interactions', function() {
 
           expect(res.error).to.be.null
           const preview = res.success!
-          expect(preview.feed.icon).to.equal('tbd')
+          expect(preview.feed.icon).to.equal(registeredIcon.id)
+          app.iconRepo.received(1).registerBySourceUrl(iconUrl)
+          app.iconRepo.received(1).registerBySourceUrl(Arg.any())
+        })
 
-          expect.fail('todo')
+        it('registers the icon for the topic map style', async function() {
+
+          const iconUrl = new URL('test:///register/for/preview')
+          const topic: FeedTopic = {
+            ...topics[0],
+            mapStyle: {
+              icon: iconUrl
+            }
+          }
+          serviceConn.fetchAvailableTopics().resolves([ topic ])
+          const registeredIcon: StaticIcon = {
+            id: uniqid(),
+            sourceUrl: iconUrl,
+            registeredTimestamp: Date.now(),
+            tags: []
+          }
+          app.iconRepo.registerBySourceUrl(iconUrl).resolves(registeredIcon)
+          const feed = {
+            service: service.id,
+            topic: topic.id
+          }
+          const req: PreviewFeedRequest = requestBy(adminPrincipal, { feed })
+          const res = await app.previewFeed(req)
+
+          expect(res.error).to.be.null
+          const preview = res.success!
+          expect(preview.feed.mapStyle?.icon).to.equal(registeredIcon.id)
+          app.iconRepo.received(1).registerBySourceUrl(iconUrl)
+          app.iconRepo.received(1).registerBySourceUrl(Arg.any())
+        })
+
+        it('registers icons for the topic and topic map style', async function() {
+
+          const topicIcon: StaticIcon = {
+            id: uniqid(),
+            sourceUrl: new URL('test:///icons/topic.png'),
+            registeredTimestamp: Date.now(),
+            tags: []
+          }
+          const mapIcon: StaticIcon = {
+            id: uniqid(),
+            sourceUrl: new URL('test:///icons/map_marker.png'),
+            registeredTimestamp: Date.now(),
+            tags: []
+          }
+          const topic: FeedTopic = {
+            ...topics[0],
+            icon: topicIcon.sourceUrl,
+            mapStyle: {
+              icon: mapIcon.sourceUrl
+            }
+          }
+          app.iconRepo.registerBySourceUrl(Arg.is(x => String(x) === String(topicIcon.sourceUrl))).resolves(topicIcon)
+          app.iconRepo.registerBySourceUrl(Arg.is(x => String(x) === String(mapIcon.sourceUrl))).resolves(mapIcon)
+          serviceConn.fetchAvailableTopics().resolves([ topic ])
+          const feed = {
+            service: service.id,
+            topic: topic.id
+          }
+          const req: PreviewFeedRequest = requestBy(adminPrincipal, { feed })
+          const res = await app.previewFeed(req)
+
+          expect(res.error).to.be.null
+          const preview = res.success!
+          expect(preview.feed.icon).to.equal(topicIcon.id)
+          expect(preview.feed.mapStyle?.icon).to.equal(mapIcon.id)
+          app.iconRepo.received(1).registerBySourceUrl(Arg.is(x => String(x) === String(topicIcon.sourceUrl)))
+          app.iconRepo.received(1).registerBySourceUrl(Arg.is(x => String(x) === String(mapIcon.sourceUrl)))
+          app.iconRepo.received(2).registerBySourceUrl(Arg.any())
         })
 
         describe('behaviors shared with creating a feed', function() {
@@ -1261,7 +1331,7 @@ describe('feeds use case interactions', function() {
 
         it('saves the feed with minimal inputs', async function() {
 
-          const feed: FeedMinimalAttrs = {
+          const feed: FeedCreateMinimal = {
             service: service.id,
             topic: topics[1].id
           }
@@ -1288,7 +1358,7 @@ describe('feeds use case interactions', function() {
 
         it('saves a feed from a preview', async function() {
 
-          const feed: FeedMinimalAttrs = {
+          const feed: FeedCreateMinimal = {
             service: service.id,
             topic: topics[1].id,
             title: 'Save From Preview',
@@ -1323,7 +1393,7 @@ describe('feeds use case interactions', function() {
             ...topics[0],
             icon: new URL('test:///external/icon.png')
           }
-          const feed: FeedMinimalAttrs = {
+          const feed: FeedCreateMinimal = {
             service: service.id,
             topic: topics[1].id,
             title: 'Save From Preview',
@@ -1381,7 +1451,7 @@ describe('feeds use case interactions', function() {
                   title: 'Topic 1 Params'
                 },
                 mapStyle: {
-                  iconUrl: new URL('test:///topic1.png')
+                  icon: new URL('test:///topic1.png')
                 },
                 updateFrequencySeconds: 5 * 60,
                 itemPropertiesSchema: {
@@ -1415,7 +1485,7 @@ describe('feeds use case interactions', function() {
                   title: 'Topic 2 Params'
                 },
                 mapStyle: {
-                  iconUrl: new URL('test:///topic2.png')
+                  icon: new URL('test:///topic2.png')
                 },
                 updateFrequencySeconds: 15 * 60,
                 itemPropertiesSchema: {
@@ -1591,7 +1661,7 @@ describe('feeds use case interactions', function() {
           const req: UpdateFeedRequest = requestBy(adminPrincipal, { feed: feedMod })
           const res = await app.updateFeed(req)
 
-          const withTopicAttrs = normalizeFeedMinimalAttrs(services[1].topics[0], { ...feedMod, service: feeds[1].service, topic: feeds[1].topic })
+          const withTopicAttrs = FeedCreateAttrs(services[1].topics[0], { ...feedMod, service: feeds[1].service, topic: feeds[1].topic })
           withTopicAttrs.id = feedMod.id
           const expanded = Object.assign({ ...withTopicAttrs }, { service: services[1].service, topic: services[1].topics[0] })
           const inDb = app.feedRepo.db.get(feeds[1].id)
@@ -1948,7 +2018,7 @@ class TestApp {
   readonly getService = GetFeedService(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
   readonly deleteService = DeleteFeedService(this.permissionService, this.serviceRepo, this.feedRepo, this.eventRepo)
   readonly listTopics = ListServiceTopics(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
-  readonly previewFeed = PreviewFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.jsonSchemaService)
+  readonly previewFeed = PreviewFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.jsonSchemaService, this.iconRepo)
   readonly createFeed = CreateFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo, this.jsonSchemaService)
   readonly listFeeds = ListAllFeeds(this.permissionService, this.feedRepo)
   readonly listServiceFeeds = ListServiceFeeds(this.permissionService, this.serviceRepo, this.feedRepo)
