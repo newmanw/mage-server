@@ -119,7 +119,7 @@ describe('base mongoose repository', async function() {
     expect(found.id).to.not.equal(created[0].id)
   })
 
-  it('updates a record', async function() {
+  it.only('updates a record', async function() {
 
     const seed: Partial<BaseEntity> = {
       derp: 'spor',
@@ -143,8 +143,28 @@ describe('base mongoose repository', async function() {
     expect(afterUpdate.length).to.equal(1)
     expect(beforeUpdate[0]).to.deep.include(seed)
     expect(afterUpdate[0]).to.deep.include(update)
-    expect(beforeUpdate[0]).to.not.deep.include(update)
-    expect(afterUpdate[0]).to.not.deep.include(seed)
+    expect(beforeUpdate[0]).to.not.deep.include(Object.assign({ ...seed }, update))
+  })
+
+  it('can remove properties in an update', async function() {
+    const seed: Partial<BaseEntity> = {
+      derp: 'spor',
+      lerp: 'jeb',
+      squee: true,
+      noo: 39
+    }
+    const existing = await repo.create(seed)
+    const update = {
+      id: existing.id,
+      lerp: undefined
+    }
+    const beforeUpdate = await repo.findAll()
+    const updated = await repo.update(update)
+    const afterUpdate = await repo.findAll()
+
+    expect(beforeUpdate[0]).to.deep.include(seed)
+    expect(afterUpdate[0]).to.not.have.property('lerp')
+    expect(updated).to.deep.equal(afterUpdate[0])
   })
 
   it('deletes a record', async function() {
