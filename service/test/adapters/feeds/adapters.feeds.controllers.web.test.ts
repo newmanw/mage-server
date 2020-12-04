@@ -9,7 +9,7 @@ import _, { uniqueId } from 'lodash'
 import { AppResponse, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeedsRoutes, FeedsAppLayer } from '../../../lib/adapters/feeds/adapters.feeds.controllers.web'
 import { CreateFeedServiceRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, CreateFeedRequest, ListServiceTopicsRequest, PreviewFeedRequest, FeedPreview, FeedExpanded, DeleteFeedRequest, ListServiceFeedsRequest, ListFeedServices, GetFeedServiceRequest, FeedServiceExpanded, DeleteFeedServiceRequest } from '../../../lib/app.api/feeds/app.api.feeds'
-import { FeedService, Feed, FeedTopic, FeedCreateMinimal, MapStyle, FeedUpdateAttrs } from '../../../lib/entities/feeds/entities.feeds'
+import { FeedService, Feed, FeedTopic, FeedCreateMinimal, MapStyle, FeedUpdateAttrs, ResolvedMapStyle } from '../../../lib/entities/feeds/entities.feeds'
 import { permissionDenied, PermissionDeniedError, InvalidInputError, invalidInput, EntityNotFoundError, entityNotFound } from '../../../lib/app.api/app.api.errors'
 import { WebAppRequestFactory } from '../../../lib/adapters/adapters.controllers.web'
 import { JSONSchema4 } from 'json-schema'
@@ -635,7 +635,7 @@ invalid request
           updateFrequencySeconds: appReqParams.feed.updateFrequencySeconds as number,
           constantParams: appReqParams.feed.constantParams,
           variableParamsSchema: appReqParams.feed.variableParamsSchema,
-          mapStyle: appReqParams.feed.mapStyle!,
+          mapStyle: appReqParams.feed.mapStyle as ResolvedMapStyle,
           itemPropertiesSchema: appReqParams.feed.itemPropertiesSchema
         },
         content: {
@@ -1006,7 +1006,7 @@ invalid request
           properties: { updated: { type: 'object' }}
         },
         mapStyle: {
-          icon: body.mapStyle?.icon
+          icon: body.mapStyle?.icon as string
         },
         updateFrequencySeconds: 987,
         service: {

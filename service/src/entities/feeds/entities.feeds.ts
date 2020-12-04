@@ -290,20 +290,33 @@ export interface FeedRepository {
 
 type FeedOverrideTopicNullableKeys = 'itemTemporalProperty' | 'itemPrimaryProperty' | 'itemSecondaryProperty' | 'updateFrequencySeconds' | 'icon' | 'mapStyle'
 
-/**
- * Keys that are not present or hae an `undefined` value will receive the value
- * from the topic's corresponding key. Keys with a `null` value (where allowed)
- * explicitly instruct that the resulting feed will not receive the
- * correspondingvalues from the topic.
- */
 export type FeedCreateMinimal = Partial<Omit<Feed, 'id' | FeedOverrideTopicNullableKeys>> & Pick<Feed, 'topic' | 'service'> &
   {
-    [nullable in keyof Pick<Feed, FeedOverrideTopicNullableKeys>]: Feed[nullable] | null
+    [nullable in keyof Pick<Feed, FeedOverrideTopicNullableKeys>]: FeedCreateUnresolved[nullable] | null
   }
 
-export type FeedUpdateAttrs = Omit<FeedCreateMinimal, 'service' | 'topic'> & Pick<Feed, 'id'>
+export type FeedUpdateAttrs = Omit<FeedCreateMinimal, 'service' | 'topic' | 'id'> & Pick<Feed, 'id'>
 
-export const FeedCreateAttrs = (topic: FeedTopic, feedMinimal: Readonly<FeedCreateMinimal>, icons?: { [url: string]: StaticIconId }): FeedCreateAttrs => {
+export type FeedCreateUnresolved = Omit<FeedCreateAttrs, 'icon' | 'mapStyle'> & {
+  icon?: FeedCreateAttrs['icon'] | FeedTopic['icon'],
+  mapStyle?: FeedCreateAttrs['mapStyle'] | FeedTopic['mapStyle'],
+  unresolvedIcons: URL[]
+}
+
+/**
+ * This is a factory function to build the attributes for creating a feed by
+ * merging a minimal set of client input attributes with those of the source
+ * topic.  Attributes that are not present or have an `undefined` value in the
+ * input will receive the corresponding value from the topic. Keys with a `null`
+ * value (where allowed) explicitly instruct that the resulting feed will not
+ * receive the correspondingvalues from the topic and be absent in the resulting
+ * create attributes.
+ *
+ * The `Unresolved` qualification indicates that the input and result attributes
+ * may contain URLs of icons that are not yet registered with MAGE's icon
+ * repository.  Any unresolved URLs will be in the `unresolvedIcons` array.
+ */
+export const FeedCreateUnresolved = (topic: FeedTopic, feedMinimal: Readonly<FeedCreateMinimal>): FeedCreateUnresolved => {
   type NonNullableCreateAttrs = Omit<FeedCreateAttrs, FeedOverrideTopicNullableKeys>
   const nonNullable: NonNullableCreateAttrs = {
     service: feedMinimal.service,
@@ -316,41 +329,46 @@ export const FeedCreateAttrs = (topic: FeedTopic, feedMinimal: Readonly<FeedCrea
     itemsHaveSpatialDimension: feedMinimal.itemsHaveSpatialDimension === undefined ? topic.itemsHaveSpatialDimension || false : feedMinimal.itemsHaveSpatialDimension,
     itemPropertiesSchema: feedMinimal.itemPropertiesSchema || topic.itemPropertiesSchema,
   }
-  type IconsOmittedNullableKeys = Exclude<FeedOverrideTopicNullableKeys, 'icon' | 'mapStyle'>
-  const nullable: { [key in IconsOmittedNullableKeys]: FeedCreateAttrs[key] } = {
+  const nullable: { [key in FeedOverrideTopicNullableKeys]: FeedCreateUnresolved[key] } = {
     itemPrimaryProperty: feedMinimal.itemPrimaryProperty === null ? undefined : feedMinimal.itemPrimaryProperty || topic.itemPrimaryProperty,
     itemSecondaryProperty: feedMinimal.itemSecondaryProperty === null ? undefined : feedMinimal.itemSecondaryProperty || topic.itemSecondaryProperty,
     itemTemporalProperty: feedMinimal.itemTemporalProperty === null ? undefined : feedMinimal.itemTemporalProperty || topic.itemTemporalProperty,
     updateFrequencySeconds: feedMinimal.updateFrequencySeconds === null ? undefined : feedMinimal.updateFrequencySeconds || topic.updateFrequencySeconds,
+    icon: feedMinimal.icon === null ? undefined : feedMinimal.icon || topic.icon,
+    mapStyle: feedMinimal.mapStyle === null ? undefined :
+      feedMinimal.mapStyle ? { ...feedMinimal.mapStyle } :
+      topic.mapStyle ? { ...topic.mapStyle } : undefined
   }
-  icons = icons || {}
-  const resolvedIcons = {
-    icon: feedMinimal.icon === null ? undefined : icons[String(topic.icon)]
-  } as Pick<Feed, 'icon' | 'mapStyle'>
-  if (feedMinimal.mapStyle) {
-    resolvedIcons.mapStyle = { ...feedMinimal.mapStyle }
-  }
-  else if (feedMinimal.mapStyle !== null && topic.mapStyle) {
-    const { icon, ...other } = topic.mapStyle
-    const resolvedStyle = other as ResolvedMapStyle
-    const resolvedIcon = icons[String(icon)]
-    if (resolvedIcon) {
-      resolvedStyle.icon = resolvedIcon
-    }
-    resolvedIcons.mapStyle = resolvedStyle
-  }
-  const createAttrs = {
+  const unresolvedIcons: URL[] = []
+  nullable.icon instanceof URL && unresolvedIcons.push(nullable.icon)
+  nullable.mapStyle?.icon instanceof URL && unresolvedIcons.push(nullable.mapStyle.icon)
+  const unresolvedAttrs = {
     ...nonNullable,
     ...nullable,
-    ...resolvedIcons
+    unresolvedIcons
   }
-  for (const key in createAttrs) {
-    const attr = key as keyof typeof createAttrs
-    if (typeof createAttrs[attr] === 'undefined') {
-      delete createAttrs[attr]
+  for (const key in unresolvedAttrs) {
+    const attr = key as keyof typeof unresolvedAttrs
+    if (typeof unresolvedAttrs[attr] === 'undefined') {
+      delete unresolvedAttrs[attr]
     }
   }
-  return createAttrs
+  return unresolvedAttrs
+}
+
+export const FeedCreateAttrs = (unresolved: FeedCreateUnresolved, icons: { [iconUrl: string]: StaticIconId }): FeedCreateAttrs => {
+  icons = icons || {}
+  const { unresolvedIcons, ...resolved } = { ...unresolved }
+  if (unresolved.mapStyle) {
+    resolved.mapStyle = { ...unresolved.mapStyle }
+  }
+  if (resolved.icon instanceof URL) {
+    resolved.icon = icons[String(resolved.icon)]
+  }
+  if (resolved.mapStyle?.icon instanceof URL) {
+    resolved.mapStyle.icon = icons[String(resolved.mapStyle.icon)]
+  }
+  return resolved as FeedCreateAttrs
 }
 
 export type FeedContentParams = JsonObject

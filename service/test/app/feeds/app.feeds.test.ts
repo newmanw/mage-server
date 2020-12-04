@@ -1,7 +1,7 @@
 import { describe, it, beforeEach, Context } from 'mocha'
 import { expect } from 'chai'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
-import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedService, FeedServiceConnection, RegisteredFeedServiceType, Feed, FeedCreateMinimal, FeedCreateAttrs, FeedRepository, FeedId, FeedContent, FeedUpdateAttrs } from '../../../lib/entities/feeds/entities.feeds'
+import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedService, FeedServiceConnection, RegisteredFeedServiceType, Feed, FeedCreateMinimal, FeedCreateUnresolved, FeedRepository, FeedId, FeedContent, FeedUpdateAttrs, FeedCreateAttrs } from '../../../lib/entities/feeds/entities.feeds'
 import { ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics, ListFeedServices, PreviewFeed, CreateFeed, ListAllFeeds, FetchFeedContent, GetFeed, UpdateFeed, DeleteFeed, GetFeedService, DeleteFeedService, ListServiceFeeds } from '../../../lib/app.impl/feeds/app.impl.feeds'
 import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError, PermissionDeniedErrorData, KeyPathError } from '../../../lib/app.api/app.api.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
@@ -13,7 +13,7 @@ import { JsonObject, JsonSchemaService, JsonValidator } from '../../../lib/entit
 import _ from 'lodash'
 import { MageEventRepository } from '../../../lib/entities/events/entities.events'
 import { URL } from 'url'
-import { StaticIcon, StaticIconRepository } from '../../../lib/entities/icons/entities.icons'
+import { StaticIcon, StaticIconId, StaticIconRepository } from '../../../lib/entities/icons/entities.icons'
 
 
 function mockServiceType(descriptor: FeedServiceTypeDescriptor): SubstituteOf<RegisteredFeedServiceType> {
@@ -930,6 +930,172 @@ describe('feeds use case interactions', function() {
             expect(res.success).to.be.an('object')
             app.jsonSchemaService.didNotReceive().validateSchema(Arg.all())
           }
+        ],
+        [
+          'registers icon for the topic',
+          async function(appOperation: PreviewOrCreateOp) {
+            const iconUrl = new URL('test:///register/for/preview')
+            const topic = {
+              ...topics[0],
+              icon: iconUrl
+            }
+            serviceConn.fetchAvailableTopics().resolves([ topic ])
+            const registeredIcon: StaticIcon = {
+              id: uniqid(),
+              sourceUrl: iconUrl,
+              registeredTimestamp: Date.now(),
+              tags: []
+            }
+            app.iconRepo.registerBySourceUrl(iconUrl).resolves(registeredIcon)
+            const feed = {
+              service: service.id,
+              topic: topic.id
+            }
+            const req: PreviewFeedRequest = requestBy(adminPrincipal, { feed })
+            const res = await app[appOperation](req)
+
+            expect(res.error).to.be.null
+            let registeredIconId: StaticIconId | undefined
+            if ('feed' in res.success!) {
+              registeredIconId = (res.success as FeedPreview).feed.icon
+            }
+            else {
+              registeredIconId = (res.success as Feed).icon
+            }
+            expect(registeredIconId).to.equal(registeredIcon.id)
+            app.iconRepo.received(1).registerBySourceUrl(iconUrl)
+            app.iconRepo.received(1).registerBySourceUrl(Arg.any())
+          }
+        ],
+        [
+          'registers the icon for the topic map style',
+          async function(appOperation: PreviewOrCreateOp) {
+            const iconUrl = new URL('test:///register/for/preview')
+            const topic: FeedTopic = {
+              ...topics[0],
+              mapStyle: {
+                icon: iconUrl
+              }
+            }
+            serviceConn.fetchAvailableTopics().resolves([ topic ])
+            const registeredIcon: StaticIcon = {
+              id: uniqid(),
+              sourceUrl: iconUrl,
+              registeredTimestamp: Date.now(),
+              tags: []
+            }
+            app.iconRepo.registerBySourceUrl(iconUrl).resolves(registeredIcon)
+            const feed = {
+              service: service.id,
+              topic: topic.id
+            }
+            const req: PreviewFeedRequest = requestBy(adminPrincipal, { feed })
+            const res = await app[appOperation](req)
+
+            expect(res.error).to.be.null
+            let resFeedIconId: StaticIconId | undefined
+            let resMapIconId: StaticIconId | undefined
+            if ('feed' in res.success!) {
+              resFeedIconId = (res.success as FeedPreview).feed.icon
+              resMapIconId = (res.success as FeedPreview).feed.mapStyle?.icon
+            }
+            else {
+              resFeedIconId = (res.success as Feed).icon
+              resMapIconId = (res.success as Feed).mapStyle?.icon
+            }
+            expect(resFeedIconId).to.be.undefined
+            expect(resMapIconId).to.equal(registeredIcon.id)
+            app.iconRepo.received(1).registerBySourceUrl(iconUrl)
+            app.iconRepo.received(1).registerBySourceUrl(Arg.any())
+          }
+        ],
+        [
+          'registers icons for the topic and topic map style',
+          async function(appOperation: PreviewOrCreateOp) {
+            const topicIcon: StaticIcon = {
+              id: uniqid(),
+              sourceUrl: new URL('test:///icons/topic.png'),
+              registeredTimestamp: Date.now(),
+              tags: []
+            }
+            const mapIcon: StaticIcon = {
+              id: uniqid(),
+              sourceUrl: new URL('test:///icons/map_marker.png'),
+              registeredTimestamp: Date.now(),
+              tags: []
+            }
+            const topic: FeedTopic = {
+              ...topics[0],
+              icon: topicIcon.sourceUrl,
+              mapStyle: {
+                icon: mapIcon.sourceUrl
+              }
+            }
+            app.iconRepo.registerBySourceUrl(Arg.is(x => String(x) === String(topicIcon.sourceUrl))).resolves(topicIcon)
+            app.iconRepo.registerBySourceUrl(Arg.is(x => String(x) === String(mapIcon.sourceUrl))).resolves(mapIcon)
+            serviceConn.fetchAvailableTopics().resolves([ topic ])
+            const feed = {
+              service: service.id,
+              topic: topic.id
+            }
+            const req: PreviewFeedRequest = requestBy(adminPrincipal, { feed })
+            const res = await app[appOperation](req)
+
+            expect(res.error).to.be.null
+            let resFeedIconId: StaticIconId | undefined
+            let resMapIconId: StaticIconId | undefined
+            if ('feed' in res.success!) {
+              resFeedIconId = (res.success as FeedPreview).feed.icon
+              resMapIconId = (res.success as FeedPreview).feed.mapStyle?.icon
+            }
+            else {
+              resFeedIconId = (res.success as Feed).icon
+              resMapIconId = (res.success as Feed).mapStyle?.icon
+            }
+            expect(resFeedIconId).to.equal(topicIcon.id)
+            expect(resMapIconId).to.equal(mapIcon.id)
+            app.iconRepo.received(1).registerBySourceUrl(Arg.is(x => String(x) === String(topicIcon.sourceUrl)))
+            app.iconRepo.received(1).registerBySourceUrl(Arg.is(x => String(x) === String(mapIcon.sourceUrl)))
+            app.iconRepo.received(2).registerBySourceUrl(Arg.any())
+          }
+        ],
+        [
+          'does not register any icons if they are not urls',
+          async function(appOperation: PreviewOrCreateOp) {
+            const topic: FeedTopic = {
+              ...topics[0],
+              icon: new URL('test:///icons/topic.png'),
+              mapStyle: {
+                icon: new URL('test:///icons/map_marker.png')
+              }
+            }
+            serviceConn.fetchAvailableTopics().resolves([ topic ])
+            const feed: FeedCreateMinimal = {
+              service: service.id,
+              topic: topic.id,
+              icon: 'feed_icon',
+              mapStyle: {
+                icon: 'map_icon'
+              }
+            }
+            const req: PreviewFeedRequest = requestBy(adminPrincipal, { feed })
+            const res = await app[appOperation](req)
+
+            expect(res.error).to.be.null
+            let resFeedIconId: StaticIconId | undefined
+            let resMapIconId: StaticIconId | undefined
+            if ('feed' in res.success!) {
+              resFeedIconId = (res.success as FeedPreview).feed.icon
+              resMapIconId = (res.success as FeedPreview).feed.mapStyle?.icon
+            }
+            else {
+              resFeedIconId = (res.success as Feed).icon
+              resMapIconId = (res.success as Feed).mapStyle?.icon
+            }
+            expect(resFeedIconId).to.equal('feed_icon')
+            expect(resMapIconId).to.equal('map_icon')
+            app.iconRepo.received(0).registerBySourceUrl(Arg.any())
+          }
         ]
       ]
 
@@ -1222,106 +1388,6 @@ describe('feeds use case interactions', function() {
           expect(app.feedRepo.db).to.be.empty
         })
 
-        it('registers icon for the topic', async function() {
-
-          const iconUrl = new URL('test:///register/for/preview')
-          const topic = {
-            ...topics[0],
-            icon: iconUrl
-          }
-          serviceConn.fetchAvailableTopics().resolves([ topic ])
-          const registeredIcon: StaticIcon = {
-            id: uniqid(),
-            sourceUrl: iconUrl,
-            registeredTimestamp: Date.now(),
-            tags: []
-          }
-          app.iconRepo.registerBySourceUrl(iconUrl).resolves(registeredIcon)
-          const feed = {
-            service: service.id,
-            topic: topic.id
-          }
-          const req: PreviewFeedRequest = requestBy(adminPrincipal, { feed })
-          const res = await app.previewFeed(req)
-
-          expect(res.error).to.be.null
-          const preview = res.success!
-          expect(preview.feed.icon).to.equal(registeredIcon.id)
-          app.iconRepo.received(1).registerBySourceUrl(iconUrl)
-          app.iconRepo.received(1).registerBySourceUrl(Arg.any())
-        })
-
-        it('registers the icon for the topic map style', async function() {
-
-          const iconUrl = new URL('test:///register/for/preview')
-          const topic: FeedTopic = {
-            ...topics[0],
-            mapStyle: {
-              icon: iconUrl
-            }
-          }
-          serviceConn.fetchAvailableTopics().resolves([ topic ])
-          const registeredIcon: StaticIcon = {
-            id: uniqid(),
-            sourceUrl: iconUrl,
-            registeredTimestamp: Date.now(),
-            tags: []
-          }
-          app.iconRepo.registerBySourceUrl(iconUrl).resolves(registeredIcon)
-          const feed = {
-            service: service.id,
-            topic: topic.id
-          }
-          const req: PreviewFeedRequest = requestBy(adminPrincipal, { feed })
-          const res = await app.previewFeed(req)
-
-          expect(res.error).to.be.null
-          const preview = res.success!
-          expect(preview.feed.mapStyle?.icon).to.equal(registeredIcon.id)
-          app.iconRepo.received(1).registerBySourceUrl(iconUrl)
-          app.iconRepo.received(1).registerBySourceUrl(Arg.any())
-        })
-
-        it('registers icons for the topic and topic map style', async function() {
-
-          const topicIcon: StaticIcon = {
-            id: uniqid(),
-            sourceUrl: new URL('test:///icons/topic.png'),
-            registeredTimestamp: Date.now(),
-            tags: []
-          }
-          const mapIcon: StaticIcon = {
-            id: uniqid(),
-            sourceUrl: new URL('test:///icons/map_marker.png'),
-            registeredTimestamp: Date.now(),
-            tags: []
-          }
-          const topic: FeedTopic = {
-            ...topics[0],
-            icon: topicIcon.sourceUrl,
-            mapStyle: {
-              icon: mapIcon.sourceUrl
-            }
-          }
-          app.iconRepo.registerBySourceUrl(Arg.is(x => String(x) === String(topicIcon.sourceUrl))).resolves(topicIcon)
-          app.iconRepo.registerBySourceUrl(Arg.is(x => String(x) === String(mapIcon.sourceUrl))).resolves(mapIcon)
-          serviceConn.fetchAvailableTopics().resolves([ topic ])
-          const feed = {
-            service: service.id,
-            topic: topic.id
-          }
-          const req: PreviewFeedRequest = requestBy(adminPrincipal, { feed })
-          const res = await app.previewFeed(req)
-
-          expect(res.error).to.be.null
-          const preview = res.success!
-          expect(preview.feed.icon).to.equal(topicIcon.id)
-          expect(preview.feed.mapStyle?.icon).to.equal(mapIcon.id)
-          app.iconRepo.received(1).registerBySourceUrl(Arg.is(x => String(x) === String(topicIcon.sourceUrl)))
-          app.iconRepo.received(1).registerBySourceUrl(Arg.is(x => String(x) === String(mapIcon.sourceUrl)))
-          app.iconRepo.received(2).registerBySourceUrl(Arg.any())
-        })
-
         describe('behaviors shared with creating a feed', function() {
           testSharedBehaviorFor.call(this.ctx, 'previewFeed')
         })
@@ -1385,34 +1451,6 @@ describe('feeds use case interactions', function() {
           expect(createRes.success).to.be.an('object')
           expect(createRes.success).to.deep.include(feed)
           expect(app.feedRepo.db.get(createRes.success!.id)).to.deep.include(feed)
-        })
-
-        it('registers the topic icon url', async function() {
-
-          const topic: FeedTopic = {
-            ...topics[0],
-            icon: new URL('test:///external/icon.png')
-          }
-          const feed: FeedCreateMinimal = {
-            service: service.id,
-            topic: topics[1].id,
-            title: 'Save From Preview',
-            constantParams: {
-              limit: 50
-            },
-            itemsHaveIdentity: true,
-            itemsHaveSpatialDimension: true
-          }
-          serviceConn.fetchAvailableTopics().resolves([ topic ])
-          const req: CreateFeedRequest = requestBy(adminPrincipal, {
-            feed: {
-              service: service.id,
-              topic: topic.id
-            }
-          })
-          const res = await app.createFeed(req)
-
-          expect.fail('finish me')
         })
 
         describe('behaviors shared with previewing a feed', function() {
@@ -1661,7 +1699,7 @@ describe('feeds use case interactions', function() {
           const req: UpdateFeedRequest = requestBy(adminPrincipal, { feed: feedMod })
           const res = await app.updateFeed(req)
 
-          const withTopicAttrs = FeedCreateAttrs(services[1].topics[0], { ...feedMod, service: feeds[1].service, topic: feeds[1].topic })
+          const withTopicAttrs = FeedCreateUnresolved(services[1].topics[0], { ...feedMod, service: feeds[1].service, topic: feeds[1].topic })
           withTopicAttrs.id = feedMod.id
           const expanded = Object.assign({ ...withTopicAttrs }, { service: services[1].service, topic: services[1].topics[0] })
           const inDb = app.feedRepo.db.get(feeds[1].id)
@@ -2019,7 +2057,7 @@ class TestApp {
   readonly deleteService = DeleteFeedService(this.permissionService, this.serviceRepo, this.feedRepo, this.eventRepo)
   readonly listTopics = ListServiceTopics(this.permissionService, this.serviceTypeRepo, this.serviceRepo)
   readonly previewFeed = PreviewFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.jsonSchemaService, this.iconRepo)
-  readonly createFeed = CreateFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo, this.jsonSchemaService)
+  readonly createFeed = CreateFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo, this.jsonSchemaService, this.iconRepo)
   readonly listFeeds = ListAllFeeds(this.permissionService, this.feedRepo)
   readonly listServiceFeeds = ListServiceFeeds(this.permissionService, this.serviceRepo, this.feedRepo)
   readonly getFeed = GetFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo)

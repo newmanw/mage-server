@@ -1,5 +1,5 @@
 import uniqid from 'uniqid'
-import { FeedCreateAttrs, FeedTopic, FeedCreateMinimal, MapStyle, ResolvedMapStyle } from '../../../lib/entities/feeds/entities.feeds'
+import { FeedCreateUnresolved, FeedTopic, FeedCreateMinimal, MapStyle, ResolvedMapStyle, FeedCreateAttrs } from '../../../lib/entities/feeds/entities.feeds'
 import { expect } from 'chai'
 import { URL } from 'url'
 import { min } from 'lodash'
@@ -72,8 +72,7 @@ describe.only('feed-create attribute factory', function() {
         }
       }
     }
-    const icons = { [String(topic.icon)]: minimal.icon! }
-    const createAttrs = FeedCreateAttrs(topic, minimal, icons)
+    const createAttrs = FeedCreateUnresolved(topic, minimal)
     expect(createAttrs).to.deep.equal({
       service: minimal.service,
       topic: topic.id,
@@ -87,7 +86,8 @@ describe.only('feed-create attribute factory', function() {
       constantParams: minimal.constantParams,
       variableParamsSchema: minimal.variableParamsSchema,
       mapStyle: minimal.mapStyle,
-      itemPropertiesSchema: minimal.itemPropertiesSchema
+      itemPropertiesSchema: minimal.itemPropertiesSchema,
+      unresolvedIcons: []
     })
     expect(createAttrs).to.not.have.property('itemPrimaryProperty')
     expect(createAttrs).to.not.have.property('itemSecondaryProperty')
@@ -123,17 +123,13 @@ describe.only('feed-create attribute factory', function() {
         title: 'Topic Properties'
       }
     }
-    const icons = {
-      [String(topic.icon)]: uniqid(),
-      [String(topic.mapStyle.icon)]: uniqid()
-    }
     const minimal: FeedCreateMinimal = {
       service: uniqid(),
       topic: topic.id,
       summary: 'About the feed',
       itemTemporalProperty: null
     }
-    const createAttrs = FeedCreateAttrs(topic, minimal, icons)
+    const createAttrs = FeedCreateUnresolved(topic, minimal)
 
     expect(createAttrs).to.deep.equal({
       service: minimal.service,
@@ -146,12 +142,13 @@ describe.only('feed-create attribute factory', function() {
       itemSecondaryProperty: topic.itemSecondaryProperty,
       updateFrequencySeconds: topic.updateFrequencySeconds,
       mapStyle: {
-        icon: icons[String(topic.mapStyle.icon)],
+        icon: topic.mapStyle.icon,
         stroke: topic.mapStyle.stroke,
         strokeOpacity: topic.mapStyle.strokeOpacity
       },
       itemPropertiesSchema: topic.itemPropertiesSchema,
-      icon: icons[String(topic.icon)]
+      icon: topic.icon,
+      unresolvedIcons: [ topic.icon, topic.mapStyle.icon ]
     })
   })
 
@@ -184,22 +181,44 @@ describe.only('feed-create attribute factory', function() {
         title: 'Topic Properties'
       }
     }
-    const icons = {
-      [String(topic.mapStyle.icon)]: uniqid()
-    }
     const minimal: FeedCreateMinimal = {
       service: uniqid(),
       topic: topic.id,
       summary: 'About the feed',
       itemTemporalProperty: null
     }
-    const createAttrs = FeedCreateAttrs(topic, minimal, icons)
+    const createAttrs = FeedCreateUnresolved(topic, minimal)
 
     expect(topic.mapStyle.icon).to.be.instanceOf(URL)
     expect(createAttrs.mapStyle).to.deep.equal({
-      icon: icons[String(topic.mapStyle.icon)],
+      icon: topic.mapStyle.icon,
       fill: topic.mapStyle.fill
     })
     expect(createAttrs.mapStyle).to.not.equal(topic.mapStyle)
+  })
+
+  it('applies resolved icon ids to the unresolved feed create attrs', async function() {
+
+    const unresolvedIcons = [ new URL('test:///resolve/1.png'), new URL('test:///resolve/2.png') ]
+    const resolvedIcons = {
+      [String(unresolvedIcons[0])]: uniqid(),
+      [String(unresolvedIcons[1])]: uniqid()
+    }
+    const unresolved: FeedCreateUnresolved = {
+      service: uniqid(),
+      topic: uniqid(),
+      title: 'Test',
+      itemsHaveIdentity: true,
+      itemsHaveSpatialDimension: true,
+      icon: unresolvedIcons[0],
+      mapStyle: {
+        icon: unresolvedIcons[1]
+      },
+      unresolvedIcons
+    }
+    const resolved = FeedCreateAttrs(unresolved, resolvedIcons)
+
+    expect(resolved.icon).to.equal(resolvedIcons[String(unresolvedIcons[0])])
+    expect(resolved.mapStyle?.icon).to.equal(resolvedIcons[String(unresolvedIcons[1])])
   })
 })

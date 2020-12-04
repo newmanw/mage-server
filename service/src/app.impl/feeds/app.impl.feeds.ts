@@ -1,5 +1,5 @@
 import { URL } from 'url'
-import { FeedServiceTypeRepository, FeedServiceRepository, FeedTopic, FeedService, InvalidServiceConfigError, FeedContent, Feed, FeedTopicId, FeedServiceConnection, FeedRepository, FeedCreateAttrs, FeedCreateMinimal, FeedServiceType, FeedServiceId } from '../../entities/feeds/entities.feeds';
+import { FeedServiceTypeRepository, FeedServiceRepository, FeedTopic, FeedService, InvalidServiceConfigError, FeedContent, Feed, FeedTopicId, FeedServiceConnection, FeedRepository, FeedCreateUnresolved, FeedCreateMinimal, FeedServiceType, FeedServiceId, FeedCreateAttrs } from '../../entities/feeds/entities.feeds';
 import * as api from '../../app.api/feeds/app.api.feeds'
 import { AppRequest, KnownErrorsOf, withPermission, AppResponse } from '../../app.api/app.api.global'
 import { PermissionDeniedError, EntityNotFoundError, InvalidInputError, entityNotFound, invalidInput, MageError, ErrInvalidInput, KeyPathError } from '../../app.api/app.api.errors'
@@ -219,24 +219,14 @@ function withFetchContext<R>(deps: ContentFetchDependencies, { service, topic, v
   }
 }
 
-type IconIdForUrl = { [sourceUrl: string]: StaticIconId }
-
-async function registerIconUrlsForFeedCreate(topic: FeedTopic, feedMinimal: FeedCreateMinimal, iconRepo: StaticIconRepository): Promise<IconIdForUrl> {
-  const toRegister: URL[] = []
-  if (topic.icon instanceof URL && !feedMinimal.icon) {
-    toRegister.push(topic.icon)
-  }
-  if (topic.mapStyle?.icon instanceof URL && !feedMinimal.mapStyle) {
-    toRegister.push(topic.mapStyle.icon)
-  }
-  if (!toRegister.length) {
-    return {}
-  }
-  const registered = await Promise.all(toRegister.map(iconUrl => iconRepo.registerBySourceUrl(iconUrl)))
-  return registered.reduce((iconIds: IconIdForUrl, icon) => {
-    iconIds[String(icon.sourceUrl)] = icon.id
-    return iconIds
-  }, {})
+async function resolveFeedCreate(topic: FeedTopic, feedMinimal: FeedCreateMinimal, iconRepo: StaticIconRepository): Promise<FeedCreateAttrs> {
+  const unresolved = FeedCreateUnresolved(topic, feedMinimal)
+  const icons = await Promise.all(unresolved.unresolvedIcons.map(iconUrl => {
+    return iconRepo.registerBySourceUrl(iconUrl).then(icon => ({ [String(iconUrl)]: icon.id }))
+  }))
+  const iconsMerged = Object.assign({}, ...icons)
+  const resolved = FeedCreateAttrs(unresolved, iconsMerged)
+  return resolved
 }
 
 export function PreviewFeed(permissionService: api.FeedsPermissionService, serviceTypeRepo: FeedServiceTypeRepository, serviceRepo: FeedServiceRepository, jsonSchemaService: JsonSchemaService, iconRepo: StaticIconRepository): api.PreviewFeed {
@@ -265,8 +255,7 @@ export function PreviewFeed(permissionService: api.FeedsPermissionService, servi
             }
           }
           const topicContent = await context.conn.fetchTopicContent(reqFeed.topic, mergedParams)
-          const icons = await registerIconUrlsForFeedCreate(context.topic, reqFeed, iconRepo)
-          const previewCreateAttrs = FeedCreateAttrs(context.topic, reqFeed, icons)
+          const previewCreateAttrs = await resolveFeedCreate(context.topic, reqFeed, iconRepo)
           const previewContent: FeedContent & { feed: 'preview' } = {
             feed: 'preview',
             topic: topicContent.topic,
@@ -286,15 +275,15 @@ export function PreviewFeed(permissionService: api.FeedsPermissionService, servi
   }
 }
 
-export function CreateFeed(permissionService: api.FeedsPermissionService, serviceTypeRepo: FeedServiceTypeRepository, serviceRepo: FeedServiceRepository, feedRepo: FeedRepository, jsonSchemaService: JsonSchemaService): api.CreateFeed {
+export function CreateFeed(permissionService: api.FeedsPermissionService, serviceTypeRepo: FeedServiceTypeRepository, serviceRepo: FeedServiceRepository, feedRepo: FeedRepository, jsonSchemaService: JsonSchemaService, iconRepo: StaticIconRepository): api.CreateFeed {
   return async function createFeed(req: api.CreateFeedRequest): ReturnType<api.CreateFeed> {
     const reqFeed = req.feed
     return await withPermission<Feed, KnownErrorsOf<api.CreateFeed>>(
       permissionService.ensureCreateFeedPermissionFor(req.context, reqFeed.service),
       withFetchContext<Feed>({ serviceRepo, serviceTypeRepo, jsonSchemaService }, reqFeed)
         .then(async (context: ContentFetchContext): Promise<Feed> => {
-          const feedAttrs = FeedCreateAttrs(context.topic, reqFeed)
-          const feed = await feedRepo.create(feedAttrs)
+          const feedResolved = await resolveFeedCreate(context.topic, reqFeed, iconRepo)
+          const feed = await feedRepo.create(feedResolved)
           return feed
         })
     )
@@ -367,12 +356,13 @@ export function UpdateFeed(permissionService: api.FeedsPermissionService, servic
       permissionService.ensureCreateFeedPermissionFor(req.context, feed.service),
       withFetchContext<api.FeedExpanded | EntityNotFoundError>({ serviceTypeRepo, serviceRepo }, { service: feed.service, topic: feed.topic }).then(
         async (fetchContext): Promise<api.FeedExpanded | EntityNotFoundError> => {
-          const updateAttrs = FeedCreateAttrs(fetchContext.topic, { ...req.feed, service: feed.service, topic: feed.topic })
-          const updated = await feedRepo.update({ ...updateAttrs, id: feed.id })
-          if (!updated) {
-            return entityNotFound(feed.id, 'Feed', 'feed deleted before update')
-          }
-          return Object.assign({ ...updated }, { service: fetchContext.service, topic: fetchContext.topic })
+          throw new Error('todo: fix')
+          // const updateAttrs = FeedCreateUnresolved(fetchContext.topic, { ...req.feed, service: feed.service, topic: feed.topic })
+          // const updated = await feedRepo.update({ ...updateAttrs, id: feed.id })
+          // if (!updated) {
+          //   return entityNotFound(feed.id, 'Feed', 'feed deleted before update')
+          // }
+          // return Object.assign({ ...updated }, { service: fetchContext.service, topic: fetchContext.topic })
         }
       )
     )
