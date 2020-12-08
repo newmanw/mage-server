@@ -287,8 +287,12 @@ export interface FeedRepository {
   removeById(feedId: FeedId): Promise<Feed | null>
   removeByServiceId(serviceId: FeedServiceId): Promise<Feed[]>
 }
-
-type FeedOverrideTopicNullableKeys = 'itemTemporalProperty' | 'itemPrimaryProperty' | 'itemSecondaryProperty' | 'updateFrequencySeconds' | 'icon' | 'mapStyle'
+type OptionalPropertyOf<T extends object> = Exclude<{
+  [K in keyof T]: T extends Record<K, T[K]>
+    ? never
+    : K
+}[keyof T], undefined>
+type FeedOverrideTopicNullableKeys = OptionalPropertyOf<Feed>
 
 export type FeedCreateMinimal = Partial<Omit<Feed, 'id' | FeedOverrideTopicNullableKeys>> & Pick<Feed, 'topic' | 'service'> &
   {
@@ -322,14 +326,14 @@ export const FeedCreateUnresolved = (topic: FeedTopic, feedMinimal: Readonly<Fee
     service: feedMinimal.service,
     topic: topic.id,
     title: feedMinimal.title || topic.title,
-    summary: feedMinimal.summary || topic.summary,
-    constantParams: feedMinimal.constantParams,
-    variableParamsSchema: feedMinimal.variableParamsSchema,
     itemsHaveIdentity: feedMinimal.itemsHaveIdentity === undefined ? topic.itemsHaveIdentity || false : feedMinimal.itemsHaveIdentity,
     itemsHaveSpatialDimension: feedMinimal.itemsHaveSpatialDimension === undefined ? topic.itemsHaveSpatialDimension || false : feedMinimal.itemsHaveSpatialDimension,
-    itemPropertiesSchema: feedMinimal.itemPropertiesSchema || topic.itemPropertiesSchema,
   }
   const nullable: { [key in FeedOverrideTopicNullableKeys]: FeedCreateUnresolved[key] } = {
+    summary: feedMinimal.summary === null ? undefined : feedMinimal.summary || topic.summary,
+    constantParams: feedMinimal.constantParams || undefined,
+    variableParamsSchema: feedMinimal.variableParamsSchema || undefined,
+    itemPropertiesSchema: feedMinimal.itemPropertiesSchema === null ? undefined : feedMinimal.itemPropertiesSchema || topic.itemPropertiesSchema,
     itemPrimaryProperty: feedMinimal.itemPrimaryProperty === null ? undefined : feedMinimal.itemPrimaryProperty || topic.itemPrimaryProperty,
     itemSecondaryProperty: feedMinimal.itemSecondaryProperty === null ? undefined : feedMinimal.itemSecondaryProperty || topic.itemSecondaryProperty,
     itemTemporalProperty: feedMinimal.itemTemporalProperty === null ? undefined : feedMinimal.itemTemporalProperty || topic.itemTemporalProperty,

@@ -14,6 +14,7 @@ import { permissionDenied, PermissionDeniedError, InvalidInputError, invalidInpu
 import { WebAppRequestFactory } from '../../../lib/adapters/adapters.controllers.web'
 import { JSONSchema4 } from 'json-schema'
 import { URL } from 'url'
+import { JsonObject } from '../../../lib/entities/entities.json_types'
 
 declare module 'express-serve-static-core' {
   interface Request {
@@ -625,7 +626,7 @@ invalid request
           service,
           topic,
           title: appReqParams.feed.title,
-          summary: appReqParams.feed.summary,
+          summary: appReqParams.feed.summary as string,
           icon: uniqid(),
           itemsHaveIdentity: appReqParams.feed.itemsHaveIdentity,
           itemsHaveSpatialDimension: appReqParams.feed.itemsHaveSpatialDimension,
@@ -633,10 +634,10 @@ invalid request
           itemSecondaryProperty: appReqParams.feed.itemSecondaryProperty as string,
           itemTemporalProperty: appReqParams.feed.itemTemporalProperty as string,
           updateFrequencySeconds: appReqParams.feed.updateFrequencySeconds as number,
-          constantParams: appReqParams.feed.constantParams,
-          variableParamsSchema: appReqParams.feed.variableParamsSchema,
+          constantParams: appReqParams.feed.constantParams as JsonObject,
+          variableParamsSchema: appReqParams.feed.variableParamsSchema as JSONSchema4,
           mapStyle: appReqParams.feed.mapStyle as ResolvedMapStyle,
-          itemPropertiesSchema: appReqParams.feed.itemPropertiesSchema
+          itemPropertiesSchema: appReqParams.feed.itemPropertiesSchema as JSONSchema4
         },
         content: {
           topic,
@@ -773,8 +774,8 @@ invalid request
         summary: appReq.feed.summary!,
         itemsHaveIdentity: false,
         itemsHaveSpatialDimension: false,
-        constantParams: appReq.feed.constantParams,
-        variableParamsSchema: appReq.feed.variableParamsSchema
+        constantParams: appReq.feed.constantParams || undefined,
+        variableParamsSchema: appReq.feed.variableParamsSchema || undefined
       }
       appRequestFactory.createRequest(Arg.any(), Arg.deepEquals({ feed: appReq.feed })).returns(appReq)
       appLayer.createFeed(Arg.requestTokenMatches(appReq)).resolves(AppResponse.success<Feed, unknown>(feed))

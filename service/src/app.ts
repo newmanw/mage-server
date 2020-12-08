@@ -254,7 +254,7 @@ function initFeedsAppLayer(repos: Repositories): AppLayer['feeds'] {
   const listServiceFeeds = feedsImpl.ListServiceFeeds(permissionService, serviceRepo, feedRepo)
   const deleteService = feedsImpl.DeleteFeedService(permissionService, serviceRepo, feedRepo, repos.events.eventRepo)
   const getFeed = feedsImpl.GetFeed(permissionService, serviceTypeRepo, serviceRepo, feedRepo)
-  const updateFeed = feedsImpl.UpdateFeed(permissionService, serviceTypeRepo, serviceRepo, feedRepo)
+  const updateFeed = feedsImpl.UpdateFeed(permissionService, serviceTypeRepo, serviceRepo, feedRepo, repos.icons.staticIconRepo)
   const deleteFeed = feedsImpl.DeleteFeed(permissionService, feedRepo, repos.events.eventRepo)
   return {
     jsonSchemaService,

@@ -172,7 +172,7 @@ interface WithContentFetchContext<R> {
   then(createFeedOp: (context: ContentFetchContext) => Promise<R>): () => Promise<EntityNotFoundError | InvalidInputError | R>
 }
 
-async function buildFetchContext(deps: ContentFetchDependencies, serviceId: FeedServiceId, topicId: FeedTopicId, variableParamsSchema?: JSONSchema4): Promise<ContentFetchContext | EntityNotFoundError | InvalidInputError> {
+async function buildFetchContext(deps: ContentFetchDependencies, serviceId: FeedServiceId, topicId: FeedTopicId, variableParamsSchema?: JSONSchema4 | null): Promise<ContentFetchContext | EntityNotFoundError | InvalidInputError> {
   const service = await deps.serviceRepo.findById(serviceId)
   if (!service) {
     return entityNotFound(serviceId, 'FeedService')
@@ -202,7 +202,7 @@ async function buildFetchContext(deps: ContentFetchDependencies, serviceId: Feed
 interface FetchContextParams {
   service: FeedServiceId
   topic: FeedTopicId
-  variableParamsSchema?: JSONSchema4
+  variableParamsSchema?: JSONSchema4 | null
 }
 
 function withFetchContext<R>(deps: ContentFetchDependencies, { service, topic, variableParamsSchema }: FetchContextParams): WithContentFetchContext<R> {
@@ -336,7 +336,7 @@ export function GetFeed(permissionService: api.FeedsPermissionService, serviceTy
   }
 }
 
-export function UpdateFeed(permissionService: api.FeedsPermissionService, serviceTypeRepo: FeedServiceTypeRepository, serviceRepo: FeedServiceRepository, feedRepo: FeedRepository): api.UpdateFeed {
+export function UpdateFeed(permissionService: api.FeedsPermissionService, serviceTypeRepo: FeedServiceTypeRepository, serviceRepo: FeedServiceRepository, feedRepo: FeedRepository, iconRepo: StaticIconRepository): api.UpdateFeed {
   return async function updateFeed(req: api.UpdateFeedRequest): ReturnType<api.UpdateFeed> {
     const feed = await feedRepo.findById(req.feed.id)
     if (!feed) {
@@ -356,13 +356,13 @@ export function UpdateFeed(permissionService: api.FeedsPermissionService, servic
       permissionService.ensureCreateFeedPermissionFor(req.context, feed.service),
       withFetchContext<api.FeedExpanded | EntityNotFoundError>({ serviceTypeRepo, serviceRepo }, { service: feed.service, topic: feed.topic }).then(
         async (fetchContext): Promise<api.FeedExpanded | EntityNotFoundError> => {
-          throw new Error('todo: fix')
-          // const updateAttrs = FeedCreateUnresolved(fetchContext.topic, { ...req.feed, service: feed.service, topic: feed.topic })
-          // const updated = await feedRepo.update({ ...updateAttrs, id: feed.id })
-          // if (!updated) {
-          //   return entityNotFound(feed.id, 'Feed', 'feed deleted before update')
-          // }
-          // return Object.assign({ ...updated }, { service: fetchContext.service, topic: fetchContext.topic })
+          const updateUnresolved = { ...req.feed, service: feed.service, topic: feed.topic }
+          const updateResolved = await resolveFeedCreate(fetchContext.topic, updateUnresolved, iconRepo)
+          const updated = await feedRepo.update({ ...updateResolved, id: feed.id })
+          if (!updated) {
+            return entityNotFound(feed.id, 'Feed', 'feed deleted before update')
+          }
+          return Object.assign({ ...updated }, { service: fetchContext.service, topic: fetchContext.topic })
         }
       )
     )

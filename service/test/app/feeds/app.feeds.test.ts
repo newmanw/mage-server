@@ -91,7 +91,7 @@ function requestBy<RequestType>(principal: TestPrincipal, params?: RequestType):
   )
 }
 
-describe('feeds use case interactions', function() {
+describe.only('feeds use case interactions', function() {
 
   let app: TestApp
   let someServiceTypes: SubstituteOf<RegisteredFeedServiceType>[]
@@ -737,7 +737,7 @@ describe('feeds use case interactions', function() {
       })
     })
 
-    describe.only('creating a feed', function() {
+    describe('creating a feed', function() {
 
       const service: FeedService = Object.freeze({
         id: uniqid(),
@@ -1678,34 +1678,136 @@ describe('feeds use case interactions', function() {
           const feedMod: FeedUpdateAttrs & Pick<Feed, 'service' | 'topic'> = Object.freeze({
             id: feeds[0].id,
             service: feeds[0].service,
-            topic: feeds[0].topic
+            topic: feeds[0].topic,
+            title: feeds[0].title + ' updated',
+            icon: null,
+            mapStyle: null
           })
           const req: UpdateFeedRequest = requestBy(adminPrincipal, { feed: feedMod })
           const res = await app.updateFeed(req)
 
           expect(res.error).to.be.null
-          expect(res.success).to.deep.include({
-            id: feeds[0].id,
-            service: services[0].service,
-            topic: services[0].topics[0]
-          })
+          expect(res.success).to.deep.include({ id: feedMod.id, title: feedMod.title, service: services[0].service, topic: services[0].topics[0] })
+          const inDb = app.feedRepo.db.get(feedMod.id)
+          expect(inDb).to.deep.include({ id: feedMod.id, title: feedMod.title, service: feedMod.service, topic: feedMod.topic })
         })
 
         it('applies topic attributes for attributes the update does not specify', async function() {
 
           const feedMod: FeedUpdateAttrs = {
-            id: feeds[1].id,
+            id: feeds[1].id
           }
+          const topicIcon: StaticIcon = {
+            id:  uniqid(),
+            sourceUrl: services[1].topics[0].icon,
+            registeredTimestamp: Date.now()
+          }
+          const mapIcon: StaticIcon = {
+            id: uniqid(),
+            sourceUrl: services[1].topics[0].mapStyle.icon!,
+            registeredTimestamp: Date.now()
+          }
+          app.iconRepo.registerBySourceUrl(Arg.is(x => String(x) === String(services[1].topics[0].icon))).resolves(topicIcon)
+          app.iconRepo.registerBySourceUrl(Arg.is(x => String(x) === String(services[1].topics[0].mapStyle?.icon))).resolves(mapIcon)
           const req: UpdateFeedRequest = requestBy(adminPrincipal, { feed: feedMod })
           const res = await app.updateFeed(req)
 
-          const withTopicAttrs = FeedCreateUnresolved(services[1].topics[0], { ...feedMod, service: feeds[1].service, topic: feeds[1].topic })
+          const withTopicAttrs = FeedCreateAttrs(
+            FeedCreateUnresolved(services[1].topics[0], { ...feedMod, service: feeds[1].service, topic: feeds[1].topic }),
+            { [String(topicIcon.sourceUrl)]: topicIcon.id, [String(mapIcon.sourceUrl)]: mapIcon.id })
           withTopicAttrs.id = feedMod.id
           const expanded = Object.assign({ ...withTopicAttrs }, { service: services[1].service, topic: services[1].topics[0] })
           const inDb = app.feedRepo.db.get(feeds[1].id)
           expect(res.error).to.be.null
           expect(res.success).to.deep.equal(expanded)
           expect(inDb).to.deep.equal(withTopicAttrs)
+          app.iconRepo.received(1).registerBySourceUrl(Arg.is(x => String(x) === String(services[1].topics[0].icon)))
+          app.iconRepo.received(1).registerBySourceUrl(Arg.is(x => String(x) === String(services[1].topics[0].mapStyle?.icon)))
+          app.iconRepo.received(2).registerBySourceUrl(Arg.any())
+        })
+
+        it('does not apply topic attributes for explicit null update keys', async function() {
+
+          const feedMod: Required<FeedUpdateAttrs> = {
+            id: feeds[0].id,
+            title: 'Override with Null',
+            summary: null,
+            constantParams: null,
+            variableParamsSchema: null,
+            itemPrimaryProperty: null,
+            itemSecondaryProperty: null,
+            itemPropertiesSchema: null,
+            itemTemporalProperty: null,
+            itemsHaveIdentity: true,
+            itemsHaveSpatialDimension: true,
+            icon: null,
+            mapStyle: null,
+            updateFrequencySeconds: null
+          }
+          const req: UpdateFeedRequest = requestBy(adminPrincipal, { feed: feedMod })
+          const res = await app.updateFeed(req)
+
+          const expected: Feed = {
+            id: feeds[0].id,
+            service: feeds[0].service,
+            topic: feeds[0].topic,
+            title: feedMod.title,
+            itemsHaveIdentity: feedMod.itemsHaveIdentity,
+            itemsHaveSpatialDimension: feedMod.itemsHaveSpatialDimension
+          }
+          const inDb = app.feedRepo.db.get(feeds[0].id)
+          expect(inDb).to.deep.equal(expected)
+          expect(res.success).to.deep.equal(Object.assign({ ...expected }, { service: services[0].service, topic: services[0].topics[0] }))
+        })
+
+        it('registers updated icon urls', async function() {
+
+          const feedMod: FeedUpdateAttrs = {
+            id: feeds[0].id,
+            summary: null,
+            icon: new URL(`test:///${uniqid()}.png`),
+            mapStyle: {
+              icon: new URL(`test:///${uniqid()}.png`)
+            },
+            constantParams: null,
+            variableParamsSchema: null,
+            itemPrimaryProperty: null,
+            itemSecondaryProperty: null,
+            itemTemporalProperty: null,
+            itemPropertiesSchema: null,
+            updateFrequencySeconds: null,
+          }
+          const feedIcon: StaticIcon = {
+            id: uniqid(),
+            sourceUrl: feedMod.icon as URL,
+            registeredTimestamp: Date.now()
+          }
+          const mapIcon: StaticIcon = {
+            id: uniqid(),
+            sourceUrl: feedMod.mapStyle?.icon as URL,
+            registeredTimestamp: Date.now()
+          }
+          app.iconRepo.registerBySourceUrl(Arg.is(x => String(x) === String(feedMod.icon))).resolves(feedIcon)
+          app.iconRepo.registerBySourceUrl(Arg.is(x => String(x) === String(feedMod.mapStyle?.icon))).resolves(mapIcon)
+          const req: UpdateFeedRequest = requestBy(adminPrincipal, { feed: feedMod })
+          const res = await app.updateFeed(req)
+
+          expect(res.error).to.be.null
+          expect(res.success).to.deep.equal({
+            id: feeds[0].id,
+            service: services[0].service,
+            topic: services[0].topics[0],
+            title: services[0].topics[0].title,
+            itemsHaveIdentity: services[0].topics[0].itemsHaveIdentity,
+            itemsHaveSpatialDimension: services[0].topics[0].itemsHaveSpatialDimension,
+            icon: feedIcon.id,
+            mapStyle: {
+              icon: mapIcon.id
+            }
+          })
+          app.iconRepo.received(1).registerBySourceUrl(Arg.is(x => String(x) === String(feedMod.icon)))
+          app.iconRepo.received(1).registerBySourceUrl(Arg.is(x => String(x) === String(feedMod.mapStyle?.icon)))
+          app.iconRepo.received(2).registerBySourceUrl(Arg.any())
         })
 
         it('checks permission for updating the feed', async function() {
@@ -2061,7 +2163,7 @@ class TestApp {
   readonly listFeeds = ListAllFeeds(this.permissionService, this.feedRepo)
   readonly listServiceFeeds = ListServiceFeeds(this.permissionService, this.serviceRepo, this.feedRepo)
   readonly getFeed = GetFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo)
-  readonly updateFeed = UpdateFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo)
+  readonly updateFeed = UpdateFeed(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo, this.iconRepo)
   readonly deleteFeed = DeleteFeed(this.permissionService, this.feedRepo, this.eventRepo)
   readonly fetchFeedContent = FetchFeedContent(this.permissionService, this.serviceTypeRepo, this.serviceRepo, this.feedRepo, this.jsonSchemaService)
 
