@@ -358,7 +358,7 @@ export function UpdateFeed(permissionService: api.FeedsPermissionService, servic
         async (fetchContext): Promise<api.FeedExpanded | EntityNotFoundError> => {
           const updateUnresolved = { ...req.feed, service: feed.service, topic: feed.topic }
           const updateResolved = await resolveFeedCreate(fetchContext.topic, updateUnresolved, iconRepo)
-          const updated = await feedRepo.update({ ...updateResolved, id: feed.id })
+          const updated = await feedRepo.put({ ...updateResolved, id: feed.id })
           if (!updated) {
             return entityNotFound(feed.id, 'Feed', 'feed deleted before update')
           }

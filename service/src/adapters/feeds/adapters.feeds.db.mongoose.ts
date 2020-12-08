@@ -64,6 +64,7 @@ export const FeedSchema = new mongoose.Schema(
     topic: { type: String, required: true },
     title: { type: String, required: true },
     summary: { type: String, required: false },
+    icon: { type: String, required: false },
     constantParams: { type: mongoose.Schema.Types.Mixed, required: false },
     variableParamsSchema: { type: mongoose.Schema.Types.Mixed, required: false },
     updateFrequencySeconds: { type: Number, required: false },
@@ -145,6 +146,26 @@ export class MongooseFeedRepository extends BaseMongooseRepository<FeedDocument,
     const service = mongoose.Types.ObjectId(attrs.service)
     const seed = Object.assign(attrs, { _id, service })
     return await super.create(seed)
+  }
+
+  async put(feed: Feed): Promise<Feed | null> {
+    type CompleteUpdate = Required<Omit<Feed, 'id' | 'service' | 'topic'>>
+    const explicit: { [K in keyof CompleteUpdate]: CompleteUpdate[K] | undefined } = {
+      title: feed.title,
+      summary: feed.summary,
+      icon: feed.icon,
+      constantParams: feed.constantParams,
+      variableParamsSchema: feed.variableParamsSchema,
+      itemsHaveIdentity: feed.itemsHaveIdentity,
+      itemsHaveSpatialDimension: feed.itemsHaveSpatialDimension,
+      itemPropertiesSchema: feed.itemPropertiesSchema,
+      itemPrimaryProperty: feed.itemPrimaryProperty,
+      itemSecondaryProperty: feed.itemSecondaryProperty,
+      itemTemporalProperty: feed.itemTemporalProperty,
+      mapStyle: feed.mapStyle,
+      updateFrequencySeconds: feed.updateFrequencySeconds
+    }
+    return await super.update({ id: feed.id, ...explicit })
   }
 
   async findFeedsByIds(...feedIds: FeedId[]): Promise<Feed[]> {

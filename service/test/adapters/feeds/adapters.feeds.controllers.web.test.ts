@@ -9,7 +9,7 @@ import _, { uniqueId } from 'lodash'
 import { AppResponse, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeedsRoutes, FeedsAppLayer } from '../../../lib/adapters/feeds/adapters.feeds.controllers.web'
 import { CreateFeedServiceRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, CreateFeedRequest, ListServiceTopicsRequest, PreviewFeedRequest, FeedPreview, FeedExpanded, DeleteFeedRequest, ListServiceFeedsRequest, ListFeedServices, GetFeedServiceRequest, FeedServiceExpanded, DeleteFeedServiceRequest } from '../../../lib/app.api/feeds/app.api.feeds'
-import { FeedService, Feed, FeedTopic, FeedCreateMinimal, MapStyle, FeedUpdateAttrs, ResolvedMapStyle } from '../../../lib/entities/feeds/entities.feeds'
+import { FeedService, Feed, FeedTopic, FeedCreateMinimal, MapStyle, FeedUpdateMinimal, ResolvedMapStyle } from '../../../lib/entities/feeds/entities.feeds'
 import { permissionDenied, PermissionDeniedError, InvalidInputError, invalidInput, EntityNotFoundError, entityNotFound } from '../../../lib/app.api/app.api.errors'
 import { WebAppRequestFactory } from '../../../lib/adapters/adapters.controllers.web'
 import { JSONSchema4 } from 'json-schema'
@@ -963,7 +963,7 @@ invalid request
 
     it('maps the request body to a feed update', async function() {
 
-      const body: Required<FeedUpdateAttrs> & { superfluous: any, service: string, topic: string } = {
+      const body: Required<FeedUpdateMinimal> & { superfluous: any, service: string, topic: string } = {
         id: uniqid(),
         title: 'Update Title',
         summary: 'Update summary',
@@ -991,7 +991,7 @@ invalid request
         service: 'service not allowed',
         topic: 'topic not allowed'
       }
-      const feedUpdate: Required<FeedUpdateAttrs> = _.omit(body, 'superfluous', 'service', 'topic')
+      const feedUpdate: Required<FeedUpdateMinimal> = _.omit(body, 'superfluous', 'service', 'topic')
       const appReq = createAdminRequest({ feed: feedUpdate })
       const appRes = AppResponse.success<FeedExpanded, unknown>({
         id: body.id,

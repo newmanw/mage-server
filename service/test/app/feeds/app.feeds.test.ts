@@ -1,7 +1,7 @@
 import { describe, it, beforeEach, Context } from 'mocha'
 import { expect } from 'chai'
 import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
-import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedService, FeedServiceConnection, RegisteredFeedServiceType, Feed, FeedCreateMinimal, FeedCreateUnresolved, FeedRepository, FeedId, FeedContent, FeedUpdateAttrs, FeedCreateAttrs } from '../../../lib/entities/feeds/entities.feeds'
+import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedService, FeedServiceConnection, RegisteredFeedServiceType, Feed, FeedCreateMinimal, FeedCreateUnresolved, FeedRepository, FeedId, FeedContent, FeedUpdateMinimal, FeedCreateAttrs } from '../../../lib/entities/feeds/entities.feeds'
 import { ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics, ListFeedServices, PreviewFeed, CreateFeed, ListAllFeeds, FetchFeedContent, GetFeed, UpdateFeed, DeleteFeed, GetFeedService, DeleteFeedService, ListServiceFeeds } from '../../../lib/app.impl/feeds/app.impl.feeds'
 import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError, PermissionDeniedErrorData, KeyPathError } from '../../../lib/app.api/app.api.errors'
 import { UserId } from '../../../lib/entities/authn/entities.authn'
@@ -957,10 +957,10 @@ describe.only('feeds use case interactions', function() {
             expect(res.error).to.be.null
             let registeredIconId: StaticIconId | undefined
             if ('feed' in res.success!) {
-              registeredIconId = (res.success as FeedPreview).feed.icon
+              registeredIconId = (res.success as FeedPreview).feed.icon as StaticIconId
             }
             else {
-              registeredIconId = (res.success as Feed).icon
+              registeredIconId = (res.success as Feed).icon as StaticIconId
             }
             expect(registeredIconId).to.equal(registeredIcon.id)
             app.iconRepo.received(1).registerBySourceUrl(iconUrl)
@@ -996,11 +996,11 @@ describe.only('feeds use case interactions', function() {
             let resFeedIconId: StaticIconId | undefined
             let resMapIconId: StaticIconId | undefined
             if ('feed' in res.success!) {
-              resFeedIconId = (res.success as FeedPreview).feed.icon
+              resFeedIconId = (res.success as FeedPreview).feed.icon as StaticIconId
               resMapIconId = (res.success as FeedPreview).feed.mapStyle?.icon
             }
             else {
-              resFeedIconId = (res.success as Feed).icon
+              resFeedIconId = (res.success as Feed).icon as StaticIconId
               resMapIconId = (res.success as Feed).mapStyle?.icon
             }
             expect(resFeedIconId).to.be.undefined
@@ -1045,11 +1045,11 @@ describe.only('feeds use case interactions', function() {
             let resFeedIconId: StaticIconId | undefined
             let resMapIconId: StaticIconId | undefined
             if ('feed' in res.success!) {
-              resFeedIconId = (res.success as FeedPreview).feed.icon
+              resFeedIconId = (res.success as FeedPreview).feed.icon as StaticIconId
               resMapIconId = (res.success as FeedPreview).feed.mapStyle?.icon
             }
             else {
-              resFeedIconId = (res.success as Feed).icon
+              resFeedIconId = (res.success as Feed).icon as StaticIconId
               resMapIconId = (res.success as Feed).mapStyle?.icon
             }
             expect(resFeedIconId).to.equal(topicIcon.id)
@@ -1085,11 +1085,11 @@ describe.only('feeds use case interactions', function() {
             let resFeedIconId: StaticIconId | undefined
             let resMapIconId: StaticIconId | undefined
             if ('feed' in res.success!) {
-              resFeedIconId = (res.success as FeedPreview).feed.icon
+              resFeedIconId = (res.success as FeedPreview).feed.icon as StaticIconId
               resMapIconId = (res.success as FeedPreview).feed.mapStyle?.icon
             }
             else {
-              resFeedIconId = (res.success as Feed).icon
+              resFeedIconId = (res.success as Feed).icon as StaticIconId
               resMapIconId = (res.success as Feed).mapStyle?.icon
             }
             expect(resFeedIconId).to.equal('feed_icon')
@@ -1651,7 +1651,7 @@ describe.only('feeds use case interactions', function() {
 
         it('does not allow changing the service and topic', async function() {
 
-          const feedMod: FeedUpdateAttrs & Pick<Feed, 'service' | 'topic'> = Object.freeze({
+          const feedMod: FeedUpdateMinimal & Pick<Feed, 'service' | 'topic'> = Object.freeze({
             id: feeds[0].id,
             service: feeds[0].service + '-mod',
             topic: feeds[0].topic + '-mod'
@@ -1675,7 +1675,7 @@ describe.only('feeds use case interactions', function() {
 
         it('accepts service and topic if they match the existing feed', async function() {
 
-          const feedMod: FeedUpdateAttrs & Pick<Feed, 'service' | 'topic'> = Object.freeze({
+          const feedMod: FeedUpdateMinimal & Pick<Feed, 'service' | 'topic'> = Object.freeze({
             id: feeds[0].id,
             service: feeds[0].service,
             topic: feeds[0].topic,
@@ -1694,7 +1694,7 @@ describe.only('feeds use case interactions', function() {
 
         it('applies topic attributes for attributes the update does not specify', async function() {
 
-          const feedMod: FeedUpdateAttrs = {
+          const feedMod: FeedUpdateMinimal = {
             id: feeds[1].id
           }
           const topicIcon: StaticIcon = {
@@ -1728,7 +1728,7 @@ describe.only('feeds use case interactions', function() {
 
         it('does not apply topic attributes for explicit null update keys', async function() {
 
-          const feedMod: Required<FeedUpdateAttrs> = {
+          const feedMod: Required<FeedUpdateMinimal> = {
             id: feeds[0].id,
             title: 'Override with Null',
             summary: null,
@@ -1762,7 +1762,7 @@ describe.only('feeds use case interactions', function() {
 
         it('registers updated icon urls', async function() {
 
-          const feedMod: FeedUpdateAttrs = {
+          const feedMod: FeedUpdateMinimal = {
             id: feeds[0].id,
             summary: null,
             icon: new URL(`test:///${uniqid()}.png`),
@@ -1812,7 +1812,7 @@ describe.only('feeds use case interactions', function() {
 
         it('checks permission for updating the feed', async function() {
 
-          const feedMod: FeedUpdateAttrs = {
+          const feedMod: FeedUpdateMinimal = {
             id: feeds[0].id,
           }
           const req: UpdateFeedRequest = requestBy(bannedPrincipal, { feed: feedMod })
@@ -2260,14 +2260,23 @@ class TestFeedRepository implements FeedRepository {
     return Array.from(this.db.values()).filter(x => x.service === service)
   }
 
-  async update(feed: Omit<Feed, 'service' | 'topic'>): Promise<Feed | null> {
+  async put(feed: Feed): Promise<Feed | null> {
     const existing = this.db.get(feed.id)
     if (!existing) {
       return null
     }
-    const updated = Object.assign({ ...feed }, { service: existing.service, topic: existing.topic })
-    this.db.set(feed.id, updated)
-    return updated
+    if (feed.id !== existing.id) {
+      throw new Error('id mismatch')
+    }
+    if (feed.service !== existing.service) {
+      throw new Error('service mismatch')
+    }
+    if (feed.topic !== existing.topic) {
+      throw new Error('topic mismatch')
+    }
+    const copy = Object.freeze(_.cloneDeep(feed))
+    this.db.set(feed.id, copy)
+    return copy
   }
 
   async removeById(feedId: FeedId): Promise<Feed | null> {

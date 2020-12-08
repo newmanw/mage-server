@@ -252,7 +252,7 @@ describe('feeds repositories', function() {
     })
   })
 
-  describe('feed repository', function() {
+  describe.only('feed repository', function() {
 
     const collection = 'test_feeds'
     let model: FeedModel
@@ -302,7 +302,7 @@ describe('feeds repositories', function() {
             strokeWidth: 1,
             fill: 'abc123',
             fillOpacity: 0.5,
-            iconUrl: new URL('mage:///test.png')
+            icon: uniqid()
           },
           itemPropertiesSchema: {
             title: 'Save Me',
@@ -318,6 +318,156 @@ describe('feeds repositories', function() {
         expect(created).to.deep.include(Object.assign({ ...expectedFeed }, { id: nextId }))
         expect(created).to.deep.equal(fetched?.toJSON())
         idFactory.received(1).nextId()
+      })
+    })
+
+    describe('updating a feed', function() {
+
+      describe('applying put semantics', async function() {
+
+        it('replaces properties', async function() {
+
+          const origAttrs: Required<FeedCreateAttrs> = Object.freeze({
+            id: uniqid(),
+            service: mongoose.Types.ObjectId().toHexString(),
+            topic: uniqid(),
+            title: uniqid(),
+            summary: uniqid(),
+            itemsHaveIdentity: true,
+            itemsHaveSpatialDimension: true,
+            itemPrimaryProperty: uniqid(),
+            itemSecondaryProperty: uniqid(),
+            itemTemporalProperty: uniqid(),
+            itemPropertiesSchema: {
+              properties: {
+                [uniqid()]: { type: 'string' }
+              }
+            },
+            icon: uniqid(),
+            mapStyle: {
+              stroke: uniqid()
+            },
+            updateFrequencySeconds: 60,
+            constantParams: { [uniqid()]: true },
+            variableParamsSchema: {
+              properties: {
+                [uniqid()]: { type: 'string' }
+              }
+            }
+          })
+          const updatedAttrs: Required<Feed> = Object.freeze({
+            id: origAttrs.id,
+            service: origAttrs.service,
+            topic: origAttrs.topic,
+            title: uniqid(),
+            summary: uniqid(),
+            itemsHaveIdentity: !origAttrs.itemsHaveIdentity,
+            itemsHaveSpatialDimension: !origAttrs.itemsHaveSpatialDimension,
+            itemPrimaryProperty: uniqid(),
+            itemSecondaryProperty: uniqid(),
+            itemTemporalProperty: uniqid(),
+            itemPropertiesSchema: {
+              properties: {
+                [uniqid()]: { type: 'string' }
+              }
+            },
+            icon: uniqid(),
+            mapStyle: {
+              stroke: uniqid()
+            },
+            updateFrequencySeconds: origAttrs.updateFrequencySeconds + 10,
+            constantParams: { [uniqid()]: true },
+            variableParamsSchema: {
+              properties: {
+                [uniqid()]: { type: 'string' }
+              }
+            }
+          })
+          const origDoc: FeedDocument = await model.create({ _id: origAttrs.id, ...origAttrs })
+          const updated = await repo.put(updatedAttrs)
+          const updatedDoc = await model.findById(origAttrs.id)
+
+          expect(origDoc.toJSON()).to.deep.equal(origAttrs)
+          expect(updated).to.deep.equal(updatedAttrs)
+          expect(updatedDoc?.toJSON()).to.deep.equal(updatedAttrs)
+        })
+
+        it('removes keys omitted from update', async function() {
+
+          const origAttrs: Required<FeedCreateAttrs> = Object.freeze({
+            id: uniqid(),
+            service: mongoose.Types.ObjectId().toHexString(),
+            topic: uniqid(),
+            title: uniqid(),
+            summary: uniqid(),
+            itemsHaveIdentity: true,
+            itemsHaveSpatialDimension: true,
+            itemPrimaryProperty: uniqid(),
+            itemSecondaryProperty: uniqid(),
+            itemTemporalProperty: uniqid(),
+            itemPropertiesSchema: {
+              properties: {
+                [uniqid()]: { type: 'string' }
+              }
+            },
+            icon: uniqid(),
+            mapStyle: {
+              stroke: uniqid()
+            },
+            updateFrequencySeconds: 60,
+            constantParams: { [uniqid()]: true },
+            variableParamsSchema: {
+              properties: {
+                [uniqid()]: { type: 'string' }
+              }
+            }
+          })
+          const updatedAttrs: Feed = Object.freeze({
+            id: origAttrs.id,
+            service: origAttrs.service,
+            topic: origAttrs.topic,
+            title: uniqid(),
+            itemsHaveIdentity: true,
+            itemsHaveSpatialDimension: true
+          })
+          const origDoc = await model.create({ ...origAttrs, _id: origAttrs.id })
+          const updated = await repo.put(updatedAttrs)
+          const updatedDoc = await model.findById(origDoc.id)
+
+          expect(origDoc.toJSON()).to.deep.equal(origAttrs)
+          expect(updated).to.deep.equal(updatedAttrs)
+          expect(updatedDoc?.toJSON()).to.deep.equal(updated)
+        })
+
+        it('cannot modify service and topic', async function() {
+
+          const origAttrs: Feed = Object.freeze({
+            id: uniqid(),
+            service: mongoose.Types.ObjectId().toHexString(),
+            topic: uniqid(),
+            title: uniqid(),
+            itemsHaveIdentity: true,
+            itemsHaveSpatialDimension: true
+          })
+          const updatedAttrs: Feed = Object.freeze({
+            id: origAttrs.id,
+            service: mongoose.Types.ObjectId().toHexString(),
+            topic: uniqid(),
+            title: uniqid(),
+            itemsHaveIdentity: true,
+            itemsHaveSpatialDimension: true
+          })
+          const origDoc = await model.create({ ...origAttrs, _id: origAttrs.id })
+          const updated = await repo.put(updatedAttrs)
+          const updatedDoc = await model.findById(origAttrs.id)
+
+          expect(origDoc.toJSON()).to.deep.equal(origAttrs)
+          expect(updated).to.not.deep.equal(updatedAttrs)
+          expect(updated).to.deep.equal({ ...updatedAttrs, service: origAttrs.service, topic: origAttrs.topic })
+          expect(updatedDoc?.service.toHexString()).to.equal(origAttrs.service)
+          expect(updatedDoc?.topic).to.equal(origAttrs.topic)
+          expect(updatedDoc?.toJSON()).to.deep.equal({ ...updatedAttrs, service: origAttrs.service, topic: origAttrs.topic })
+        })
       })
     })
 

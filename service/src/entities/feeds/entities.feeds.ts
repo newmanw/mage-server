@@ -283,23 +283,25 @@ export interface FeedRepository {
   findFeedsByIds(...feedIds: FeedId[]): Promise<Feed[]>
   findAll(): Promise<Feed[]>
   findFeedsForService(service: FeedServiceId): Promise<Feed[]>
-  update(feed: FeedUpdateAttrs): Promise<Feed | null>
+  put(feed: Feed): Promise<Feed | null>
   removeById(feedId: FeedId): Promise<Feed | null>
   removeByServiceId(serviceId: FeedServiceId): Promise<Feed[]>
 }
+
 type OptionalPropertyOf<T extends object> = Exclude<{
   [K in keyof T]: T extends Record<K, T[K]>
     ? never
     : K
 }[keyof T], undefined>
-type FeedOverrideTopicNullableKeys = OptionalPropertyOf<Feed>
+
+export type FeedOverrideTopicNullableKeys = OptionalPropertyOf<Feed>
 
 export type FeedCreateMinimal = Partial<Omit<Feed, 'id' | FeedOverrideTopicNullableKeys>> & Pick<Feed, 'topic' | 'service'> &
   {
     [nullable in keyof Pick<Feed, FeedOverrideTopicNullableKeys>]: FeedCreateUnresolved[nullable] | null
   }
 
-export type FeedUpdateAttrs = Omit<FeedCreateMinimal, 'service' | 'topic' | 'id'> & Pick<Feed, 'id'>
+export type FeedUpdateMinimal = Omit<FeedCreateMinimal, 'service' | 'topic' | 'id'> & Pick<Feed, 'id'>
 
 export type FeedCreateUnresolved = Omit<FeedCreateAttrs, 'icon' | 'mapStyle'> & {
   icon?: FeedCreateAttrs['icon'] | FeedTopic['icon'],
