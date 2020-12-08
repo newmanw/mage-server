@@ -4,7 +4,7 @@ import { expect } from 'chai'
 import { URL } from 'url'
 import { min } from 'lodash'
 
-describe.only('feed-create attribute factory', function() {
+describe('feed-create attribute factory', function() {
 
   it('applies the feed attribute when present', function() {
 

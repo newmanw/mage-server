@@ -252,7 +252,7 @@ describe('feeds repositories', function() {
     })
   })
 
-  describe.only('feed repository', function() {
+  describe('feed repository', function() {
 
     const collection = 'test_feeds'
     let model: FeedModel

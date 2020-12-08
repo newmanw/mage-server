@@ -9,11 +9,10 @@ import _, { uniqueId } from 'lodash'
 import { AppResponse, AppRequest } from '../../../lib/app.api/app.api.global'
 import { FeedsRoutes, FeedsAppLayer } from '../../../lib/adapters/feeds/adapters.feeds.controllers.web'
 import { CreateFeedServiceRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, CreateFeedRequest, ListServiceTopicsRequest, PreviewFeedRequest, FeedPreview, FeedExpanded, DeleteFeedRequest, ListServiceFeedsRequest, ListFeedServices, GetFeedServiceRequest, FeedServiceExpanded, DeleteFeedServiceRequest } from '../../../lib/app.api/feeds/app.api.feeds'
-import { FeedService, Feed, FeedTopic, FeedCreateMinimal, MapStyle, FeedUpdateMinimal, ResolvedMapStyle } from '../../../lib/entities/feeds/entities.feeds'
+import { FeedService, Feed, FeedTopic, FeedCreateMinimal, MapStyle, FeedUpdateMinimal, ResolvedMapStyle, FeedServiceId, FeedTopicId } from '../../../lib/entities/feeds/entities.feeds'
 import { permissionDenied, PermissionDeniedError, InvalidInputError, invalidInput, EntityNotFoundError, entityNotFound } from '../../../lib/app.api/app.api.errors'
 import { WebAppRequestFactory } from '../../../lib/adapters/adapters.controllers.web'
 import { JSONSchema4 } from 'json-schema'
-import { URL } from 'url'
 import { JsonObject } from '../../../lib/entities/entities.json_types'
 
 declare module 'express-serve-static-core' {
@@ -46,6 +45,10 @@ describe('feeds web controller', function() {
   type AppRequestFactoryHandle = {
     createRequest: WebAppRequestFactory
   }
+
+  type FeedMinimalVerbose =
+    { [K in keyof Required<Omit<FeedCreateMinimal, 'service' | 'topic'>>]: FeedCreateMinimal[K] | undefined } &
+    { service: FeedServiceId, topic: FeedTopicId }
 
   const rootPath = '/test/feeds'
   let client: supertest.SuperTest<supertest.Test>
@@ -627,7 +630,7 @@ invalid request
           topic,
           title: appReqParams.feed.title,
           summary: appReqParams.feed.summary as string,
-          icon: uniqid(),
+          icon: appReqParams.feed.icon as string,
           itemsHaveIdentity: appReqParams.feed.itemsHaveIdentity,
           itemsHaveSpatialDimension: appReqParams.feed.itemsHaveSpatialDimension,
           itemPrimaryProperty: appReqParams.feed.itemTemporalProperty as string,
@@ -650,7 +653,7 @@ invalid request
         }
       }
       appRequestFactory.createRequest(Arg.any(), Arg.deepEquals(appReqParams)).returns(appReq)
-      appLayer.previewFeed(appReq).resolves(AppResponse.success<FeedPreview, unknown>(preview))
+      appLayer.previewFeed(Arg.is(x => x === appReq)).resolves(AppResponse.success<FeedPreview, unknown>(preview))
 
       expect(appReq).to.deep.include(appReqParams)
 
@@ -665,11 +668,12 @@ invalid request
 
       const service = uniqid()
       const topic = uniqid()
-      const minimalFeed: FeedCreateMinimal = Object.freeze({
+      const minimalFeed: FeedMinimalVerbose = Object.freeze({
         service,
         topic,
         title: undefined,
         summary: undefined,
+        icon: undefined,
         itemsHaveIdentity: undefined,
         itemsHaveSpatialDimension: undefined,
         itemPrimaryProperty: undefined,
@@ -751,21 +755,21 @@ invalid request
           }
         }
       }
-      const appReq: CreateFeedRequest = createAdminRequest({
-        feed: {
-          service,
-          topic,
-          ...postBody,
-          itemsHaveIdentity: undefined,
-          itemsHaveSpatialDimension: undefined,
-          itemPrimaryProperty: undefined,
-          itemSecondaryProperty: undefined,
-          itemTemporalProperty: undefined,
-          updateFrequencySeconds: undefined,
-          mapStyle: undefined,
-          itemPropertiesSchema: undefined
-        }
-      })
+      const feedMinimal: FeedMinimalVerbose = {
+        ...postBody,
+        service,
+        topic,
+        icon: undefined,
+        itemsHaveIdentity: undefined,
+        itemsHaveSpatialDimension: undefined,
+        itemPrimaryProperty: undefined,
+        itemSecondaryProperty: undefined,
+        itemTemporalProperty: undefined,
+        updateFrequencySeconds: undefined,
+        mapStyle: undefined,
+        itemPropertiesSchema: undefined
+      }
+      const appReq: CreateFeedRequest = createAdminRequest({ feed: feedMinimal })
       const feed: Feed = {
         id: uniqid(),
         service,
@@ -1028,7 +1032,7 @@ invalid request
 
       expect(res.status).to.equal(200)
       expect(res.type).to.match(jsonMimeType)
-      expect(res.body).to.deep.equal(_.omit(appRes.success))
+      expect(res.body).to.deep.equal(appRes.success)
     })
 
     it('fails with 404 if the feed id is not found', async function() {

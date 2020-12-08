@@ -129,6 +129,7 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
         topic,
         title: bodyFeed.title,
         summary: bodyFeed.summary,
+        icon: bodyFeed.icon,
         constantParams: bodyFeed.constantParams,
         variableParamsSchema: bodyFeed.variableParamsSchema,
         itemsHaveIdentity: bodyFeed.itemsHaveIdentity,

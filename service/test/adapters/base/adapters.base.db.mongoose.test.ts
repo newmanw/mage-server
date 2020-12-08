@@ -119,7 +119,7 @@ describe('base mongoose repository', async function() {
     expect(found.id).to.not.equal(created[0].id)
   })
 
-  it.only('updates a record', async function() {
+  it('updates a record', async function() {
 
     const seed: Partial<BaseEntity> = {
       derp: 'spor',
