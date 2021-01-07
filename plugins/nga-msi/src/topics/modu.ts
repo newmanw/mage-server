@@ -1,6 +1,6 @@
 import { JsonObject } from '@ngageoint/mage.service/lib/entities/entities.json_types'
 import { FeedTopic, FeedTopicContent } from '@ngageoint/mage.service/lib/entities/feeds/entities.feeds'
-import { PluginResourceUrl } from '@ngageoint/mage.service/lib/entities/icons/entities.icons'
+import { PluginResourceUrl } from '@ngageoint/mage.service/lib/entities/entities.global'
 import { Feature } from 'geojson'
 import { ParsedUrlQuery } from 'querystring'
 import { MsiRequest, MsiResponse } from '../nga-msi'
@@ -30,7 +30,7 @@ export const topicDescriptor: FeedTopic = {
   itemTemporalProperty: 'timestamp',
   updateFrequencySeconds: 60 * 15,
   mapStyle: {
-    iconUrl: new PluginResourceUrl('@ngageoint/mage.nga-msi', 'icons/asam.png')
+    icon: new PluginResourceUrl('@ngageoint/mage.nga-msi', 'icons/asam.png')
   },
   itemPropertiesSchema: {
     type: 'object',

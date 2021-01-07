@@ -1,7 +1,4 @@
 import { URL } from 'url'
-import fs from 'fs'
-import fsx from 'fs-extra'
-import path from 'path'
 
 export interface IconPluginHooks {
   icons: {
@@ -13,7 +10,7 @@ export interface IconPluginHooks {
  * `PluginStaticIcon` defines properties necessary for plugin packages to
  * provide bundled static icon assets for use in MAGE.
  */
-export type PluginStaticIcon = Required<StaticIconStub> & {
+export type PluginStaticIcon = Omit<StaticIconStub, 'sourceUrl'> & Required<Pick<StaticIconStub, 'contentHash'>> & {
   /**
    * The module relative path of a plugin icon points to an image file within
    * the plugin package.  The path is relative to the root of the plugin
@@ -82,7 +79,8 @@ export interface StaticIconRepository {
   loadContent(id: StaticIconId): Promise<NodeJS.ReadableStream | null>
 }
 
-export interface IconUrlResolver {
+export interface IconUrlScheme {
+  isLocalScheme: boolean
   canResolve(url: URL): boolean
   resolveContent(url: URL): Promise<NodeJS.ReadableStream | IconContentNotFoundError>
 }
@@ -100,41 +98,4 @@ export class IconError<Code extends IconErrorCode = IconErrorCode> extends Error
 export type IconContentNotFoundError = IconError<typeof IconContentNotFound>
 export function IconContentNotFoundError(sourceUrl: URL): IconContentNotFoundError {
   return new IconError(IconContentNotFound, `no content found for icon url ${sourceUrl}`)
-}
-
-export class PluginResourceUrl extends URL {
-
-  static readonly pluginProtocol = 'mage-plugin:'
-
-  constructor(readonly pluginModuleName: string, readonly resourcePath: string) {
-    super(`${PluginResourceUrl.pluginProtocol}///${pluginModuleName}/${resourcePath}`)
-  }
-}
-
-export class PluginIconResolver implements IconUrlResolver {
-
-  readonly pluginNamesDescending: string[]
-
-  constructor(pluginNames: string[]) {
-    this.pluginNamesDescending = pluginNames.sort().reverse()
-  }
-
-  canResolve(url: URL): boolean {
-    return url.protocol === PluginResourceUrl.pluginProtocol
-  }
-
-  async resolveContent(sourceUrl: URL): Promise<NodeJS.ReadableStream | IconContentNotFoundError> {
-    const longestMatchingPlugin = this.pluginNamesDescending.find(pluginName => sourceUrl.toString().startsWith(pluginName))
-    if (!longestMatchingPlugin) {
-      return IconContentNotFoundError(sourceUrl)
-    }
-    const relPath = sourceUrl.pathname.slice(longestMatchingPlugin.length)
-    const basePath = require.resolve(longestMatchingPlugin)
-    const fullPath = path.join(basePath, relPath)
-    const stats = await fsx.stat(fullPath)
-    if (stats.isFile()) {
-      return fs.createReadStream(fullPath)
-    }
-    return IconContentNotFoundError(sourceUrl)
-  }
 }

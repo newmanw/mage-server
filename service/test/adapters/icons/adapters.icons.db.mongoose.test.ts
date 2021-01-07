@@ -4,13 +4,13 @@ import _ from 'lodash'
 import { MongoMemoryServer } from 'mongodb-memory-server'
 import mongoose from 'mongoose'
 import uniqid from 'uniqid'
-import { StaticIconStub } from '../../../lib/entities/icons/entities.icons'
+import { IconUrlScheme, StaticIconStub } from '../../../lib/entities/icons/entities.icons'
 import { MongooseStaticIconRepository, StaticIconDocument, StaticIconModel } from '../../../lib/adapters/icons/adapters.icons.db.mongoose'
 import { Substitute as Sub, SubstituteOf } from '@fluffy-spoon/substitute'
 import { EntityIdFactory } from '../../../lib/entities/entities.global'
 
 
-describe('static icon mongoose repository', function() {
+describe.only('static icon mongoose repository', function() {
 
   let mongo: MongoMemoryServer
   let uri: string
@@ -18,6 +18,7 @@ describe('static icon mongoose repository', function() {
   let model: mongoose.Model<StaticIconDocument>
   let idFactory: SubstituteOf<EntityIdFactory>
   let repo: MongooseStaticIconRepository
+  let resolvers: IconUrlScheme[]
 
   before(async function() {
     mongo = new MongoMemoryServer()
@@ -31,6 +32,7 @@ describe('static icon mongoose repository', function() {
     })
     model = StaticIconModel(conn, 'test_static_icons')
     idFactory = Sub.for<EntityIdFactory>()
+    resolvers = []
     repo = new MongooseStaticIconRepository(model, idFactory)
     model.findOne({})
   })
@@ -349,5 +351,18 @@ describe('static icon mongoose repository', function() {
     const all = await model.find({})
 
     expect(all).to.have.length(1)
+  })
+
+  describe('loading icon content', function() {
+
+    let resolverA = Sub.for<IconUrlScheme>()
+    let resolverB = Sub.for<IconUrlScheme>()
+
+    beforeEach(function() {
+      resolverA = Sub.for<IconUrlScheme>()
+      resolverB = Sub.for<IconUrlScheme>()
+      resolvers = [ resolverA, resolverB ]
+    })
+
   })
 })

@@ -1,4 +1,5 @@
-import { StaticIconRepository, IconPluginHooks, PluginStaticIcon, StaticIconStub, PluginResourceUrl } from '../../entities/icons/entities.icons'
+import { PluginResourceUrl } from '../../entities/entities.global'
+import { StaticIconRepository, IconPluginHooks, PluginStaticIcon, StaticIconStub } from '../../entities/icons/entities.icons'
 
 
 export async function loadIconsHooks(pluginModuleName: string, repo: StaticIconRepository, hooks: Partial<IconPluginHooks>): Promise<void> {
