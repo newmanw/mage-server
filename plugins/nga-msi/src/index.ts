@@ -21,6 +21,8 @@ const hooks: FeedsPluginHooks & IconPluginHooks = {
         {
           pluginRelativePath: 'icons/asam.png',
           title: 'ASAM',
+          summary: 'The ASAM pirate skull and crossbones icon',
+          contentHash: '1',
           imageType: 'raster',
           mediaType: 'image/png',
           fileName: 'asam.png',
