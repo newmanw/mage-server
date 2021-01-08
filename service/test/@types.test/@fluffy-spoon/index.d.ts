@@ -1,5 +1,5 @@
 import { Argument } from '@fluffy-spoon/substitute/dist/src/Arguments'
-import { AppRequest } from '../../../lib/app.api/app.api.global'
+import { AppRequest, AppRequestContext } from '../../../lib/app.api/app.api.global'
 
 /**
  * For some reason, putting the declaration here in this specific folder is the
@@ -27,6 +27,7 @@ declare module '@fluffy-spoon/substitute' {
   namespace Arg {
     function deepEquals<T>(x: T): Argument<T> & T
     function requestTokenMatches<T extends AppRequest>(expectedRequest: T): Argument<T> & T
+    function requestTokenMatches<T extends AppRequestContext>(expectedContext: T): Argument<T> & T
   }
 }
 
