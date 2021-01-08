@@ -7,7 +7,7 @@ import { FeedServiceTypeDescriptor } from '../../app.api/feeds/app.api.feeds'
 import { JsonSchemaService, JsonValidator, JSONSchema4 } from '../../entities/entities.json_types'
 import { MageEventRepository } from '../../entities/events/entities.events'
 import { MongooseFeedRepository } from '../../adapters/feeds/adapters.feeds.db.mongoose'
-import { StaticIcon, StaticIconId, StaticIconRepository } from '../../entities/icons/entities.icons'
+import { StaticIcon, StaticIconId, StaticIconImportFetch, StaticIconRepository } from '../../entities/icons/entities.icons'
 
 
 export function ListFeedServiceTypes(permissionService: api.FeedsPermissionService, repo: FeedServiceTypeRepository): api.ListFeedServiceTypes {
@@ -219,10 +219,10 @@ function withFetchContext<R>(deps: ContentFetchDependencies, { service, topic, v
   }
 }
 
-async function resolveFeedCreate(topic: FeedTopic, feedMinimal: FeedCreateMinimal, iconRepo: StaticIconRepository): Promise<FeedCreateAttrs> {
+async function resolveFeedCreate(topic: FeedTopic, feedMinimal: FeedCreateMinimal, iconRepo: StaticIconRepository, iconFetch: StaticIconImportFetch = StaticIconImportFetch.Lazy): Promise<FeedCreateAttrs> {
   const unresolved = FeedCreateUnresolved(topic, feedMinimal)
   const icons = await Promise.all(unresolved.unresolvedIcons.map(iconUrl => {
-    return iconRepo.registerBySourceUrl(iconUrl).then(icon => ({ [String(iconUrl)]: icon.id }))
+    return iconRepo.findOrImportBySourceUrl(iconUrl, iconFetch).then(icon => ({ [String(iconUrl)]: icon.id }))
   }))
   const iconsMerged = Object.assign({}, ...icons)
   const resolved = FeedCreateAttrs(unresolved, iconsMerged)
@@ -282,7 +282,7 @@ export function CreateFeed(permissionService: api.FeedsPermissionService, servic
       permissionService.ensureCreateFeedPermissionFor(req.context, reqFeed.service),
       withFetchContext<Feed>({ serviceRepo, serviceTypeRepo, jsonSchemaService }, reqFeed)
         .then(async (context: ContentFetchContext): Promise<Feed> => {
-          const feedResolved = await resolveFeedCreate(context.topic, reqFeed, iconRepo)
+          const feedResolved = await resolveFeedCreate(context.topic, reqFeed, iconRepo, StaticIconImportFetch.EagerAwait)
           const feed = await feedRepo.create(feedResolved)
           return feed
         })

@@ -66,20 +66,46 @@ export interface StaticIcon {
   tags?: string[]
 }
 
+export type LocalStaticIconStub = Omit<StaticIconStub, 'sourceUrl' | 'title'> & Required<Pick<StaticIcon, 'title'>>
+
 const iconIsResolved = (icon: StaticIcon): boolean => {
   return typeof icon.contentHash === 'string' && typeof icon.contentTimestamp === 'number'
 }
 
 export type StaticIconId = string
 
+export enum StaticIconImportFetch {
+  /**
+   * Immediately fetch and store the icon content from the source URL and wait
+   * for the fetch to complete.
+   */
+  EagerAwait = 'StaticIconFetch.eagerAwait',
+  /**
+   * Immediately fetch and store the icon content from the source URL, but do
+   * not serially wait for the fetch to complete.
+   */
+  Eager = 'StaticIconFetch.eager',
+  /**
+   * Defer fetching the icon content from the source URL until some process
+   * explictly requests a fetch at some point in the future, such as a client
+   * requests the icon content by its internal ID.
+   */
+  Lazy = 'StaticIconFetch.lazy',
+}
+
 export interface StaticIconRepository {
-  registerBySourceUrl(stub: StaticIconStub | URL): Promise<StaticIcon>
+  findOrImportBySourceUrl(stub: StaticIconStub | URL, fetch?: StaticIconImportFetch): Promise<StaticIcon>
+  createLocal(stub: LocalStaticIconStub, content: NodeJS.ReadableStream): Promise<StaticIcon>
   findById(id: StaticIconId): Promise<StaticIcon | null>
-  saveContent(id: StaticIconId, content: NodeJS.ReadableStream): Promise<boolean>
+  resolveFromSourceUrl(id: StaticIconId): Promise<NodeJS.ReadableStream | null>
+  resolveFromSourceUrlAndStore(id: StaticIconId): Promise<StaticIcon | null>
   loadContent(id: StaticIconId): Promise<NodeJS.ReadableStream | null>
 }
 
 export interface IconUrlScheme {
+  /**
+   * TODO: this should hopefully go away
+   */
   isLocalScheme: boolean
   canResolve(url: URL): boolean
   resolveContent(url: URL): Promise<NodeJS.ReadableStream | IconContentNotFoundError>

@@ -13,7 +13,7 @@ import { JsonObject, JsonSchemaService, JsonValidator } from '../../../lib/entit
 import _ from 'lodash'
 import { MageEventRepository } from '../../../lib/entities/events/entities.events'
 import { URL } from 'url'
-import { StaticIcon, StaticIconId, StaticIconRepository } from '../../../lib/entities/icons/entities.icons'
+import { StaticIcon, StaticIconId, StaticIconImportFetch, StaticIconRepository } from '../../../lib/entities/icons/entities.icons'
 
 
 function mockServiceType(descriptor: FeedServiceTypeDescriptor): SubstituteOf<RegisteredFeedServiceType> {
@@ -91,7 +91,7 @@ function requestBy<RequestType>(principal: TestPrincipal, params?: RequestType):
   )
 }
 
-describe('feeds use case interactions', function() {
+describe.only('feeds use case interactions', function() {
 
   let app: TestApp
   let someServiceTypes: SubstituteOf<RegisteredFeedServiceType>[]
@@ -946,7 +946,7 @@ describe('feeds use case interactions', function() {
               registeredTimestamp: Date.now(),
               tags: []
             }
-            app.iconRepo.registerBySourceUrl(iconUrl).resolves(registeredIcon)
+            app.iconRepo.findOrImportBySourceUrl(iconUrl).resolves(registeredIcon)
             const feed = {
               service: service.id,
               topic: topic.id
@@ -963,8 +963,8 @@ describe('feeds use case interactions', function() {
               registeredIconId = (res.success as Feed).icon as StaticIconId
             }
             expect(registeredIconId).to.equal(registeredIcon.id)
-            app.iconRepo.received(1).registerBySourceUrl(iconUrl)
-            app.iconRepo.received(1).registerBySourceUrl(Arg.any())
+            app.iconRepo.received(1).findOrImportBySourceUrl(iconUrl)
+            app.iconRepo.received(1).findOrImportBySourceUrl(Arg.any())
           }
         ],
         [
@@ -984,7 +984,7 @@ describe('feeds use case interactions', function() {
               registeredTimestamp: Date.now(),
               tags: []
             }
-            app.iconRepo.registerBySourceUrl(iconUrl).resolves(registeredIcon)
+            app.iconRepo.findOrImportBySourceUrl(iconUrl).resolves(registeredIcon)
             const feed = {
               service: service.id,
               topic: topic.id
@@ -1005,8 +1005,8 @@ describe('feeds use case interactions', function() {
             }
             expect(resFeedIconId).to.be.undefined
             expect(resMapIconId).to.equal(registeredIcon.id)
-            app.iconRepo.received(1).registerBySourceUrl(iconUrl)
-            app.iconRepo.received(1).registerBySourceUrl(Arg.any())
+            app.iconRepo.received(1).findOrImportBySourceUrl(iconUrl)
+            app.iconRepo.received(1).findOrImportBySourceUrl(Arg.any())
           }
         ],
         [
@@ -1031,8 +1031,8 @@ describe('feeds use case interactions', function() {
                 icon: mapIcon.sourceUrl
               }
             }
-            app.iconRepo.registerBySourceUrl(Arg.is(x => String(x) === String(topicIcon.sourceUrl))).resolves(topicIcon)
-            app.iconRepo.registerBySourceUrl(Arg.is(x => String(x) === String(mapIcon.sourceUrl))).resolves(mapIcon)
+            app.iconRepo.findOrImportBySourceUrl(Arg.is(x => String(x) === String(topicIcon.sourceUrl))).resolves(topicIcon)
+            app.iconRepo.findOrImportBySourceUrl(Arg.is(x => String(x) === String(mapIcon.sourceUrl))).resolves(mapIcon)
             serviceConn.fetchAvailableTopics().resolves([ topic ])
             const feed = {
               service: service.id,
@@ -1054,9 +1054,9 @@ describe('feeds use case interactions', function() {
             }
             expect(resFeedIconId).to.equal(topicIcon.id)
             expect(resMapIconId).to.equal(mapIcon.id)
-            app.iconRepo.received(1).registerBySourceUrl(Arg.is(x => String(x) === String(topicIcon.sourceUrl)))
-            app.iconRepo.received(1).registerBySourceUrl(Arg.is(x => String(x) === String(mapIcon.sourceUrl)))
-            app.iconRepo.received(2).registerBySourceUrl(Arg.any())
+            app.iconRepo.received(1).findOrImportBySourceUrl(Arg.is(x => String(x) === String(topicIcon.sourceUrl)))
+            app.iconRepo.received(1).findOrImportBySourceUrl(Arg.is(x => String(x) === String(mapIcon.sourceUrl)))
+            app.iconRepo.received(2).findOrImportBySourceUrl(Arg.any())
           }
         ],
         [
@@ -1094,7 +1094,7 @@ describe('feeds use case interactions', function() {
             }
             expect(resFeedIconId).to.equal('feed_icon')
             expect(resMapIconId).to.equal('map_icon')
-            app.iconRepo.received(0).registerBySourceUrl(Arg.any())
+            app.iconRepo.received(0).findOrImportBySourceUrl(Arg.any())
           }
         ]
       ]
@@ -1453,6 +1453,48 @@ describe('feeds use case interactions', function() {
           expect(app.feedRepo.db.get(createRes.success!.id)).to.deep.include(feed)
         })
 
+        it('registers the topic icon for immediate fetch', async function() {
+
+          const icon: StaticIcon = {
+            id: uniqid(),
+            sourceUrl: new URL('test:///icon.png'),
+            registeredTimestamp: Date.now()
+          }
+          const topic = { ...topics[1], icon: icon.sourceUrl }
+          const feed: FeedCreateMinimal = {
+            service: service.id,
+            topic: topics[1].id,
+            title: 'Save From Preview',
+            constantParams: {
+              limit: 50
+            },
+            itemsHaveIdentity: true,
+            itemsHaveSpatialDimension: true
+          }
+          const req: CreateFeedRequest = requestBy(adminPrincipal, { feed })
+          serviceConn.fetchAvailableTopics().resolves([topic])
+          app.iconRepo.findOrImportBySourceUrl(
+            Arg.is(x => String(x) === String(feed.icon as URL)),
+            Arg.is(x => x === StaticIconImportFetch.EagerAwait)
+          ).resolves(icon)
+          const res = await app.createFeed(req)
+
+          expect(res.error).to.be.null
+          expect(res.success).to.not.be.an('object')
+          expect(res.success?.icon).to.equal(icon.id)
+          app.iconRepo.received(1).findOrImportBySourceUrl(
+            Arg.is(x => String(x) === String(topics[1].icon)),
+            Arg.is(x => x === StaticIconImportFetch.EagerAwait))
+        })
+
+        it('registers the feed icon url for immediate fetch', async function() {
+          expect.fail('todo')
+        })
+
+        it('fails if the immediate icon fetch fails', async function() {
+          expect.fail('todo')
+        })
+
         describe('behaviors shared with previewing a feed', function() {
           testSharedBehaviorFor.call(this.ctx, 'createFeed')
         })
@@ -1707,8 +1749,8 @@ describe('feeds use case interactions', function() {
             sourceUrl: services[1].topics[0].mapStyle.icon!,
             registeredTimestamp: Date.now()
           }
-          app.iconRepo.registerBySourceUrl(Arg.is(x => String(x) === String(services[1].topics[0].icon))).resolves(topicIcon)
-          app.iconRepo.registerBySourceUrl(Arg.is(x => String(x) === String(services[1].topics[0].mapStyle?.icon))).resolves(mapIcon)
+          app.iconRepo.findOrImportBySourceUrl(Arg.is(x => String(x) === String(services[1].topics[0].icon))).resolves(topicIcon)
+          app.iconRepo.findOrImportBySourceUrl(Arg.is(x => String(x) === String(services[1].topics[0].mapStyle?.icon))).resolves(mapIcon)
           const req: UpdateFeedRequest = requestBy(adminPrincipal, { feed: feedMod })
           const res = await app.updateFeed(req)
 
@@ -1721,9 +1763,9 @@ describe('feeds use case interactions', function() {
           expect(res.error).to.be.null
           expect(res.success).to.deep.equal(expanded)
           expect(inDb).to.deep.equal(withTopicAttrs)
-          app.iconRepo.received(1).registerBySourceUrl(Arg.is(x => String(x) === String(services[1].topics[0].icon)))
-          app.iconRepo.received(1).registerBySourceUrl(Arg.is(x => String(x) === String(services[1].topics[0].mapStyle?.icon)))
-          app.iconRepo.received(2).registerBySourceUrl(Arg.any())
+          app.iconRepo.received(1).findOrImportBySourceUrl(Arg.is(x => String(x) === String(services[1].topics[0].icon)))
+          app.iconRepo.received(1).findOrImportBySourceUrl(Arg.is(x => String(x) === String(services[1].topics[0].mapStyle?.icon)))
+          app.iconRepo.received(2).findOrImportBySourceUrl(Arg.any())
         })
 
         it('does not apply topic attributes for explicit null update keys', async function() {
@@ -1787,8 +1829,8 @@ describe('feeds use case interactions', function() {
             sourceUrl: feedMod.mapStyle?.icon as URL,
             registeredTimestamp: Date.now()
           }
-          app.iconRepo.registerBySourceUrl(Arg.is(x => String(x) === String(feedMod.icon))).resolves(feedIcon)
-          app.iconRepo.registerBySourceUrl(Arg.is(x => String(x) === String(feedMod.mapStyle?.icon))).resolves(mapIcon)
+          app.iconRepo.findOrImportBySourceUrl(Arg.is(x => String(x) === String(feedMod.icon))).resolves(feedIcon)
+          app.iconRepo.findOrImportBySourceUrl(Arg.is(x => String(x) === String(feedMod.mapStyle?.icon))).resolves(mapIcon)
           const req: UpdateFeedRequest = requestBy(adminPrincipal, { feed: feedMod })
           const res = await app.updateFeed(req)
 
@@ -1805,9 +1847,9 @@ describe('feeds use case interactions', function() {
               icon: mapIcon.id
             }
           })
-          app.iconRepo.received(1).registerBySourceUrl(Arg.is(x => String(x) === String(feedMod.icon)))
-          app.iconRepo.received(1).registerBySourceUrl(Arg.is(x => String(x) === String(feedMod.mapStyle?.icon)))
-          app.iconRepo.received(2).registerBySourceUrl(Arg.any())
+          app.iconRepo.received(1).findOrImportBySourceUrl(Arg.is(x => String(x) === String(feedMod.icon)))
+          app.iconRepo.received(1).findOrImportBySourceUrl(Arg.is(x => String(x) === String(feedMod.mapStyle?.icon)))
+          app.iconRepo.received(2).findOrImportBySourceUrl(Arg.any())
         })
 
         it('checks permission for updating the feed', async function() {

@@ -67,7 +67,7 @@ describe.only('static icon mongoose repository', function() {
       }
       const id = uniqid()
       idFactory.nextId().resolves(id)
-      const registered = await repo.registerBySourceUrl(stub)
+      const registered = await repo.findOrImportBySourceUrl(stub)
       const found = await model.find({})
 
       expect(found).to.have.length(1)
@@ -82,7 +82,7 @@ describe.only('static icon mongoose repository', function() {
       const sourceUrl = new URL('mage:///test/icons/bare.png')
       const id = uniqid()
       idFactory.nextId().resolves(id)
-      const reg = await repo.registerBySourceUrl(sourceUrl)
+      const reg = await repo.findOrImportBySourceUrl(sourceUrl)
       const allDocs = await model.find({})
       expect(allDocs).to.have.length(1)
       const regDoc = allDocs[0]
@@ -106,7 +106,7 @@ describe.only('static icon mongoose repository', function() {
         sourceUrl,
         contentHash: uniqid()
       }
-      const reg = await repo.registerBySourceUrl(attrs)
+      const reg = await repo.findOrImportBySourceUrl(attrs)
 
       expect(reg.contentTimestamp).to.be.closeTo(Date.now(), 100)
     })
@@ -142,12 +142,12 @@ describe.only('static icon mongoose repository', function() {
       }
       const id = uniqid()
       idFactory.nextId().resolves(id)
-      const orig = await repo.registerBySourceUrl(origAttrs)
+      const orig = await repo.findOrImportBySourceUrl(origAttrs)
       const origFound = await model.find({})
 
       expect(orig).to.deep.include({ id, ...origAttrs })
 
-      const updated = await repo.registerBySourceUrl(updatedAttrs)
+      const updated = await repo.findOrImportBySourceUrl(updatedAttrs)
       const updatedFound = await model.find({})
 
       expect(updated).to.deep.include({ id, ...updatedAttrs })
@@ -185,9 +185,9 @@ describe.only('static icon mongoose repository', function() {
       })
       const id = uniqid()
       idFactory.nextId().resolves(id)
-      const orig = await repo.registerBySourceUrl(origAttrs)
+      const orig = await repo.findOrImportBySourceUrl(origAttrs)
       const origFound = await model.find({})
-      const updated = await repo.registerBySourceUrl(updatedAttrs)
+      const updated = await repo.findOrImportBySourceUrl(updatedAttrs)
       const updatedFound = await model.find({})
 
       expect(origFound).to.have.length(1)
@@ -228,9 +228,9 @@ describe.only('static icon mongoose repository', function() {
       }
       const id = uniqid()
       idFactory.nextId().resolves(id)
-      const orig = await repo.registerBySourceUrl(origAttrs)
+      const orig = await repo.findOrImportBySourceUrl(origAttrs)
       const origFound = await model.find({})
-      const updated = await repo.registerBySourceUrl(updatedAttrs)
+      const updated = await repo.findOrImportBySourceUrl(updatedAttrs)
       const updatedFound = await model.find({})
 
       expect(origFound).to.have.length(1)
@@ -269,12 +269,12 @@ describe.only('static icon mongoose repository', function() {
       }
       const id = uniqid()
       idFactory.nextId().resolves(id)
-      const registered = await repo.registerBySourceUrl(stub)
+      const registered = await repo.findOrImportBySourceUrl(stub)
 
       expect(registered).to.deep.include({ id,  ...stub })
       expect(registered.contentTimestamp).to.be.closeTo(Date.now(), 100)
 
-      const sameHashRegistered = await repo.registerBySourceUrl(sameHashStub)
+      const sameHashRegistered = await repo.findOrImportBySourceUrl(sameHashStub)
 
       expect(sameHashRegistered).to.deep.equal(registered)
     })
@@ -310,9 +310,9 @@ describe.only('static icon mongoose repository', function() {
       })
       const id = uniqid()
       idFactory.nextId().resolves(id)
-      const orig = await repo.registerBySourceUrl(origAttrs)
+      const orig = await repo.findOrImportBySourceUrl(origAttrs)
       const origFound = await model.find({})
-      const updated = await repo.registerBySourceUrl(updatedAttrs)
+      const updated = await repo.findOrImportBySourceUrl(updatedAttrs)
       const updatedFound = await model.find({})
 
       expect(orig).to.deep.equal({ id, registeredTimestamp: origFound[0].registeredTimestamp, ...origAttrs })

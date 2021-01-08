@@ -23,6 +23,6 @@ export async function loadIconsHooks(pluginModuleName: string, repo: StaticIconR
       title: pluginIcon.title,
       summary: pluginIcon.summary,
     }
-    return repo.registerBySourceUrl(iconInfo)
+    return repo.findOrImportBySourceUrl(iconInfo)
   }))
 }

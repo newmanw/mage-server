@@ -3,7 +3,7 @@ import { URL } from 'url'
 import mongoose from 'mongoose'
 import mongodb from 'mongodb'
 import { EntityIdFactory } from '../../entities/entities.global'
-import { StaticIcon, StaticIconStub, StaticIconId, StaticIconRepository } from '../../entities/icons/entities.icons'
+import { StaticIcon, StaticIconStub, StaticIconId, StaticIconRepository, LocalStaticIconStub } from '../../entities/icons/entities.icons'
 import { BaseMongooseRepository } from '../base/adapters.base.db.mongoose'
 
 export type StaticIconDocument = Omit<StaticIcon, 'sourceUrl'> & mongoose.Document & {
@@ -43,7 +43,8 @@ export const StaticIconSchema = new mongoose.Schema(
         json.sourceUrl = new URL(doc.sourceUrl)
       }
     }
-  })
+  }
+)
 export function StaticIconModel(conn: mongoose.Connection, collection?: string): StaticIconModel {
   return conn.model(StaticIconModelName, StaticIconSchema, collection || 'static_icons')
 }
@@ -60,7 +61,7 @@ export class MongooseStaticIconRepository extends BaseMongooseRepository<StaticI
     return super.create(withId)
   }
 
-  async registerBySourceUrl(stub: StaticIconStub | URL): Promise<StaticIcon> {
+  async findOrImportBySourceUrl(stub: StaticIconStub | URL): Promise<StaticIcon> {
     if (!('sourceUrl' in stub)) {
       stub = { sourceUrl: stub }
     }
@@ -81,11 +82,19 @@ export class MongooseStaticIconRepository extends BaseMongooseRepository<StaticI
     return registered?.toJSON()
   }
 
-  saveContent(id: StaticIconId, content: NodeJS.ReadableStream): Promise<boolean> {
+  async createLocal(stub: LocalStaticIconStub, content: NodeJS.ReadableStream): Promise<StaticIcon> {
     throw new Error('Method not implemented.')
   }
 
-  loadContent(id: StaticIconId): Promise<NodeJS.ReadableStream | null> {
+  async resolveFromSourceUrl(id: string): Promise<NodeJS.ReadableStream | null> {
+    throw new Error('Method not implemented.')
+  }
+
+  async resolveFromSourceUrlAndStore(id: string): Promise<StaticIcon | null> {
+    throw new Error('Method not implemented.')
+  }
+
+  async loadContent(id: StaticIconId): Promise<NodeJS.ReadableStream | null> {
     throw new Error('Method not implemented.')
   }
 
