@@ -37,17 +37,30 @@ import {
   MatRadioModule,
   MatCheckboxModule,
   MatSliderModule,
-  MatExpansionModule
+  MatExpansionModule,
+  MatSnackBarModule,
+  MatDatepickerModule,
+  MatNativeDateModule,
+  MatButtonToggleModule,
+  MatProgressBarModule,
+  MatGridListModule,
+  MatDialogModule,
+  MatTabsModule,
+  MatBadgeModule,
+  MatTableModule,
+  MatPaginatorModule,
+  MatSortModule
 } from '@angular/material';
 
 import { TokenInterceptorService } from './http/token-interceptor.service'
+import { MatDatetimepickerModule } from '@nader-eloshaiker/mat-datetimepicker'
+import { MatMomentDatetimeModule } from '@nader-eloshaiker/mat-datetimepicker-moment'
+
+import { NgxMatDatetimePickerModule, NgxMatTimepickerModule, NgxMatNativeDateModule } from '@angular-material-components/datetime-picker';
 
 import { ZoomComponent } from './map/controls/zoom.component';
 import { AddObservationComponent } from './map/controls/add-observation.component';
 import { SwaggerComponent } from './swagger/swagger.component';
-import { ScrollWrapperComponent } from './wrapper/scroll/feed-scroll.component';
-import { DropdownComponent } from './observation/edit/dropdown/dropdown.component';
-import { MultiSelectDropdownComponent } from './observation/edit/multiselectdropdown/multiselectdropdown.component';
 
 import { LocationComponent } from './map/controls/location.component';
 import { SearchComponent } from './map/controls/search.component';
@@ -59,6 +72,67 @@ import { LeafletDirective } from './map/leaflet.upgrade.component';
 import { LayerHeaderComponent } from './map/layers/layer-header.component';
 import { LayerContentComponent } from './map/layers/layer-content.component';
 import { ColorPickerComponent } from './color-picker/color-picker.component';
+import { ExportsComponent } from './export/exports.component';
+import { ExportMetadataDialogComponent } from "./export/export-metadata-dialog.component";
+
+import { MapClipComponent } from './map/clip/clip.component';
+import { GeometryModule } from './geometry/geometry.module';
+import { ObservationDeleteComponent } from './observation/observation-delete/observation-delete.component';
+import { ObservationListItemComponent } from './observation/observation-list/observation-list-item.component';
+import { MomentModule } from './moment/moment.module';
+import { BootstrapComponent } from './bootstrap/bootstrap.component';
+import { AttachmentComponent } from './observation/attachment/attachment.component';
+import { FilenamePipe } from './filename/filename.pipe';
+import { AttachUploadComponent } from './observation/attachment/attachment-upload/attachment-upload.component';
+import { ObservationViewFormComponent } from './observation/observation-view/observation-view-form.component';
+import { ObservationViewComponent } from './observation/observation-view/observation-view.component';
+import { ObservationFavoritesComponent } from './observation/observation-favorites/observation-favorites.component';
+import { UserAvatarComponent } from './user/user-avatar/user-avatar.component';
+import { TokenInterceptorService } from './http/token-interceptor.service';
+import { ObservationFormComponent } from './observation/observation-form/observation-form.component';
+import { ObservationListComponent } from './observation/observation-list/observation-list.component';
+import { UserViewComponent } from './user/user-view/user-view.component';
+import { UserListItemComponent } from './user/user-list/user-list-item.component';
+import { UserListComponent } from './user/user-list/user-list.component';
+import { FeedComponent } from './feed/feed.component';
+
+import {
+  mapServiceProvider,
+  eventServiceProvider,
+  localStorageServiceProvider,
+  geometryServiceProvider,
+  observationServiceProvider,
+  filterServiceProvider,
+  userServiceProvider } from './upgrade/ajs-upgraded-providers';
+
+import {
+  ObservationViewCheckboxComponent,
+  ObservationViewDateComponent,
+  ObservationViewGeometryComponent,
+  ObservationViewMultiselectdropdownComponent,
+  ObservationViewTextComponent,
+  ObservationViewTextareaComponent
+} from './observation/observation-view/observation-view';
+
+import {
+  MinValueDirective,
+  MaxValueDirective,
+  MGRSValidatorDirective,
+  ObservationEditCheckboxComponent,
+  ObservationEditDateComponent,
+  ObservationEditSelectComponent,
+  ObservationEditEmailComponent,
+  ObservationEditGeometryComponent,
+  ObservationEditGeometryFormComponent,
+  ObservationEditGeometryMapComponent,
+  ObservationEditMultiselectComponent,
+  ObservationEditNumberComponent,
+  ObservationEditRadioComponent,
+  ObservationEditTextComponent,
+  ObservationEditTextareaComponent,
+  ObservationEditFormComponent,
+  ObservationEditComponent
+} from './observation/observation-edit/observation-edit';
 
 import { mapServiceProvider, localStorageServiceProvider, userServiceProvider, eventResourceProvider } from './upgrade/ajs-upgraded-providers';
 import { BootstrapComponent } from './bootstrap/bootstrap.component';
@@ -75,13 +149,13 @@ import { FeedTabComponent } from './feed/feed-tab.component';
 import { MomentModule } from './moment/moment.module';
 import { GeometryModule } from './geometry/geometry.module';
 import { AdminFeedsModule } from './admin/admin-feeds/admin-feeds.module';
+import { ObservationPopupComponent } from './observation/observation-popup/observation-popup.component';
+import { UserPopupComponent } from './user/user-popup/user-popup.component';
+import { CdkDetailRowDirective } from './export/directives/cdk-detail-row.directive';
 
 @NgModule({
   declarations: [
     SwaggerComponent,
-    DropdownComponent,
-    MultiSelectDropdownComponent,
-    ScrollWrapperComponent,
     ZoomComponent,
     AddObservationComponent,
     LocationComponent,
@@ -99,6 +173,52 @@ import { AdminFeedsModule } from './admin/admin-feeds/admin-feeds.module';
     MapClipComponent,
     FeedItemMapPopupComponent,
     FeedTabComponent
+    MinValueDirective,
+    MaxValueDirective,
+    MGRSValidatorDirective,
+    ObservationListItemComponent,
+    ObservationEditComponent,
+    ObservationDeleteComponent,
+    ObservationEditFormComponent,
+    ObservationEditMultiselectComponent,
+    ObservationEditCheckboxComponent,
+    ObservationEditSelectComponent,
+    ObservationEditEmailComponent,
+    ObservationEditNumberComponent,
+    ObservationEditTextComponent,
+    ObservationEditTextareaComponent,
+    ObservationEditRadioComponent,
+    ObservationEditGeometryComponent,
+    ObservationEditGeometryMapComponent,
+    ObservationEditGeometryFormComponent,
+    ObservationEditDateComponent,
+    ObservationViewComponent,
+    ObservationViewTextComponent,
+    ObservationViewTextareaComponent,
+    ObservationViewCheckboxComponent,
+    ObservationViewDateComponent,
+    ObservationViewGeometryComponent,
+    ObservationViewMultiselectdropdownComponent,
+    ObservationViewFormComponent,
+    ObservationFavoritesComponent,
+    ObservationFormComponent,
+    ObservationListComponent,
+    MapClipComponent,
+    BootstrapComponent,
+    AttachmentComponent,
+    FilenamePipe,
+    AttachUploadComponent,
+    UserAvatarComponent,
+    UserViewComponent,
+    UserListItemComponent,
+    UserListComponent,
+    FeedComponent,
+    ObservationPopupComponent,
+    UserPopupComponent,
+    ColorPickerComponent,
+    ExportsComponent,
+    ExportMetadataDialogComponent,
+    CdkDetailRowDirective
   ],
   imports: [
     BrowserModule,
@@ -110,11 +230,20 @@ import { AdminFeedsModule } from './admin/admin-feeds/admin-feeds.module';
     BrowserAnimationsModule,
     DragDropModule,
     NgxMatSelectSearchModule,
+    MatBadgeModule,
+    MatDialogModule,
+    MatButtonToggleModule,
+    MatNativeDateModule,
+    MatDatepickerModule,
+    MatMomentDatetimeModule,
+    MatDatetimepickerModule,
     MatToolbarModule,
     MatIconModule,
     MatTooltipModule,
+    MatTabsModule,
     MatButtonModule,
     MatCardModule,
+    MatGridListModule,
     MatProgressSpinnerModule,
     MatFormFieldModule,
     MatRadioModule,
@@ -129,6 +258,10 @@ import { AdminFeedsModule } from './admin/admin-feeds/admin-feeds.module';
     NgxMatSelectSearchModule,
     MatChipsModule,
     MatSidenavModule,
+    MatSnackBarModule,
+    MatProgressBarModule,
+    MomentModule,
+    GeometryModule,
     ScrollingModule,
     SaturationModule,
     HueModule,
@@ -146,6 +279,25 @@ import { AdminFeedsModule } from './admin/admin-feeds/admin-feeds.module';
     localStorageServiceProvider,
     userServiceProvider,
     eventResourceProvider,
+    MatTableModule,
+    MatDialogModule,
+    MatPaginatorModule,
+    MatSortModule,
+    MatSnackBarModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    NgxMatDatetimePickerModule,
+    NgxMatTimepickerModule,
+    NgxMatNativeDateModule
+  ],
+  providers: [
+    mapServiceProvider,
+    userServiceProvider,
+    filterServiceProvider,
+    eventServiceProvider,
+    geometryServiceProvider,
+    observationServiceProvider,
+    localStorageServiceProvider,
     { provide: HTTP_INTERCEPTORS, useClass: TokenInterceptorService, multi: true }
   ],
   bootstrap: [],
@@ -161,19 +313,29 @@ import { AdminFeedsModule } from './admin/admin-feeds/admin-feeds.module';
     MatSidenavContainer,
     DropdownComponent,
     MultiSelectDropdownComponent,
+    BootstrapComponent,
+    FeedComponent,
+    ObservationDeleteComponent,
+    ObservationFavoritesComponent,
+    ObservationListItemComponent,
+    ObservationPopupComponent,
+    UserViewComponent,
+    UserAvatarComponent,
+    UserPopupComponent,
     LeafletComponent,
     ZoomComponent,
     SearchComponent,
     LocationComponent,
     AddObservationComponent,
     LayersControlComponent,
-    ScrollWrapperComponent,
     SwaggerComponent,
     ColorPickerComponent,
     FeedComponent,
     FeedTabComponent,
     FeedItemComponent,
     FeedItemMapPopupComponent
+    ExportsComponent,
+    ExportMetadataDialogComponent
   ]
 })
 export class AppModule {

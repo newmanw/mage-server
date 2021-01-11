@@ -1,5 +1,6 @@
 function NavController($rootScope, $scope) {
 
+function NavController($rootScope, $scope) {
   $rootScope.$on('event:user', function(e, login) {
     $scope.token = login.token;
     $scope.myself = login.user;

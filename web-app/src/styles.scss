@@ -5,8 +5,8 @@
 @import "./ng1/css/style.scss";
 @import "./ng1/css/map.scss";
 html, body { height: 100%; }
-body { 
-  margin: 0; 
+body {
+  margin: 0;
   font-family: Roboto, "Helvetica Neue", sans-serif;
   font-size: unset;
 }
@@ -14,17 +14,3 @@ body {
 bootstrap {
   height: 100%;
 }
-
-/* Angular Material Overrides */
-
-:not(.mat-fab):not(.mat-mini-fab):not(.mat-icon-button) > .mat-button-wrapper .mat-icon,
-:not([mat-fab]):not([mat-mini-fab]):not([mat-icon-button]) > .mat-button-wrapper .mat-icon {
-  font-size: 18px;
-	height: 18px;
-	width: 18px;
-	line-height: 18px;
-	margin-right: 8px;
-	margin-left: -4px;
-}
-
-/* Angular Material Overrides End */

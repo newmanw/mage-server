@@ -3,9 +3,9 @@ var _ = require('underscore')
 
 module.exports = MapService;
 
-MapService.$inject = ['EventService', 'LocationService', 'FeatureService', 'FeedItemPopupService', '$compile', '$rootScope', 'LocalStorageService'];
+MapService.$inject = ['EventService', 'LocationService', 'FeatureService', 'FeedItemPopupService', 'LocalStorageService', 'PopupService', '$compile', '$rootScope'];
 
-function MapService(EventService, LocationService, FeatureService, FeedItemPopupService, $compile, $rootScope, LocalStorageService) {
+function MapService(EventService, LocationService, FeatureService, FeedItemPopupService, LocalStorageService, PopupService, $compile, $rootScope) {
 
   // Map Service should delegate to some map provider that implements delegate interface
   // In this case should delegate to leaflet directive.  See if this is possible
@@ -52,7 +52,6 @@ function MapService(EventService, LocationService, FeatureService, FeedItemPopup
   var listeners = [];
   var observationsById = {};
   var usersById = {};
-  var popupScopes = {};
 
   var layersChangedListener = {
     onLayersChanged: onLayersChanged
@@ -94,26 +93,11 @@ function MapService(EventService, LocationService, FeatureService, FeedItemPopup
         onEachFeature: function(feature, layer) {
           observationLayer.featureIdToLayer[feature.id] = layer;
         },
-        popup: {
-          html: function(observation) {
-            const el = angular.element('<div observation-popup="observation" observation-popup-info="onInfo(observation)" observation-zoom="onZoom(observation)"></div>');
-            const compiled = $compile(el);
-            const newScope = $rootScope.$new(true);
-            newScope.observation = observation;
-            newScope.onInfo = function(observation) {
-              $rootScope.$broadcast('observation:view', observation);
-            };
-  
-            newScope.onZoom = function(observation) {
-              service.zoomToFeatureInLayer(observation, 'observations');
-            };
-  
-            compiled(newScope);
-            popupScopes[observation.id] = newScope;
-  
-            return el[0];
-          },
-          closeButton: false
+        popup: (layer, feature) => {
+          PopupService.popupObservation(layer, feature);
+        },
+        onLayer: (layer, feature) => {
+          PopupService.registerObservation(layer, feature);
         }
       }
     };
@@ -132,30 +116,11 @@ function MapService(EventService, LocationService, FeatureService, FeedItemPopup
           property: 'timestamp',
           colorBuckets: LocationService.colorBuckets
         },
-        popup: {
-          html: function(location) {
-            var user = usersById[location.userId];
-            var el = angular.element('<div class="foo" location-popup="user" user-popup-info="onInfo(user)" user-zoom="onZoom(user)"></div>');
-            var compiled = $compile(el);
-            var newScope = $rootScope.$new(true);
-            newScope.user = user;
-            newScope.onInfo = function(user) {
-              $rootScope.$broadcast('user:select', user);
-            };
-  
-            newScope.onZoom = function(user) {
-              service.zoomToFeatureInLayer(user, 'people');
-            };
-  
-            compiled(newScope);
-            popupScopes[user.id] = newScope;
-  
-            return el[0];
-          },
-          closeButton: false,
-          onClose: function(user) {
-            $rootScope.$broadcast('user:deselect', user);
-          }
+        popup: (layer, feature) => {
+          PopupService.popupUser(layer, feature);
+        },
+        onLayer: (layer, feature) => {
+          PopupService.registerUser(layer, usersById[feature.id]);
         }
       }
     };
@@ -269,21 +234,14 @@ function MapService(EventService, LocationService, FeatureService, FeedItemPopup
       const observation = observationsById[updated.id];
       if (observation) {
         observationsById[updated.id] = updated;
-        popupScopes[updated.id].user = updated;
-        service.updateFeatureForLayer(updated, 'observations');
+        service.updateFeatureForLayer(updated, 'Observations');
       }
     });
 
     _.each(changed.removed, function(removed) {
       delete observationsById[removed.id];
 
-      service.removeFeatureFromLayer(removed, 'observations');
-
-      const scope = popupScopes[removed.id];
-      if (scope) {
-        scope.$destroy();
-        delete popupScopes[removed.id];
-      }
+      service.removeFeatureFromLayer(removed, 'Observations');
     });
   }
 
@@ -297,8 +255,7 @@ function MapService(EventService, LocationService, FeatureService, FeedItemPopup
       const user = usersById[updated.id];
       if (user) {
         usersById[updated.id] = updated;
-        popupScopes[updated.id].user = updated;
-        service.updateFeatureForLayer(updated.location, 'people');
+        service.updateFeatureForLayer(updated.location, 'People');
 
         // pan/zoom map to user if this is the user we are following
         if (followFeatureInLayer.layer === 'people' && user.id === followFeatureInLayer.id)
@@ -309,16 +266,10 @@ function MapService(EventService, LocationService, FeatureService, FeedItemPopup
 
     _.each(changed.removed, function(removed) {
       delete usersById[removed.id];
-      service.removeFeatureFromLayer(removed.location, 'people');
-
-      const scope = popupScopes[removed.id];
-      if (scope) {
-        scope.$destroy();
-        delete popupScopes[removed.id];
-      }
+      service.removeFeatureFromLayer(removed.location, 'People');
     });
   }
-    
+
   function setDelegate(theDelegate) {
     delegate = theDelegate;
   }

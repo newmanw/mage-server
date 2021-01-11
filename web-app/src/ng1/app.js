@@ -8,8 +8,6 @@ import uiRouter from "@uirouter/angularjs";
 import { SwaggerComponent } from "../app/swagger/swagger.component";
 import { downgradeComponent, downgradeInjectable } from '@angular/upgrade/static';
 
-import { BootstrapComponent } from "../app/bootstrap/bootstrap.component"
-
 import {
   MatIcon,
   MatButton,
@@ -18,18 +16,28 @@ import {
   MatFormField,
   MatSidenav,
   MatSidenavContent,
-  MatSidenavContainer,
+  MatSidenavContainer
 } from '@angular/material';
+
+import { BootstrapComponent } from "../app/bootstrap/bootstrap.component"
 
 import { ZoomComponent } from '../app/map/controls/zoom.component';
 import { SearchComponent } from '../app/map/controls/search.component';
 import { LocationComponent } from '../app/map/controls/location.component';
 import { AddObservationComponent } from '../app/map/controls/add-observation.component';
 import { LeafletComponent } from '../app/map/leaflet.component';
+import { ExportsComponent } from '../app/export/exports.component';
 
-import { ScrollWrapperComponent } from '../app/wrapper/scroll/feed-scroll.component';
-import { DropdownComponent } from '../app/observation/edit/dropdown/dropdown.component';
-import { MultiSelectDropdownComponent } from '../app/observation/edit/multiselectdropdown/multiselectdropdown.component';
+import { FeedService } from '../app/feed/feed.service'
+import { PopupService } from '../app/map/popup.service'
+
+import { FeedComponent } from '../app/feed/feed.component';
+
+import { ObservationPopupComponent } from '../app/observation/observation-popup/observation-popup.component';
+import { ObservationListItemComponent } from '../app/observation/observation-list/observation-list-item.component';
+
+import { UserAvatarComponent } from '../app/user/user-avatar/user-avatar.component';
+import { UserPopupComponent } from '../app/user/user-popup/user-popup.component';
 
 import { FeedService } from '../app/feed/feed.service'
 import { FeedComponent } from '../app/feed/feed.component'
@@ -66,8 +74,9 @@ app
   .factory('FeedService', downgradeInjectable(FeedService))
   .factory('FeedItemService', downgradeInjectable(FeedItemService))
   .factory('FeedItemPopupService', downgradeInjectable(FeedItemPopupService))
+  .factory('PopupService', downgradeInjectable(PopupService));
 
-// Downgraded Angular components 
+// Downgraded Angular components
 app
   .directive('matIcon', downgradeComponent({ component: MatIcon }))
   .directive('matButton', downgradeComponent({ component: MatButton }))
@@ -77,9 +86,11 @@ app
   .directive('matSidenav', downgradeComponent({ component: MatSidenav }))
   .directive('matSidenavContent', downgradeComponent({ component: MatSidenavContent }))
   .directive('matSidenavContainer', downgradeComponent({ component: MatSidenavContainer }))
-  .directive('feedScrollWrapper', downgradeComponent({ component: ScrollWrapperComponent }))
-  .directive('observationEditDropdown', downgradeComponent({ component: DropdownComponent }))
-  .directive('observationEditMultiselectdropdown', downgradeComponent({ component: MultiSelectDropdownComponent }))
+  .directive('feed', downgradeComponent({ component: FeedComponent }))
+  .directive('observationPopup', downgradeComponent({ component: ObservationPopupComponent }))
+  .directive('observationListItem', downgradeComponent({ component: ObservationListItemComponent }))
+  .directive('userAvatar', downgradeComponent({ component: UserAvatarComponent }))
+  .directive('userMapPopup', downgradeComponent({ component: UserPopupComponent }))
   .directive('mapLeaflet', downgradeComponent({ component: LeafletComponent }))
   .directive('mapControlZoom', downgradeComponent({ component: ZoomComponent }))
   .directive('mapControlSearch', downgradeComponent({ component: SearchComponent }))
@@ -93,14 +104,14 @@ app
   .directive('adminFeed', downgradeComponent({ component: AdminFeedComponent }))
   .directive('adminService', downgradeComponent({ component: AdminServiceComponent }))
   .directive('feedEdit', downgradeComponent({ component: AdminFeedEditComponent }))
-  .directive('swagger', downgradeComponent({ component: SwaggerComponent }));
+  .directive('swagger', downgradeComponent({ component: SwaggerComponent }))
+  .directive('exports', downgradeComponent({ component: ExportsComponent }));
 
 app
   .component('filterPanel', require('./filter/filter'))
   .component('exportPanel', require('./export/export'))
   .component('eventFilter', require('./filter/event.filter.component'))
   .component('dateTime', require('./datetime/datetime.component'))
-  .component('observationFormChooser', require('./observation/observation-form-chooser.component'))
   .component('disclaimer', require('./disclaimer/disclaimer.controller'))
   .component('setup', require('./setup/setup.controller'))
   .component('about', about)
@@ -128,14 +139,13 @@ require('./filters');
 require('./leaflet-extensions');
 require('./mage');
 require('./authentication');
-require('./observation');
 require('./user');
 require('./admin');
 require('./material-components');
 
 config.$inject = ['$httpProvider', '$stateProvider', '$urlRouterProvider', '$urlServiceProvider', '$animateProvider'];
 
-function config($httpProvider, $stateProvider, $urlRouterProvider, $urlServiceProvider, $animateProvider) {  
+function config($httpProvider, $stateProvider, $urlRouterProvider, $urlServiceProvider, $animateProvider) {
   $httpProvider.defaults.withCredentials = true;
   $httpProvider.defaults.headers.post  = {'Content-Type': 'application/x-www-form-urlencoded'};
 
@@ -175,7 +185,7 @@ function config($httpProvider, $stateProvider, $urlRouterProvider, $urlServicePr
   $urlRouterProvider.otherwise('/signin');
 
   // TODO temp place for app states for angular 8
-  // this should probably move 
+  // this should probably move
   $stateProvider.state({
     name: 'swagger',
     url: '/swagger',
@@ -185,7 +195,7 @@ function config($httpProvider, $stateProvider, $urlRouterProvider, $urlServicePr
 
   $stateProvider.state({
     name: 'landing',
-    url: '/signin?action?strategy',
+    url: '/signin?action?strategy?token',
     component: 'landing',
     resolve: {
       api: ['$q', 'Api', function($q,  Api) {
@@ -259,7 +269,7 @@ function config($httpProvider, $stateProvider, $urlRouterProvider, $urlServicePr
     component: "adminTeamEdit",
     resolve: resolveAdmin()
   });
-  
+
   $stateProvider.state('admin.team', {
     url: '/teams/:teamId',
     component: "adminTeam",
@@ -348,7 +358,7 @@ function config($httpProvider, $stateProvider, $urlRouterProvider, $urlServicePr
     component: "adminDevices",
     resolve: resolveAdmin()
   });
-  
+
   $stateProvider.state('admin.deviceCreate', {
     url: '/devices/new',
     component: "adminDeviceEdit",
@@ -452,13 +462,12 @@ function config($httpProvider, $stateProvider, $urlRouterProvider, $urlServicePr
     component: "about",
     resolve: resolveLogin()
   });
-  
+
 }
 
-run.$inject = ['$rootScope', '$uibModal', '$templateCache', '$state', 'Api'];
+run.$inject = ['$rootScope', '$uibModal', '$state', 'Api'];
 
-function run($rootScope, $uibModal, $templateCache, $state, Api) {
-  $templateCache.put("observation/observation-important.html", require("./observation/observation-important.html"));
+function run($rootScope, $uibModal, $state, Api) {
 
   $rootScope.$on('event:auth-loginRequired', function(e, response) {
     const stateExceptions = ['landing'];
@@ -496,7 +505,7 @@ function run($rootScope, $uibModal, $templateCache, $state, Api) {
           }
         };
         modalInstance.closed.then(modalClosed);
-        
+
       });
     }
   });

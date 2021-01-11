@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "@ngageoint/mage.web-app",
-  "version": "5.4.3",
+  "version": "5.4.4",
   "description": "The MAGE web-app is the UI for interacting with the MAGE service in a web browser.",
   "keywords": [
     "NGA",
@@ -27,8 +27,8 @@
     "url": "https://github.com/ngageoint/mage-server/issues"
   },
   "scripts": {
-    "start": "ng serve --aot",
-    "build": "ng build --prod=true",
+    "start": "ng serve",
+    "build": "ng build --prod=false",
     "ng": "ng",
     "test": "ng test",
     "test-headless": "ng test --watch=false --browsers=ChromeHeadless",
@@ -52,10 +52,13 @@
     "@angular/flex-layout": "^8.0.0-beta.27",
     "@angular/forms": "~8.2.14",
     "@angular/material": "~8.2.3",
+    "@angular/material-moment-adapter": "^11.0.1",
     "@angular/platform-browser": "~8.2.14",
     "@angular/platform-browser-dynamic": "~8.2.14",
     "@angular/router": "~8.2.14",
     "@angular/upgrade": "~8.2.14",
+    "@nader-eloshaiker/mat-datetimepicker": "4.0.7",
+    "@nader-eloshaiker/mat-datetimepicker-moment": "4.0.7",
     "@ng-select/ng-select": "2.20.0",
     "@turf/center": "4.3.0",
     "@turf/helpers": "4.3.0",
@@ -78,7 +81,7 @@
     "jquery": "3.3.1",
     "jquery-file-download": "1.4.6",
     "jquery-minicolors": "2.1.10",
-    "leaflet": "1.6.0",
+    "leaflet": "1.7.1",
     "leaflet-editable": "1.2.0",
     "leaflet-groupedlayercontrol": "git+https://github.com/newmanw/leaflet-groupedlayercontrol.git#master",
     "leaflet.markercluster": "1.4.1",
@@ -100,7 +103,8 @@
     "webfontloader": "1.6.6",
     "xml2js": "0.4.19",
     "zone.js": "~0.9.1",
-    "zxcvbn": "4.4.2"
+    "zxcvbn": "4.4.2",
+    "@angular-material-components/datetime-picker": "2.x"
   },
   "peerDependencies": {
     "@ngageoint/mage.service": "~5.3.0"

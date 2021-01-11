@@ -1,12 +1,13 @@
 const _ = require('underscore')
   , angular = require('angular')
   , moment = require('moment');
+const { Observation } = require('./observation.resource');
 
 module.exports = EventService;
 
-EventService.$inject = ['$rootScope', '$q', '$timeout', '$http', '$httpParamSerializer', 'Event', 'ObservationService', 'LocationService', 'LayerService', 'FeedService', 'FilterService', 'PollingService', 'LocalStorageService'];
+EventService.$inject = ['$rootScope', '$q', '$timeout', '$http', '$httpParamSerializer', 'ObservationService', 'LocationService', 'LayerService', 'FeedService', 'FilterService', 'PollingService', 'LocalStorageService'];
 
-function EventService($rootScope, $q, $timeout, $http, $httpParamSerializer, Event, ObservationService, LocationService, LayerService, FeedService, FilterService, PollingService, LocalStorageService) {
+function EventService($rootScope, $q, $timeout, $http, $httpParamSerializer, ObservationService, LocationService, LayerService, FeedService, FilterService, PollingService, LocalStorageService) {
   let observationsChangedListeners = [];
   let usersChangedListeners = [];
   let layersChangedListeners = [];
@@ -271,9 +272,13 @@ function EventService($rootScope, $q, $timeout, $http, $httpParamSerializer, Eve
   }
 
   function saveObservation(observation) {
-    var event = eventsById[observation.eventId];
-    var isNewObservation = !observation.id;
-    return ObservationService.saveObservationForEvent(event, observation).then(function(observation) {
+    const resource = new Observation(observation)
+
+    const event = eventsById[resource.eventId];
+    const isNewObservation = !resource.id;
+    const promise = ObservationService.saveObservationForEvent(event, resource)
+
+    promise.then(function(observation) {
       event.observationsById[observation.id] = observation;
 
       // Check if this new observation passes the current filter
@@ -282,6 +287,8 @@ function EventService($rootScope, $q, $timeout, $http, $httpParamSerializer, Eve
         isNewObservation ? observationsChanged({added: [observation]}) : observationsChanged({updated: [observation]});
       }
     });
+
+    return promise;
   }
 
   function addObservationFavorite(observation) {
@@ -511,7 +518,7 @@ function EventService($rootScope, $q, $timeout, $http, $httpParamSerializer, Eve
       });
 
       pollFeeds();
-    });  
+    });
   }
 
   function fetchObservations(event, parameters) {
@@ -654,10 +661,10 @@ function EventService($rootScope, $q, $timeout, $http, $httpParamSerializer, Eve
 
       const elapsed = (now - localFeed.lastSync) / 1000;
       if (elapsed > feed.updateFrequencySeconds) {
-        return 5 
+        return 5
       } else {
         return feed.updateFrequencySeconds - elapsed
-      } 
+      }
     });
 
     return Math.min(...delays);

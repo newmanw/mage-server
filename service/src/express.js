@@ -1,6 +1,7 @@
 const express = require("express")
   , crypto = require('crypto')
   , cookieSession = require('cookie-session')
+  , bodyParser = require('body-parser')
   , fs = require('fs')
   , passport = require('passport')
   , path = require('path')

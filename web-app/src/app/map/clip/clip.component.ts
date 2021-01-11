@@ -1,107 +1,125 @@
-import { Component, Input, AfterViewInit, ElementRef, Inject, OnDestroy } from '@angular/core';
-import { Feature } from 'geojson';
-import { Map } from 'leaflet';
-import * as L from 'leaflet';
-import { LocalStorageService, MapService } from 'src/app/upgrade/ajs-upgraded-providers';
+import { Component, Input, ElementRef, Inject, OnDestroy, OnChanges, SimpleChanges, OnInit, ViewChild } from '@angular/core'
+import { Feature } from 'geojson'
+import { Map, GeoJSON, PathOptions, Layer, FixedWidthMarker, control, TileLayer, WMSOptions } from 'leaflet'
+import { LocalStorageService, MapService } from 'src/app/upgrade/ajs-upgraded-providers'
+
+interface FeatureWithStyle extends Feature {
+  style?: any
+}
 
 @Component({
   selector: 'map-clip',
   templateUrl: './clip.component.html',
   styleUrls: ['./clip.component.scss']
 })
-export class MapClipComponent implements AfterViewInit, OnDestroy {
-  @Input() feature: Feature;
+export class MapClipComponent implements OnInit, OnChanges, OnDestroy {
+  @Input() feature: Feature
 
-  map: Map;
-  layers = {};
-  zoomControl = L.control.zoom();
+  @ViewChild('map', { static: true }) mapElement: ElementRef
+
+  map: Map
+  layer: GeoJSON
+  layers = {}
+  zoomControl = control.zoom()
   mapListener = {
     onBaseLayerSelected: this.onBaseLayerSelected.bind(this)
-  };
+  }
 
-  constructor(private element: ElementRef, @Inject(LocalStorageService) private localStorageService: any, @Inject(MapService) private mapService: any) { }
-  
-  ngAfterViewInit(): void {
+  constructor(
+    @Inject(MapService) private mapService: any,
+    @Inject(LocalStorageService) private localStorageService: any) {
+
+  }
+
+  ngOnInit(): void {
     const mapPosition = this.localStorageService.getMapPosition();
 
-    this.map = L.map(this.element.nativeElement, {
+    this.map = new Map(this.mapElement.nativeElement, {
       center: mapPosition.center,
-      zoom: 1,
+      zoom: 15,
       minZoom: 0,
       maxZoom: 18,
       zoomControl: false,
       trackResize: true,
       scrollWheelZoom: false,
       attributionControl: false
-    });
+    })
 
-    this.map.on('mouseover', () => {
-      this.map.addControl(this.zoomControl);
-    });
+    this.map.scrollWheelZoom.disable()
+    this.map.dragging.disable()
+    this.map.touchZoom.disable()
+    this.map.doubleClickZoom.disable()
+    this.map.boxZoom.disable()
+    this.map.keyboard.disable()
 
-    this.map.on('mouseout', () => {
-      this.map.removeControl(this.zoomControl);
-    });
+    this.mapService.addListener(this.mapListener)
 
-    this.mapService.addListener(this.mapListener);
+    this.addFeature()
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (!this.map) return;
 
     this.addFeature();
   }
 
   ngOnDestroy(): void {
-    this.mapService.removeListener(this.mapListener);
+    this.mapService.removeListener(this.mapListener)
   }
 
   onBaseLayerSelected(baseLayer): void {
-    let layer = this.layers[baseLayer.name];
-    if (layer) this.map.removeLayer(layer.layer);
+    let layer = this.layers[baseLayer.name]
+    if (layer) this.map.removeLayer(layer.layer)
 
-    layer = this.createRasterLayer(baseLayer);
-    this.layers[baseLayer.name] = { type: 'tile', layer: baseLayer, rasterLayer: layer };
+    layer = this.createRasterLayer(baseLayer)
+    this.layers[baseLayer.name] = { type: 'tile', layer: baseLayer, rasterLayer: layer }
 
-    layer.addTo(this.map);
+    layer.addTo(this.map)
   }
 
-  createRasterLayer(layer): L.Layer {
-    let baseLayer: L.Layer = null;
+  createRasterLayer(layer): Layer {
+    let baseLayer: Layer = null
     if (layer.format === 'XYZ' || layer.format === 'TMS') {
-      const options = { tms: layer.format === 'TMS', maxZoom: 18 };
-      baseLayer = new L.TileLayer(layer.url, options);
+      const options = { tms: layer.format === 'TMS', maxZoom: 18 }
+      baseLayer = new TileLayer(layer.url, options)
     } else if (layer.format === 'WMS') {
-      const options: L.WMSOptions = {
+      const options: WMSOptions = {
         layers: layer.wms.layers,
         version: layer.wms.version,
         format: layer.wms.format,
         transparent: layer.wms.transparent
-      };
+      }
 
-      if (layer.wms.styles) options.styles = layer.wms.styles;
-      baseLayer = new L.TileLayer.WMS(layer.url, options);
+      if (layer.wms.styles) options.styles = layer.wms.styles
+      baseLayer = new TileLayer.WMS(layer.url, options)
     }
 
-    return baseLayer;
+    return baseLayer
   }
 
   addFeature(): void {
-    if (!this.feature || !this.feature.geometry) {
-      const mapPosition = this.localStorageService.getMapPosition();
-      this.map.setView(mapPosition.center, 1);
-      return;
+    if (this.layer) {
+      this.map.removeLayer(this.layer)
     }
 
-    const layer = L.geoJSON(this.feature, {
-      pointToLayer: function (feature: any, latlng) {
-        const marker = L.fixedWidthMarker(latlng, {
+    if (!this.feature || !this.feature.geometry) {
+      const mapPosition = this.localStorageService.getMapPosition()
+      this.map.setView(mapPosition.center, 1)
+      return
+    }
+
+    this.layer = new GeoJSON(this.feature, {
+      pointToLayer: function (feature: FeatureWithStyle, latlng): Layer {
+        return new FixedWidthMarker(latlng, {
           iconUrl: feature.style ? feature.style.iconUrl : ''
-        });
-        return marker;
+        })
       },
-      style: function (feature: any) {
-        return feature.style;
+      style: function (feature: FeatureWithStyle): PathOptions {
+        return feature.style
       }
-    });
-    
-    layer.addTo(this.map);
-    this.map.fitBounds(layer.getBounds());
+    })
+
+    this.layer.addTo(this.map)
+    this.map.fitBounds(this.layer.getBounds())
   }
 }

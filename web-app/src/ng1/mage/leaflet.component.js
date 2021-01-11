@@ -107,6 +107,9 @@ class LeafletController {
     this.onMapAvailable({ map: this.map });
 
     this.map.on('locationfound', this.onLocation, this);
+    this.map.on('locationerror', function(err) {
+      console.log('LOCATION ERROR', err);
+    });
 
     function saveMapPosition() {
       const center = this.map.getCenter();
@@ -454,7 +457,7 @@ class LeafletController {
       if (layer) {
         featureLayer.layer.removeLayer(layer);
       };
-      
+
       if (featureLayer.options.cluster) {
         featureLayer.layer.addLayer(this.createGeoJsonForLayer(feature, featureLayer, pane));
       } else {
@@ -585,7 +588,7 @@ class LeafletController {
       });
       this.map.setView(layer.getLatLng(), options.zoomToLocation ? 17 : this.map.getZoom());
     } else {
-      layer.fire('click')
+      layer.fire('click');
     }
   }
 
