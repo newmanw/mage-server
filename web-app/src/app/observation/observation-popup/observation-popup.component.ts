@@ -1,6 +1,6 @@
 import { Component, Inject, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { FeedService } from 'src/app/feed/feed.service';
 import { EventService, MapService } from 'src/app/upgrade/ajs-upgraded-providers';
+import { FeedPanelService } from 'src/app/feed-panel/feed-panel.service';
 import * as moment from 'moment';
 
 @Component({
@@ -19,7 +19,7 @@ export class ObservationPopupComponent implements OnInit, OnChanges {
   secondaryField: any;
 
   constructor(
-    private feedService: FeedService,
+    private feedPanelService: FeedPanelService,
     @Inject(MapService) private mapService: any,
     @Inject(EventService) private eventService: any) { }
 
@@ -63,10 +63,10 @@ export class ObservationPopupComponent implements OnInit, OnChanges {
   }
 
   onInfo(): void {
-    this.feedService.viewObservation(this.observation)
+    this.feedPanelService.viewObservation(this.observation)
   }
 
   onZoom(): void {
-    this.mapService.zoomToFeatureInLayer(this.observation, 'Observations');
+    this.mapService.zoomToFeatureInLayer(this.observation, 'observations');
   }
 }

@@ -3,12 +3,10 @@ export const MapService = new InjectionToken<any>('MapService');
 export const LocalStorageService = new InjectionToken<any>('LocalStorageService');
 export const UserService = new InjectionToken<any>('UserService');
 export const Event = new InjectionToken<any>('Event');
-export const UserService = new InjectionToken<any>('UserService');
 export const FilterService = new InjectionToken<any>('EventService');
 export const EventService = new InjectionToken<any>('EventService');
 export const GeometryService = new InjectionToken<any>('GeometryService');
 export const ObservationService = new InjectionToken<any>('ObservationService');
-export const LocalStorageService = new InjectionToken<any>('LocalStorageService');
 
 export function mapServiceFactory(i: any): any {
   return i.get('MapService');
@@ -86,15 +84,5 @@ export function observationServiceFactory(i: any): any {
 export const observationServiceProvider = {
   provide: ObservationService,
   useFactory: observationServiceFactory,
-  deps: ['$injector']
-};
-
-export function localStorageServiceFactory(i: any): any {
-  return i.get('LocalStorageService');
-}
-
-export const localStorageServiceProvider = {
-  provide: LocalStorageService,
-  useFactory: localStorageServiceFactory,
   deps: ['$injector']
 };

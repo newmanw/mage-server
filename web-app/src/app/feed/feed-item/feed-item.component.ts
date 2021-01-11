@@ -1,7 +1,7 @@
 import { Component, Input, Inject, OnChanges, SimpleChanges } from '@angular/core';
 import { Feed, StyledFeature } from '../feed.model';
-import { FeedItemService } from './feed-item.service';
 import { MapService } from '../../upgrade/ajs-upgraded-providers';
+import { FeedPanelService } from 'src/app/feed-panel/feed-panel.service';
 
 @Component({
   selector: 'feed-item',
@@ -20,7 +20,7 @@ export class FeedItemComponent implements OnChanges {
   mapFeature: StyledFeature;
   properties = []
 
-  constructor(private feedItemService: FeedItemService, @Inject(MapService) private mapService: any) {}
+  constructor(private feedPanelService: FeedPanelService, @Inject(MapService) private mapService: any) {}
 
   ngOnChanges(_changes: SimpleChanges): void {
     this.updateItem();
@@ -64,7 +64,7 @@ export class FeedItemComponent implements OnChanges {
   }
 
   close(): void {
-    this.feedItemService.deselect(this.feed, this.item);
+    this.feedPanelService.deselectFeedItem(this.feed, this.item);
   }
 
   onLocationClick(): void {

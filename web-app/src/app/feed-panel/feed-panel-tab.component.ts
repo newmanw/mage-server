@@ -1,12 +1,18 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { FeedTab } from './feed.model';
+
+export interface FeedTab {
+  id: string,
+  title: string;
+  icon?: string;
+  iconUrl?: string;
+}
 
 @Component({
-  selector: 'feed-tab',
-  templateUrl: './feed-tab.component.html',
-  styleUrls: ['./feed-tab.component.scss']
+  selector: 'feed-panel-tab',
+  templateUrl: './feed-panel-tab.component.html',
+  styleUrls: ['./feed-panel-tab.component.scss']
 })
-export class FeedTabComponent implements OnInit {
+export class FeedPanelTabComponent implements OnInit {
   @Input() tab: FeedTab;
   @Input() active: boolean;
 

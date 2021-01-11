@@ -27,7 +27,6 @@ import {
 } from '@angular/material';
 import { UpgradeModule } from '@angular/upgrade/static';
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
-import { FeedItemSummaryModule } from 'src/app/feed/feed-item/feed-item-summary/feed-item-summary.module';
 import { MomentModule } from 'src/app/moment/moment.module';
 import { AdminBreadcrumbModule } from '../admin-breadcrumb/admin-breadcrumb.module';
 import { AdminFeedsComponent } from './admin-feeds.component';
@@ -43,6 +42,7 @@ import { AdminServiceComponent } from './admin-service/admin-service.component';
 import { AdminServiceDeleteComponent } from './admin-service/admin-service-delete/admin-service-delete.component';
 import { AdminFeedEditTopicConfigurationComponent } from './admin-feed/admin-feed-edit/admin-feed-edit-topic/admin-feed-edit-topic-configuration.component';
 import { JsonSchemaModule } from 'src/app/json-schema/json-schema.module';
+import { FeedItemSummaryModule } from 'src/app/feed/feed-item/feed-item-summary/feed-item-summary.module';
 
 @NgModule({
   declarations: [

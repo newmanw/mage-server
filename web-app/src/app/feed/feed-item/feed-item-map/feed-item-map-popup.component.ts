@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Feature } from 'geojson';
+import { FeedPanelService } from 'src/app/feed-panel/feed-panel.service';
 import { Feed } from '../../feed.model';
-import { FeedItemService } from '../feed-item.service';
 
 @Component({
   selector: 'feed-item-map-popup',
@@ -17,7 +17,7 @@ export class FeedItemMapPopupComponent implements OnInit {
   primary: string;
   secondary: string;
 
-  constructor(private feedItemService: FeedItemService) { }
+  constructor(private feedPanelService: FeedPanelService) { }
 
   ngOnInit(): void {
     if (!this.item || !this.item.properties) return;
@@ -39,7 +39,7 @@ export class FeedItemMapPopupComponent implements OnInit {
   }
 
   onInfo(): void {
-    this.feedItemService.select(this.feed, this.item);
+    this.feedPanelService.selectFeedItem(this.feed, this.item);
   }
 
 }

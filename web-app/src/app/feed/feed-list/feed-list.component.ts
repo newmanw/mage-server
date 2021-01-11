@@ -1,17 +1,17 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { FeedService } from './feed.service';
-import { Feed } from './feed.model';
+import { FeedService } from '../feed.service';
+import { Feed } from '../feed.model';
 import { Feature } from 'geojson';
 
 @Component({
-  selector: 'feed',
-  templateUrl: './feed.component.html',
-  styleUrls: ['./feed.component.scss']
+  selector: 'feed-list',
+  templateUrl: './feed-list.component.html',
+  styleUrls: ['./feed-list.component.scss']
 })
-export class FeedComponent implements OnChanges {
-  @Input() feed: Feed;
+export class FeedListComponent implements OnChanges {
+  @Input() feed: Feed
 
-  items: Array<Feature> = [];
+  items: Array<Feature> = []
 
   constructor(private feedService: FeedService) {}
 
@@ -23,5 +23,4 @@ export class FeedComponent implements OnChanges {
       });
     }
   }
-
 }

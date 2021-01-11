@@ -29,9 +29,8 @@ import { LeafletComponent } from '../app/map/leaflet.component';
 import { ExportsComponent } from '../app/export/exports.component';
 
 import { FeedService } from '../app/feed/feed.service'
+import { FeedPanelService } from '../app/feed-panel/feed-panel.service'
 import { PopupService } from '../app/map/popup.service'
-
-import { FeedComponent } from '../app/feed/feed.component';
 
 import { ObservationPopupComponent } from '../app/observation/observation-popup/observation-popup.component';
 import { ObservationListItemComponent } from '../app/observation/observation-list/observation-list-item.component';
@@ -39,12 +38,7 @@ import { ObservationListItemComponent } from '../app/observation/observation-lis
 import { UserAvatarComponent } from '../app/user/user-avatar/user-avatar.component';
 import { UserPopupComponent } from '../app/user/user-popup/user-popup.component';
 
-import { FeedService } from '../app/feed/feed.service'
-import { FeedComponent } from '../app/feed/feed.component'
-import { FeedTabComponent } from '../app/feed/feed-tab.component'
-import { FeedItemComponent } from '../app/feed/feed-item/feed-item.component'
-import { FeedItemService } from '../app/feed/feed-item/feed-item.service';
-import { FeedItemPopupService } from '../app/feed/feed-item/feed-item-map/feed-item-map-popup.service';
+import { FeedPanelComponent } from '../app/feed-panel/feed-panel.component'
 import { FeedItemMapPopupComponent } from '../app/feed/feed-item/feed-item-map/feed-item-map-popup.component'
 import { AdminFeedsComponent } from '../app/admin/admin-feeds/admin-feeds.component';
 import { AdminFeedComponent } from '../app/admin/admin-feeds/admin-feed/admin-feed.component';
@@ -72,8 +66,7 @@ app
 
 app
   .factory('FeedService', downgradeInjectable(FeedService))
-  .factory('FeedItemService', downgradeInjectable(FeedItemService))
-  .factory('FeedItemPopupService', downgradeInjectable(FeedItemPopupService))
+  .factory('FeedPanelService', downgradeInjectable(FeedPanelService))
   .factory('PopupService', downgradeInjectable(PopupService));
 
 // Downgraded Angular components
@@ -86,7 +79,7 @@ app
   .directive('matSidenav', downgradeComponent({ component: MatSidenav }))
   .directive('matSidenavContent', downgradeComponent({ component: MatSidenavContent }))
   .directive('matSidenavContainer', downgradeComponent({ component: MatSidenavContainer }))
-  .directive('feed', downgradeComponent({ component: FeedComponent }))
+  .directive('feedPanel', downgradeComponent({ component: FeedPanelComponent }))
   .directive('observationPopup', downgradeComponent({ component: ObservationPopupComponent }))
   .directive('observationListItem', downgradeComponent({ component: ObservationListItemComponent }))
   .directive('userAvatar', downgradeComponent({ component: UserAvatarComponent }))
@@ -96,9 +89,6 @@ app
   .directive('mapControlSearch', downgradeComponent({ component: SearchComponent }))
   .directive('mapControlLocation', downgradeComponent({ component: LocationComponent }))
   .directive('mapControlAddObservation', downgradeComponent({ component: AddObservationComponent }))
-  .directive('feed', downgradeComponent({ component: FeedComponent }))
-  .directive('feedTab', downgradeComponent({ component: FeedTabComponent }))
-  .directive('feedItem', downgradeComponent({ component: FeedItemComponent }))
   .directive('feedItemMapPopup', downgradeComponent({ component: FeedItemMapPopupComponent }))
   .directive('feeds', downgradeComponent({ component: AdminFeedsComponent }))
   .directive('adminFeed', downgradeComponent({ component: AdminFeedComponent }))

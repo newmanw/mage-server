@@ -1,13 +1,12 @@
 import { HttpClientModule } from '@angular/common/http';
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDividerModule, MatListModule, MatToolbarModule } from '@angular/material';
-import { FeedItemSummaryModule } from './feed-item/feed-item-summary/feed-item-summary.module';
-import { FeedComponent } from './feed.component';
-
+import { FeedItemSummaryModule } from '../feed-list-item/feed-item-summary/feed-item-summary.module';
+import { FeedListComponent } from './feed-list.component';
 
 describe('FeedComponent', () => {
-  let component: FeedComponent;
-  let fixture: ComponentFixture<FeedComponent>;
+  let component: FeedListComponent;
+  let fixture: ComponentFixture<FeedListComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
@@ -19,14 +18,14 @@ describe('FeedComponent', () => {
         HttpClientModule
       ],
       declarations: [
-        FeedComponent
+        FeedListComponent
       ]
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(FeedComponent);
+    fixture = TestBed.createComponent(FeedListComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

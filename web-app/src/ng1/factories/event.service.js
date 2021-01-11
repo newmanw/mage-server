@@ -1,13 +1,12 @@
 const _ = require('underscore')
   , angular = require('angular')
   , moment = require('moment');
-const { Observation } = require('./observation.resource');
 
 module.exports = EventService;
 
-EventService.$inject = ['$rootScope', '$q', '$timeout', '$http', '$httpParamSerializer', 'ObservationService', 'LocationService', 'LayerService', 'FeedService', 'FilterService', 'PollingService', 'LocalStorageService'];
+EventService.$inject = ['$rootScope', '$q', '$timeout', '$http', '$httpParamSerializer', 'Observation', 'ObservationService', 'LocationService', 'LayerService', 'FeedService', 'FilterService', 'PollingService', 'LocalStorageService'];
 
-function EventService($rootScope, $q, $timeout, $http, $httpParamSerializer, ObservationService, LocationService, LayerService, FeedService, FilterService, PollingService, LocalStorageService) {
+function EventService($rootScope, $q, $timeout, $http, $httpParamSerializer, Observation, ObservationService, LocationService, LayerService, FeedService, FilterService, PollingService, LocalStorageService) {
   let observationsChangedListeners = [];
   let usersChangedListeners = [];
   let layersChangedListeners = [];

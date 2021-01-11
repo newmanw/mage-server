@@ -1,24 +1,24 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatIconModule } from '@angular/material';
-import { FeedTabComponent } from './feed-tab.component';
+import { FeedPanelTabComponent } from './feed-panel-tab.component';
 
 
 describe('FeedTabComponent', () => {
-  let component: FeedTabComponent;
-  let fixture: ComponentFixture<FeedTabComponent>;
+  let component: FeedPanelTabComponent;
+  let fixture: ComponentFixture<FeedPanelTabComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       imports: [
         MatIconModule
       ],
-      declarations: [FeedTabComponent ]
+      declarations: [FeedPanelTabComponent ]
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(FeedTabComponent);
+    fixture = TestBed.createComponent(FeedPanelTabComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

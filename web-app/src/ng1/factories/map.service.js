@@ -1,11 +1,11 @@
-var _ = require('underscore')
+const _ = require('underscore')
   , angular = require('angular');
 
 module.exports = MapService;
 
-MapService.$inject = ['EventService', 'LocationService', 'FeatureService', 'FeedItemPopupService', 'LocalStorageService', 'PopupService', '$compile', '$rootScope'];
+MapService.$inject = ['EventService', 'LocationService', 'FeatureService', 'LocalStorageService', 'PopupService', '$compile', '$rootScope'];
 
-function MapService(EventService, LocationService, FeatureService, FeedItemPopupService, LocalStorageService, PopupService, $compile, $rootScope) {
+function MapService(EventService, LocationService, FeatureService, LocalStorageService, PopupService, $compile, $rootScope) {
 
   // Map Service should delegate to some map provider that implements delegate interface
   // In this case should delegate to leaflet directive.  See if this is possible
@@ -198,10 +198,10 @@ function MapService(EventService, LocationService, FeatureService, FeedItemPopup
           iconWidth: 24,
           selected: true,
           popup: (layer, feature) => {
-            FeedItemPopupService.popup(layer, feed, feature);
+            PopupService.popupFeedItem(layer, feed, feature);
           },
           onLayer: (layer, feature) => {
-            FeedItemPopupService.register(layer, feed, feature);
+            PopupService.registerFeedItem(layer, feed, feature);
           }
         }
       });
@@ -234,14 +234,14 @@ function MapService(EventService, LocationService, FeatureService, FeedItemPopup
       const observation = observationsById[updated.id];
       if (observation) {
         observationsById[updated.id] = updated;
-        service.updateFeatureForLayer(updated, 'Observations');
+        service.updateFeatureForLayer(updated, 'observations');
       }
     });
 
     _.each(changed.removed, function(removed) {
       delete observationsById[removed.id];
 
-      service.removeFeatureFromLayer(removed, 'Observations');
+      service.removeFeatureFromLayer(removed, 'observations');
     });
   }
 
@@ -255,18 +255,17 @@ function MapService(EventService, LocationService, FeatureService, FeedItemPopup
       const user = usersById[updated.id];
       if (user) {
         usersById[updated.id] = updated;
-        service.updateFeatureForLayer(updated.location, 'People');
+        service.updateFeatureForLayer(updated.location, 'people');
 
         // pan/zoom map to user if this is the user we are following
         if (followFeatureInLayer.layer === 'people' && user.id === followFeatureInLayer.id)
           service.zoomToFeatureInLayer(user, 'people');
       }
-
     });
 
     _.each(changed.removed, function(removed) {
       delete usersById[removed.id];
-      service.removeFeatureFromLayer(removed.location, 'People');
+      service.removeFeatureFromLayer(removed.location, 'people');
     });
   }
 

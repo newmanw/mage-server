@@ -84,7 +84,7 @@ export class ObservationEditComponent implements OnInit, OnChanges, DoCheck {
       this.geometryStyle = { ...this.observation.style }
 
       if (this.isNewObservation) {
-        this.mapService.addFeaturesToLayer([this.observation], 'Observations')
+        this.mapService.addFeaturesToLayer([this.observation], 'observations')
       }
     }
 
@@ -112,7 +112,7 @@ export class ObservationEditComponent implements OnInit, OnChanges, DoCheck {
       observation.style = style
       this.geometryStyle = style
 
-      this.mapService.updateFeatureForLayer(observation, 'Observations')
+      this.mapService.updateFeatureForLayer(observation, 'observations')
     }
   }
 
@@ -207,7 +207,7 @@ export class ObservationEditComponent implements OnInit, OnChanges, DoCheck {
       // as the event service will add it back to the map based on it new id
       // if it passes the current filter.
       if (id === 'new') {
-        this.mapService.removeFeatureFromLayer({ id: id }, 'Observations')
+        this.mapService.removeFeatureFromLayer({ id: id }, 'observations')
       }
 
       this.error = null;
@@ -244,9 +244,9 @@ export class ObservationEditComponent implements OnInit, OnChanges, DoCheck {
   cancel(): void {
     this.observation.geometry = this.initialObservation.geometry;
     if (this.observation.id !== 'new') {
-      this.mapService.updateFeatureForLayer(this.observation, 'Observations')
+      this.mapService.updateFeatureForLayer(this.observation, 'observations')
     } else {
-      this.mapService.removeFeatureFromLayer(this.observation, 'Observations')
+      this.mapService.removeFeatureFromLayer(this.observation, 'observations')
     }
 
     const attachments = this.observation.attachments || []

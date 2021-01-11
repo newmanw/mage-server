@@ -52,7 +52,6 @@ import {
   MatSortModule
 } from '@angular/material';
 
-import { TokenInterceptorService } from './http/token-interceptor.service'
 import { MatDatetimepickerModule } from '@nader-eloshaiker/mat-datetimepicker'
 import { MatMomentDatetimeModule } from '@nader-eloshaiker/mat-datetimepicker-moment'
 
@@ -94,7 +93,7 @@ import { ObservationListComponent } from './observation/observation-list/observa
 import { UserViewComponent } from './user/user-view/user-view.component';
 import { UserListItemComponent } from './user/user-list/user-list-item.component';
 import { UserListComponent } from './user/user-list/user-list.component';
-import { FeedComponent } from './feed/feed.component';
+import { FeedListComponent } from './feed/feed-list/feed-list.component';
 
 import {
   mapServiceProvider,
@@ -103,7 +102,8 @@ import {
   geometryServiceProvider,
   observationServiceProvider,
   filterServiceProvider,
-  userServiceProvider } from './upgrade/ajs-upgraded-providers';
+  userServiceProvider,
+  eventResourceProvider } from './upgrade/ajs-upgraded-providers';
 
 import {
   ObservationViewCheckboxComponent,
@@ -134,24 +134,16 @@ import {
   ObservationEditComponent
 } from './observation/observation-edit/observation-edit';
 
-import { mapServiceProvider, localStorageServiceProvider, userServiceProvider, eventResourceProvider } from './upgrade/ajs-upgraded-providers';
-import { BootstrapComponent } from './bootstrap/bootstrap.component';
-import { FeedComponent } from './feed/feed.component';
 import { FeedItemComponent } from './feed/feed-item/feed-item.component';
-import { FeedItemService } from './feed/feed-item/feed-item.service';
-import { FeedItemPopupService } from './feed/feed-item/feed-item-map/feed-item-map-popup.service';
 import { FeedItemMapPopupComponent } from './feed/feed-item/feed-item-map/feed-item-map-popup.component';
 import { FeedItemSummaryModule } from './feed/feed-item/feed-item-summary/feed-item-summary.module';
 
-import { MapClipComponent } from './map/clip/clip.component';
-
-import { FeedTabComponent } from './feed/feed-tab.component';
-import { MomentModule } from './moment/moment.module';
-import { GeometryModule } from './geometry/geometry.module';
+import { FeedPanelTabComponent } from './feed-panel/feed-panel-tab.component';
 import { AdminFeedsModule } from './admin/admin-feeds/admin-feeds.module';
 import { ObservationPopupComponent } from './observation/observation-popup/observation-popup.component';
 import { UserPopupComponent } from './user/user-popup/user-popup.component';
 import { CdkDetailRowDirective } from './export/directives/cdk-detail-row.directive';
+import { FeedPanelComponent } from './feed-panel/feed-panel.component';
 
 @NgModule({
   declarations: [
@@ -168,11 +160,10 @@ import { CdkDetailRowDirective } from './export/directives/cdk-detail-row.direct
     LayerContentComponent,
     ColorPickerComponent,
     BootstrapComponent,
-    FeedComponent,
     FeedItemComponent,
     MapClipComponent,
     FeedItemMapPopupComponent,
-    FeedTabComponent
+    FeedPanelTabComponent,
     MinValueDirective,
     MaxValueDirective,
     MGRSValidatorDirective,
@@ -212,13 +203,14 @@ import { CdkDetailRowDirective } from './export/directives/cdk-detail-row.direct
     UserViewComponent,
     UserListItemComponent,
     UserListComponent,
-    FeedComponent,
+    FeedListComponent,
     ObservationPopupComponent,
     UserPopupComponent,
     ColorPickerComponent,
     ExportsComponent,
     ExportMetadataDialogComponent,
-    CdkDetailRowDirective
+    CdkDetailRowDirective,
+    FeedPanelComponent
   ],
   imports: [
     BrowserModule,
@@ -230,6 +222,9 @@ import { CdkDetailRowDirective } from './export/directives/cdk-detail-row.direct
     BrowserAnimationsModule,
     DragDropModule,
     NgxMatSelectSearchModule,
+    NgxMatDatetimePickerModule,
+    NgxMatTimepickerModule,
+    NgxMatNativeDateModule,
     MatBadgeModule,
     MatDialogModule,
     MatButtonToggleModule,
@@ -260,6 +255,9 @@ import { CdkDetailRowDirective } from './export/directives/cdk-detail-row.direct
     MatSidenavModule,
     MatSnackBarModule,
     MatProgressBarModule,
+    MatTableModule,
+    MatPaginatorModule,
+    MatSortModule,
     MomentModule,
     GeometryModule,
     ScrollingModule,
@@ -273,28 +271,11 @@ import { CdkDetailRowDirective } from './export/directives/cdk-detail-row.direct
     FeedItemSummaryModule
   ],
   providers: [
-    FeedItemService,
-    FeedItemPopupService,
-    mapServiceProvider,
-    localStorageServiceProvider,
-    userServiceProvider,
-    eventResourceProvider,
-    MatTableModule,
-    MatDialogModule,
-    MatPaginatorModule,
-    MatSortModule,
-    MatSnackBarModule,
-    MatDatepickerModule,
-    MatNativeDateModule,
-    NgxMatDatetimePickerModule,
-    NgxMatTimepickerModule,
-    NgxMatNativeDateModule
-  ],
-  providers: [
     mapServiceProvider,
     userServiceProvider,
     filterServiceProvider,
     eventServiceProvider,
+    eventResourceProvider,
     geometryServiceProvider,
     observationServiceProvider,
     localStorageServiceProvider,
@@ -311,10 +292,8 @@ import { CdkDetailRowDirective } from './export/directives/cdk-detail-row.direct
     MatSidenav,
     MatSidenavContent,
     MatSidenavContainer,
-    DropdownComponent,
-    MultiSelectDropdownComponent,
     BootstrapComponent,
-    FeedComponent,
+    FeedPanelComponent,
     ObservationDeleteComponent,
     ObservationFavoritesComponent,
     ObservationListItemComponent,
@@ -330,10 +309,7 @@ import { CdkDetailRowDirective } from './export/directives/cdk-detail-row.direct
     LayersControlComponent,
     SwaggerComponent,
     ColorPickerComponent,
-    FeedComponent,
-    FeedTabComponent,
-    FeedItemComponent,
-    FeedItemMapPopupComponent
+    FeedItemMapPopupComponent,
     ExportsComponent,
     ExportMetadataDialogComponent
   ]

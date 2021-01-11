@@ -1,8 +1,8 @@
 import { Component, Input, Inject, OnChanges, SimpleChanges } from '@angular/core';
 import { Feed } from '../../feed.model';
-import { FeedItemService } from '../feed-item.service';
 import { MapService } from 'src/app/upgrade/ajs-upgraded-providers';
 import { Feature } from 'geojson';
+import { FeedPanelService } from 'src/app/feed-panel/feed-panel.service';
 
 @Component({
   selector: 'feed-item-summary',
@@ -19,7 +19,7 @@ export class FeedItemSummaryComponent implements OnChanges {
   secondary: string;
   iconUrl: string;
 
-  constructor(private feedItemService: FeedItemService, @Inject(MapService) private mapService: any) { }
+  constructor(private feedPanelService: FeedPanelService, @Inject(MapService) private mapService: any) { }
 
   ngOnChanges(_changes: SimpleChanges): void {
     if (!this.feed || !this.item.properties) return;
@@ -45,7 +45,7 @@ export class FeedItemSummaryComponent implements OnChanges {
   }
 
   onItemSelect(): void {
-    this.feedItemService.select(this.feed, this.item);
+    this.feedPanelService.selectFeedItem(this.feed, this.item);
     this.mapService.zoomToFeatureInLayer(this.item, `feed-${this.feed.id}`);
   }
 }
