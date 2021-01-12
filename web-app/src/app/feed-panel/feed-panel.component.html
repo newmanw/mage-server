@@ -11,14 +11,14 @@
     [event]="event"
     (close)="onUserViewClose()">
   </user-view>
-  
+
   <observation-view *ngIf="viewObservation" @slide
     class="component__view"
     [event]="event"
     [observation]="viewObservation"
     (close)="onObservationViewClose()">
   </observation-view>
-  
+
   <observation-edit *ngIf="editObservation" @slide
     class="component__view"
     [form]="editForm"
@@ -26,14 +26,14 @@
     (close)="onObservationEditClose($event)"
     (delete)="onObservationDelete($event)">
   </observation-edit>
-  
+
   <observation-edit *ngIf="newObservation" @slide (@slide.done)="observationAnimationComplete($event)"
     class="component__view"
     [form]="newObservationForm"
     [observation]="newObservation"
     (close)="onObservationEditClose()">
   </observation-edit>
-  
+
   <observation-form *ngIf="newObservationForms" @slide
     class="component__view"
     [forms]="newObservationForms"
@@ -41,7 +41,7 @@
     (close)="cancelNewObservation()">
   </observation-form>
 
-  <feed-item  *ngIf="feedItem" @slide
+  <feed-item *ngIf="feedItem" @slide
     class="component__view"
     [item]="feedItem.item"
     [feed]="feedItem.feed">

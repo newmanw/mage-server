@@ -94,6 +94,7 @@ import { UserViewComponent } from './user/user-view/user-view.component';
 import { UserListItemComponent } from './user/user-list/user-list-item.component';
 import { UserListComponent } from './user/user-list/user-list.component';
 import { FeedListComponent } from './feed/feed-list/feed-list.component';
+import { FeedPanelComponent } from './feed-panel/feed-panel.component';
 
 import {
   mapServiceProvider,
@@ -143,7 +144,6 @@ import { AdminFeedsModule } from './admin/admin-feeds/admin-feeds.module';
 import { ObservationPopupComponent } from './observation/observation-popup/observation-popup.component';
 import { UserPopupComponent } from './user/user-popup/user-popup.component';
 import { CdkDetailRowDirective } from './export/directives/cdk-detail-row.directive';
-import { FeedPanelComponent } from './feed-panel/feed-panel.component';
 
 @NgModule({
   declarations: [
@@ -204,6 +204,7 @@ import { FeedPanelComponent } from './feed-panel/feed-panel.component';
     UserListItemComponent,
     UserListComponent,
     FeedListComponent,
+    FeedPanelComponent,
     ObservationPopupComponent,
     UserPopupComponent,
     ColorPickerComponent,

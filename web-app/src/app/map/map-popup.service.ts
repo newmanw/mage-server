@@ -9,7 +9,7 @@ import { FeedItemMapPopupComponent } from '../feed/feed-item/feed-item-map/feed-
 @Injectable({
   providedIn: 'root'
 })
-export class PopupService {
+export class MapPopupService {
 
   constructor(
     private componentFactoryResolver: ComponentFactoryResolver,
