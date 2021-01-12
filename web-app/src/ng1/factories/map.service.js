@@ -197,10 +197,10 @@ function MapService(EventService, LocationService, FeatureService, LocalStorageS
           iconWidth: 24,
           selected: true,
           popup: (layer, feature) => {
-            PopupService.popupFeedItem(layer, feed, feature);
+            MapPopupService.popupFeedItem(layer, feed, feature);
           },
           onLayer: (layer, feature) => {
-            PopupService.registerFeedItem(layer, feed, feature);
+            MapPopupService.registerFeedItem(layer, feed, feature);
           }
         }
       });
