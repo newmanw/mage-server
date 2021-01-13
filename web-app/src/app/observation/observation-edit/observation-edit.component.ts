@@ -1,7 +1,8 @@
 import { animate, style, transition, trigger } from '@angular/animations'
-import { ChangeDetectorRef, Component, DoCheck, ElementRef, EventEmitter, Inject, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core'
+import { Component, DoCheck, ElementRef, EventEmitter, Inject, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild } from '@angular/core'
 import { MatDialog } from '@angular/material'
 import { EventService, FilterService, LocalStorageService, MapService, ObservationService, UserService } from 'src/app/upgrade/ajs-upgraded-providers'
+import { AttachmentService, AttachmentUploadEvent, AttachmentUploadStatus } from '../attachment/attachment.service'
 import { ObservationDeleteComponent } from '../observation-delete/observation-delete.component'
 
 @Component({
@@ -44,9 +45,9 @@ export class ObservationEditComponent implements OnInit, OnChanges, DoCheck {
   mask = false
   saving = false
   error: any
-  uploadId = 0
-  uploadAttachments = false
-  attachments = []
+
+  uploads = []
+  attachmentUrl: string
 
   isNewObservation: boolean
   canDeleteObservation: boolean
@@ -62,7 +63,7 @@ export class ObservationEditComponent implements OnInit, OnChanges, DoCheck {
 
   constructor(
     public dialog: MatDialog,
-    private changeDetector: ChangeDetectorRef,
+    private attachmentService: AttachmentService,
     @Inject(MapService) private mapService: any,
     @Inject(UserService) private userService: any,
     @Inject(FilterService) private filterService: any,
@@ -73,6 +74,8 @@ export class ObservationEditComponent implements OnInit, OnChanges, DoCheck {
 
   ngOnInit(): void {
     this.canDeleteObservation = this.hasEventUpdatePermission() || this.isCurrentUsersObservation() || this.hasUpdatePermissionsInEventAcl()
+
+    this.attachmentService.upload$.subscribe(event => this.onAttachmentUpload(event))
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -212,20 +215,31 @@ export class ObservationEditComponent implements OnInit, OnChanges, DoCheck {
 
       this.error = null;
 
-      if (this.attachments.length) {
-        this.uploadAttachments = true;
-      } else {
-        this.form = null
-        this.attachments = []
-      }
-
       // delete any attachments that were marked for delete
       markedForDelete.forEach(attachment => {
         this.eventService.deleteAttachmentForObservation(this.observation, attachment);
         observation.attachments = observation.attachments.filter(a => a.id !== attachment.id)
       });
 
-      if (!this.uploadAttachments) {
+      // TODO need better way to check for attachments to upload
+      // TODO are these stored in the observation forms?
+      this.form.forms.forEach(form => {
+        form.fields.forEach(field => {
+          if (field.type === 'attachment' && Array.isArray(field.value)) {
+            field.value.forEach(attachment => {
+              if (attachment.file) {
+                this.uploads.push(attachment.id)
+              }
+            })
+          }
+        })
+      })
+
+      if (this.uploads.length) {
+        this.attachmentUrl = `${observation.url}/attachments`
+      } else {
+        this.form = null
+        this.uploads = []
         this.saving = false
         this.close.emit(observation)
       }
@@ -255,54 +269,6 @@ export class ObservationEditComponent implements OnInit, OnChanges, DoCheck {
     })
 
     this.close.emit()
-  }
-
-  trackByAttachment(index: number, attachment: any): any {
-    return attachment.id;
-  }
-
-  allAttachments(): any[] {
-    const attachments = this.observation.attachments || [];
-    return attachments.concat(this.attachments)
-  }
-
-  onAttachmentFile(event): void {
-    const files = Array.from(event.target.files)
-    files.forEach(file => {
-      const id = this.uploadId++;
-      this.attachments.push({
-        id: id,
-        file: file
-      })
-    })
-
-    this.changeDetector.detectChanges()
-  }
-
-  onAttachmentRemove($event): void {
-    this.attachments = this.attachments.filter(attachment => attachment.id !== $event.id)
-  }
-
-  onAttachmentUploaded($event): void {
-    this.eventService.addAttachmentToObservation(this.observation, $event.response);
-
-    this.attachments = this.attachments.filter(attachment => attachment.id !== $event.id)
-    if (this.attachments.length === 0) {
-      this.saving = false;
-      this.uploadAttachments = false;
-      this.close.emit();
-    }
-  }
-
-  onAttachmentError($event): void {
-    // TODO warn user in some way that attachment didn't upload
-    this.attachments = this.attachments.filter(attachment => attachment.id !== $event.id)
-
-    if (this.attachments.length === 0) {
-      this.saving = false;
-      this.uploadAttachments = false;
-      this.close.emit();
-    }
   }
 
   deleteObservation(): void {
@@ -335,4 +301,27 @@ export class ObservationEditComponent implements OnInit, OnChanges, DoCheck {
     this.form.geometryField.value = event.feature ? event.feature.geometry : null;
   }
 
+  private onAttachmentUpload(event: AttachmentUploadEvent): void {
+    switch(event.status) {
+      case AttachmentUploadStatus.COMPLETE: {
+        // TODO this is adding the attachment to attachments array, no longer exists
+        // figure out how to update, or if I need to update the observations attachments
+        //this.eventService.addAttachmentToObservation(this.observation, event.response);
+
+        this.uploads = this.uploads.filter(id => id !== event.id)
+        if (this.uploads.length === 0) {
+          this.saving = false;
+          this.close.emit();
+        }
+      }
+      case AttachmentUploadStatus.ERROR: {
+        // TODO inform user in some way that attachment didn't upload
+        this.uploads = this.uploads.filter(id => id !== event.id)
+        if (this.uploads.length === 0) {
+          this.saving = false;
+          this.close.emit();
+        }
+      }
+    }
+  }
 }

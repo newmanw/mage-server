@@ -9,6 +9,7 @@ export class ObservationEditFormComponent {
   @Input() form: any
   @Input() formDefinition: any
   @Input() geometryStyle: any
+  @Input() attachmentUrl: string
 
   @Output() featureEdit = new EventEmitter<any>()
 

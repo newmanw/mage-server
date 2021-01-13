@@ -27,7 +27,6 @@ export const userServiceProvider = {
   deps: ['$injector']
 };
 
-
 export function filterServiceFactory(i: any): any {
   return i.get('FilterService');
 }

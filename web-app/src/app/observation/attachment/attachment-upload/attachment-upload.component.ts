@@ -2,7 +2,7 @@ import { HttpEvent, HttpEventType, HttpResponse, HttpResponseBase } from '@angul
 import { ChangeDetectorRef, Component, EventEmitter, Input, OnChanges, Output, SimpleChanges } from '@angular/core';
 import { AttachmentService } from '../attachment.service';
 
-interface FileUpload {
+export interface FileUpload {
   id: number,
   file: File,
   preview?: string,
@@ -18,7 +18,6 @@ interface FileUpload {
 export class AttachUploadComponent implements OnChanges {
   @Input() attachment: FileUpload
   @Input() url: string
-  @Input() allowUpload: boolean
 
   @Output() remove = new EventEmitter<{ id: number }>()
   @Output() upload = new EventEmitter<{ id: number, response: HttpResponseBase }>()
@@ -37,7 +36,7 @@ export class AttachUploadComponent implements OnChanges {
       }
     }
 
-    if (changes.allowUpload && this.allowUpload === true) {
+    if (changes.url && changes.url.currentValue) {
       this.startUpload();
     }
   }
@@ -93,16 +92,11 @@ export class AttachUploadComponent implements OnChanges {
   }
 
   startUpload(): void {
-    if (!this.attachment || !this.url || !this.allowUpload) return
+    if (!this.attachment || !this.url) return
 
-    this.attachmentService.upload(this.attachment.file, this.url).subscribe((response: HttpEvent<HttpResponse<Object>>) => {
+    this.attachmentService.upload(this.attachment, this.url).subscribe((response: HttpEvent<HttpResponse<Object>>) => {
       if (response.type === HttpEventType.Response) {
         this.attachment.uploading = false
-        if (response.status === 200) {
-          this.upload.emit({ id: this.attachment.id, response: response.body })
-        } else {
-          this.error.emit({ id: this.attachment.id })
-        }
       } else if (response.type === HttpEventType.UploadProgress) {
         this.attachment.uploading = true
         this.attachment.uploadProgress = Math.round(100 * response.loaded / response.total);

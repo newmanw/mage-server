@@ -137,6 +137,7 @@ import {
 import { ObservationPopupComponent } from './observation/observation-popup/observation-popup.component';
 import { UserPopupComponent } from './user/user-popup/user-popup.component';
 import { CdkDetailRowDirective } from './export/directives/cdk-detail-row.directive';
+import { ObservationEditAttachmentComponent } from './observation/observation-edit/observation-edit-attachment/observation-edit-attachment.component';
 
 @NgModule({
   declarations: [
@@ -158,6 +159,7 @@ import { CdkDetailRowDirective } from './export/directives/cdk-detail-row.direct
     ObservationListItemComponent,
     ObservationEditComponent,
     ObservationDeleteComponent,
+    ObservationEditAttachmentComponent,
     ObservationEditFormComponent,
     ObservationEditMultiselectComponent,
     ObservationEditCheckboxComponent,

@@ -86,32 +86,3 @@
   left: 0;
   opacity: .2;
 }
-
-.edit-attachments { 
-  margin: 16px 8px;
-}
-
-.edit-attachments {
-  padding: 4px;
-}
-
-.edit-attachments__grid {
-  margin-bottom: 16px;
-}
-
-.delete {
-  margin: 16px;
-}
-
-.delete__button {
-  width: 100%;
-}
-
-// Need this to override bootstrap, can be removed when bootstrap is removed
-input[type="file"] { 
-  display: none;
-}
-
-.add__button {
-  width: 100%;
-}

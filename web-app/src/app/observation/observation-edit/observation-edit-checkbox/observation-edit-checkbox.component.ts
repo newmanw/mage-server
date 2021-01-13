@@ -13,5 +13,5 @@ interface CheckboxField {
   styleUrls: ['./observation-edit-checkbox.component.scss']
 })
 export class ObservationEditCheckboxComponent {
-  @Input() field: CheckboxField;
+  @Input() field: CheckboxField
 }

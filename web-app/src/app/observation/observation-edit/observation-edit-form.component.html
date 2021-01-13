@@ -5,6 +5,7 @@
 
   <div *ngFor="let field of nonArchivedFields(formDefinition.fields)">
     <div [ngSwitch]="field.type">
+      <observation-edit-attachment *ngSwitchCase="'attachment'" [field]="field" [url]="attachmentUrl"></observation-edit-attachment>
       <observation-edit-checkbox *ngSwitchCase="'checkbox'" [field]="field"></observation-edit-checkbox>
       <observation-edit-date *ngSwitchCase="'date'" [field]="field"></observation-edit-date>
       <observation-edit-dropdown *ngSwitchCase="'dropdown'" [field]="field"></observation-edit-dropdown>

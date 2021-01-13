@@ -7,7 +7,6 @@ import { LocalStorageService, UserService } from 'src/app/upgrade/ajs-upgraded-p
   styleUrls: ['./attachment.component.scss']
 })
 export class AttachmentComponent implements OnInit {
-  @Input() observation: any
   @Input() attachment: any
   @Input() clickable: boolean
   @Input() edit: boolean
