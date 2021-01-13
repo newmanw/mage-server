@@ -2,8 +2,10 @@ import { animate, style, transition, trigger } from '@angular/animations';
 import { Component, EventEmitter, Inject, Input, OnChanges, OnInit, Output, SimpleChanges, TemplateRef, ViewChild } from '@angular/core';
 import { MatDialog, MatTabGroup } from '@angular/material';
 import { EventService, FilterService, MapService, ObservationService, UserService } from '../upgrade/ajs-upgraded-providers';
-import { FeedPanelService } from './feed-panel.service';
+import { FeedAction, FeedPanelService } from './feed-panel.service';
 import * as moment from 'moment';
+import { FeedService } from '../feed/feed.service';
+import { FeedItemService } from '../feed/feed-item/feed-item.service';
 
 @Component({
   selector: 'feed-panel',
@@ -31,7 +33,7 @@ export class FeedPanelComponent implements OnInit, OnChanges {
   @ViewChild('tabGroup', { static: false }) tabGroup: MatTabGroup
   @ViewChild('permissionDialog', { static: false }) permissionDialog: TemplateRef<any>
 
-  tabs = [{
+  defaultTabs = [{
     id: 'observations',
     title: 'Observations',
     icon: 'place'
@@ -40,6 +42,7 @@ export class FeedPanelComponent implements OnInit, OnChanges {
     title: 'People',
     icon: 'people'
   }]
+  tabs = this.defaultTabs.slice()
 
   currentTab: any
 
@@ -63,6 +66,8 @@ export class FeedPanelComponent implements OnInit, OnChanges {
 
   constructor(
     public dialog: MatDialog,
+    private feedService: FeedService,
+    private feedItemService: FeedItemService,
     private feedPanelService: FeedPanelService,
     @Inject(MapService) private mapService: any,
     @Inject(UserService) private userService: any,
@@ -74,6 +79,8 @@ export class FeedPanelComponent implements OnInit, OnChanges {
     this.currentTab = this.tabs[0]
 
     this.eventService.addObservationsChangedListener(this)
+    this.feedService.feeds.subscribe(feeds => this.onFeedsChanged(feeds));
+    this.feedItemService.item$.subscribe(event => this.onFeedItemEvent(event));
 
     this.feedPanelService.viewUser$.subscribe(event => {
       this.viewUser = event.user
@@ -303,6 +310,29 @@ export class FeedPanelComponent implements OnInit, OnChanges {
   tabChanged(event: number): void {
     if (event === 0) {
       this.observationBadge = null
+    }
+  }
+
+  onFeedsChanged(feeds): void {
+    this.tabs = this.defaultTabs.concat(feeds.map(feed => {
+      const style = feed.mapStyle || {}
+      return {
+        id: `feed-${feed.id}`,
+        title: feed.title,
+        iconUrl: style.iconUrl,
+        feed: feed
+      }
+    }))
+  }
+
+  onFeedItemEvent(event): void {
+    if (event.action == FeedAction.Select) {
+      this.feedItem = {
+        feed: event.feed,
+        item: event.item
+      };
+    } else {
+      this.feedItem = null;
     }
   }
 }
