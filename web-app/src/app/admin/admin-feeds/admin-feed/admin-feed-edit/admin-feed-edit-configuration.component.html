@@ -8,13 +8,13 @@
       </mat-panel-description>
     </mat-expansion-panel-header>
     <div *ngIf="topic">
-      <app-json-schema framework="material-design"
-        [options]="formOptions" 
+      <mage-json-schema-form framework="material-design"
+        [options]="formOptions"
         [data]="topic"
         [schema]="feedConfigurationSchema"
         [layout]="formLayout"
         (onChanges)="feedConfigChanged($event)">
-      </app-json-schema>
+      </mage-json-schema-form>
     </div>
     <mat-action-row>
       <button mat-button color="warn" (click)="prevStep()">Previous</button>

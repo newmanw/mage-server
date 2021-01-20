@@ -6,7 +6,8 @@ export interface Feed {
   topic: FeedTopic;
   title: string;
   summary?: string;
-  mapStyle?: Style;
+  icon?: string;
+  mapStyle?: MapStyle;
   itemTemporalProperty?: string;
   itemPrimaryProperty?: string;
   itemSecondaryProperty?: string;
@@ -19,11 +20,11 @@ export interface Feed {
   itemPropertiesSchema?: any;
 }
 
-export interface Style {
+export interface MapStyle {
   iconUrl?: string;
 }
 
-export type StyledFeature = Feature & { style: Style }
+export type StyledFeature = Feature & { style: MapStyle }
 export interface FeedContent {
   items: FeatureCollection
 }

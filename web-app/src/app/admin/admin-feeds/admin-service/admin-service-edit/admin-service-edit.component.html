@@ -21,12 +21,14 @@
       </mat-select>
     </mat-form-field>
     <div *ngIf="selectedServiceType && serviceFormReady">
-      <app-json-schema loadExternalAssets="true"
+      <mage-json-schema-form loadExternalAssets="true"
           [schema]="serviceTitleSummarySchema"
-          [options]="formOptions" (onChanges)="serviceTitleSummaryChanged($event)"></app-json-schema>
-      <app-json-schema loadExternalAssets="true"
+          [options]="formOptions" (onChanges)="serviceTitleSummaryChanged($event)">
+      </mage-json-schema-form>
+      <mage-json-schema-form loadExternalAssets="true"
         [schema]="selectedServiceType.configSchema"
-        [options]="formOptions" (onChanges)="serviceConfigurationChanged($event)"></app-json-schema>
+        [options]="formOptions" (onChanges)="serviceConfigurationChanged($event)">
+      </mage-json-schema-form>
     </div>
     <mat-action-row>
       <button mat-button *ngIf="services?.length !== 0" color="warn" (click)="cancel()">Cancel</button>

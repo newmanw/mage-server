@@ -2,7 +2,7 @@
   <admin-breadcrumb [breadcrumbs]="breadcrumbs"></admin-breadcrumb>
 
   <div class="heading">
-    <div class="heading__content"> 
+    <div class="heading__content">
       <mat-icon class="heading__icon">cloud_queue</mat-icon>
       <div class="heading__info">
         <div class="heading__title">{{service.title}}</div>
@@ -25,15 +25,16 @@
             <mat-card-title class="primary-color">Configuration</mat-card-title>
           </mat-card-header>
           <mat-card-content>
-            <app-json-schema
-              [(schema)]="serviceType.configSchema" 
-              [data]="service.config" 
+            <mage-json-schema-form
+              [(schema)]="serviceType.configSchema"
+              [data]="service.config"
               [options]="configOptions"
-              framework="material-design"></app-json-schema>
+              framework="material-design">
+            </mage-json-schema-form>
           </mat-card-content>
         </mat-card>
       </div>
-      
+
       <div class="column__feeds">
         <mat-card class="content__card">
           <mat-card-header>
@@ -42,18 +43,18 @@
           <mat-card-content>
             <mat-nav-list>
               <ng-container *ngFor="let feed of feeds | slice:(feedPage*itemsPerPage):((feedPage+1)*itemsPerPage);">
-      
+
                 <mat-list-item (click)="goToFeed(feed)">
                   <mat-icon class="feed__icon" mat-list-icon>rss_feed</mat-icon>
                   <div mat-line>{{feed.title}}</div>
                   <div mat-line>{{feed.summary}}</div>
                 </mat-list-item>
-      
+
                 <mat-divider [inset]="true"></mat-divider>
-      
+
               </ng-container>
             </mat-nav-list>
-      
+
             <mat-paginator [length]="feeds.length" [pageSize]="itemsPerPage" (page)="feedPage = $event.pageIndex">
             </mat-paginator>
           </mat-card-content>

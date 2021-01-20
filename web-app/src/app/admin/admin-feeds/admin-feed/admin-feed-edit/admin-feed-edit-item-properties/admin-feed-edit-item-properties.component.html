@@ -12,16 +12,16 @@
         <mat-expansion-panel *ngFor="let itemProperty of initialProperties; index as i;">
           <mat-expansion-panel-header>
             <mat-panel-title>
-              {{itemProperties[i].key}}
+              {{itemProperty.key}}
             </mat-panel-title>
             <mat-panel-description>
-              {{itemProperties[i].schema.title}} : {{itemProperties[i].schema.type}}
+              {{itemProperty.schema.title}} : {{itemProperty.schema.type}}
             </mat-panel-description>
           </mat-expansion-panel-header>
-          <app-json-schema (onChanges)="propertiesChanged($event, i)"
-            [options]="formOptions" [data]="initialProperties[i]"
+          <mage-json-schema-form (onChanges)="propertiesChanged($event, i)"
+            [options]="formOptions" [data]="itemProperty"
             [schema]="itemPropertySchema" framework="material-design" [layout]="itemPropertySchemaLayout">
-          </app-json-schema>
+          </mage-json-schema-form>
         </mat-expansion-panel>
       </mat-accordion>
       <mat-divider style="padding: 16px;"></mat-divider>
@@ -30,11 +30,11 @@
           Add A New Property
         </mat-card-title>
         <mat-card-content>
-          <app-json-schema
+          <mage-json-schema-form
             [options]="formOptions" [(data)]="newProperty"
             (isValid)="isValid($event)"
             [schema]="itemPropertySchema" framework="material-design" [layout]="itemPropertySchemaLayout">
-          </app-json-schema>
+          </mage-json-schema-form>
         </mat-card-content>
         <mat-card-actions align="end">
             <button mat-button color="primary" [disabled]="!valid" (click)="addProperty()">Add Property</button>
