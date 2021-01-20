@@ -27,7 +27,7 @@ export interface ImageSize {
 }
 
 /**
- * The reason behind the 'static' qualifier of `StaticIcon` is to distinguish
+ * The reason for the 'static' qualifier of `StaticIcon` is to distinguish
  * that the icon image is not dynamically generated and so is subject to
  * caching.  Other types of icons, such as the [Joint Military Symbology](https://www.jcs.mil/Portals/36/Documents/Doctrine/Other_Pubs/ms_2525d.pdf)
  * may be dynamically generated based on the attributes of the feature the icon
