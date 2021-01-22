@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges, ViewChild, ViewContainerRef } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { FeedTopic, Service } from 'src/app/feed/feed.model';
 import { FeedService } from 'src/app/feed/feed.service';
@@ -16,7 +16,6 @@ export class AdminFeedEditTopicComponent implements OnInit, OnChanges {
   @Output() noServicesExist = new EventEmitter();
   @Output() cancelled = new EventEmitter();
   @Output() opened = new EventEmitter();
-  @ViewChild('template', {static: true}) template;
 
   services: Array<Service>;
   selectedService: Service;
@@ -27,15 +26,11 @@ export class AdminFeedEditTopicComponent implements OnInit, OnChanges {
   serviceSearchControl: FormControl = new FormControl();
   topicSearchControl: FormControl = new FormControl();
 
-  constructor(
-    private feedService: FeedService,
-    private viewContainerRef: ViewContainerRef
-  ) {
+  constructor(private feedService: FeedService) {
     this.services = [];
   }
 
   ngOnInit(): void {
-    this.viewContainerRef.createEmbeddedView(this.template);
     this.feedService.fetchServices().subscribe(services => {
       this.services = services;
       if (this.services.length === 0) {

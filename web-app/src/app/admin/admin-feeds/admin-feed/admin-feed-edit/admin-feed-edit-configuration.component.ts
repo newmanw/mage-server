@@ -28,7 +28,6 @@ export class AdminFeedEditConfigurationComponent implements OnInit, OnChanges {
   feed: any;
 
   constructor(
-    private viewContainerRef: ViewContainerRef
   ) {
     this.formOptions = {
       addSubmit: false
@@ -51,7 +50,6 @@ export class AdminFeedEditConfigurationComponent implements OnInit, OnChanges {
   }
 
   ngOnInit(): void {
-    this.viewContainerRef.createEmbeddedView(this.template);
     this.resetFormLayout();
     this.feedConfigurationSchema = {
       title: {
@@ -95,9 +93,6 @@ export class AdminFeedEditConfigurationComponent implements OnInit, OnChanges {
       'title',
       'itemsHaveIdentity',
       'itemsHaveSpatialDimension',
-      // 'itemTemporalProperty',
-      // 'itemPrimaryProperty',
-      // 'itemSecondaryProperty',
       {
         key: 'itemTemporalProperty',
         type: 'autocomplete',

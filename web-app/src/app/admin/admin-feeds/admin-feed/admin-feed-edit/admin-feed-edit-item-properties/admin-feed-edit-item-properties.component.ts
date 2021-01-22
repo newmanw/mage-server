@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange, SimpleChanges, ViewChild, ViewContainerRef } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange, SimpleChanges } from '@angular/core';
 import { FeedTopic } from 'src/app/feed/feed.model';
 
 @Component({
@@ -14,7 +14,6 @@ export class AdminFeedEditItemPropertiesComponent implements OnInit, OnChanges {
   @Output() itemPropertiesUpdated = new EventEmitter<any>();
   @Output() cancelled = new EventEmitter();
   @Output() opened = new EventEmitter();
-  @ViewChild('template', {static: true}) template;
 
   newProperty: any;
   itemPropertySchemaLayout: any;
@@ -27,13 +26,7 @@ export class AdminFeedEditItemPropertiesComponent implements OnInit, OnChanges {
 
   itemProperties: Array<any> = [];
 
-  constructor(
-    private viewContainerRef: ViewContainerRef
-  ) { }
-
   ngOnInit(): void {
-    this.viewContainerRef.createEmbeddedView(this.template);
-
     this.newProperty = {};
     this.formOptions = {
       addSubmit: false

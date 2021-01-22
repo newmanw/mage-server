@@ -1,21 +1,19 @@
-<ng-template #template>
-  <mat-expansion-panel [expanded]="expanded" (opened)="opened.emit()" hideToggle>
-    <mat-expansion-panel-header>
-      <mat-panel-title>
-        Configure The Content Fetch Parameters
-      </mat-panel-title>
-      <mat-panel-description>
-      </mat-panel-description>
-    </mat-expansion-panel-header>
-    <div *ngIf="topic">
-      <mage-json-schema-form [schema]="topic.paramsSchema" [data]="params"
-        [options]="formOptions" (onChanges)="topicConfigChanged($event)" framework="material-design">
-      </mage-json-schema-form>
-    </div>
-    <mat-action-row *ngIf="!feed">
-      <button *ngIf="showPrevious" mat-button color="warn" (click)="cancel()">Previous</button>
-      <button mat-button color="primary" (click)="finish()">Next</button>
-    </mat-action-row>
-  </mat-expansion-panel>
-</ng-template>
+<mat-expansion-panel [expanded]="expanded" (opened)="opened.emit()" hideToggle>
+  <mat-expansion-panel-header>
+    <mat-panel-title>
+      Configure The Content Fetch Parameters
+    </mat-panel-title>
+    <mat-panel-description>
+    </mat-panel-description>
+  </mat-expansion-panel-header>
+  <div *ngIf="topic">
+    <mage-json-schema-form [schema]="topic.paramsSchema" [data]="params"
+      [options]="formOptions" (onChanges)="topicConfigChanged($event)" framework="material-design">
+    </mage-json-schema-form>
+  </div>
+  <mat-action-row *ngIf="!feed">
+    <button *ngIf="showPrevious" mat-button color="warn" (click)="cancel()">Previous</button>
+    <button mat-button color="primary" (click)="finish()">Next</button>
+  </mat-action-row>
+</mat-expansion-panel>
 

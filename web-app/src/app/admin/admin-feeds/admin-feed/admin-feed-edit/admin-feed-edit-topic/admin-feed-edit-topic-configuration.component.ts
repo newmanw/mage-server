@@ -5,8 +5,6 @@ import {
   OnChanges,
   OnInit,
   Output,
-  ViewChild,
-  ViewContainerRef
 } from '@angular/core';
 import { Feed, FeedTopic } from 'src/app/feed/feed.model';
 
@@ -26,21 +24,17 @@ export class AdminFeedEditTopicConfigurationComponent implements OnInit, OnChang
   @Output() topicConfigured = new EventEmitter<any>();
   @Output() cancelled = new EventEmitter();
   @Output() opened = new EventEmitter();
-  @ViewChild('template', {static: true}) template: any;
 
   currentConfiguration: any;
   formOptions: any;
 
-  constructor(
-    private viewContainerRef: ViewContainerRef
-  ) {
+  constructor() {
     this.formOptions = {
       addSubmit: false
     };
   }
 
   ngOnInit(): void {
-    this.viewContainerRef.createEmbeddedView(this.template);
   }
 
   ngOnChanges(): void {
@@ -58,5 +52,4 @@ export class AdminFeedEditTopicConfigurationComponent implements OnInit, OnChang
   cancel(): void {
     this.cancelled.emit();
   }
-
 }
