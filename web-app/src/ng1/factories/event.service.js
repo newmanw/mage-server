@@ -464,15 +464,17 @@ function EventService($rootScope, $q, $timeout, $http, $httpParamSerializer, Obs
 
   function fetch() {
     const event = FilterService.getEvent();
-    if (!event) return;
-
-    var parameters = {};
-    var interval = FilterService.getInterval();
+    if (!event) {
+      return {
+        then() {}
+      }
+    }
+    const parameters = {};
+    const interval = FilterService.getInterval();
     if (interval) {
-      var time = FilterService.formatInterval(interval);
+      const time = FilterService.formatInterval(interval);
       parameters.interval = time;
     }
-
     return $q.all([
       fetchObservations(event, parameters),
       fetchLocations(event, parameters)
@@ -619,15 +621,15 @@ function EventService($rootScope, $q, $timeout, $http, $httpParamSerializer, Obs
   }
 
   function poll(interval) {
-    if (interval <= 0) return;
-
+    if (interval <= 0) {
+      return;
+    }
     fetch().then(function() {
       _.each(pollListeners, function(listener) {
         if (_.isFunction(listener.onPoll)) {
           listener.onPoll();
         }
       });
-
       pollingTimeout = $timeout(function() {
         poll(interval);
       }, interval);
