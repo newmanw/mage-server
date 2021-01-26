@@ -15,7 +15,6 @@ export class AdminServiceEditComponent implements OnInit, OnChanges {
   @Output() serviceCreated = new EventEmitter<Service>();
   @Output() cancelled = new EventEmitter();
   @Output() opened = new EventEmitter();
-  @ViewChild('template', {static: true}) template;
 
   serviceTitleSummarySchema: any;
   serviceConfiguration: any;
@@ -28,18 +27,13 @@ export class AdminServiceEditComponent implements OnInit, OnChanges {
   serviceTypes: Array<ServiceType>;
   services: Array<Service>;
 
-  constructor(
-    private feedService: FeedService,
-    private viewContainerRef: ViewContainerRef
-  ) {
+  constructor(private feedService: FeedService) {
     this.formOptions = {
       addSubmit: false
     };
   }
 
   ngOnInit(): void {
-    this.viewContainerRef.createEmbeddedView(this.template);
-
     forkJoin(
       this.feedService.fetchServiceTypes(),
       this.feedService.fetchServices()
