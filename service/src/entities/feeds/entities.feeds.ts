@@ -4,7 +4,6 @@ import { FeatureCollection } from 'geojson'
 import { JSONSchema4 } from 'json-schema'
 import { URL } from 'url'
 import { StaticIconId } from '../icons/entities.icons'
-import { create } from 'lodash'
 
 interface LoadFeedServiceTypes {
   (): Promise<FeedServiceType[]>
