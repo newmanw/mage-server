@@ -5,7 +5,8 @@ import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { JsonSchemaComponent } from '../../../../json-schema/json-schema.component';
 import { AdminFeedEditConfigurationComponent } from './admin-feed-edit-configuration.component';
 
-describe('FeedConfigurationComponent', () => {
+fdescribe('FeedMetaDataComponent', () => {
+
   let component: AdminFeedEditConfigurationComponent;
   let fixture: ComponentFixture<AdminFeedEditConfigurationComponent>;
 

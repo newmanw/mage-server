@@ -16,7 +16,7 @@ export interface Feed {
   updateFrequency?: number;
   constantParams?: any;
   variableParamsSchema?: any;
-  updateFrequencySeconds: number;
+  updateFrequencySeconds?: number;
   itemPropertiesSchema?: any;
 }
 
@@ -48,6 +48,7 @@ export interface FeedTopic {
   id: string;
   title: string;
   summary?: string;
+  icon?: string;
   paramsSchema?: any;
   updateFrequencySeconds?: number;
   itemsHaveIdentity?: boolean;
@@ -56,4 +57,5 @@ export interface FeedTopic {
   itemPrimaryProperty?: string;
   itemSecondaryProperty?: string;
   itemPropertiesSchema?: any;
+  mapStyle?: MapStyle
 }

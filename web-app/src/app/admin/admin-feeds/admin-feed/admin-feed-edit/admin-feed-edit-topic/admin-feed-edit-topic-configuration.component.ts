@@ -5,6 +5,7 @@ import {
   OnChanges,
   OnInit,
   Output,
+  SimpleChanges,
 } from '@angular/core';
 import { Feed, FeedTopic } from 'src/app/feed/feed.model';
 
@@ -13,40 +14,42 @@ import { Feed, FeedTopic } from 'src/app/feed/feed.model';
   templateUrl: './admin-feed-edit-topic-configuration.component.html',
   styleUrls: ['./admin-feed-edit-topic-configuration.component.scss']
 })
-export class AdminFeedEditTopicConfigurationComponent implements OnInit, OnChanges {
+export class AdminFeedEditTopicConfigurationComponent implements OnChanges, OnInit {
 
-  @Input() expanded: boolean;
-  @Input() topic: FeedTopic;
-  @Input() feed: Feed;
-  @Input() params: any;
+  @Input() expanded: boolean
+  @Input() fetchParametersSchema: any
+  @Input() initialFetchParameters: any;
   @Input() showPrevious: boolean;
-  @Output() topicConfigurationChanged = new EventEmitter<any>();
-  @Output() topicConfigured = new EventEmitter<any>();
+  @Output() fetchParametersChanged = new EventEmitter<any>();
+  @Output() fetchParametersAccepted = new EventEmitter<any>();
   @Output() cancelled = new EventEmitter();
   @Output() opened = new EventEmitter();
 
-  currentConfiguration: any;
-  formOptions: any;
+  fetchParametersMod: any = {}
 
-  constructor() {
-    this.formOptions = {
-      addSubmit: false
-    };
+  formOptions = {
+    addSubmit: false
   }
 
-  ngOnInit(): void {
+  constructor() { }
+
+  ngOnInit() {
   }
 
-  ngOnChanges(): void {
+  ngOnChanges(changes: SimpleChanges) {
+    if (changes.initialFetchParameters && changes.initialFetchParameters.currentValue !== changes.initialFetchParameters.previousValue) {
+      console.log('fetch parameters changed ', Date.now(), changes.initialFetchParameters.currentValue === this.initialFetchParameters, changes.initialFetchParameters.currentValue)
+    }
   }
 
-  topicConfigChanged($event: any): void {
-    this.currentConfiguration = $event;
-    this.topicConfigurationChanged.emit($event);
+  onFetchParametersChanged($event: any): void {
+    console.log('changes ', $event === this.initialFetchParameters, $event)
+    this.fetchParametersMod = $event;
+    this.fetchParametersChanged.emit($event);
   }
 
   finish(): void {
-    this.topicConfigured.emit(this.currentConfiguration);
+    this.fetchParametersAccepted.emit(this.fetchParametersMod);
   }
 
   cancel(): void {

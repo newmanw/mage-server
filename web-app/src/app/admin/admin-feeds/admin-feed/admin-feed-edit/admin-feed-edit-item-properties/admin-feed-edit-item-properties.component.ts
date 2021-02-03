@@ -1,5 +1,21 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange, SimpleChanges } from '@angular/core';
-import { FeedTopic } from 'src/app/feed/feed.model';
+import { FormArray, FormControl, FormGroup } from '@angular/forms'
+import { debounceTime } from 'rxjs/operators'
+
+type JsonSchemaPropertyType = 'string' | 'number' | 'integer' | 'boolean' | 'null'
+type JsonSchemaPropertyFormat = 'uri' | 'date-time'
+
+interface SimplePropertyJsonSchema {
+  type: JsonSchemaPropertyType | null
+  title?: string | null
+  description?: string | null
+  format?: JsonSchemaPropertyFormat | null
+}
+
+export interface KeyedPropertySchema {
+  key: string,
+  schema: SimplePropertyJsonSchema
+}
 
 @Component({
   selector: 'app-feed-item-properties-configuration',
@@ -9,182 +25,114 @@ import { FeedTopic } from 'src/app/feed/feed.model';
 export class AdminFeedEditItemPropertiesComponent implements OnInit, OnChanges {
 
   @Input() expanded: boolean;
-  @Input() itemPropertiesSchema: any;
-  @Input() topic: FeedTopic;
-  @Output() itemPropertiesUpdated = new EventEmitter<any>();
+  @Input() itemPropertiesSchema: any = { properties: {} };
+  @Output() itemPropertiesSchemaChanged = new EventEmitter<any>();
+  @Output() itemPropertiesSchemaAccepted = new EventEmitter<any>();
   @Output() cancelled = new EventEmitter();
   @Output() opened = new EventEmitter();
 
-  newProperty: any;
-  itemPropertySchemaLayout: any;
-  itemPropertySchema: any;
-  initialProperties: Array<any> = [];
-  topicItemPropertiesSchema: Array<any>;
-  formOptions: any;
-  feed: any;
-  valid: boolean;
-
-  itemProperties: Array<any> = [];
+  itemPropertiesSchemas: KeyedPropertySchema[] = [];
+  itemPropertiesForm: FormGroup = new FormGroup({})
+  newProperty: KeyedPropertySchema = {
+    key: null,
+    schema: {
+      type: null,
+      title: null,
+      description: null,
+      format: null
+    }
+  };
+  valid: boolean = false;
 
   ngOnInit(): void {
-    this.newProperty = {};
-    this.formOptions = {
-      addSubmit: false
-    };
-
-    this.itemPropertySchema = {
-      type: 'object',
-      properties: {
-        key: {
-          type: 'string',
-        },
-        schema: {
-          type: 'object',
-          properties: {
-            title: {
-              type: 'string'
-            },
-            type: {
-              type: 'string',
-              enum: ['string', 'number', 'integer']
-            },
-            format: {
-              type: 'string',
-              enum: [
-                'date',
-                'time',
-                'date-time',
-                'email',
-                'hostname',
-                'ipv4',
-                'ipv6',
-                'uri',
-                'uri-reference',
-                'uri-template',
-                'regex'
-              ]
-            },
-            pattern: {
-              type: 'string'
-            }
-          },
-          required: ['title', 'type']
-        }
-      },
-      required: ['key']
-    };
-
-    this.itemPropertySchemaLayout = [{
-      type: 'div',
-      display: 'flex',
-      'flex-direction': 'column',
-      items: [{
-        type: 'div',
-        display: 'flex',
-        'flex-direction': 'row',
-        fxLayoutGap: '8px',
-        items: [{
-          type: 'text',
-          key: 'key',
-          title: 'Property Key',
-          description: 'GeoJSON property key'
-        }, {
-          type: 'text',
-          key: 'schema.title',
-          title: 'Property Title',
-          description: 'Display title'
-        },
-        {
-          key: 'schema.type',
-          title: 'Type',
-          type: 'select',
-          description: 'GeoJSON data type'
-        }]
-      }, {
-        type: 'div',
-        display: 'flex',
-        'flex-direction': 'row',
-        fxLayoutGap: '8px',
-        items: [{
-          key: 'schema.format',
-          type: 'select',
-          title: 'Format',
-          description: 'Semantic validation format'
-        }, {
-          type: 'text',
-          key: 'schema.pattern',
-          title: 'Pattern',
-          description: 'Regular expression to restrict strings'
-        }]
-      }]
-    }];
+    this.itemPropertiesForm.valueChanges.pipe(debounceTime(500)).subscribe({
+      next: (formSchema) => {
+        this.itemPropertiesSchemaChanged.emit(syncSchemaFormToSchema(formSchema, this.itemPropertiesSchema))
+      }
+    })
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    const change: SimpleChange = changes.itemPropertiesSchema;
-    if (change && !change.previousValue && change.currentValue) {
-      this.initialProperties = [];
-      for (const key in this.itemPropertiesSchema.properties) {
-        if (this.itemPropertiesSchema.properties.hasOwnProperty(key)) {
-          this.initialProperties.push({
-            key,
-            schema: this.itemPropertiesSchema.properties[key]
-          });
-        }
-      }
-    }
-    const topicChange: SimpleChange = changes.topic;
-    if (topicChange && (!this.initialProperties || !this.initialProperties.length) && topicChange.currentValue) {
-      this.initialProperties = [];
-      for (const key in topicChange.currentValue.itemPropertiesSchema.properties) {
-        if (topicChange.currentValue.itemPropertiesSchema.properties.hasOwnProperty(key)) {
-          this.initialProperties.push({
-            key,
-            schema: topicChange.currentValue.itemPropertiesSchema.properties[key]
-          });
-        }
-      }
-    }
-
-    if (this.initialProperties) {
-      this.itemProperties = this.initialProperties.map(value => {
-        return {
-          key: value.key,
-          schema: value.schema
-        };
-      });
+    if (changes.itemPropertiesSchema) {
+      this.itemPropertiesSchemas = keyedPropertiesFromSchema(this.itemPropertiesSchema)
+      this.itemPropertiesForm = syncPropertiesFormToSchemaProperties(this.itemPropertiesForm, this.itemPropertiesSchema)
     }
   }
 
-  closed(): void {
-    console.log('panel closed')
-  }
+  closed(): void { }
 
   isValid(valid: boolean): void {
-    // console.log('valid', valid);
     this.valid = valid;
   }
 
   addProperty(): void {
-    this.initialProperties.push(this.newProperty);
-    this.propertiesChanged(this.newProperty, this.initialProperties.length - 1);
-    this.newProperty = {};
+    // TODO
+    // this.initialProperties.push(this.newProperty);
+    // this.propertiesChanged(this.newProperty, this.initialProperties.length - 1);
+    // this.newProperty = {};
   }
 
   prevStep(): void {
+    // TODO should probably save properties changes here
     this.cancelled.emit();
   }
 
   nextStep(): void {
-    const schema = {};
-    this.itemProperties.forEach(value => {
-      schema[value.key] = value.schema;
-    });
-    this.itemPropertiesUpdated.emit(schema);
+    const properties = this.itemPropertiesSchemas.reduce((properties, property) => {
+      properties[property.key] = property.schema
+      return properties
+    }, {})
+    this.itemPropertiesSchema.properties = properties
+    this.itemPropertiesSchemaAccepted.emit(this.itemPropertiesSchema);
   }
+}
 
-  propertiesChanged($event: any, $index: any): void {
-    this.itemProperties[$index] = $event;
+function keyedPropertiesFromSchema(schema: any): KeyedPropertySchema[] {
+  if (!schema || !schema.properties) {
+    return []
   }
+  return Object.getOwnPropertyNames(schema.properties).map(key => {
+    return { key, schema: { ...schema.properties[key] }}
+  })
+}
 
+function syncPropertiesFormToSchemaProperties(form: FormGroup, schema: any): FormGroup {
+  const properties: { [key: string]: SimplePropertyJsonSchema } = schema ? schema.properties || {} : {}
+  const propertiesKeys = Object.getOwnPropertyNames(properties)
+  const formKeys = Object.getOwnPropertyNames(form.controls)
+  for (const schemaKey of propertiesKeys) {
+    if (!form.contains(schemaKey)) {
+      form.addControl(schemaKey, formGroupForPropertySchema(properties[schemaKey]))
+    }
+  }
+  for (const formKey of formKeys) {
+    if (!properties.hasOwnProperty(formKey)) {
+      form.removeControl(formKey)
+    }
+  }
+  return form
+}
+
+function formGroupForPropertySchema(schema: SimplePropertyJsonSchema): FormGroup {
+  const controls = {
+    schema: new FormGroup({
+      type: new FormControl(schema.type),
+      title: new FormControl(schema.title),
+      description: new FormControl(schema.description),
+      format: new FormControl(schema.format)
+    })
+  }
+  return new FormGroup(controls)
+}
+
+function syncSchemaFormToSchema(schemaFormValue: any, schema: any): any {
+  schema = schema || { type: 'object', properties: {} }
+  const { properties, ...schemaCopy } = schema
+  schemaCopy.properties = {}
+  for (const key of Object.getOwnPropertyNames(schemaFormValue)) {
+    const formPropertySchema = schemaFormValue[key].schema
+    const propertySchema = properties[key]
+    schemaCopy.properties[key] = Object.assign({}, propertySchema, formPropertySchema)
+  }
+  return schemaCopy
 }

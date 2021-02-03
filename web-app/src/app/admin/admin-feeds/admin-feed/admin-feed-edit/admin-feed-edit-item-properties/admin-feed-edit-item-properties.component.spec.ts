@@ -9,7 +9,7 @@ import {
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { FeedTopic } from 'src/app/feed/feed.model';
 import { JsonSchemaModule } from 'src/app/json-schema/json-schema.module';
-import { AdminFeedEditItemPropertiesComponent } from './admin-feed-edit-item-properties.component';
+import { AdminFeedEditItemPropertiesComponent, KeyedPropertySchema } from './admin-feed-edit-item-properties.component';
 
 describe('FeedItemPropertiesConfigurationComponent', () => {
   @Component({
@@ -162,15 +162,14 @@ describe('FeedItemPropertiesConfigurationComponent', () => {
 
     hostComponent.topic = topic;
     fixture.detectChanges();
-    console.log('component item properties', component.itemProperties);
-    expect(component.itemProperties.length).toEqual(Object.keys(topic.itemPropertiesSchema.properties).length);
+    expect(component.itemPropertiesSchemas.length).toEqual(Object.keys(topic.itemPropertiesSchema.properties).length);
   });
 
   it('should populate with the itemPropertiesSchema', () => {
     fixture.detectChanges();
     hostComponent.itemPropertiesSchema = feedItemPropertiesSchema;
     fixture.detectChanges();
-    expect(component.itemProperties.length).toEqual(Object.keys(feedItemPropertiesSchema.properties).length);
+    expect(component.itemPropertiesSchemas.length).toEqual(Object.keys(feedItemPropertiesSchema.properties).length);
   });
 
   it('should populate with the itemPropertiesSchema even if topic is passed in', () => {
@@ -178,16 +177,16 @@ describe('FeedItemPropertiesConfigurationComponent', () => {
     hostComponent.topic = topic;
     hostComponent.itemPropertiesSchema = feedItemPropertiesSchema;
     fixture.detectChanges();
-    expect(component.itemProperties.length).toEqual(Object.keys(feedItemPropertiesSchema.properties).length);
+    expect(component.itemPropertiesSchemas.length).toEqual(Object.keys(feedItemPropertiesSchema.properties).length);
   });
 
   it('should update the itemProperties when a new property is added', () => {
     fixture.detectChanges();
     hostComponent.topic = topic;
     fixture.detectChanges();
-    expect(component.itemProperties.length).toEqual(Object.keys(topic.itemPropertiesSchema.properties).length);
+    expect(component.itemPropertiesSchemas.length).toEqual(Object.keys(topic.itemPropertiesSchema.properties).length);
 
-    const newProperty = {
+    const newProperty: KeyedPropertySchema = {
       key: 'new',
       schema: {
         title: 'The New Property',
@@ -197,18 +196,18 @@ describe('FeedItemPropertiesConfigurationComponent', () => {
     component.newProperty = newProperty;
     component.addProperty();
 
-    expect(component.itemProperties).toContain(newProperty);
+    expect(component.itemPropertiesSchemas).toContain(newProperty);
   });
 
   it('should emit itemPropertiesUpdated', () => {
-    spyOn(component.itemPropertiesUpdated, 'emit');
+    spyOn(component.itemPropertiesSchemaAccepted, 'emit');
 
     fixture.detectChanges();
     hostComponent.topic = topic;
     fixture.detectChanges();
-    expect(component.itemProperties.length).toEqual(Object.keys(topic.itemPropertiesSchema.properties).length);
+    expect(component.itemPropertiesSchemas.length).toEqual(Object.keys(topic.itemPropertiesSchema.properties).length);
 
-    const newProperty = {
+    const newProperty: KeyedPropertySchema = {
       key: 'new',
       schema: {
         title: 'The New Property',
@@ -218,11 +217,11 @@ describe('FeedItemPropertiesConfigurationComponent', () => {
     component.newProperty = newProperty;
     component.addProperty();
 
-    expect(component.itemProperties).toContain(newProperty);
+    expect(component.itemPropertiesSchemas).toContain(newProperty);
 
     component.nextStep();
 
-    expect(component.itemPropertiesUpdated.emit).toHaveBeenCalledWith(
+    expect(component.itemPropertiesSchemaAccepted.emit).toHaveBeenCalledWith(
       {...topic.itemPropertiesSchema.properties,
          ...{new: { title: 'The New Property', type: 'string'}}
       });

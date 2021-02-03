@@ -1,14 +1,17 @@
 import { Component, OnInit } from '@angular/core';
 import { StateService } from '@uirouter/angular';
-import { Feed, FeedTopic, Service } from 'src/app/feed/feed.model';
-import { FeedService } from 'src/app/feed/feed.service';
+import { NextObserver } from 'rxjs'
 import * as _ from 'underscore';
-import { AdminBreadcrumb } from 'src/app/admin/admin-breadcrumb/admin-breadcrumb.model';
+import { Feed, FeedTopic, Service } from '../../../../feed/feed.model';
+import { FeedService } from '../../../../feed/feed.service';
+import { AdminBreadcrumb } from '../../../admin-breadcrumb/admin-breadcrumb.model';
+import { FeedEditService, FeedEditState, FeedEditStateObservers, FeedMetaData } from './feed-edit.service'
 
 @Component({
   selector: 'app-feed-edit',
   templateUrl: './admin-feed-edit.component.html',
-  styleUrls: ['./admin-feed-edit.component.scss']
+  styleUrls: ['./admin-feed-edit.component.scss'],
+  providers: [FeedEditService]
 })
 export class AdminFeedEditComponent implements OnInit {
   breadcrumbs: AdminBreadcrumb[] = [{
@@ -23,25 +26,45 @@ export class AdminFeedEditComponent implements OnInit {
   currentItemProperties: any;
   hasFeedDeletePermission: boolean;
 
-  selectedService: Service;
-  selectedTopic: FeedTopic;
+  selectedService: Service | null;
+  selectedTopic: FeedTopic | null;
   configuredTopic: any;
-  createdService: Service;
 
-  itemPropertiesSchema: any;
+  itemPropertiesSchema: object;
   itemProperties: any[];
 
   preview: any;
 
   feedConfiguration: any;
   constantParams: any;
-  configuredParams: any;
+  fetchParametersMod: any;
 
   step = 0;
 
   debouncedPreview: any;
 
+  editState: FeedEditState = {
+    originalFeed: null,
+    availableServices: [],
+    selectedService: null,
+    availableTopics: [],
+    selectedTopic: null,
+    fetchParameters: null,
+    itemPropertiesSchema: null,
+    feedMetaData: null,
+    preview: null
+  }
+
+  private observers = Object.getOwnPropertyNames(this.editState).reduce((stateObservers, stateKey) => {
+    const observer: NextObserver<any> = { next: (x) => {
+      this.editState[stateKey] = x
+    }}
+    stateObservers[stateKey] = observer
+    return stateObservers
+  }, {})
+
   constructor(
+    private feedEdit: FeedEditService,
     private feedService: FeedService,
     private stateService: StateService
   ) {
@@ -63,27 +86,29 @@ export class AdminFeedEditComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    for (const stateKey of Object.getOwnPropertyNames(this.editState)) {
+      this.feedEdit.changes[stateKey].subscribe(this.observers[stateKey])
+    }
     if (this.stateService.params.feedId) {
-      this.feedService.fetchFeed(this.stateService.params.feedId).subscribe(feed => {
-        this.breadcrumbs[1] = {
-          title: feed.title,
-          state: {
-            name: 'admin.feed',
-            params: {
-              feedId: feed.id
+      this.feedEdit.editFeed(this.stateService.params.feedId)
+      this.feedEdit.changes.originalFeed.subscribe(feed => {
+        if (feed) {
+          this.breadcrumbs[1] = {
+            title: feed.title,
+            state: {
+              name: 'admin.feed',
+              params: {
+                feedId: feed.id
+              }
             }
           }
+          this.step = 1;
+          this.debouncedPreview();
         }
-
-        this.feed = feed;
-        this.constantParams = this.configuredParams = feed.constantParams;
-        this.selectedService = this.feed.service as Service;
-        this.selectedTopic = this.feed.topic;
-        this.step = 1;
-        this.serviceAndTopicSelected({service: this.selectedService, topic: this.selectedTopic});
-        this.configuredTopic = this.feed;
-        this.debouncedPreview();
       });
+    }
+    else {
+      this.feedEdit.newFeed()
     }
   }
 
@@ -96,7 +121,7 @@ export class AdminFeedEditComponent implements OnInit {
   }
 
   serviceCreated(service: Service): void {
-    this.createdService = service;
+    this.feedEdit.serviceCreated(service)
     this.setStep(0);
   }
 
@@ -110,66 +135,71 @@ export class AdminFeedEditComponent implements OnInit {
     };
   }
 
-  serviceAndTopicSelected(serviceAndTopic: {service: Service, topic: FeedTopic}): void {
-    this.selectedTopic = this.configuredTopic = serviceAndTopic.topic;
-    this.selectedService = serviceAndTopic.service;
-    if (this.feed) {
-      this.itemPropertiesSchema = this.feed.itemPropertiesSchema;
-    } else {
-      this.itemPropertiesSchema = {};
+  serviceSelected(service: Service): void {
+    this.feedEdit.selectService(service)
+  }
+
+  topicSelected(topic: FeedTopic): void {
+    this.feedEdit.selectTopic(topic)
+    if (topic) {
+      this.nextStep();
     }
+  }
+
+  onFetchParametersAccepted(fetchParameters: any): void {
+    this.feedEdit.fetchParametersChanged(fetchParameters)
+    // this.fetchParametersMod = fetchParameters;
+    // this.configuredTopic.constantParams = fetchParameters;
+    // this.previewFeed();
     this.nextStep();
   }
 
-  topicConfigured(topicParameters: any): void {
-    this.configuredParams = topicParameters;
-    this.configuredTopic.constantParams = topicParameters;
-    this.previewFeed();
-    this.nextStep();
-  }
-
-  topicConfigChanged(topicParameters: any): void {
-    this.configuredParams = topicParameters;
-
-    if (this.feed) {
-      this.debouncedPreview();
-    }
+  onFetchParametersChanged(fetchParameters: any): void {
+    this.feedEdit.fetchParametersChanged(fetchParameters)
+    // this.fetchParametersMod = fetchParameters;
+    // if (this.feed) {
+    //   this.debouncedPreview();
+    // }
   }
 
   previewFeed(): void {
-    const feedPreviewRequest = {
-      feed: { constantParams: this.configuredParams }
-    };
-    this.feedService.previewFeed(this.selectedService.id, this.selectedTopic.id, feedPreviewRequest)
-      .subscribe(preview => {
-        this.preview = preview;
-      });
+    // const feedPreviewRequest = {
+    //   feed: { constantParams: this.fetchParametersMod }
+    // };
+    // this.feedService.previewFeed(this.selectedService.id, this.selectedTopic.id, feedPreviewRequest)
+    //   .subscribe(preview => {
+    //     this.preview = preview;
+    //   });
   }
 
-  itemPropertiesUpdated(itemProperties: any): void {
-    this.currentItemProperties = itemProperties;
+  onItemPropertiesSchemaChanged(itemProperties: any): void {
+    this.feedEdit.itemPropertiesSchemaChanged(itemProperties)
+  }
+
+  onItemPropertiesSchemaAccepted(itemProperties: any): void {
     this.nextStep();
   }
 
-  feedConfigurationChanged(feedConfiguration: any): void {
-    if (this.preview) {
-      this.preview.feed = feedConfiguration;
-    }
+  onFeedMetaDataChanged(metaData: FeedMetaData): void {
+    // if (this.preview) {
+    //   this.preview.feed = metaData;
+    // }
+    this.feedEdit.feedMetaDataChanged(metaData)
   }
 
-  feedConfigurationSet(feedConfiguration: any): void {
-    this.feedConfiguration = feedConfiguration;
-    if (this.feed) {
-      this.updateFeed();
-    } else {
-      this.createFeed();
-    }
+  onFeedMetaDataAccepted(metaData: FeedMetaData): void {
+    // this.feedConfiguration = metaData;
+    // if (this.feed) {
+    //   this.updateFeed();
+    // } else {
+    //   this.createFeed();
+    // }
   }
 
   createFeed(): void {
     this.feedConfiguration.service = this.selectedService.id;
     this.feedConfiguration.topic = this.selectedTopic.id;
-    this.feedConfiguration.constantParams = this.configuredParams;
+    this.feedConfiguration.constantParams = this.fetchParametersMod;
     this.feedConfiguration.itemPropertiesSchema = this.currentItemProperties;
     this.feedService.createFeed(this.selectedService.id, this.selectedTopic.id, this.feedConfiguration).subscribe(feed => {
       this.stateService.go('admin.feed', { feedId: feed.id });
@@ -177,7 +207,7 @@ export class AdminFeedEditComponent implements OnInit {
   }
 
   updateFeed(): void {
-    this.feed.constantParams = this.configuredParams;
+    this.feed.constantParams = this.fetchParametersMod;
     this.feed.itemPropertiesSchema = this.currentItemProperties;
     Object.assign(this.feed, this.feedConfiguration);
     this.feedService.updateFeed(this.feed).subscribe(feed => {

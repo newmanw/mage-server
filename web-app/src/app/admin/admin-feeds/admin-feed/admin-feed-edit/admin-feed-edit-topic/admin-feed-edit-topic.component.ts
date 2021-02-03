@@ -11,16 +11,14 @@ import { FeedService } from 'src/app/feed/feed.service';
 export class AdminFeedEditTopicComponent implements OnInit, OnChanges {
 
   @Input() expanded: boolean;
-  @Input() defaultService: Service;
-  @Output() serviceAndTopicSelected = new EventEmitter<{service: Service, topic: FeedTopic}>();
+  @Input() services: Service[];
+  @Input() topics: FeedTopic[];
+  @Input() selectedService: Service;
+  @Output() serviceSelected = new EventEmitter<Service>();
+  @Output() topicSelected = new EventEmitter<FeedTopic>();
   @Output() noServicesExist = new EventEmitter();
-  @Output() cancelled = new EventEmitter();
   @Output() opened = new EventEmitter();
 
-  services: Array<Service>;
-  selectedService: Service;
-
-  topics: Array<FeedTopic>;
   selectedTopic: FeedTopic;
 
   serviceSearchControl: FormControl = new FormControl();
@@ -28,46 +26,22 @@ export class AdminFeedEditTopicComponent implements OnInit, OnChanges {
 
   constructor(private feedService: FeedService) {
     this.services = [];
+    this.topics = [];
   }
 
   ngOnInit(): void {
-    this.feedService.fetchServices().subscribe(services => {
-      this.services = services;
-      if (this.services.length === 0) {
-        this.noServicesExist.emit();
-        return;
-      }
-      if (this.defaultService) {
-        this.selectedService = this.defaultService;
-        this.serviceSelected();
-        return;
-      }
-      if (this.services.length === 1) {
-        this.selectedService = this.services[0];
-        this.serviceSelected();
-      }
-    });
+
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes.defaultService && changes.defaultService.currentValue !== undefined) {
-      this.selectedService = this.defaultService;
-      this.serviceSelected();
-    }
+
   }
 
-  serviceSelected(): void {
-    if (this.selectedService) {
-      this.feedService.fetchTopics(this.selectedService.id).subscribe(topics => {
-        this.topics = topics;
-        if (this.topics.length === 1) {
-          this.selectedTopic = this.topics[0];
-        }
-      });
-    }
+  onServiceSelected(): void {
+    this.serviceSelected.emit(this.selectedService || null)
   }
 
-  next(): void {
-    this.serviceAndTopicSelected.emit({service: this.selectedService, topic: this.selectedTopic});
+  onTopicSelected(): void {
+    this.topicSelected.emit(this.selectedTopic || null)
   }
 }

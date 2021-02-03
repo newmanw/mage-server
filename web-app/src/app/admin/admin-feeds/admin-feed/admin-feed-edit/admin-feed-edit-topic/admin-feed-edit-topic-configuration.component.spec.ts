@@ -100,7 +100,7 @@ describe('TopicConfigurationComponent', () => {
   });
 
   it('should emit topicConfigurationChanged', () => {
-    spyOn(component.topicConfigurationChanged, 'emit');
+    spyOn(component.fetchParametersChanged, 'emit');
 
     hostComponent.topic = {
       id: 'topicId',
@@ -116,13 +116,13 @@ describe('TopicConfigurationComponent', () => {
       }
     };
     fixture.detectChanges();
-    expect(component.topicConfigurationChanged.emit).toHaveBeenCalledWith({newerThanDays: 56});
-    expect(component.currentConfiguration).toEqual({newerThanDays: 56});
+    expect(component.fetchParametersChanged.emit).toHaveBeenCalledWith({newerThanDays: 56});
+    expect(component.initialFetchParameters).toEqual({newerThanDays: 56});
   });
 
   it('should emit topicConfigured', () => {
-    spyOn(component.topicConfigured, 'emit');
-    spyOn(component.topicConfigurationChanged, 'emit');
+    spyOn(component.fetchParametersAccepted, 'emit');
+    spyOn(component.fetchParametersChanged, 'emit');
 
     hostComponent.topic = {
       id: 'topicId',
@@ -139,14 +139,14 @@ describe('TopicConfigurationComponent', () => {
     };
     fixture.detectChanges();
     component.finish();
-    expect(component.topicConfigurationChanged.emit).toHaveBeenCalledWith({newerThanDays: 56});
-    expect(component.topicConfigured.emit).toHaveBeenCalledWith({newerThanDays: 56});
-    expect(component.currentConfiguration).toEqual({newerThanDays: 56});
+    expect(component.fetchParametersChanged.emit).toHaveBeenCalledWith({newerThanDays: 56});
+    expect(component.fetchParametersAccepted.emit).toHaveBeenCalledWith({newerThanDays: 56});
+    expect(component.initialFetchParameters).toEqual({newerThanDays: 56});
   });
 
   it('should emit not topicConfigured and should emit cancelled', () => {
-    spyOn(component.topicConfigured, 'emit');
-    spyOn(component.topicConfigurationChanged, 'emit');
+    spyOn(component.fetchParametersAccepted, 'emit');
+    spyOn(component.fetchParametersChanged, 'emit');
     spyOn(component.cancelled, 'emit');
 
     hostComponent.topic = {
@@ -164,9 +164,9 @@ describe('TopicConfigurationComponent', () => {
     };
     fixture.detectChanges();
     component.cancel();
-    expect(component.topicConfigurationChanged.emit).toHaveBeenCalledWith({newerThanDays: 56});
-    expect(component.topicConfigured.emit).not.toHaveBeenCalled();
+    expect(component.fetchParametersChanged.emit).toHaveBeenCalledWith({newerThanDays: 56});
+    expect(component.fetchParametersAccepted.emit).not.toHaveBeenCalled();
     expect(component.cancelled.emit).toHaveBeenCalled();
-    expect(component.currentConfiguration).toEqual({newerThanDays: 56});
+    expect(component.initialFetchParameters).toEqual({newerThanDays: 56});
   });
 });

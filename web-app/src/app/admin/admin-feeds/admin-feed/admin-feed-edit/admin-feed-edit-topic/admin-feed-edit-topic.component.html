@@ -9,7 +9,7 @@
   <div>
     <mat-form-field appearance="outline" *ngIf="services.length">
       <mat-label>Select A Service</mat-label>
-      <mat-select [(ngModel)]="selectedService" (selectionChange)="serviceSelected()">
+      <mat-select [(ngModel)]="selectedService" (selectionChange)="onServiceSelected()" [required]>
         <mat-option>
           <ngx-mat-select-search [formControl]="serviceSearchControl" placeholderLabel="Select A Service"
             noEntriesFoundLabel=""></ngx-mat-select-search>
@@ -24,7 +24,7 @@
   <div>
     <mat-form-field appearance="outline">
       <mat-label>Select A Topic</mat-label>
-      <mat-select [(ngModel)]="selectedTopic">
+      <mat-select [(ngModel)]="selectedTopic" (selectionChange)="onTopicSelected()" [required]>
         <mat-option>
           <ngx-mat-select-search [formControl]="topicSearchControl" placeholderLabel="Select A Topic"
             noEntriesFoundLabel=""></ngx-mat-select-search>
@@ -36,7 +36,4 @@
     </mat-form-field>
   </div>
 
-  <mat-action-row>
-    <button mat-button color="primary" (click)="next()">Next</button>
-  </mat-action-row>
 </mat-expansion-panel>

@@ -144,6 +144,7 @@ import { AdminFeedsModule } from './admin/admin-feeds/admin-feeds.module';
 import { ObservationPopupComponent } from './observation/observation-popup/observation-popup.component';
 import { UserPopupComponent } from './user/user-popup/user-popup.component';
 import { CdkDetailRowDirective } from './export/directives/cdk-detail-row.directive';
+import { StaticIconSelectComponent } from './static-icon/static-icon-select/static-icon-select.component';
 
 @NgModule({
   declarations: [
@@ -211,7 +212,8 @@ import { CdkDetailRowDirective } from './export/directives/cdk-detail-row.direct
     ExportsComponent,
     ExportMetadataDialogComponent,
     CdkDetailRowDirective,
-    FeedPanelComponent
+    FeedPanelComponent,
+    StaticIconSelectComponent
   ],
   imports: [
     BrowserModule,

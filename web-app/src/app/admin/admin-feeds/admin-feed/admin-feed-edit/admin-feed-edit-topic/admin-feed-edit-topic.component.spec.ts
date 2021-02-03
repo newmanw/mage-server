@@ -80,7 +80,7 @@ describe('ChooseServiceTopicComponent', () => {
   });
 
   it('should set the service if a default is passed in', async(() => {
-    spyOn(component, 'serviceSelected');
+    spyOn(component, 'onServiceSelected');
     fixture.detectChanges();
 
     const serviceReq = httpMock.expectOne('/api/feeds/services');
@@ -118,7 +118,7 @@ describe('ChooseServiceTopicComponent', () => {
   }));
 
   it('should set the service if a default is set on init', async(() => {
-    spyOn(component, 'serviceSelected');
+    spyOn(component, 'onServiceSelected');
     const service: Service = {
       id: 'serviceId2',
       serviceType: 'type2',
@@ -155,7 +155,7 @@ describe('ChooseServiceTopicComponent', () => {
   }));
 
   it('should set the service if only one exists', async(() => {
-    spyOn(component, 'serviceSelected');
+    spyOn(component, 'onServiceSelected');
     fixture.detectChanges();
 
     const serviceReq = httpMock.expectOne('/api/feeds/services');
@@ -189,7 +189,7 @@ describe('ChooseServiceTopicComponent', () => {
   });
 
   it('should set the service and topic if only one of each exists', async(() => {
-    spyOn(component, 'serviceSelected').and.callThrough();
+    spyOn(component, 'onServiceSelected').and.callThrough();
     fixture.detectChanges();
 
     const serviceReq = httpMock.expectOne('/api/feeds/services');
@@ -220,7 +220,7 @@ describe('ChooseServiceTopicComponent', () => {
   }));
 
   it('should set the service and not set the topic if more than one topic exists', async(() => {
-    spyOn(component, 'serviceSelected').and.callThrough();
+    spyOn(component, 'onServiceSelected').and.callThrough();
     fixture.detectChanges();
 
     const serviceReq = httpMock.expectOne('/api/feeds/services');
@@ -256,7 +256,7 @@ describe('ChooseServiceTopicComponent', () => {
   }));
 
   it('should emit serviceAndTopicSelected', () => {
-    spyOn(component.serviceAndTopicSelected, 'emit');
+    spyOn(component.topicSelected, 'emit');
     fixture.detectChanges();
 
     const service: Service = {
@@ -286,12 +286,11 @@ describe('ChooseServiceTopicComponent', () => {
     component.selectedService = service;
     component.selectedTopic = topic;
 
-    component.next();
-    expect(component.serviceAndTopicSelected.emit).toHaveBeenCalled();
+    expect(component.topicSelected.emit).toHaveBeenCalled();
   });
 
   it('should not fetch topics if a service is not selected', async(() => {
-    spyOn(component.serviceAndTopicSelected, 'emit');
+    spyOn(component.topicSelected, 'emit');
     fixture.detectChanges();
 
     const service = {
@@ -315,7 +314,7 @@ describe('ChooseServiceTopicComponent', () => {
     httpMock.expectNone('/api/feeds/services/serviceId/topics');
 
     fixture.whenStable().then(() => {
-      component.serviceSelected();
+      component.onServiceSelected();
       httpMock.verify();
     });
   }));

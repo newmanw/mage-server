@@ -1,7 +1,7 @@
 import { HttpClientModule } from '@angular/common/http';
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatDividerModule, MatListModule, MatToolbarModule } from '@angular/material';
-import { FeedItemSummaryModule } from '../feed-list-item/feed-item-summary/feed-item-summary.module';
+import { FeedItemSummaryModule } from '../feed-item/feed-item-summary/feed-item-summary.module';
 import { FeedListComponent } from './feed-list.component';
 
 describe('FeedComponent', () => {
