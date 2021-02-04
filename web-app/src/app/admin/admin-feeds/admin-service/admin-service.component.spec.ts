@@ -45,7 +45,7 @@ class MdDialogMock {
   }
 };
 
-fdescribe('AdminServiceComponent', () => {
+describe('AdminServiceComponent', () => {
   let component: AdminServiceComponent;
   let fixture: ComponentFixture<AdminServiceComponent>;
   let element: HTMLElement;

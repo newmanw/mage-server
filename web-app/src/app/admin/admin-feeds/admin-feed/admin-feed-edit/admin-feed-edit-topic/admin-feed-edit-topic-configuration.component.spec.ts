@@ -3,8 +3,8 @@ import { Component, ViewChild } from '@angular/core';
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { MatExpansionModule } from '@angular/material';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { Feed, FeedTopic } from 'src/app/feed/feed.model';
-import { JsonSchemaModule } from 'src/app/json-schema/json-schema.module';
+import { Feed, FeedTopic } from '../../../../../feed/feed.model';
+import { JsonSchemaModule } from '../../../../../json-schema/json-schema.module';
 import { AdminFeedEditTopicConfigurationComponent } from './admin-feed-edit-topic-configuration.component';
 
 describe('TopicConfigurationComponent', () => {
@@ -14,15 +14,15 @@ describe('TopicConfigurationComponent', () => {
     template: `<app-topic-configuration
                 [expanded]="expanded"
                 [showPrevious]="showPrevious"
-                [topic]="topic"
-                [feed]="feed">
+                [fetchParametersSchema]="fetchParametersSchema"
+                [initialFetchParameters]="initialFetchParameters">
               </app-topic-configuration>`
   })
   class TestHostComponent {
     expanded: boolean;
     showPrevious: boolean;
-    feed: Feed;
-    topic: FeedTopic;
+    fetchParametersSchema = { properties: { derp: { type: 'number' } } }
+    initialFetchParameters = { derp: 100 }
 
     @ViewChild(AdminFeedEditTopicConfigurationComponent, { static: true })
     public topicConfigurationComponent: AdminFeedEditTopicConfigurationComponent;
@@ -78,22 +78,22 @@ describe('TopicConfigurationComponent', () => {
   });
 
   it('should show no buttons if a feed exists', () => {
-    hostComponent.feed = {
-      id: 'feedId',
-      title: 'feed title',
-      updateFrequencySeconds: 1,
-      service: {
-        id: 'serviceId',
-        title: 'title',
-        summary: 'summary',
-        serviceType: 'serviceType',
-        config: {}
-      },
-      topic: {
-        id: 'topicId',
-        title: 'topic'
-      }
-    };
+    // hostComponent.feed = {
+    //   id: 'feedId',
+    //   title: 'feed title',
+    //   updateFrequencySeconds: 1,
+    //   service: {
+    //     id: 'serviceId',
+    //     title: 'title',
+    //     summary: 'summary',
+    //     serviceType: 'serviceType',
+    //     config: {}
+    //   },
+    //   topic: {
+    //     id: 'topicId',
+    //     title: 'topic'
+    //   }
+    // };
     fixture.detectChanges();
     expect(element.querySelector('mat-action-row')).toBeNull();
     expect(element.querySelectorAll('button').length).toEqual(0);
@@ -102,19 +102,19 @@ describe('TopicConfigurationComponent', () => {
   it('should emit topicConfigurationChanged', () => {
     spyOn(component.fetchParametersChanged, 'emit');
 
-    hostComponent.topic = {
-      id: 'topicId',
-      title: 'Topic Title',
-      paramsSchema: {
-        type: 'object',
-        properties: {
-          newerThanDays: {
-            type: 'number',
-            default: 56
-          }
-        }
-      }
-    };
+    // hostComponent.topic = {
+    //   id: 'topicId',
+    //   title: 'Topic Title',
+    //   paramsSchema: {
+    //     type: 'object',
+    //     properties: {
+    //       newerThanDays: {
+    //         type: 'number',
+    //         default: 56
+    //       }
+    //     }
+    //   }
+    // };
     fixture.detectChanges();
     expect(component.fetchParametersChanged.emit).toHaveBeenCalledWith({newerThanDays: 56});
     expect(component.initialFetchParameters).toEqual({newerThanDays: 56});
@@ -124,19 +124,19 @@ describe('TopicConfigurationComponent', () => {
     spyOn(component.fetchParametersAccepted, 'emit');
     spyOn(component.fetchParametersChanged, 'emit');
 
-    hostComponent.topic = {
-      id: 'topicId',
-      title: 'Topic Title',
-      paramsSchema: {
-        type: 'object',
-        properties: {
-          newerThanDays: {
-            type: 'number',
-            default: 56
-          }
-        }
-      }
-    };
+    // hostComponent.topic = {
+    //   id: 'topicId',
+    //   title: 'Topic Title',
+    //   paramsSchema: {
+    //     type: 'object',
+    //     properties: {
+    //       newerThanDays: {
+    //         type: 'number',
+    //         default: 56
+    //       }
+    //     }
+    //   }
+    // };
     fixture.detectChanges();
     component.finish();
     expect(component.fetchParametersChanged.emit).toHaveBeenCalledWith({newerThanDays: 56});
@@ -149,19 +149,19 @@ describe('TopicConfigurationComponent', () => {
     spyOn(component.fetchParametersChanged, 'emit');
     spyOn(component.cancelled, 'emit');
 
-    hostComponent.topic = {
-      id: 'topicId',
-      title: 'Topic Title',
-      paramsSchema: {
-        type: 'object',
-        properties: {
-          newerThanDays: {
-            type: 'number',
-            default: 56
-          }
-        }
-      }
-    };
+    // hostComponent.topic = {
+    //   id: 'topicId',
+    //   title: 'Topic Title',
+    //   paramsSchema: {
+    //     type: 'object',
+    //     properties: {
+    //       newerThanDays: {
+    //         type: 'number',
+    //         default: 56
+    //       }
+    //     }
+    //   }
+    // };
     fixture.detectChanges();
     component.cancel();
     expect(component.fetchParametersChanged.emit).toHaveBeenCalledWith({newerThanDays: 56});

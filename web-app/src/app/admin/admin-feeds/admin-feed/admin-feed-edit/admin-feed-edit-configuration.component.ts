@@ -1,8 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms'
 import { debounceTime } from 'rxjs/operators'
-import { Feed, FeedTopic } from 'src/app/feed/feed.model';
-import { StaticIconSelectComponent } from 'src/app/static-icon/static-icon-select/static-icon-select.component'
 import { FeedMetaData, FeedMetaDataNullable } from './feed-edit.service'
 
 export type IconModel = Readonly<
@@ -29,8 +27,6 @@ export class AdminFeedEditConfigurationComponent implements OnInit, OnChanges {
   @Output() feedMetaDataChanged = new EventEmitter<FeedMetaData>();
   @Output() cancelled = new EventEmitter();
   @Output() opened = new EventEmitter();
-
-  // feedMetaData: FeedMetaData
 
   feedMetaDataForm: FormGroup = new FormGroup({
     title: new FormControl(),

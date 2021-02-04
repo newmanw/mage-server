@@ -11,8 +11,7 @@ import { Component } from '@angular/core';
 @Component({
   selector: 'mage-json-schema-form',
   providers: [ JsonSchemaFormService ],
-  template:
-  `
+  template: `
 <form [autocomplete]="jsf?.formOptions?.autocomplete ? 'on' : 'off'" class="json-schema-form" (ngSubmit)="submitForm()">
   <root-widget [layout]="jsf?.layout"></root-widget>
 </form>
