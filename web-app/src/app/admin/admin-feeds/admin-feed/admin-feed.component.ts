@@ -59,7 +59,7 @@ export class AdminFeedComponent implements OnInit {
   filteredChoices: Observable<any[]>
   events = []
   nonFeedEvents: Array<Event> = []
-  feedEvents = []
+  feedEvents = [] as any[]
 
   service: Service
   feedServiceType: ServiceType
@@ -75,7 +75,7 @@ export class AdminFeedComponent implements OnInit {
     @Inject(UserService) private userService: { myself: { id: string, role: {permissions: Array<string>}}},
     @Inject(Event) private eventResource: any
     ) {
-      this.hasFeedCreatePermission = _.contains(userService.myself.role.permissions, 'FEEDS_CREATE_FEED') 
+      this.hasFeedCreatePermission = _.contains(userService.myself.role.permissions, 'FEEDS_CREATE_FEED')
       this.hasFeedEditPermission = _.contains(userService.myself.role.permissions, 'FEEDS_CREATE_FEED')
       this.hasFeedDeletePermission = _.contains(userService.myself.role.permissions, 'FEEDS_CREATE_FEED')
       this.hasUpdateEventPermission = _.contains(userService.myself.role.permissions, 'UPDATE_EVENT')
@@ -93,7 +93,7 @@ export class AdminFeedComponent implements OnInit {
         this.fullFeed = JSON.stringify(feed, null, 2)
         this.feedLoaded = Promise.resolve(true)
         this.service = this.feed.service as Service
-        this.feedTopic = this.feed.topic
+        this.feedTopic = this.feed.topic as FeedTopic
         this.feedService.fetchServiceType(this.service.serviceType as string).subscribe(serviceType => {
           this.feedServiceType = serviceType
         });
@@ -170,7 +170,7 @@ export class AdminFeedComponent implements OnInit {
       this.eventModel = null
       this.addEvent = false
 
-      this.snackBar.open(`Feed added to event ${event.name}`, null, {
+      this.snackBar.open(`Feed added to event ${event.name}`, undefined, {
         duration: 5 * 1000,
       });
     });
@@ -187,7 +187,7 @@ export class AdminFeedComponent implements OnInit {
       this.nonFeedEvents = this.nonFeedEvents.sort((a: any, b: any) => a.name < b.name ? -1 : 1)
       this.searchControl.reset()
 
-      this.snackBar.open(`Feed removed from event ${event.name}`, null, {
+      this.snackBar.open(`Feed removed from event ${event.name}`, undefined, {
         duration: 5 * 1000,
       });
     });

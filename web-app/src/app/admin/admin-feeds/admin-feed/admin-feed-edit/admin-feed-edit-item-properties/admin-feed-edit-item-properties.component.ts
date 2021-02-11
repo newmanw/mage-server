@@ -34,7 +34,7 @@ export class AdminFeedEditItemPropertiesComponent implements OnInit, OnChanges {
   itemPropertiesSchemas: KeyedPropertySchema[] = [];
   itemPropertiesForm: FormGroup = new FormGroup({})
   newProperty: KeyedPropertySchema = {
-    key: null,
+    key: '',
     schema: {
       type: null,
       title: null,

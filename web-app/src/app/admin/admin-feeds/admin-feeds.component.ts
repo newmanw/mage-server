@@ -20,7 +20,7 @@ export class AdminFeedsComponent implements OnInit {
     title: 'Feeds',
     icon: 'rss_feed'
   }]
-  
+
   services: Service[] = []
   private _services: Service[] = []
 
@@ -131,7 +131,7 @@ export class AdminFeedsComponent implements OnInit {
 
   deleteFeed($event: MouseEvent, feed: Feed): void {
     $event.stopPropagation()
-    
+
     this.dialog.open(AdminFeedDeleteComponent, {
       data: feed,
       autoFocus: false,
@@ -150,10 +150,12 @@ export class AdminFeedsComponent implements OnInit {
     return a.title < b.title ? -1 : 1
   }
 
-  private filterByTitleAndSummary(text: string): (item: {title: string, summary?: string}) => boolean {
-    return (item: { title: string, summary?: string }): boolean => {
-      return item.title.toLowerCase().indexOf(text.toLowerCase()) !== -1
-        || item.summary.toLowerCase().indexOf(text.toLowerCase()) !== -1
+  private filterByTitleAndSummary(text: string): (item: {title: string, summary?: string | null}) => boolean {
+    return (item: { title: string, summary?: string | null }): boolean => {
+      const textLowerCase = text.toLowerCase()
+      const title = item.title.toLowerCase()
+      const summary = item.summary ? item.summary.toLowerCase() : ''
+      return title.indexOf(textLowerCase) !== -1 || summary.indexOf(textLowerCase) !== -1
     }
   }
 
