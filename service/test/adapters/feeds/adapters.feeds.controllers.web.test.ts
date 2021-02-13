@@ -573,9 +573,9 @@ invalid request
     })
   })
 
-  describe('POST /services/{serviceId}/topics/{topicId}/feed_preview', function() {
+  describe.only('POST /services/{serviceId}/topics/{topicId}/feed_preview', function() {
 
-    type CompletePreviewFeedRequestParams = Required<Omit<PreviewFeedRequest, 'context'>> & {
+    type CompletePreviewFeedRequestParams = Required<Omit<PreviewFeedRequest, 'context' | 'skipContentFetch'>> & {
       feed: Omit<Required<PreviewFeedRequest['feed']>, 'id'>
     }
 
@@ -716,6 +716,109 @@ invalid request
       expect(res.status).to.equal(200)
       expect(res.type).to.match(jsonMimeType)
       expect(res.body).to.deep.equal(preview)
+    })
+
+    it('adds the skip content fetch flag when parameter is true', async function() {
+
+      const service = uniqid()
+      const topic = uniqid()
+      const minimalFeed: FeedMinimalVerbose = Object.freeze({
+        service,
+        topic,
+        title: undefined,
+        summary: undefined,
+        icon: undefined,
+        itemsHaveIdentity: undefined,
+        itemsHaveSpatialDimension: undefined,
+        itemPrimaryProperty: undefined,
+        itemSecondaryProperty: undefined,
+        itemTemporalProperty: undefined,
+        constantParams: undefined,
+        variableParamsSchema: undefined,
+        updateFrequencySeconds: undefined,
+        mapStyle: undefined,
+        itemPropertiesSchema: undefined
+      })
+      const appReq: PreviewFeedRequest = createAdminRequest({
+        feed: minimalFeed,
+        variableParams: undefined,
+        skipContentFetch: true
+      })
+      const preview: FeedPreview = {
+        feed: {
+          id: 'preview',
+          service,
+          topic,
+          title: 'Topic Title',
+          itemsHaveIdentity: true,
+          itemsHaveSpatialDimension: true
+        }
+      }
+
+      appRequestFactory.createRequest(Arg.any(), Arg.deepEquals({ feed: minimalFeed, variableParams: undefined, skipContentFetch: true })).returns(appReq)
+      appLayer.previewFeed(appReq).resolves(AppResponse.success<FeedPreview, unknown>(preview))
+
+      const res = await client.post(`${rootPath}/services/${service}/topics/${topic}/feed_preview?skip_content_fetch=true`).send(minimalFeed)
+
+      expect(res.status).to.equal(200)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.deep.equal(preview)
+      appLayer.received(1).previewFeed(Arg.deepEquals(appReq))
+    })
+
+    it('does not add skip content fetch flag when parameter is not true', async function() {
+
+      const service = uniqid()
+      const topic = uniqid()
+      const minimalFeed: FeedMinimalVerbose = Object.freeze({
+        service,
+        topic,
+        title: undefined,
+        summary: undefined,
+        icon: undefined,
+        itemsHaveIdentity: undefined,
+        itemsHaveSpatialDimension: undefined,
+        itemPrimaryProperty: undefined,
+        itemSecondaryProperty: undefined,
+        itemTemporalProperty: undefined,
+        constantParams: undefined,
+        variableParamsSchema: undefined,
+        updateFrequencySeconds: undefined,
+        mapStyle: undefined,
+        itemPropertiesSchema: undefined
+      })
+      const appReq: PreviewFeedRequest = createAdminRequest({
+        feed: minimalFeed,
+        variableParams: undefined
+      })
+      const preview: FeedPreview = {
+        feed: {
+          id: 'preview',
+          service,
+          topic,
+          title: 'Topic Title',
+          itemsHaveIdentity: true,
+          itemsHaveSpatialDimension: true
+        },
+        content: {
+          topic,
+          feed: 'preview',
+          items: {
+            type: 'FeatureCollection',
+            features: []
+          }
+        }
+      }
+
+      appRequestFactory.createRequest(Arg.any(), Arg.deepEquals({ feed: minimalFeed, variableParams: undefined })).returns(appReq)
+      appLayer.previewFeed(appReq).resolves(AppResponse.success<FeedPreview, unknown>(preview))
+
+      const res = await client.post(`${rootPath}/services/${service}/topics/${topic}/feed_preview?skip_content_fetch=truish`).send(minimalFeed)
+
+      expect(res.status).to.equal(200)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.deep.equal(preview)
+      appLayer.received(1).previewFeed(Arg.deepEquals(appReq))
     })
 
     it('fails with 404 if the service does not exist', async function() {

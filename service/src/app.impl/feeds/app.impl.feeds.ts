@@ -1,5 +1,5 @@
 import { URL } from 'url'
-import { FeedServiceTypeRepository, FeedServiceRepository, FeedTopic, FeedService, InvalidServiceConfigError, FeedContent, Feed, FeedTopicId, FeedServiceConnection, FeedRepository, FeedCreateUnresolved, FeedCreateMinimal, FeedServiceType, FeedServiceId, FeedCreateAttrs } from '../../entities/feeds/entities.feeds';
+import { FeedServiceTypeRepository, FeedServiceRepository, FeedTopic, FeedService, InvalidServiceConfigError, FeedContent, Feed, FeedTopicId, FeedServiceConnection, FeedRepository, FeedCreateUnresolved, FeedCreateMinimal, FeedServiceType, FeedServiceId, FeedCreateAttrs, FeedTopicContent } from '../../entities/feeds/entities.feeds';
 import * as api from '../../app.api/feeds/app.api.feeds'
 import { AppRequest, KnownErrorsOf, withPermission, AppResponse } from '../../app.api/app.api.global'
 import { PermissionDeniedError, EntityNotFoundError, InvalidInputError, entityNotFound, invalidInput, MageError, ErrInvalidInput, KeyPathError } from '../../app.api/app.api.errors'
@@ -254,9 +254,15 @@ export function PreviewFeed(permissionService: api.FeedsPermissionService, servi
                 [ invalid, 'variableParams' ])
             }
           }
+          const previewCreateAttrs = await resolveFeedCreate(context.topic, reqFeed, iconRepo, StaticIconImportFetch.EagerAwait)
+          const feedPreview: api.FeedPreview = {
+            feed: previewCreateAttrs
+          }
+          if (req.skipContentFetch === true) {
+            return feedPreview
+          }
           const topicContent = await context.conn.fetchTopicContent(reqFeed.topic, mergedParams)
-          const previewCreateAttrs = await resolveFeedCreate(context.topic, reqFeed, iconRepo)
-          const previewContent: FeedContent & { feed: 'preview' } = {
+          const previewContent:  FeedContent & { feed: 'preview' } = {
             feed: 'preview',
             topic: topicContent.topic,
             variableParams: req.variableParams,
@@ -265,10 +271,7 @@ export function PreviewFeed(permissionService: api.FeedsPermissionService, servi
           if (topicContent.pageCursor) {
             previewContent.pageCursor = topicContent.pageCursor
           }
-          const feedPreview: api.FeedPreview = {
-            feed: previewCreateAttrs,
-            content: previewContent,
-          }
+          feedPreview.content = previewContent
           return feedPreview
         })
     )
@@ -357,7 +360,7 @@ export function UpdateFeed(permissionService: api.FeedsPermissionService, servic
       withFetchContext<api.FeedExpanded | EntityNotFoundError>({ serviceTypeRepo, serviceRepo }, { service: feed.service, topic: feed.topic }).then(
         async (fetchContext): Promise<api.FeedExpanded | EntityNotFoundError> => {
           const updateUnresolved = { ...req.feed, service: feed.service, topic: feed.topic }
-          const updateResolved = await resolveFeedCreate(fetchContext.topic, updateUnresolved, iconRepo)
+          const updateResolved = await resolveFeedCreate(fetchContext.topic, updateUnresolved, iconRepo, StaticIconImportFetch.EagerAwait)
           const updated = await feedRepo.put({ ...updateResolved, id: feed.id })
           if (!updated) {
             return entityNotFound(feed.id, 'Feed', 'feed deleted before update')

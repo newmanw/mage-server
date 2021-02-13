@@ -148,6 +148,9 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
     .post(async (req, res, next) => {
       const params = feedCreateParamsFromRequestBody(req.params.serviceId, req.params.topicId, req.body.feed) as Omit<PreviewFeedRequest, 'context'>
       params.variableParams = req.body.variableParams
+      if (String(req.query.skip_content_fetch).toLocaleLowerCase() === 'true') {
+        params.skipContentFetch = true
+      }
       const appReq = createAppRequest(req, params)
       const appRes = await appLayer.previewFeed(appReq)
       if (appRes.success) {

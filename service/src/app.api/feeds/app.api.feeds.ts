@@ -63,12 +63,13 @@ export interface CreateFeedRequest extends AppRequest {
 }
 
 export interface PreviewFeedRequest extends CreateFeedRequest {
+  skipContentFetch?: boolean
   variableParams?: FeedContentParams
 }
 
 export interface FeedPreview {
   feed: FeedCreateAttrs
-  content: FeedContent & { feed: 'preview' }
+  content?: FeedContent & { feed: 'preview' }
 }
 
 export interface PreviewFeed {
