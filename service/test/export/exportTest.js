@@ -24,7 +24,7 @@ const Observation = require('../../lib/models/observation');
 const { expect } = require('chai')
 const observationModel = Observation.observationModel;
 
-require('../../models/exportmetadata');
+require('../../lib/models/exportmetadata');
 const ExportMetadataModel = mongoose.model('ExportMetadata');
 
 describe("export tests", function () {
