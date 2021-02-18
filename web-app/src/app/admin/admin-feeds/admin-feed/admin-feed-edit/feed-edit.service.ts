@@ -149,11 +149,15 @@ export class FeedEditService {
     this.state.itemPropertiesSchema.next(_.cloneDeep(topic.itemPropertiesSchema))
     // TODO: what do with topic icon?
     const metaData = feedMetaDataLean(topic)
-    this.state.feedMetaData.next(metaData)
+    this.state.topicMetaData.next(metaData)
+    this.state.fetchParameters.next(null)
+    this.state.feedMetaData.next(null)
+    this.state.preview.next(null)
   }
 
   fetchParametersChanged(fetchParameters: any) {
     this.state.fetchParameters.next(fetchParameters)
+    this.fetchNewPreview()
     // TODO: refresh preview through rx debounce operator
   }
 

@@ -1,4 +1,5 @@
-import { defer, Observable, of, zip, asyncScheduler, asapScheduler, Observer, PartialObserver, NextObserver } from 'rxjs'
+import { defer, Observable, of, zip, asapScheduler, Observer, PartialObserver, NextObserver } from 'rxjs'
+import { TestScheduler } from 'rxjs/testing'
 import { first, map } from 'rxjs/operators'
 import { FeedEditService, FeedEditState, FeedEditStateObservers } from './feed-edit.service'
 import { FeedExpanded, FeedService } from '../../../../feed/feed.service'
@@ -208,7 +209,7 @@ class FeedEditChangeRecorder implements FeedEditStateObservers {
   }
 }
 
-describe('FeedEditService', () => {
+fdescribe('FeedEditService', () => {
 
   let feedEdit: FeedEditService
   let stateChanges: FeedEditChangeRecorder
@@ -344,7 +345,7 @@ describe('FeedEditService', () => {
       expect(stateChanges.selectedService.observed).toEqual([ null, null ])
     })
 
-    it('populates feed meta-data and item properties schema from selected topic', () => {
+    it('populates topic meta-data and item properties schema from selected topic', () => {
 
       const service = services[0]
       const topics = topicsForService[service.id]
@@ -366,15 +367,63 @@ describe('FeedEditService', () => {
         selectedTopic: topic,
         fetchParameters: null,
         itemPropertiesSchema: topic.itemPropertiesSchema,
-        feedMetaData: feedMetaDataLean(topic),
+        topicMetaData: feedMetaDataLean(topic),
+        feedMetaData: null,
         preview: null
       })
       expect(stateChanges.selectedTopic.latest).toEqual(topic)
-      expect(stateChanges.feedMetaData.latest).toEqual(feedMetaDataLean(topic))
+      expect(stateChanges.topicMetaData.latest).toEqual(feedMetaDataLean(topic))
       expect(stateChanges.itemPropertiesSchema.latest).toEqual(topic.itemPropertiesSchema)
     })
 
-    it('resets the fetch parameters, item properties schema, and preview when the selected topic changes', () => {
+    it('resets the fetch parameters, item properties schema, feed meta-data, and preview when the selected topic changes', () => {
+
+      const service = services[0]
+      const topics = topicsForService[service.id]
+      const fetchParameters: any = { original: true }
+      const feedMetaData: FeedMetaData = {
+        title: 'Change the Topic'
+      }
+      feedService.fetchServices.and.returnValue(of(services))
+      feedService.fetchTopics.withArgs(service.id).and.returnValue(of(topics))
+      feedService.previewFeed.and.returnValue(of(emptyPreview))
+
+      feedEdit.newFeed()
+      feedEdit.selectService(service.id)
+      feedEdit.selectTopic(topics[0].id)
+      feedEdit.fetchParametersChanged(fetchParameters)
+      feedEdit.feedMetaDataChanged(feedMetaData)
+
+      expect(feedEdit.currentState).toEqual(<FeedEditState>{
+        availableServices: services,
+        selectedService: service,
+        availableTopics: topics,
+        selectedTopic: topics[0],
+        fetchParameters,
+        topicMetaData: feedMetaDataLean(topics[0]),
+        feedMetaData,
+        itemPropertiesSchema: topics[0].itemPropertiesSchema,
+        originalFeed: null,
+        preview: emptyPreview
+      })
+
+      feedEdit.selectTopic(topics[1].id)
+
+      expect(feedEdit.currentState).toEqual(<FeedEditState>{
+        availableServices: services,
+        selectedService: service,
+        availableTopics: topics,
+        selectedTopic: topics[1],
+        itemPropertiesSchema: topics[1].itemPropertiesSchema,
+        fetchParameters: null,
+        topicMetaData: feedMetaDataLean(topics[1]),
+        feedMetaData: null,
+        originalFeed: null,
+        preview: null
+      })
+    })
+
+    it('resets everything when the selected service changes', () => {
       fail('todo')
     })
 
