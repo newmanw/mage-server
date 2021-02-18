@@ -1,39 +1,22 @@
 import { forwardRef, Inject } from '@angular/core'
 import * as _ from 'lodash'
 import { BehaviorSubject, Observable, PartialObserver } from 'rxjs'
-import { Feed, FeedTopic, Service } from '../../../../feed/feed.model'
-import { FeedService } from '../../../../feed/feed.service'
+import { Feed, FeedPreview, FeedTopic, Service } from '../../../../feed/feed.model'
+import { FeedExpanded, FeedService } from '../../../../feed/feed.service'
+import { FeedMetaData, feedMetaDataLean } from './feed-edit.model'
 
-type RequiredKeys<T> = { [K in keyof T]-?: {} extends { [P in K]: T[K] } ? never : K }[keyof T];
-type OptionalKeys<T> = { [K in keyof T]-?: {} extends { [P in K]: T[K] } ? K : never }[keyof T];
-type PickRequired<T> = Pick<T, RequiredKeys<T>>;
-type PickOptional<T> = Pick<T, OptionalKeys<T>>;
-type Nullable<T> = { [P in keyof T]: T[P] | null };
-type NullableOptional<T> = PickRequired<T> & Nullable<PickOptional<T>>;
-
-type FeedMetaDataKeys =
-  | 'title'
-  | 'summary'
-  | 'icon'
-  | 'itemsHaveIdentity'
-  | 'itemsHaveSpatialDimension'
-  | 'itemPrimaryProperty'
-  | 'itemSecondaryProperty'
-  | 'itemTemporalProperty'
-
-export type FeedMetaData = Pick<Feed, FeedMetaDataKeys>
-export type FeedMetaDataNullable = Required<NullableOptional<FeedMetaData>>
 
 export interface FeedEditState {
-  originalFeed: Feed | null
+  originalFeed: FeedExpanded | null
   availableServices: Service[]
   selectedService: Service | null
   availableTopics: FeedTopic[]
   selectedTopic: FeedTopic | null
-  fetchParameters: object | null
-  itemPropertiesSchema: object | null
+  fetchParameters: any | null
+  itemPropertiesSchema: any | null
+  topicMetaData: FeedMetaData | null
   feedMetaData: FeedMetaData | null
-  preview: object | null
+  preview: FeedPreview | null
 }
 
 type FeedEditStateChanges = {
@@ -55,33 +38,53 @@ export type FeedEditStateObservers = {
 export class FeedEditService {
 
   private state: FeedEditStateSubjects = {
-    originalFeed: new BehaviorSubject<Feed>(null),
+    originalFeed: new BehaviorSubject<FeedExpanded | null>(null),
     availableServices: new BehaviorSubject<Service[]>([]),
     selectedService: new BehaviorSubject<Service | null>(null),
     availableTopics: new BehaviorSubject<FeedTopic[]>([]),
     selectedTopic: new BehaviorSubject<FeedTopic | null>(null),
-    fetchParameters: new BehaviorSubject<object | null>(null),
-    itemPropertiesSchema: new BehaviorSubject<object | null>(null),
+    fetchParameters: new BehaviorSubject<any | null>(null),
+    itemPropertiesSchema: new BehaviorSubject<any | null>(null),
+    topicMetaData: new BehaviorSubject<FeedMetaData | null>(null),
     feedMetaData: new BehaviorSubject<FeedMetaData | null>(null),
-    preview: new BehaviorSubject<object | null>(null)
+    preview: new BehaviorSubject<FeedPreview | null>(null)
   }
 
   changes: FeedEditStateChanges = this.state
 
+  get currentState(): FeedEditState {
+    return {
+      originalFeed: this.state.originalFeed.value,
+      availableServices: this.state.availableServices.value,
+      selectedService: this.state.selectedService.value,
+      availableTopics: this.state.availableTopics.value,
+      selectedTopic: this.state.selectedTopic.value,
+      fetchParameters: this.state.fetchParameters.value,
+      itemPropertiesSchema: this.state.itemPropertiesSchema.value,
+      topicMetaData: this.state.topicMetaData.value,
+      feedMetaData: this.state.feedMetaData.value,
+      preview: this.state.preview.value
+    }
+  }
+
   constructor(@Inject(forwardRef(() => FeedService)) private feedService: FeedService) {}
 
-  editFeed(feedId: string | null) {
+  editFeed(feedId: string) {
+    this.resetState()
     this.feedService.fetchFeed(feedId).subscribe({
       next: (feed) => {
         const state = this.state
         const service = feed.service as Service
-        const topic = feed.topic
+        const topic = feed.topic as FeedTopic
+        const feedCopy = _.cloneDeep(feed)
+        state.originalFeed.next(feedCopy)
         state.availableServices.next([ service ])
         state.availableTopics.next([ topic ])
         state.selectedService.next(service)
         state.selectedTopic.next(topic)
         state.fetchParameters.next(feed.constantParams)
         state.itemPropertiesSchema.next(feed.itemPropertiesSchema)
+        state.topicMetaData.next(feedMetaDataLean(topic))
         state.feedMetaData.next({
           title: feed.title,
           summary: feed.summary,
@@ -92,75 +95,61 @@ export class FeedEditService {
           itemsHaveIdentity: feed.itemsHaveIdentity,
           itemsHaveSpatialDimension: feed.itemsHaveSpatialDimension
         })
-        state.preview.next(null)
-        const feedCopy = _.cloneDeep(feed)
-        state.originalFeed.next(feedCopy)
+        this.fetchNewPreview()
       }
     })
   }
 
   newFeed(): void {
-    this.state.originalFeed.next(null)
-    this.state.availableTopics.next([])
-    this.state.selectedService.next(null)
-    this.state.selectedTopic.next(null)
-    this.state.fetchParameters.next(null)
-    this.state.itemPropertiesSchema.next(null)
-    this.state.feedMetaData.next(null)
-    this.state.preview.next(null)
-    this.refreshAvailableServices(null)
+    this.resetState()
+    this.fetchAvailableServices(null)
   }
 
   serviceCreated(service: Service): void {
-    this.refreshAvailableServices(service)
+    this.fetchAvailableServices(service.id)
   }
 
-  selectService(service: Service | null) {
-    if (this.state.originalFeed.getValue()) {
+  selectService(serviceId: string | null) {
+    if (this.state.originalFeed.value) {
       return
     }
-    if (this.state.selectedService.getValue() === service) {
+    const selectedService = this.state.selectedService.value
+    if (selectedService && selectedService.id === serviceId) {
       return
     }
-    this.selectTopic(null)
-    this.state.availableTopics.next([])
-    if (service) {
-      this.feedService.fetchTopics(service.id).subscribe({
-        next: (topics) => {
-          this.state.availableTopics.next(topics)
-        }
-      })
+    const nextService = this.state.availableServices.value.find(x => x.id === serviceId)
+    if (!nextService) {
+      return
     }
-    this.state.selectedService.next(service)
+    if (selectedService) {
+      if (this.state.selectedTopic.value) {
+        this.selectTopic(null)
+      }
+      this.state.availableTopics.next([])
+    }
+    this.state.selectedService.next(nextService)
+    this.feedService.fetchTopics(nextService.id).subscribe({
+      next: (topics) => {
+        this.state.availableTopics.next(topics)
+      }
+    })
   }
 
-  selectTopic(topic: FeedTopic | null) {
-    if (this.state.originalFeed.getValue()) {
+  selectTopic(topicId: string | null) {
+    if (this.state.originalFeed.value) {
       return
     }
-    const topics = this.state.availableTopics.getValue() || []
-    if (topic) {
-      topic = topics.find(x => x.id === topic.id)
-    }
+    const topics = this.state.availableTopics.value || []
+    const topic = topics.find(x => x.id === topicId)
     if (!topic) {
-      this.state.itemPropertiesSchema.next(null)
-      this.state.feedMetaData.next(null)
+      // TODO: anything else here?
       return
     }
     this.state.selectedTopic.next(topic)
     this.state.itemPropertiesSchema.next(_.cloneDeep(topic.itemPropertiesSchema))
-    // TODO: populate from topic
     // TODO: what do with topic icon?
-    this.state.feedMetaData.next({
-      title: topic.title,
-      summary: topic.summary,
-      icon: topic.icon,
-      itemPrimaryProperty: topic.itemPrimaryProperty,
-      itemSecondaryProperty: topic.itemSecondaryProperty,
-      itemTemporalProperty: topic.itemTemporalProperty,
-      itemsHaveIdentity: topic.itemsHaveIdentity,
-      itemsHaveSpatialDimension: topic.itemsHaveSpatialDimension
-    })
+    const metaData = feedMetaDataLean(topic)
+    this.state.feedMetaData.next(metaData)
   }
 
   fetchParametersChanged(fetchParameters: any) {
@@ -176,11 +165,53 @@ export class FeedEditService {
     this.state.feedMetaData.next(metaData)
   }
 
-  private refreshAvailableServices(serviceToSelect?: Service | null): void {
+  private resetState(): void {
+    this.state.originalFeed.next(null)
+    this.state.availableServices.next([])
+    this.state.availableTopics.next([])
+    this.state.selectedTopic.next(null)
+    this.state.selectedService.next(null)
+    this.state.fetchParameters.next(null)
+    this.state.itemPropertiesSchema.next(null)
+    this.state.topicMetaData.next(null)
+    this.state.feedMetaData.next(null)
+    this.state.preview.next(null)
+  }
+
+  private fetchAvailableServices(serviceIdToSelect?: string | null): void {
     this.feedService.fetchServices().subscribe({
       next: (services) => {
         this.state.availableServices.next(services)
-        this.selectService(serviceToSelect || null)
+        this.selectService(serviceIdToSelect || null)
+      }
+    })
+  }
+
+  private fetchNewPreview(): void {
+    // TODO: add busy flag to indicate loading
+    // TODO: cancel outstanding refresh?
+    const service = this.state.selectedService.value
+    const topic = this.state.selectedTopic.value
+    if (!service || !topic) {
+      this.state.preview.next(null)
+      return
+    }
+    const feed: Partial<Omit<Feed, 'id'>> = {
+      service: service.id,
+      topic: topic.id,
+      ...this.state.feedMetaData.value as FeedMetaData,
+    }
+    const fetchParams = _.cloneDeep(this.state.fetchParameters.value || {})
+    if (Object.getOwnPropertyNames(fetchParams).length) {
+      feed.constantParams = { ...this.state.fetchParameters.value }
+    }
+    const itemSchema = _.cloneDeep(this.state.itemPropertiesSchema || {})
+    if (Object.getOwnPropertyNames(itemSchema)) {
+      feed.itemPropertiesSchema = { ...this.state.itemPropertiesSchema.value }
+    }
+    this.feedService.previewFeed(service.id, topic.id, feed).subscribe({
+      next: preview => {
+        this.state.preview.next(preview)
       }
     })
   }

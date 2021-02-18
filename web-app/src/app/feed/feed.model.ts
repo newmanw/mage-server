@@ -3,7 +3,7 @@ import { Feature, FeatureCollection } from 'geojson';
 export interface Feed {
   id: string;
   service: Service | string;
-  topic: FeedTopic;
+  topic: FeedTopic | string;
   title: string;
   summary?: string;
   icon?: string;
@@ -13,7 +13,6 @@ export interface Feed {
   itemSecondaryProperty?: string;
   itemsHaveSpatialDimension?: boolean;
   itemsHaveIdentity?: boolean;
-  updateFrequency?: number;
   constantParams?: any;
   variableParamsSchema?: any;
   updateFrequencySeconds?: number;
@@ -58,4 +57,15 @@ export interface FeedTopic {
   itemSecondaryProperty?: string;
   itemPropertiesSchema?: any;
   mapStyle?: MapStyle
+}
+
+export interface FeedContent {
+  feed: string
+  variableParams?: any
+  items: FeatureCollection
+}
+
+export interface FeedPreview {
+  feed: Feed
+  content: FeedContent
 }

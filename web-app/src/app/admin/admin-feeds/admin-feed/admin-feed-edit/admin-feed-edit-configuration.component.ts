@@ -1,7 +1,7 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms'
 import { debounceTime } from 'rxjs/operators'
-import { FeedMetaData, FeedMetaDataNullable } from './feed-edit.service'
+import { FeedMetaData, feedMetaDataLean, FeedMetaDataNullable } from './feed-edit.model'
 
 export type IconModel = Readonly<
   | { iconFile: string }
@@ -12,6 +12,7 @@ export type IconModel = Readonly<
 export interface MapStyle {
   icon: IconModel
 }
+
 @Component({
   selector: 'app-feed-configuration',
   templateUrl: './admin-feed-edit-configuration.component.html',
@@ -21,7 +22,8 @@ export class AdminFeedEditConfigurationComponent implements OnInit, OnChanges {
 
   @Input() expanded: boolean;
   @Input() itemPropertiesSchema: any;
-  @Input() feedMetaData: FeedMetaData;
+  @Input() topicMetaData: FeedMetaData | null;
+  @Input() feedMetaData: FeedMetaData | null;
   @Input() buttonText: string;
   @Output() feedMetaDataAccepted = new EventEmitter<any>();
   @Output() feedMetaDataChanged = new EventEmitter<FeedMetaData>();
@@ -36,14 +38,16 @@ export class AdminFeedEditConfigurationComponent implements OnInit, OnChanges {
     itemsHaveSpatialDimension: new FormControl(),
     itemPrimaryProperty: new FormControl(),
     itemSecondaryProperty: new FormControl(),
-    itemTemporalProperty: new FormControl()
+    itemTemporalProperty: new FormControl(),
+    updateFrequencySeconds: new FormControl()
   })
   itemSchemaPropertyTitles: { key: string, title: string }[] = [];
 
   ngOnInit(): void {
     this.feedMetaDataForm.valueChanges.pipe(debounceTime(500)).subscribe({
       next: formValue => {
-        this.feedMetaData = metaDataForFormValue(formValue)
+        formValue = formValueWithoutCheckboxValuesAssignedFromTopicOfForm(this.feedMetaDataForm)
+        this.feedMetaData = feedMetaDataLean(formValue)
         this.feedMetaDataChanged.emit(this.feedMetaData)
       }
     })
@@ -63,8 +67,12 @@ export class AdminFeedEditConfigurationComponent implements OnInit, OnChanges {
         this.feedMetaDataForm.setValue(formValueForMetaData(this.feedMetaData), { emitEvent: false })
       }
       else {
-        this.feedMetaDataForm.reset({ emitEvent: false })
+        const clear = formValueForMetaData({})
+        this.feedMetaDataForm.reset(clear, { emitEvent: false })
       }
+    }
+    if (changes.topicMetaData || changes.feedMetaData) {
+      this.updateCheckboxesFromTopicForUnspecifiedMetaDataKeys()
     }
   }
 
@@ -75,30 +83,55 @@ export class AdminFeedEditConfigurationComponent implements OnInit, OnChanges {
   onAccepted(): void {
     this.feedMetaDataAccepted.emit(this.feedMetaData);
   }
-}
 
-function metaDataForFormValue(formValue: FeedMetaDataNullable): FeedMetaData {
-  return {
-    title: formValue.title,
-    summary: formValue.summary || void(0),
-    icon: formValue.icon || void(0),
-    itemPrimaryProperty: formValue.itemPrimaryProperty || void(0),
-    itemSecondaryProperty: formValue.itemSecondaryProperty || void(0),
-    itemTemporalProperty: formValue.itemTemporalProperty || void(0),
-    itemsHaveIdentity: formValue.itemsHaveIdentity === null ? void(0) : formValue.itemsHaveIdentity,
-    itemsHaveSpatialDimension: formValue.itemsHaveSpatialDimension === null ? void(0) : formValue.itemsHaveSpatialDimension,
+  /**
+   * Use the topic values to initialize the checkboxes to avoid using the
+   * potentially user-confusing `indeterminate` state on checkboxes.
+   */
+  private updateCheckboxesFromTopicForUnspecifiedMetaDataKeys() {
+    const topicMetaData = this.topicMetaData || {}
+    const feedMetaData = this.feedMetaData || {}
+    const checkboxes: Pick<FeedMetaData, keyof typeof checkboxKeys> = {}
+    for (const key of Object.getOwnPropertyNames(checkboxKeys)) {
+      if (typeof feedMetaData[key] === 'boolean') {
+        checkboxes[key] = feedMetaData[key]
+      }
+      else if (typeof topicMetaData[key] === 'boolean') {
+        checkboxes[key] = topicMetaData[key]
+      }
+    }
+    this.feedMetaDataForm.patchValue(checkboxes, { emitEvent: false })
   }
 }
 
 function formValueForMetaData(metaData: FeedMetaData): Required<FeedMetaDataNullable> {
   return {
-    title: metaData.title,
+    title: metaData.title || null,
     summary: metaData.summary || null,
     icon: metaData.icon || null,
     itemPrimaryProperty: metaData.itemPrimaryProperty || null,
     itemSecondaryProperty: metaData.itemSecondaryProperty || null,
     itemTemporalProperty: metaData.itemTemporalProperty || null,
-    itemsHaveIdentity: metaData.itemsHaveIdentity === void(0) ? null : metaData.itemsHaveIdentity,
-    itemsHaveSpatialDimension: metaData.itemsHaveSpatialDimension === void(0) ? null : metaData.itemsHaveSpatialDimension
+    itemsHaveIdentity: typeof metaData.itemsHaveIdentity === 'boolean' ? metaData.itemsHaveIdentity : null,
+    itemsHaveSpatialDimension: typeof metaData.itemsHaveSpatialDimension === 'boolean' ? metaData.itemsHaveSpatialDimension : null,
+    updateFrequencySeconds: typeof metaData.updateFrequencySeconds === 'number' ? metaData.updateFrequencySeconds : null
   }
+}
+
+type FeedMetaDataBooleanKeys = { [K in keyof FeedMetaData]: FeedMetaData[K] extends boolean ? K : never }[keyof FeedMetaData]
+
+const checkboxKeys: Record<FeedMetaDataBooleanKeys, null> = {
+  itemsHaveIdentity: null,
+  itemsHaveSpatialDimension: null
+}
+
+function formValueWithoutCheckboxValuesAssignedFromTopicOfForm(feedMetaDataForm: FormGroup): FeedMetaDataNullable {
+  const formValue = { ...feedMetaDataForm.value }
+  for (const checkboxKey of Object.getOwnPropertyNames(checkboxKeys)) {
+    const checkbox = feedMetaDataForm.get(checkboxKey)
+    if (checkbox.pristine) {
+      delete formValue[checkboxKey]
+    }
+  }
+  return formValue
 }

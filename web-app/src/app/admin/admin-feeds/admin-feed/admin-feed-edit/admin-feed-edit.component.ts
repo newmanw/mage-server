@@ -5,7 +5,8 @@ import * as _ from 'underscore';
 import { Feed, FeedTopic, Service } from '../../../../feed/feed.model';
 import { FeedService } from '../../../../feed/feed.service';
 import { AdminBreadcrumb } from '../../../admin-breadcrumb/admin-breadcrumb.model';
-import { FeedEditService, FeedEditState, FeedEditStateObservers, FeedMetaData } from './feed-edit.service'
+import { FeedMetaData } from './feed-edit.model'
+import { FeedEditService, FeedEditState, FeedEditStateObservers } from './feed-edit.service'
 
 @Component({
   selector: 'app-feed-edit',
@@ -51,6 +52,7 @@ export class AdminFeedEditComponent implements OnInit {
     selectedTopic: null,
     fetchParameters: null,
     itemPropertiesSchema: null,
+    topicMetaData: null,
     feedMetaData: null,
     preview: null
   }
@@ -136,11 +138,11 @@ export class AdminFeedEditComponent implements OnInit {
   }
 
   serviceSelected(service: Service): void {
-    this.feedEdit.selectService(service)
+    this.feedEdit.selectService(service.id)
   }
 
   topicSelected(topic: FeedTopic): void {
-    this.feedEdit.selectTopic(topic)
+    this.feedEdit.selectTopic(topic.id)
     if (topic) {
       this.nextStep();
     }
@@ -197,13 +199,13 @@ export class AdminFeedEditComponent implements OnInit {
   }
 
   createFeed(): void {
-    this.feedConfiguration.service = this.selectedService.id;
-    this.feedConfiguration.topic = this.selectedTopic.id;
-    this.feedConfiguration.constantParams = this.fetchParametersMod;
-    this.feedConfiguration.itemPropertiesSchema = this.currentItemProperties;
-    this.feedService.createFeed(this.selectedService.id, this.selectedTopic.id, this.feedConfiguration).subscribe(feed => {
-      this.stateService.go('admin.feed', { feedId: feed.id });
-    });
+    // this.feedConfiguration.service = this.selectedService.id;
+    // this.feedConfiguration.topic = this.selectedTopic.id;
+    // this.feedConfiguration.constantParams = this.fetchParametersMod;
+    // this.feedConfiguration.itemPropertiesSchema = this.currentItemProperties;
+    // this.feedService.createFeed(this.selectedService.id, this.selectedTopic.id, this.feedConfiguration).subscribe(feed => {
+    //   this.stateService.go('admin.feed', { feedId: feed.id });
+    // });
   }
 
   updateFeed(): void {
