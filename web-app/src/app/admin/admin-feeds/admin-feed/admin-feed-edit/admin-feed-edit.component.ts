@@ -23,26 +23,10 @@ export class AdminFeedEditComponent implements OnInit {
     }
   }]
 
-  feed: Feed;
-  currentItemProperties: any;
   hasFeedDeletePermission: boolean;
 
-  selectedService: Service | null;
-  selectedTopic: FeedTopic | null;
-  configuredTopic: any;
-
-  itemPropertiesSchema: object;
-  itemProperties: any[];
-
-  preview: any;
-
-  feedConfiguration: any;
-  constantParams: any;
-  fetchParametersMod: any;
 
   step = 0;
-
-  debouncedPreview: any;
 
   editState: FeedEditState = {
     originalFeed: null,
@@ -57,57 +41,41 @@ export class AdminFeedEditComponent implements OnInit {
     preview: null
   }
 
-  private observers = Object.getOwnPropertyNames(this.editState).reduce((stateObservers, stateKey) => {
-    const observer: NextObserver<any> = { next: (x) => {
-      this.editState[stateKey] = x
-    }}
-    stateObservers[stateKey] = observer
-    return stateObservers
-  }, {})
-
   constructor(
     private feedEdit: FeedEditService,
     private feedService: FeedService,
     private stateService: StateService
   ) {
-    this.debouncedPreview = _.debounce(this.previewFeed, 500);
-    this.constantParams = {};
-    this.configuredTopic = {};
-
     if (this.stateService.params.feedId) {
-      this.breadcrumbs = this.breadcrumbs.concat([{
-        title: ''
-      }, {
-        title: 'Edit'
-      }]);
-    } else {
-      this.breadcrumbs.push({
-        title: 'New'
-      })
+      this.breadcrumbs = this.breadcrumbs.concat([
+        { title: '' },
+        { title: 'Edit' }
+      ]);
+    }
+    else {
+      this.breadcrumbs.push({ title: 'New' })
     }
   }
 
   ngOnInit(): void {
-    for (const stateKey of Object.getOwnPropertyNames(this.editState)) {
-      this.feedEdit.changes[stateKey].subscribe(this.observers[stateKey])
-    }
-    if (this.stateService.params.feedId) {
-      this.feedEdit.editFeed(this.stateService.params.feedId)
-      this.feedEdit.changes.originalFeed.subscribe(feed => {
-        if (feed) {
-          this.breadcrumbs[1] = {
-            title: feed.title,
-            state: {
-              name: 'admin.feed',
-              params: {
-                feedId: feed.id
-              }
+    this.feedEdit.state$.subscribe(x => {
+      const nextOriginalFeed = x.originalFeed
+      if (nextOriginalFeed && !this.editState.originalFeed) {
+        this.breadcrumbs[1] = {
+          title: nextOriginalFeed.title,
+          state: {
+            name: 'admin.feed',
+            params: {
+              feedId: nextOriginalFeed.id
             }
           }
-          this.step = 1;
-          this.debouncedPreview();
         }
-      });
+        this.step = 1;
+      }
+      this.editState = x
+    })
+    if (this.stateService.params.feedId) {
+      this.feedEdit.editFeed(this.stateService.params.feedId)
     }
     else {
       this.feedEdit.newFeed()
@@ -209,12 +177,12 @@ export class AdminFeedEditComponent implements OnInit {
   }
 
   updateFeed(): void {
-    this.feed.constantParams = this.fetchParametersMod;
-    this.feed.itemPropertiesSchema = this.currentItemProperties;
-    Object.assign(this.feed, this.feedConfiguration);
-    this.feedService.updateFeed(this.feed).subscribe(feed => {
-      this.stateService.go('admin.feed', { feedId: feed.id });
-    });
+    // this.feed.constantParams = this.fetchParametersMod;
+    // this.feed.itemPropertiesSchema = this.currentItemProperties;
+    // Object.assign(this.feed, this.feedConfiguration);
+    // this.feedService.updateFeed(this.feed).subscribe(feed => {
+    //   this.stateService.go('admin.feed', { feedId: feed.id });
+    // });
   }
 
   setStep(index: number): void {
