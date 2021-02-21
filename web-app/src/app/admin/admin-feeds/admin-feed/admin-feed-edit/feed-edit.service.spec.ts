@@ -1,9 +1,8 @@
-import { defer, Observable, of, zip, asapScheduler, Observer, PartialObserver, NextObserver } from 'rxjs'
-import { TestScheduler } from 'rxjs/testing'
-import { first, map } from 'rxjs/operators'
+import { Observable, of, asapScheduler, NextObserver, MonoTypeOperatorFunction } from 'rxjs'
+import { distinctUntilChanged, pluck } from 'rxjs/operators'
 import { FeedEditService, FeedEditState, FeedEditStateObservers } from './feed-edit.service'
 import { FeedExpanded, FeedService } from '../../../../feed/feed.service'
-import { Feed, FeedPreview, FeedTopic, Service } from '../../../../feed/feed.model'
+import { FeedPreview, FeedTopic, Service } from '../../../../feed/feed.model'
 import { FeedMetaData, feedMetaDataLean } from './feed-edit.model'
 
 
@@ -152,8 +151,21 @@ class Recorder<T> implements NextObserver<T> {
   }
 }
 
+const distinctUntilChangedCheckEmpty = <T>(): MonoTypeOperatorFunction<T> => {
+  return distinctUntilChanged((a, b): boolean => {
+    if (typeof a !== typeof b) {
+      return false
+    }
+    if (Array.isArray(a) && Array.isArray(b)) {
+      return (a.length === 0 && b.length === 0) || a === b
+    }
+    return  a && b ? (Object.getOwnPropertyNames(a).length === 0 && Object.getOwnPropertyNames(b).length === 0) : a === b
+  })
+}
+
 class FeedEditChangeRecorder implements FeedEditStateObservers {
 
+  state: Recorder<FeedEditState>
   originalFeed: Recorder<FeedExpanded | null>
   availableServices: Recorder<Service[]>
   selectedService: Recorder<Service | null>
@@ -166,34 +178,24 @@ class FeedEditChangeRecorder implements FeedEditStateObservers {
   preview: Recorder<FeedPreview | null>
 
   constructor(feedEdit: FeedEditService) {
-    this.originalFeed = Recorder.of(feedEdit.changes.originalFeed)
-    this.availableServices = Recorder.of(feedEdit.changes.availableServices)
-    this.selectedService = Recorder.of(feedEdit.changes.selectedService)
-    this.availableTopics = Recorder.of(feedEdit.changes.availableTopics)
-    this.selectedTopic = Recorder.of(feedEdit.changes.selectedTopic)
-    this.fetchParameters = Recorder.of(feedEdit.changes.fetchParameters)
-    this.itemPropertiesSchema = Recorder.of(feedEdit.changes.itemPropertiesSchema)
-    this.topicMetaData = Recorder.of(feedEdit.changes.topicMetaData)
-    this.feedMetaData = Recorder.of(feedEdit.changes.feedMetaData)
-    this.preview = Recorder.of(feedEdit.changes.preview)
+    this.state = Recorder.of(feedEdit.state$)
+    this.originalFeed = Recorder.of(feedEdit.state$.pipe(pluck('originalFeed'), distinctUntilChangedCheckEmpty()))
+    this.availableServices = Recorder.of(feedEdit.state$.pipe(pluck('availableServices'), distinctUntilChangedCheckEmpty()))
+    this.selectedService = Recorder.of(feedEdit.state$.pipe(pluck('selectedService'), distinctUntilChangedCheckEmpty()))
+    this.availableTopics = Recorder.of(feedEdit.state$.pipe(pluck('availableTopics'), distinctUntilChangedCheckEmpty()))
+    this.selectedTopic = Recorder.of(feedEdit.state$.pipe(pluck('selectedTopic'), distinctUntilChangedCheckEmpty()))
+    this.fetchParameters = Recorder.of(feedEdit.state$.pipe(pluck('fetchParameters'), distinctUntilChangedCheckEmpty()))
+    this.itemPropertiesSchema = Recorder.of(feedEdit.state$.pipe(pluck('itemPropertiesSchema'), distinctUntilChangedCheckEmpty()))
+    this.topicMetaData = Recorder.of(feedEdit.state$.pipe(pluck('topicMetaData'), distinctUntilChangedCheckEmpty()))
+    this.feedMetaData = Recorder.of(feedEdit.state$.pipe(pluck('feedMetaData'), distinctUntilChangedCheckEmpty()))
+    this.preview = Recorder.of(feedEdit.state$.pipe(pluck('preview'), distinctUntilChangedCheckEmpty()))
   }
 
   get latest(): FeedEditState {
-    return {
-      originalFeed: this.originalFeed.latest,
-      availableServices: this.availableServices.latest,
-      selectedService: this.selectedService.latest,
-      availableTopics: this.availableTopics.latest,
-      selectedTopic: this.selectedTopic.latest,
-      fetchParameters: this.fetchParameters.latest,
-      itemPropertiesSchema: this.itemPropertiesSchema.latest,
-      topicMetaData: this.topicMetaData.latest,
-      feedMetaData: this.feedMetaData.latest,
-      preview: this.preview.latest
-    }
+    return this.state.latest
   }
 
-  get allObserved(): { [StateKey in keyof FeedEditState]: FeedEditState[StateKey][] } {
+  get eachObserved(): { [StateKey in keyof FeedEditState]: FeedEditState[StateKey][] } {
     return {
       originalFeed: this.originalFeed.observed,
       availableServices: this.availableServices.observed,
@@ -286,63 +288,66 @@ fdescribe('FeedEditService', () => {
     })
   })
 
-  describe('creating a new feed', () => {
+  fdescribe('creating a new feed', () => {
 
     it('resets to initial state and fetches available services', () => {
 
-      feedService.fetchServices.and.returnValue(of(services, asapScheduler))
+      feedService.fetchServices.and.returnValue(of(services))
+
+      expect(stateChanges.state.observed).toEqual([ emptyState ])
 
       feedEdit.newFeed()
 
-      expect(feedEdit.currentState).toEqual(emptyState)
-
-      asapScheduler.flush()
-
+      expect(stateChanges.state.observed).toEqual([
+        emptyState,
+        emptyState,
+        { ...emptyState, availableServices: services }
+      ])
       expect(feedEdit.currentState).toEqual({
         ...emptyState,
         availableServices: services
       })
-      expect(stateChanges.availableServices.observed).toEqual([ [], [], services ])
     })
 
-    it('selects a service and fetches topics for the selected service', () => {
+    it('selecting a service fetches topics for the selected service', () => {
 
-      feedService.fetchServices.and.returnValue(of(services, asapScheduler))
-      feedService.fetchTopics.withArgs(services[1].id).and.returnValue(of(topicsForService[services[1].id], asapScheduler))
+      feedService.fetchServices.and.returnValue(of(services))
+      feedService.fetchTopics.withArgs(services[1].id).and.returnValue(of(topicsForService[services[1].id]))
+
+      expect(stateChanges.availableTopics.observed).toEqual([ [] ])
 
       feedEdit.newFeed()
-      asapScheduler.flush()
-      feedEdit.selectService(services[1].id)
-      asapScheduler.flush()
 
+      expect(stateChanges.availableTopics.observed).toEqual([ [] ])
+
+      feedEdit.selectService(services[1].id)
+
+      expect(stateChanges.availableTopics.observed).toEqual([ [], topicsForService[services[1].id] ])
       expect(feedEdit.currentState.availableTopics).toEqual(topicsForService[services[1].id])
-      expect(stateChanges.availableTopics.observed).toEqual([
-        [],
-        [],
-        topicsForService[services[1].id]
-      ])
     })
 
     it('cannot select a service not in available services', () => {
 
-      feedService.fetchServices.and.returnValue(of(services, asapScheduler))
+      feedService.fetchServices.and.returnValue(of(services))
 
       expect(feedEdit.currentState.availableServices).toEqual([])
+      expect(stateChanges.selectedService.observed).toEqual([ null ])
 
       feedEdit.selectService('impossible')
 
       expect(feedEdit.currentState.selectedService).toBeNull()
-      expect(stateChanges.selectedService.observed).toEqual([ null ])
+      expect(stateChanges.state.observed).toEqual([ emptyState ])
 
       feedEdit.newFeed()
-      asapScheduler.flush()
 
       expect(feedEdit.currentState.availableServices).toEqual(services)
+      expect(stateChanges.state.observed).toEqual([ emptyState, emptyState, { ...emptyState, availableServices: services } ])
 
       feedEdit.selectService('derp')
 
       expect(feedEdit.currentState.selectedService).toBeNull()
-      expect(stateChanges.selectedService.observed).toEqual([ null, null ])
+      expect(stateChanges.state.observed).toEqual([ emptyState, emptyState, { ...emptyState, availableServices: services }])
+      expect(stateChanges.selectedService.observed).toEqual([ null ])
     })
 
     it('populates topic meta-data and item properties schema from selected topic', () => {
@@ -380,7 +385,7 @@ fdescribe('FeedEditService', () => {
 
       const service = services[0]
       const topics = topicsForService[service.id]
-      const fetchParameters: any = { original: true }
+      const fetchParameters: any = { resetMe: true }
       const feedMetaData: FeedMetaData = {
         title: 'Change the Topic'
       }
@@ -424,12 +429,165 @@ fdescribe('FeedEditService', () => {
     })
 
     it('resets everything when the selected service changes', () => {
-      fail('todo')
+
+      feedService.fetchServices.and.returnValue(of(services))
+      feedService.fetchTopics.withArgs(services[0].id).and.returnValue(of(topicsForService[services[0].id]))
+      feedService.fetchTopics.withArgs(services[1].id).and.returnValue(of(topicsForService[services[1].id]))
+      feedService.previewFeed.and.returnValue(of(emptyPreview))
+
+      const stateBeforeChange: FeedEditState = {
+        availableServices: services,
+        selectedService: services[0],
+        availableTopics: topicsForService[services[0].id],
+        selectedTopic: topicsForService[services[0].id][0],
+        fetchParameters: { firstService: true },
+        itemPropertiesSchema: { properties: { test: { type: 'boolean', title: 'Test' }}},
+        topicMetaData: feedMetaDataLean(topicsForService[services[0].id][0]),
+        feedMetaData: { title: 'Test', itemPrimaryProperty: 'test' },
+        originalFeed: null,
+        preview: emptyPreview
+      }
+
+      feedEdit.newFeed()
+      feedEdit.selectService(stateBeforeChange.selectedService.id)
+      feedEdit.selectTopic(stateBeforeChange.selectedTopic.id)
+      feedEdit.fetchParametersChanged(stateBeforeChange.fetchParameters)
+      feedEdit.itemPropertiesSchemaChanged(stateBeforeChange.itemPropertiesSchema)
+      feedEdit.feedMetaDataChanged(stateBeforeChange.feedMetaData)
+
+      expect(feedEdit.currentState).toEqual(stateBeforeChange)
+
+      feedEdit.selectService(services[1].id)
+
+      const stateAfterChange: FeedEditState = {
+        ...emptyState,
+        availableServices: services,
+        selectedService: services[1],
+        availableTopics: topicsForService[services[1].id]
+      }
+      expect(feedEdit.currentState).toEqual(stateAfterChange)
     })
 
     it('does nothing when selecting an invalid topic', () => {
       // TODO: this might not be right. should the observable dispatch an error?
-      fail('todo')
+
+      feedService.fetchServices.and.returnValue(of(services))
+      feedService.fetchTopics.withArgs(services[0].id).and.returnValue(of(topicsForService[services[0].id]))
+
+      feedEdit.newFeed()
+      feedEdit.selectService(services[0].id)
+
+      const changes: FeedEditState[] = [
+        emptyState,
+        emptyState,
+        {
+          ...emptyState,
+          availableServices: services
+        },
+        {
+          ...emptyState,
+          availableServices: services,
+          selectedService: services[0]
+        },
+        {
+          ...emptyState,
+          availableServices: services,
+          selectedService: services[0],
+          availableTopics: topicsForService[services[0].id]
+        }
+      ]
+
+      expect(stateChanges.state.observed).toEqual(changes)
+
+      const invalidTopicId = topicsForService[services[0].id][0].id + String(Date.now())
+      feedEdit.selectTopic(invalidTopicId)
+
+      expect(stateChanges.state.observed).toEqual(changes)
+    })
+
+    it('initiating a new create process resets everything after values changed', () => {
+
+      feedService.fetchServices.and.returnValue(of(services))
+      feedService.fetchTopics.withArgs(services[0].id).and.returnValue(of(topicsForService[services[0].id]))
+      feedService.fetchTopics.withArgs(services[1].id).and.returnValue(of(topicsForService[services[1].id]))
+      feedService.previewFeed.and.returnValue(of(emptyPreview))
+
+      const stateBefore: FeedEditState = {
+        availableServices: services,
+        selectedService: services[0],
+        availableTopics: topicsForService[services[0].id],
+        selectedTopic: topicsForService[services[0].id][0],
+        fetchParameters: { firstService: true },
+        itemPropertiesSchema: { properties: { test: { type: 'boolean', title: 'Test' }}},
+        topicMetaData: feedMetaDataLean(topicsForService[services[0].id][0]),
+        feedMetaData: { title: 'Test', itemPrimaryProperty: 'test' },
+        originalFeed: null,
+        preview: emptyPreview
+      }
+
+      feedEdit.newFeed()
+      feedEdit.selectService(stateBefore.selectedService.id)
+      feedEdit.selectTopic(stateBefore.selectedTopic.id)
+      feedEdit.fetchParametersChanged(stateBefore.fetchParameters)
+      feedEdit.itemPropertiesSchemaChanged(stateBefore.itemPropertiesSchema)
+      feedEdit.feedMetaDataChanged(stateBefore.feedMetaData)
+
+      expect(feedEdit.currentState).toEqual(stateBefore)
+
+      feedEdit.newFeed()
+
+      const stateAfterChange: FeedEditState = {
+        ...emptyState,
+        availableServices: services
+      }
+      expect(feedEdit.currentState).toEqual(stateAfterChange)
+    })
+
+    it('refreshes services after creating a service and selects the created service', () => {
+
+      const created: Service = {
+        id: 'created',
+        serviceType: 'test_type',
+        title: 'Created Service',
+        summary: 'For new feed',
+        config: { test: true }
+      }
+      const createdTopics: FeedTopic[] = [
+        {
+          id: 'createdtopic1',
+          title: 'Topic of New Service'
+        }
+      ]
+      feedService.fetchServices.and.returnValues(
+        of(services),
+        of([ ...services, created ])
+      )
+      feedService.fetchTopics.withArgs(created.id).and.returnValue(of(createdTopics))
+      feedEdit.newFeed()
+      feedEdit.serviceCreated(created)
+
+      const expectedStates: FeedEditState[] = [
+        emptyState,
+        emptyState,
+        {
+          ...emptyState,
+          availableServices: services
+        },
+        emptyState,
+        {
+          ...emptyState,
+          availableServices: [ ...services, created ],
+          selectedService: created
+        },
+        {
+          ...emptyState,
+          availableServices: [ ...services, created ],
+          selectedService: created,
+          availableTopics: createdTopics
+        },
+      ]
+      expect(stateChanges.state.observed).toEqual(expectedStates)
+      expect(feedEdit.currentState).toEqual(expectedStates[expectedStates.length - 1])
     })
   })
 
@@ -443,7 +601,7 @@ fdescribe('FeedEditService', () => {
 
       expect(feedEdit.currentState).toEqual(emptyState)
       expect(stateChanges.latest).toEqual(emptyState)
-      expect(stateChanges.allObserved).toEqual({
+      expect(stateChanges.eachObserved).toEqual({
         originalFeed: [ null, null ],
         availableServices: [ [], [] ],
         selectedService: [ null, null ],
@@ -515,7 +673,7 @@ fdescribe('FeedEditService', () => {
       }
       expect(feedEdit.currentState).toEqual(expectedState)
       expect(feedService.fetchFeed).toHaveBeenCalledWith(feedId)
-      expect(stateChanges.allObserved).toEqual(<FeedEditChangeRecorder['allObserved']>{
+      expect(stateChanges.eachObserved).toEqual(<FeedEditChangeRecorder['eachObserved']>{
         availableServices: [ [], [], expectedState.availableServices ],
         selectedService: [ null, null, expectedState.selectedService ],
         availableTopics: [ [], [], expectedState.availableTopics ],
@@ -547,20 +705,15 @@ fdescribe('FeedEditService', () => {
           title: 'Topic 1',
         }
       }
-      feedService.fetchFeed.withArgs(feed.id).and.returnValue(of(feed, asapScheduler))
+      feedService.fetchFeed.withArgs(feed.id).and.returnValue(of(feed))
       feedService.previewFeed.and.returnValue(of(emptyPreview))
 
       feedEdit.editFeed(feed.id)
-      asapScheduler.flush()
 
       expect(feedEdit.currentState.availableServices).toEqual([ feed.service ])
       expect(feedEdit.currentState.selectedService).toEqual(feed.service)
       expect(feedEdit.currentState.availableTopics).toEqual([ feed.topic ])
       expect(feedEdit.currentState.selectedTopic).toEqual(feed.topic)
-      expect(stateChanges.allObserved.availableServices).toEqual([ [], [], [ feed.service ] ])
-      expect(stateChanges.allObserved.selectedService).toEqual([ null, null, feed.service ])
-      expect(stateChanges.allObserved.availableTopics).toEqual([ [], [], [ feed.topic ] ])
-      expect(stateChanges.allObserved.selectedTopic).toEqual([ null, null, feed.topic ])
 
       feedEdit.selectService('nope')
       feedEdit.selectService(feed.service.id)
@@ -575,10 +728,14 @@ fdescribe('FeedEditService', () => {
       expect(feedEdit.currentState.selectedService).toEqual(feed.service)
       expect(feedEdit.currentState.availableTopics).toEqual([ feed.topic ])
       expect(feedEdit.currentState.selectedTopic).toEqual(feed.topic)
-      expect(stateChanges.allObserved.availableServices).toEqual([ [], [], [ feed.service ] ])
-      expect(stateChanges.allObserved.selectedService).toEqual([ null, null, feed.service ])
-      expect(stateChanges.allObserved.availableTopics).toEqual([ [], [], [ feed.topic ] ])
-      expect(stateChanges.allObserved.selectedTopic).toEqual([ null, null, feed.topic ])
+      expect(stateChanges.eachObserved.availableServices).toEqual([ [], [], [ feed.service ] ])
+      expect(stateChanges.eachObserved.selectedService).toEqual([ null, null, feed.service ])
+      expect(stateChanges.eachObserved.availableTopics).toEqual([ [], [], [ feed.topic ] ])
+      expect(stateChanges.eachObserved.selectedTopic).toEqual([ null, null, feed.topic ])
+    })
+
+    it('does nothing after creating a new service', () => {
+      fail('todo')
     })
   })
 
@@ -596,7 +753,6 @@ fdescribe('FeedEditService', () => {
       const service = services[0]
       const topic = topicsForService[service.id][0]
       const topicMetaData = Object.freeze(feedMetaDataLean(topic))
-      const changes = [ null ]
 
       feedEdit.newFeed()
       feedEdit.selectService(service.id)
@@ -674,6 +830,10 @@ fdescribe('FeedEditService', () => {
   })
 
   it('does not set constant parameters if the parameters are empty', () => {
+    fail('todo')
+  })
+
+  it('refreshes preview content when fetch parameters change', () => {
     fail('todo')
   })
 })
