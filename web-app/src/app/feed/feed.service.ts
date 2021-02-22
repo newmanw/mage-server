@@ -131,7 +131,7 @@ export class FeedService {
   }
 }
 
-export type FeedExpanded = Feed & {
+export type FeedExpanded = Omit<Feed, 'service' | 'topic'> & {
   service: Service,
   topic: FeedTopic
 }

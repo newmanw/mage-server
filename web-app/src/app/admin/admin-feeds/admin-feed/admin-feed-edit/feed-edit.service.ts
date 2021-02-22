@@ -102,6 +102,9 @@ export class FeedEditService {
   }
 
   serviceCreated(service: Service): void {
+    if (this.currentState.originalFeed) {
+      return
+    }
     this.resetAndFetchServices(service.id)
   }
 
@@ -213,7 +216,6 @@ export class FeedEditService {
     if (!service || !topic) {
       return
     }
-    this.patchState({ preview: null })
     const feed: Partial<Omit<Feed, 'id'>> = {
       service: service.id,
       topic: topic.id,

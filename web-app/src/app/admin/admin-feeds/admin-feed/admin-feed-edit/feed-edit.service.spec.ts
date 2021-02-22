@@ -1,4 +1,4 @@
-import { Observable, of, asapScheduler, NextObserver, MonoTypeOperatorFunction } from 'rxjs'
+import { Observable, of, asapScheduler, NextObserver, MonoTypeOperatorFunction, asyncScheduler } from 'rxjs'
 import { distinctUntilChanged, pluck } from 'rxjs/operators'
 import { FeedEditService, FeedEditState, FeedEditStateObservers } from './feed-edit.service'
 import { FeedExpanded, FeedService } from '../../../../feed/feed.service'
@@ -288,7 +288,7 @@ fdescribe('FeedEditService', () => {
     })
   })
 
-  fdescribe('creating a new feed', () => {
+  describe('creating a new feed', () => {
 
     it('resets to initial state and fetches available services', () => {
 
@@ -593,29 +593,7 @@ fdescribe('FeedEditService', () => {
 
   describe('editing an existing feed', () => {
 
-    it('resets to empty state first', () => {
-
-      feedService.fetchFeed.and.returnValue(of<FeedExpanded>(asapScheduler))
-
-      feedEdit.editFeed('inconsequential')
-
-      expect(feedEdit.currentState).toEqual(emptyState)
-      expect(stateChanges.latest).toEqual(emptyState)
-      expect(stateChanges.eachObserved).toEqual({
-        originalFeed: [ null, null ],
-        availableServices: [ [], [] ],
-        selectedService: [ null, null ],
-        availableTopics: [ [], [] ],
-        selectedTopic: [ null, null ],
-        fetchParameters: [ null, null ],
-        itemPropertiesSchema: [ null, null ],
-        topicMetaData: [ null, null ],
-        feedMetaData: [ null, null ],
-        preview: [ null, null ]
-      })
-    })
-
-    it('fetches the feed and intializes editing state', () => {
+    it('resets first, then fetches the feed and intializes editing state', () => {
 
       const feedId = 'feed1'
       const fetchedFeed: Readonly<FeedExpanded> = Object.freeze({
@@ -644,11 +622,10 @@ fdescribe('FeedEditService', () => {
           levelBetween: [ 10, 25 ]
         }
       })
-      feedService.fetchFeed.withArgs(feedId).and.returnValue(of(fetchedFeed, asapScheduler))
+      feedService.fetchFeed.withArgs(feedId).and.returnValue(of(fetchedFeed))
       feedService.previewFeed.and.returnValue(of(emptyPreview))
 
       feedEdit.editFeed(feedId)
-      asapScheduler.flush()
 
       const expectedState: FeedEditState = {
         availableServices: [ fetchedFeed.service ],
@@ -659,32 +636,20 @@ fdescribe('FeedEditService', () => {
         fetchParameters: fetchedFeed.constantParams,
         itemPropertiesSchema: fetchedFeed.itemPropertiesSchema,
         topicMetaData: feedMetaDataLean(fetchedFeed.topic),
-        feedMetaData: {
-          title: fetchedFeed.title,
-          summary: fetchedFeed.summary,
-          icon: undefined,
-          itemPrimaryProperty: fetchedFeed.itemPrimaryProperty,
-          itemSecondaryProperty: undefined,
-          itemTemporalProperty: undefined,
-          itemsHaveIdentity: undefined,
-          itemsHaveSpatialDimension: undefined
-        },
+        feedMetaData: feedMetaDataLean(fetchedFeed),
         preview: emptyPreview
       }
       expect(feedEdit.currentState).toEqual(expectedState)
       expect(feedService.fetchFeed).toHaveBeenCalledWith(feedId)
-      expect(stateChanges.eachObserved).toEqual(<FeedEditChangeRecorder['eachObserved']>{
-        availableServices: [ [], [], expectedState.availableServices ],
-        selectedService: [ null, null, expectedState.selectedService ],
-        availableTopics: [ [], [], expectedState.availableTopics ],
-        selectedTopic: [ null, null, expectedState.selectedTopic ],
-        originalFeed: [ null, null, expectedState.originalFeed ],
-        fetchParameters: [ null, null, expectedState.fetchParameters ],
-        itemPropertiesSchema: [ null, null, expectedState.itemPropertiesSchema ],
-        topicMetaData: [ null, null, expectedState.topicMetaData ],
-        feedMetaData: [ null, null, expectedState.feedMetaData ],
-        preview: [ null, null, expectedState.preview ]
-      })
+      expect(stateChanges.state.observed).toEqual([
+        emptyState,
+        emptyState,
+        {
+          ...expectedState,
+          preview: null
+        },
+        expectedState
+      ])
     })
 
     it('does not allow selecting a service or topic', async () => {
@@ -710,32 +675,108 @@ fdescribe('FeedEditService', () => {
 
       feedEdit.editFeed(feed.id)
 
-      expect(feedEdit.currentState.availableServices).toEqual([ feed.service ])
-      expect(feedEdit.currentState.selectedService).toEqual(feed.service)
-      expect(feedEdit.currentState.availableTopics).toEqual([ feed.topic ])
-      expect(feedEdit.currentState.selectedTopic).toEqual(feed.topic)
+      const statesBeforeSelect: FeedEditState[] = [
+        emptyState,
+        emptyState,
+        {
+          ...emptyState,
+          originalFeed: feed,
+          availableServices: [ feed.service ],
+          selectedService: feed.service,
+          availableTopics: [ feed.topic ],
+          selectedTopic: feed.topic,
+          topicMetaData: feedMetaDataLean(feed.topic),
+          feedMetaData: feedMetaDataLean(feed)
+        },
+        {
+          ...emptyState,
+          originalFeed: feed,
+          availableServices: [ feed.service ],
+          selectedService: feed.service,
+          availableTopics: [ feed.topic ],
+          selectedTopic: feed.topic,
+          topicMetaData: feedMetaDataLean(feed.topic),
+          feedMetaData: feedMetaDataLean(feed),
+          preview: emptyPreview,
+        }
+      ]
+
+      expect(feedEdit.currentState).toEqual(statesBeforeSelect[3])
+      expect(stateChanges.state.observed).toEqual(statesBeforeSelect)
 
       feedEdit.selectService('nope')
       feedEdit.selectService(feed.service.id)
       feedEdit.selectTopic('nope')
       feedEdit.selectTopic(feed.topic.id)
 
-      await new Promise((resolve) => {
-        setTimeout(resolve)
-      })
-
-      expect(feedEdit.currentState.availableServices).toEqual([ feed.service ])
-      expect(feedEdit.currentState.selectedService).toEqual(feed.service)
-      expect(feedEdit.currentState.availableTopics).toEqual([ feed.topic ])
-      expect(feedEdit.currentState.selectedTopic).toEqual(feed.topic)
-      expect(stateChanges.eachObserved.availableServices).toEqual([ [], [], [ feed.service ] ])
-      expect(stateChanges.eachObserved.selectedService).toEqual([ null, null, feed.service ])
-      expect(stateChanges.eachObserved.availableTopics).toEqual([ [], [], [ feed.topic ] ])
-      expect(stateChanges.eachObserved.selectedTopic).toEqual([ null, null, feed.topic ])
+      expect(feedEdit.currentState).toEqual(statesBeforeSelect[3])
+      expect(stateChanges.state.observed).toEqual(statesBeforeSelect)
     })
 
     it('does nothing after creating a new service', () => {
-      fail('todo')
+
+      const feed: FeedExpanded = {
+        id: 'feed1',
+        title: 'Service is Set',
+        summary: 'No selecting a service for a saved feed',
+        service: {
+          id: 'service1',
+          title: 'Test Service',
+          summary: 'Testing',
+          config: null,
+          serviceType: 'servicetype1'
+        },
+        topic: {
+          id: 'topic1',
+          title: 'Topic 1',
+        }
+      }
+      feedService.fetchFeed.withArgs(feed.id).and.returnValue(of(feed))
+      feedService.previewFeed.and.returnValue(of(emptyPreview))
+
+      feedEdit.editFeed(feed.id)
+
+      const statesBeforeNewService: FeedEditState[] = [
+        emptyState,
+        emptyState,
+        {
+          ...emptyState,
+          originalFeed: feed,
+          availableServices: [ feed.service ],
+          selectedService: feed.service,
+          availableTopics: [ feed.topic ],
+          selectedTopic: feed.topic,
+          topicMetaData: feedMetaDataLean(feed.topic),
+          feedMetaData: feedMetaDataLean(feed)
+        },
+        {
+          ...emptyState,
+          originalFeed: feed,
+          availableServices: [ feed.service ],
+          selectedService: feed.service,
+          availableTopics: [ feed.topic ],
+          selectedTopic: feed.topic,
+          topicMetaData: feedMetaDataLean(feed.topic),
+          feedMetaData: feedMetaDataLean(feed),
+          preview: emptyPreview,
+        }
+      ]
+
+      expect(feedEdit.currentState).toEqual(statesBeforeNewService[3])
+      expect(stateChanges.state.observed).toEqual(statesBeforeNewService)
+
+      feedEdit.serviceCreated({
+        id: 'newservice',
+        serviceType: 'testtype',
+        title: 'Not Now',
+        summary: 'Ignore this service',
+        config: {
+          ignore: true
+        }
+      })
+
+      expect(feedEdit.currentState).toEqual(statesBeforeNewService[3])
+      expect(stateChanges.state.observed).toEqual(statesBeforeNewService)
     })
   })
 
