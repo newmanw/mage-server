@@ -3,7 +3,8 @@ import { distinctUntilChanged, pluck } from 'rxjs/operators'
 import { FeedEditService, FeedEditStateObservers } from './feed-edit.service'
 import { FeedService } from '../../../../feed/feed.service'
 import { FeedExpanded, FeedPreview, FeedTopic, Service } from '../../../../feed/feed.model'
-import { FeedEditState, FeedMetaData, feedMetaDataLean } from './feed-edit.model'
+import { FeedEditState, FeedMetaData, feedMetaDataLean, feedPostFromEditState } from './feed-edit.model'
+import * as _ from 'lodash'
 
 
 const emptyState: Readonly<FeedEditState> = Object.freeze({
@@ -207,7 +208,7 @@ class FeedEditChangeRecorder implements FeedEditStateObservers {
   }
 }
 
-fdescribe('FeedEditService', () => {
+describe('FeedEditService', () => {
 
   let feedEdit: FeedEditService
   let stateChanges: FeedEditChangeRecorder
@@ -737,12 +738,17 @@ fdescribe('FeedEditService', () => {
 
   describe('changing the feed meta-data', () => {
 
+    const previewWithoutContent: FeedPreview = {
+      feed: emptyPreview.feed
+    }
     beforeEach(() => {
       feedService.fetchServices.and.returnValue(of(services))
       feedService.fetchTopics.and.callFake((serviceId: string) => {
         return of(topicsForService[serviceId])
       })
-      feedService.previewFeed.and.returnValue(of(emptyPreview))
+      feedService.previewFeed
+        .withArgs(jasmine.anything(), jasmine.anything(), jasmine.anything(), { skipContentFetch: true })
+        .and.returnValue(of(previewWithoutContent))
     })
 
     it('allows setting empty meta-data', () => {
@@ -803,9 +809,60 @@ fdescribe('FeedEditService', () => {
       feedEdit.selectTopic(topic.id)
       feedEdit.feedMetaDataChanged({ title: 'Preview Without Fetch' })
 
-      expect(feedService.previewFeed).toHaveBeenCalledWith(service.id, topic.id, jasmine.anything(), jasmine.objectContaining({ skipContentFetch: true }))
-      expect(feedEdit.currentState.preview).toEqual(emptyPreview)
-      expect(stateChanges.preview.observed).toEqual([ null, emptyPreview ])
+      const previewPost = feedPostFromEditState(feedEdit.currentState)
+      expect(feedService.previewFeed).toHaveBeenCalledWith(service.id, topic.id, _.omit(previewPost, 'service', 'topic'), { skipContentFetch: true })
+      expect(feedEdit.currentState.preview).toEqual(previewWithoutContent)
+      expect(stateChanges.preview.observed).toEqual([ null, previewWithoutContent ])
+    })
+
+    it('retains content of previously fetched preview but updates preview feed', () => {
+
+      const service = services[1]
+      const topic = topicsForService[service.id][0]
+      feedEdit.newFeed()
+      feedEdit.selectService(service.id)
+      feedEdit.selectTopic(topic.id)
+
+      const previewWithContent: FeedPreview = {
+        feed: { ...previewWithoutContent.feed, title: 'Has Some Content' },
+        content: {
+          feed: 'preview',
+          items: {
+            type: 'FeatureCollection',
+            features: [
+              {
+                type: 'Feature',
+                geometry: null,
+                properties: {
+                  retained: true
+                }
+              }
+            ]
+          }
+        }
+      }
+      feedService.previewFeed.withArgs(service.id, topic.id, jasmine.anything(), { skipContentFetch: false }).and.returnValue(of(previewWithContent))
+
+      feedEdit.fetchParametersChanged({ returnContent: true })
+
+      expect(feedEdit.currentState.preview).toEqual(previewWithContent)
+      expect(feedEdit.currentState.preview.feed.title).toEqual('Has Some Content')
+
+      feedEdit.feedMetaDataChanged({ title: 'Retain Content' })
+
+      expect(feedService.previewFeed).toHaveBeenCalledWith(service.id, topic.id, jasmine.anything(), { skipContentFetch: true })
+      expect(feedEdit.currentState.preview).toEqual({
+        feed: previewWithoutContent.feed,
+        content: previewWithContent.content
+      })
+      expect(stateChanges.preview.observed).toEqual([
+        null,
+        previewWithContent,
+        {
+          feed: previewWithoutContent.feed,
+          content: previewWithContent.content
+        }
+      ])
     })
 
     it('removes null values from change', () => {
@@ -856,6 +913,30 @@ fdescribe('FeedEditService', () => {
       expect(feedService.previewFeed).toHaveBeenCalledTimes(0)
     })
 
+    it('refreshes preview fetching new content', () => {
+
+      const service = services[1]
+      const topic = topicsForService[service.id][0]
+      feedEdit.newFeed()
+      feedEdit.selectService(service.id)
+      feedEdit.selectTopic(topic.id)
+
+      expect(feedEdit.currentState.fetchParameters).toBeNull()
+
+      feedEdit.fetchParametersChanged({ test: true })
+
+      expect(feedEdit.currentState).toEqual(jasmine.objectContaining({
+        selectedTopic: topic,
+        fetchParameters: { test: true },
+        preview: emptyPreview
+      }))
+      expect(stateChanges.fetchParameters.observed).toEqual([ null, { test: true } ])
+      expect(stateChanges.preview.observed).toEqual([ null, emptyPreview ])
+      expect(feedService.previewFeed).toHaveBeenCalledWith(service.id, topic.id,
+        _.omit(feedPostFromEditState(feedEdit.currentState), 'service', 'topic'),
+        { skipContentFetch: false })
+    })
+
     it('allows empty parameters', () => {
 
       const service = services[1]
@@ -875,10 +956,28 @@ fdescribe('FeedEditService', () => {
       }))
       expect(stateChanges.fetchParameters.observed).toEqual([ null, {} ])
       expect(stateChanges.preview.observed).toEqual([ null, emptyPreview ])
-      expect(feedService.previewFeed).toHaveBeenCalled()
+      expect(feedService.previewFeed).toHaveBeenCalledWith(service.id, topic.id,
+        _.omit(feedPostFromEditState(feedEdit.currentState), 'service', 'topic'),
+        { skipContentFetch: false })
     })
 
-    it('allows null parameters', () => {
+    it('does not refresh preview it the parameters are identical', () => {
+
+      const service = services[1]
+      const topic = topicsForService[service.id][0]
+      feedEdit.newFeed()
+      feedEdit.selectService(service.id)
+      feedEdit.selectTopic(topic.id)
+
+      expect(feedEdit.currentState.fetchParameters).toBe(null)
+
+      feedEdit.fetchParametersChanged(null)
+
+      expect(stateChanges.fetchParameters.observed).toEqual([ null ])
+      expect(feedService.previewFeed).not.toHaveBeenCalled()
+    })
+
+    it('resets preview content without fetching new preview when fetch parameters change to null', () => {
 
       const service = services[1]
       const topic = topicsForService[service.id][0]
@@ -888,24 +987,29 @@ fdescribe('FeedEditService', () => {
 
       expect(feedEdit.currentState.fetchParameters).toBeNull()
 
-      feedEdit.fetchParametersChanged(null)
+      feedEdit.fetchParametersChanged({})
 
       expect(feedEdit.currentState).toEqual(jasmine.objectContaining({
-        selectedTopic: topic,
-        fetchParameters: null,
+        fetchParameters: {},
         preview: emptyPreview
       }))
-      expect(stateChanges.fetchParameters.observed).toEqual([ null ])
+      expect(stateChanges.fetchParameters.observed).toEqual([ null, {} ])
       expect(stateChanges.preview.observed).toEqual([ null, emptyPreview ])
-      expect(feedService.previewFeed).toHaveBeenCalledWith(service.id, topic.id, {}, {})
-    })
+      expect(feedService.previewFeed).toHaveBeenCalledWith(service.id, topic.id, jasmine.anything(), { skipContentFetch: false })
 
-    it('does not refresh preview it the parameters are identical', () => {
-      fail('todo')
-    })
+      feedEdit.fetchParametersChanged(null)
 
-    it('refreshes preview fetching new content', () => {
-      fail('todo')
+      const previewWithEmptyContent: FeedPreview = {
+        ...emptyPreview,
+        content: null
+      }
+      expect(feedEdit.currentState).toEqual(jasmine.objectContaining({
+        fetchParameters: null,
+        preview: previewWithEmptyContent
+      }))
+      expect(stateChanges.fetchParameters.observed).toEqual([ null, {}, null ])
+      expect(stateChanges.preview.observed).toEqual([ null, emptyPreview, previewWithEmptyContent ])
+      expect(feedService.previewFeed).toHaveBeenCalledTimes(1)
     })
   })
 })

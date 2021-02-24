@@ -72,5 +72,5 @@ export interface FeedContent {
 
 export interface FeedPreview {
   feed: Feed
-  content: FeedContent
+  content?: FeedContent
 }

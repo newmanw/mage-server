@@ -156,7 +156,21 @@ export class FeedEditService {
     if (!this.currentState.selectedTopic) {
       return
     }
+    if (fetchParameters === this.currentState.fetchParameters) {
+      return
+    }
+    let preview = null
+    if (this.currentState.preview) {
+      preview = {
+        ...this.currentState.preview,
+        content: null
+      }
+    }
+    this.patchState({ fetchParameters, preview })
     this.patchState({ fetchParameters })
+    if (fetchParameters === null) {
+      return
+    }
     this.fetchNewPreview()
   }
 
@@ -197,8 +211,15 @@ export class FeedEditService {
     const feed = feedPostFromEditState(this.currentState)
     const { service, topic, ...feedSpec } = feed
     // TODO: handle errors
-    this.feedService.previewFeed(service, topic, feedSpec, opts || {}).subscribe({
+    this.feedService.previewFeed(service, topic, feedSpec, opts || { skipContentFetch: false }).subscribe({
       next: preview => {
+        const currentPreview = this.currentState.preview
+        if (!preview.content && currentPreview && currentPreview.content) {
+          preview = {
+            ...preview,
+            content: currentPreview.content
+          }
+        }
         this.patchState({ preview })
       }
     })
