@@ -1,4 +1,4 @@
-import { Observable, of, asapScheduler, NextObserver, MonoTypeOperatorFunction } from 'rxjs'
+import { Observable, of, NextObserver, MonoTypeOperatorFunction } from 'rxjs'
 import { distinctUntilChanged, pluck } from 'rxjs/operators'
 import { FeedEditService, FeedEditStateObservers } from './feed-edit.service'
 import { FeedService } from '../../../../feed/feed.service'
