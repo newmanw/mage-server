@@ -3,7 +3,7 @@ import { Component, OnInit, Inject, ElementRef, ViewChild } from '@angular/core'
 import { FormControl } from '@angular/forms'
 import { Observable } from 'rxjs'
 import { map, startWith } from 'rxjs/operators'
-import { Feed, ServiceType, FeedTopic, Service } from 'src/app/feed/feed.model'
+import { ServiceType, FeedTopic, Service, FeedExpanded } from '../../../feed/feed.model'
 import { StateService } from '@uirouter/angular'
 import { UserService, Event } from '../../../upgrade/ajs-upgraded-providers'
 import { FeedService } from 'src/app/feed/feed.service'
@@ -41,7 +41,7 @@ export class AdminFeedComponent implements OnInit {
   }]
 
   feedLoaded: Promise<boolean>
-  feed: Feed
+  feed: FeedExpanded
   fullFeed: string
   hasFeedCreatePermission: boolean
   hasFeedEditPermission: boolean

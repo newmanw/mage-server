@@ -2,8 +2,8 @@ import { Feature, FeatureCollection } from 'geojson';
 
 export interface Feed {
   id: string;
-  service: Service | string;
-  topic: FeedTopic | string;
+  service: string;
+  topic: string;
   title: string;
   summary?: string;
   icon?: string;
@@ -57,6 +57,11 @@ export interface FeedTopic {
   itemSecondaryProperty?: string;
   itemPropertiesSchema?: any;
   mapStyle?: MapStyle
+}
+
+export type FeedExpanded = Omit<Feed, 'service' | 'topic'> & {
+  service: Service,
+  topic: FeedTopic
 }
 
 export interface FeedContent {

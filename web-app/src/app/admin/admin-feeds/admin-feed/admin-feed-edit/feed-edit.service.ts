@@ -1,32 +1,10 @@
-import { Serializer } from '@angular/compiler'
 import { forwardRef, Inject } from '@angular/core'
 import * as _ from 'lodash'
 import { BehaviorSubject, Observable, PartialObserver } from 'rxjs'
-import { Feed, FeedPreview, FeedTopic, Service } from '../../../../feed/feed.model'
-import { FeedExpanded, FeedService } from '../../../../feed/feed.service'
-import { FeedMetaData, feedMetaDataLean } from './feed-edit.model'
+import { FeedTopic, Service } from '../../../../feed/feed.model'
+import { FeedPreviewOptions, FeedService } from '../../../../feed/feed.service'
+import { FeedEditState, FeedMetaData, feedMetaDataLean, feedPostFromEditState } from './feed-edit.model'
 
-
-export interface FeedEditState {
-  originalFeed: FeedExpanded | null
-  availableServices: Service[]
-  selectedService: Service | null
-  availableTopics: FeedTopic[]
-  selectedTopic: FeedTopic | null
-  fetchParameters: any | null
-  itemPropertiesSchema: any | null
-  topicMetaData: FeedMetaData | null
-  feedMetaData: FeedMetaData | null
-  preview: FeedPreview | null
-}
-
-type FeedEditStateChanges = {
-  [stateKey in keyof FeedEditState]: Observable<FeedEditState[stateKey]>
-}
-
-type FeedEditStateSubjects = {
-  [stateKey in keyof FeedEditState]: BehaviorSubject<FeedEditState[stateKey]>
-}
 
 export type FeedEditStateObservers = {
   [stateKey in keyof FeedEditState]: PartialObserver<FeedEditState[stateKey]>
@@ -162,10 +140,9 @@ export class FeedEditService {
         return null
       }
     }
-    const safeTopic = topic || {} as FeedTopic
     const patch: StatePatch = {
       selectedTopic: topic,
-      itemPropertiesSchema: topic ? _.cloneDeep(safeTopic.itemPropertiesSchema) || null : null,
+      itemPropertiesSchema: null,
       topicMetaData: topic ? feedMetaDataLean(topic) : null,
       fetchParameters: null,
       feedMetaData: null,
@@ -176,9 +153,11 @@ export class FeedEditService {
   }
 
   fetchParametersChanged(fetchParameters: any) {
+    if (!this.currentState.selectedTopic) {
+      return
+    }
     this.patchState({ fetchParameters })
     this.fetchNewPreview()
-    // TODO: refresh preview through rx debounce operator
   }
 
   itemPropertiesSchemaChanged(itemPropertiesSchema: any) {
@@ -186,7 +165,11 @@ export class FeedEditService {
   }
 
   feedMetaDataChanged(feedMetaData: FeedMetaData) {
-    this.patchState({ feedMetaData })
+    if (!this.currentState.selectedTopic) {
+      return
+    }
+    this.patchState({ feedMetaData: feedMetaDataLean(feedMetaData) })
+    this.fetchNewPreview({ skipContentFetch: true })
   }
 
   private resetState(): void {
@@ -208,29 +191,13 @@ export class FeedEditService {
     })
   }
 
-  private fetchNewPreview(): void {
+  private fetchNewPreview(opts?: FeedPreviewOptions): void {
     // TODO: add busy flag to indicate loading
     // TODO: cancel outstanding preview fetch
-    const service = this.currentState.selectedService
-    const topic = this.currentState.selectedTopic
-    if (!service || !topic) {
-      return
-    }
-    const feed: Partial<Omit<Feed, 'id'>> = {
-      service: service.id,
-      topic: topic.id,
-      ...this.currentState.feedMetaData
-    }
-    const fetchParams = this.currentState.fetchParameters || {}
-    if (Object.getOwnPropertyNames(fetchParams).length) {
-      feed.constantParams = _.cloneDeep(fetchParams)
-    }
-    const itemSchema = this.currentState.itemPropertiesSchema || {}
-    if (Object.getOwnPropertyNames(itemSchema)) {
-      feed.itemPropertiesSchema = _.cloneDeep(this.currentState.itemPropertiesSchema)
-    }
+    const feed = feedPostFromEditState(this.currentState)
+    const { service, topic, ...feedSpec } = feed
     // TODO: handle errors
-    this.feedService.previewFeed(service.id, topic.id, feed).subscribe({
+    this.feedService.previewFeed(service, topic, feedSpec, opts || {}).subscribe({
       next: preview => {
         this.patchState({ preview })
       }

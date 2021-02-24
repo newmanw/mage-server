@@ -1,12 +1,10 @@
 import { Component, OnInit } from '@angular/core';
 import { StateService } from '@uirouter/angular';
-import { NextObserver } from 'rxjs'
 import * as _ from 'underscore';
-import { Feed, FeedTopic, Service } from '../../../../feed/feed.model';
-import { FeedService } from '../../../../feed/feed.service';
+import { FeedTopic, Service } from '../../../../feed/feed.model';
 import { AdminBreadcrumb } from '../../../admin-breadcrumb/admin-breadcrumb.model';
-import { FeedMetaData } from './feed-edit.model'
-import { FeedEditService, FeedEditState, FeedEditStateObservers } from './feed-edit.service'
+import { FeedEditState, FeedMetaData } from './feed-edit.model'
+import { FeedEditService } from './feed-edit.service'
 
 @Component({
   selector: 'app-feed-edit',
@@ -43,7 +41,6 @@ export class AdminFeedEditComponent implements OnInit {
 
   constructor(
     private feedEdit: FeedEditService,
-    private feedService: FeedService,
     private stateService: StateService
   ) {
     if (this.stateService.params.feedId) {
@@ -146,7 +143,7 @@ export class AdminFeedEditComponent implements OnInit {
     this.feedEdit.itemPropertiesSchemaChanged(itemProperties)
   }
 
-  onItemPropertiesSchemaAccepted(itemProperties: any): void {
+  onItemPropertiesSchemaAccepted(): void {
     this.nextStep();
   }
 
@@ -157,7 +154,7 @@ export class AdminFeedEditComponent implements OnInit {
     this.feedEdit.feedMetaDataChanged(metaData)
   }
 
-  onFeedMetaDataAccepted(metaData: FeedMetaData): void {
+  onFeedMetaDataAccepted(): void {
     // this.feedConfiguration = metaData;
     // if (this.feed) {
     //   this.updateFeed();

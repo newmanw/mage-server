@@ -2,7 +2,12 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Feature } from 'geojson';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
-import { Feed, FeedContent, FeedPreview, FeedTopic, Service, ServiceType, StyledFeature } from './feed.model';
+import { Feed, FeedContent, FeedExpanded, FeedPreview, FeedTopic, Service, ServiceType, StyledFeature } from './feed.model';
+
+
+export interface FeedPreviewOptions {
+  skipContentFetch?: boolean
+}
 
 @Injectable({
   providedIn: 'root'
@@ -51,10 +56,12 @@ export class FeedService {
     return this.http.get<Array<FeedTopic>>(`/api/feeds/services/${serviceId}/topics`);
   }
 
-  previewFeed(serviceId: string, topicId: string, topicConfiguration: any): Observable<FeedPreview> {
+  previewFeed(serviceId: string, topicId: string, feedSpec: Partial<Omit<Feed, 'service' | 'topic'>>, opts?: FeedPreviewOptions): Observable<FeedPreview> {
+    opts = opts || {}
+    const skipContentFetch: boolean = opts.skipContentFetch === true
     return this.http.post<FeedPreview>(
-      `/api/feeds/services/${serviceId}/topics/${topicId}/feed_preview`,
-      topicConfiguration);
+      `/api/feeds/services/${serviceId}/topics/${topicId}/feed_preview?skip_content_fetch=${skipContentFetch}`,
+      feedSpec);
   }
 
   fetchTopic(serviceId: string, topicId: string): Observable<FeedTopic> {
@@ -73,7 +80,7 @@ export class FeedService {
     return this.http.put<Feed>(`/api/feeds/${feed.id}`, feed);
   }
 
-  deleteFeed(feed: Feed): Observable<{}> {
+  deleteFeed(feed: Feed | FeedExpanded): Observable<{}> {
     return this.http.delete(`/api/feeds/${feed.id}`, {responseType: 'text'});
   }
 
@@ -129,9 +136,4 @@ export class FeedService {
 
     return subject;
   }
-}
-
-export type FeedExpanded = Omit<Feed, 'service' | 'topic'> & {
-  service: Service,
-  topic: FeedTopic
 }

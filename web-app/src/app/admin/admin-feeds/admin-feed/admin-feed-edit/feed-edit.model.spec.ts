@@ -1,5 +1,5 @@
-import { Feed, FeedTopic } from '../../../../feed/feed.model'
-import { FeedMetaData, feedMetaDataLean, FeedMetaDataNullable } from './feed-edit.model'
+import { Feed, FeedTopic, Service } from '../../../../feed/feed.model'
+import { FeedEditState, FeedMetaData, feedMetaDataLean, FeedMetaDataNullable, feedPostFromEditState } from './feed-edit.model'
 
 export type FeedMetaDataBooleanKeys = { [K in keyof FeedMetaData]: FeedMetaData[K] extends boolean ? K : never }[keyof FeedMetaData]
 
@@ -148,5 +148,130 @@ describe('feedMetaDataLean', () => {
     const lean = feedMetaDataLean(source)
 
     expect(lean).toEqual(source)
+  })
+})
+
+describe('feedPostFromEditState', () => {
+
+  it('maps all properties from complete edit state', () => {
+
+    const service: Required<Service> = { id: 'service1', serviceType: 'type1', title: 'Service 1', summary: 'Test service 1', config: { test: true }}
+    const topic: Required<FeedTopic> = {
+      id: 'topic1',
+      title: 'Test Topic',
+      summary: 'A topic for testing',
+      icon: 'icon1',
+      itemPrimaryProperty: 'prop1',
+      itemSecondaryProperty: 'prop2',
+      itemTemporalProperty: 'time',
+      itemPropertiesSchema: {
+        properties: {
+          prop1: { type: 'string' }
+        }
+      },
+      itemsHaveIdentity: true,
+      itemsHaveSpatialDimension: true,
+      mapStyle: {
+        iconUrl: 'icon1'
+      },
+      paramsSchema: {
+        properties: {
+          when: { type: 'number' }
+        }
+      },
+      updateFrequencySeconds: 100
+    }
+    const feedMetaData: Required<FeedMetaData> = {
+      title: 'Test Feed',
+      summary: 'A feed for testing',
+      icon: 'icon5',
+      itemPrimaryProperty:  'feedProp1',
+      itemSecondaryProperty: 'feedProp2',
+      itemTemporalProperty: 'feedTime',
+      itemsHaveIdentity: false,
+      itemsHaveSpatialDimension: false,
+      updateFrequencySeconds: 4000
+    }
+    const state: FeedEditState = {
+      availableServices: [],
+      availableTopics: [],
+      selectedService: service,
+      selectedTopic: topic,
+      topicMetaData: feedMetaDataLean(topic),
+      feedMetaData,
+      fetchParameters: { test: 'yes' },
+      itemPropertiesSchema: {
+        properties: {
+          feedProp1: { type: 'string', title: 'Prop 1 Titled' }
+        }
+      },
+      originalFeed: {
+        id: 'feed1',
+        service: service,
+        topic: topic,
+        title: 'Original Title'
+      },
+      preview: null
+    }
+
+    const feedFromState = feedPostFromEditState(state)
+
+    const expectedFeed: Required<Omit<Feed, 'mapStyle' | 'variableParamsSchema'>> = {
+      id: state.originalFeed.id,
+      service: state.selectedService.id,
+      topic: state.selectedTopic.id,
+      itemPropertiesSchema: state.itemPropertiesSchema,
+      constantParams: state.fetchParameters,
+      ...feedMetaData
+    }
+    expect(feedFromState).toEqual(expectedFeed)
+  })
+
+  it('omits null values from edit state', () => {
+
+    const service: Required<Service> = { id: 'service1', serviceType: 'type1', title: 'Service 1', summary: 'Test service 1', config: { test: true }}
+    const topic: Required<FeedTopic> = {
+      id: 'topic1',
+      title: 'Test Topic',
+      summary: 'A topic for testing',
+      icon: 'icon1',
+      itemPrimaryProperty: 'prop1',
+      itemSecondaryProperty: 'prop2',
+      itemTemporalProperty: 'time',
+      itemPropertiesSchema: {
+        properties: {
+          prop1: { type: 'string' }
+        }
+      },
+      itemsHaveIdentity: true,
+      itemsHaveSpatialDimension: true,
+      mapStyle: {
+        iconUrl: 'icon1'
+      },
+      paramsSchema: {
+        properties: {
+          when: { type: 'number' }
+        }
+      },
+      updateFrequencySeconds: 100
+    }
+    const state: FeedEditState = {
+      availableServices: [],
+      availableTopics: [],
+      selectedService: service,
+      selectedTopic: topic,
+      topicMetaData: feedMetaDataLean(topic),
+      feedMetaData: null,
+      fetchParameters: null,
+      itemPropertiesSchema: null,
+      originalFeed: null,
+      preview: null
+    }
+    const feedPost = feedPostFromEditState(state)
+
+    expect(feedPost).toEqual({
+      service: state.selectedService.id,
+      topic: state.selectedTopic.id
+    })
   })
 })

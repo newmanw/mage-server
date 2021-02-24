@@ -1,9 +1,9 @@
-import { Observable, of, asapScheduler, NextObserver, MonoTypeOperatorFunction, asyncScheduler } from 'rxjs'
+import { Observable, of, asapScheduler, NextObserver, MonoTypeOperatorFunction } from 'rxjs'
 import { distinctUntilChanged, pluck } from 'rxjs/operators'
-import { FeedEditService, FeedEditState, FeedEditStateObservers } from './feed-edit.service'
-import { FeedExpanded, FeedService } from '../../../../feed/feed.service'
-import { FeedPreview, FeedTopic, Service } from '../../../../feed/feed.model'
-import { FeedMetaData, feedMetaDataLean } from './feed-edit.model'
+import { FeedEditService, FeedEditStateObservers } from './feed-edit.service'
+import { FeedService } from '../../../../feed/feed.service'
+import { FeedExpanded, FeedPreview, FeedTopic, Service } from '../../../../feed/feed.model'
+import { FeedEditState, FeedMetaData, feedMetaDataLean } from './feed-edit.model'
 
 
 const emptyState: Readonly<FeedEditState> = Object.freeze({
@@ -159,7 +159,7 @@ const distinctUntilChangedCheckEmpty = <T>(): MonoTypeOperatorFunction<T> => {
     if (Array.isArray(a) && Array.isArray(b)) {
       return (a.length === 0 && b.length === 0) || a === b
     }
-    return  a && b ? (Object.getOwnPropertyNames(a).length === 0 && Object.getOwnPropertyNames(b).length === 0) : a === b
+    return a && b ? (Object.getOwnPropertyNames(a).length === 0 && Object.getOwnPropertyNames(b).length === 0) || a === b : a === b
   })
 }
 
@@ -189,10 +189,6 @@ class FeedEditChangeRecorder implements FeedEditStateObservers {
     this.topicMetaData = Recorder.of(feedEdit.state$.pipe(pluck('topicMetaData'), distinctUntilChangedCheckEmpty()))
     this.feedMetaData = Recorder.of(feedEdit.state$.pipe(pluck('feedMetaData'), distinctUntilChangedCheckEmpty()))
     this.preview = Recorder.of(feedEdit.state$.pipe(pluck('preview'), distinctUntilChangedCheckEmpty()))
-  }
-
-  get latest(): FeedEditState {
-    return this.state.latest
   }
 
   get eachObserved(): { [StateKey in keyof FeedEditState]: FeedEditState[StateKey][] } {
@@ -231,61 +227,8 @@ fdescribe('FeedEditService', () => {
   it('starts with empty state', async () => {
 
     expect(feedEdit.currentState).toEqual(emptyState)
-    expect(stateChanges.latest).toEqual(emptyState)
-  })
-
-  describe('feed meta-data', () => {
-
-    describe('creating from a topic', () => {
-
-      it('picks the meta-data properties from the topic', () => {
-
-        const topic: Required<FeedTopic> & Required<FeedMetaData> = {
-          id: 'topic1',
-          title: 'Make Meta-Data',
-          summary: 'Does it work?',
-          icon: 'mage-plugin://not/sure/yet.png',
-          itemPrimaryProperty: 'primary',
-          itemSecondaryProperty: 'secondary',
-          itemTemporalProperty: 'temporal',
-          itemsHaveIdentity: false,
-          itemsHaveSpatialDimension: false,
-          updateFrequencySeconds: 300,
-          itemPropertiesSchema: {
-            properties: {
-              primary: { type: 'string' },
-              secondary: { type: 'string' },
-              temporal: { type: 'number' }
-            }
-          },
-          mapStyle: {
-            iconUrl: 'pretty://pictures/nice.png'
-          },
-          paramsSchema: {
-            password: { type: 'string' }
-          }
-        }
-        const metaData = feedMetaDataLean(topic)
-
-        const expected: Required<FeedMetaData> = {
-          title: 'Make Meta-Data',
-          summary: 'Does it work?',
-          icon: 'mage-plugin://not/sure/yet.png',
-          itemPrimaryProperty: 'primary',
-          itemSecondaryProperty: 'secondary',
-          itemTemporalProperty: 'temporal',
-          itemsHaveIdentity: false,
-          itemsHaveSpatialDimension: false,
-          updateFrequencySeconds: 300
-        }
-        expect(metaData).toEqual(expected)
-      })
-
-      it('omits keys with undefined values', () => {
-
-        fail('todo')
-      })
-    })
+    expect(stateChanges.state.latest).toEqual(emptyState)
+    expect(stateChanges.state.observed).toEqual([ emptyState ])
   })
 
   describe('creating a new feed', () => {
@@ -350,18 +293,16 @@ fdescribe('FeedEditService', () => {
       expect(stateChanges.selectedService.observed).toEqual([ null ])
     })
 
-    it('populates topic meta-data and item properties schema from selected topic', () => {
+    it('populates topic meta-data from selected topic', () => {
 
       const service = services[0]
       const topics = topicsForService[service.id]
       const topic = topics[1]
-      feedService.fetchServices.and.returnValue(of(services, asapScheduler))
-      feedService.fetchTopics.withArgs(service.id).and.returnValue(of(topics, asapScheduler))
+      feedService.fetchServices.and.returnValue(of(services))
+      feedService.fetchTopics.withArgs(service.id).and.returnValue(of(topics))
 
       feedEdit.newFeed()
-      asapScheduler.flush()
       feedEdit.selectService(service.id)
-      asapScheduler.flush()
       feedEdit.selectTopic(topic.id)
 
       expect(feedEdit.currentState).toEqual(<FeedEditState>{
@@ -371,14 +312,13 @@ fdescribe('FeedEditService', () => {
         availableTopics: topics,
         selectedTopic: topic,
         fetchParameters: null,
-        itemPropertiesSchema: topic.itemPropertiesSchema,
+        itemPropertiesSchema: null,
         topicMetaData: feedMetaDataLean(topic),
         feedMetaData: null,
         preview: null
       })
       expect(stateChanges.selectedTopic.latest).toEqual(topic)
       expect(stateChanges.topicMetaData.latest).toEqual(feedMetaDataLean(topic))
-      expect(stateChanges.itemPropertiesSchema.latest).toEqual(topic.itemPropertiesSchema)
     })
 
     it('resets the fetch parameters, item properties schema, feed meta-data, and preview when the selected topic changes', () => {
@@ -398,6 +338,14 @@ fdescribe('FeedEditService', () => {
       feedEdit.selectTopic(topics[0].id)
       feedEdit.fetchParametersChanged(fetchParameters)
       feedEdit.feedMetaDataChanged(feedMetaData)
+      feedEdit.itemPropertiesSchemaChanged({
+        properties: {
+          prop1: {
+            type: 'string',
+            title: 'Prop 1'
+          }
+        }
+      })
 
       expect(feedEdit.currentState).toEqual(<FeedEditState>{
         availableServices: services,
@@ -407,7 +355,14 @@ fdescribe('FeedEditService', () => {
         fetchParameters,
         topicMetaData: feedMetaDataLean(topics[0]),
         feedMetaData,
-        itemPropertiesSchema: topics[0].itemPropertiesSchema,
+        itemPropertiesSchema: {
+          properties: {
+            prop1: {
+              type: 'string',
+              title: 'Prop 1'
+            }
+          }
+        },
         originalFeed: null,
         preview: emptyPreview
       })
@@ -419,7 +374,7 @@ fdescribe('FeedEditService', () => {
         selectedService: service,
         availableTopics: topics,
         selectedTopic: topics[1],
-        itemPropertiesSchema: topics[1].itemPropertiesSchema,
+        itemPropertiesSchema: null,
         fetchParameters: null,
         topicMetaData: feedMetaDataLean(topics[1]),
         feedMetaData: null,
@@ -787,94 +742,170 @@ fdescribe('FeedEditService', () => {
       feedService.fetchTopics.and.callFake((serviceId: string) => {
         return of(topicsForService[serviceId])
       })
+      feedService.previewFeed.and.returnValue(of(emptyPreview))
     })
 
-    it('merges topic properties to unspecified meta-data properties', () => {
+    it('allows setting empty meta-data', () => {
 
       const service = services[0]
       const topic = topicsForService[service.id][0]
-      const topicMetaData = Object.freeze(feedMetaDataLean(topic))
 
       feedEdit.newFeed()
       feedEdit.selectService(service.id)
       feedEdit.selectTopic(topic.id)
 
-      expect(stateChanges.feedMetaData.observed).toEqual([
-        null,
-        null,
-        topicMetaData,
-      ])
+      expect(stateChanges.feedMetaData.observed).toEqual([ null ])
 
       feedEdit.feedMetaDataChanged({})
 
+      expect(stateChanges.feedMetaData.observed).toEqual([ null, {} ])
+    })
+
+    it('sets meta-data to the given value', () => {
+
+      const service = services[0]
+      const topic = topicsForService[service.id][0]
+      feedEdit.newFeed()
+      feedEdit.selectService(service.id)
+      feedEdit.selectTopic(topic.id)
+
+      expect(feedEdit.currentState.feedMetaData).toBeNull()
+
+      feedEdit.feedMetaDataChanged({ title: 'Changed Title' })
+
+      expect(feedEdit.currentState.feedMetaData).toEqual({ title: 'Changed Title' })
       expect(stateChanges.feedMetaData.observed).toEqual([
         null,
-        null,
-        topicMetaData,
-        topicMetaData
+        { title: 'Changed Title' }
       ])
+    })
 
-      feedEdit.feedMetaDataChanged({ title: undefined })
+    it('is not allowed with no topic selected', () => {
 
-      expect(stateChanges.feedMetaData.observed).toEqual([
-        null,
-        null,
-        topicMetaData,
-        topicMetaData,
-        topicMetaData
-      ])
+      feedEdit.newFeed()
+      feedEdit.selectService(services[0].id)
 
-      feedEdit.feedMetaDataChanged({
-        title: undefined,
-        itemPrimaryProperty: undefined,
-        itemSecondaryProperty: 'altSecondary'
+      expect(feedEdit.currentState.feedMetaData).toBeNull()
+
+      feedEdit.feedMetaDataChanged({ title: 'Select Topic First' })
+
+      expect(feedEdit.currentState.feedMetaData).toBeNull()
+      expect(stateChanges.feedMetaData.observed).toEqual([ null ])
+      expect(feedService.previewFeed).toHaveBeenCalledTimes(0)
+    })
+
+    it('refreshes preview without fetching content', () => {
+
+      const service = services[1]
+      const topic = topicsForService[service.id][0]
+      feedEdit.newFeed()
+      feedEdit.selectService(service.id)
+      feedEdit.selectTopic(topic.id)
+      feedEdit.feedMetaDataChanged({ title: 'Preview Without Fetch' })
+
+      expect(feedService.previewFeed).toHaveBeenCalledWith(service.id, topic.id, jasmine.anything(), jasmine.objectContaining({ skipContentFetch: true }))
+      expect(feedEdit.currentState.preview).toEqual(emptyPreview)
+      expect(stateChanges.preview.observed).toEqual([ null, emptyPreview ])
+    })
+
+    it('removes null values from change', () => {
+
+      // TODO: when strict null checks are enabled in tsconfig.json, this should not compile
+      const service = services[1]
+      const topic = topicsForService[service.id][0]
+      feedEdit.newFeed()
+      feedEdit.selectService(service.id)
+      feedEdit.selectTopic(topic.id)
+      feedEdit.feedMetaDataChanged({ title: null, summary: null, itemPrimaryProperty: null })
+
+      expect(feedEdit.currentState.feedMetaData).toEqual(feedMetaDataLean({ title: null, summary: null, itemPrimaryProperty: null }))
+      expect(stateChanges.feedMetaData.observed).toEqual([ null, {} ])
+    })
+  })
+
+  describe('changing the fetch parameters', () => {
+
+    beforeEach(() => {
+      feedService.fetchServices.and.returnValue(of(services))
+      feedService.fetchTopics.and.callFake((serviceId: string) => {
+        return of(topicsForService[serviceId])
       })
-
-      expect(stateChanges.feedMetaData.observed).toEqual([
-        null,
-        topicMetaData,
-        topicMetaData,
-        topicMetaData,
-        { ...topicMetaData, itemSecondaryProperty: 'altSecondary' }
-      ])
-
-      const allMod: Required<FeedMetaData> = {
-        title: 'Title Mod',
-        summary: 'Summary Mod',
-        icon: 'icon-mod.png',
-        itemPrimaryProperty: 'primaryMod',
-        itemSecondaryProperty: 'secondaryMod',
-        itemTemporalProperty: 'temporalMod',
-        itemsHaveIdentity: !topic.itemsHaveIdentity,
-        itemsHaveSpatialDimension: !topic.itemsHaveSpatialDimension,
-        updateFrequencySeconds: (topic.updateFrequencySeconds || 0) + 100
-      }
-      feedEdit.feedMetaDataChanged(allMod)
-
-      expect(stateChanges.feedMetaData.observed).toEqual([
-        null,
-        topicMetaData,
-        topicMetaData,
-        topicMetaData,
-        { ...topicMetaData, itemSecondaryProperty: 'altSecondary' },
-        allMod
-      ])
+      feedService.previewFeed.and.returnValue(of(emptyPreview))
     })
 
-    it('is not allowed when there is no topic selected', () => {
+    it('is not allowed with no topic selected', () => {
+
+      feedEdit.fetchParametersChanged({ ignore: true })
+
+      expect(feedEdit.currentState.fetchParameters).toBeNull()
+      expect(stateChanges.fetchParameters.observed).toEqual([ null ])
+      expect(feedService.previewFeed).toHaveBeenCalledTimes(0)
+
+      feedEdit.newFeed()
+      feedEdit.fetchParametersChanged({ ignore: true })
+
+      expect(feedEdit.currentState.fetchParameters).toBeNull()
+      expect(stateChanges.fetchParameters.observed).toEqual([ null ])
+      expect(feedService.previewFeed).toHaveBeenCalledTimes(0)
+
+      const service = services[1]
+      feedEdit.selectService(service.id)
+
+      expect(feedEdit.currentState.fetchParameters).toBeNull()
+      expect(stateChanges.fetchParameters.observed).toEqual([ null ])
+      expect(feedService.previewFeed).toHaveBeenCalledTimes(0)
+    })
+
+    it('allows empty parameters', () => {
+
+      const service = services[1]
+      const topic = topicsForService[service.id][0]
+      feedEdit.newFeed()
+      feedEdit.selectService(service.id)
+      feedEdit.selectTopic(topic.id)
+
+      expect(feedEdit.currentState.fetchParameters).toBeNull()
+
+      feedEdit.fetchParametersChanged({})
+
+      expect(feedEdit.currentState).toEqual(jasmine.objectContaining({
+        selectedTopic: topic,
+        fetchParameters: {},
+        preview: emptyPreview
+      }))
+      expect(stateChanges.fetchParameters.observed).toEqual([ null, {} ])
+      expect(stateChanges.preview.observed).toEqual([ null, emptyPreview ])
+      expect(feedService.previewFeed).toHaveBeenCalled()
+    })
+
+    it('allows null parameters', () => {
+
+      const service = services[1]
+      const topic = topicsForService[service.id][0]
+      feedEdit.newFeed()
+      feedEdit.selectService(service.id)
+      feedEdit.selectTopic(topic.id)
+
+      expect(feedEdit.currentState.fetchParameters).toBeNull()
+
+      feedEdit.fetchParametersChanged(null)
+
+      expect(feedEdit.currentState).toEqual(jasmine.objectContaining({
+        selectedTopic: topic,
+        fetchParameters: null,
+        preview: emptyPreview
+      }))
+      expect(stateChanges.fetchParameters.observed).toEqual([ null ])
+      expect(stateChanges.preview.observed).toEqual([ null, emptyPreview ])
+      expect(feedService.previewFeed).toHaveBeenCalledWith(service.id, topic.id, {}, {})
+    })
+
+    it('does not refresh preview it the parameters are identical', () => {
       fail('todo')
     })
 
-    it('respects null values from change', () => {
+    it('refreshes preview fetching new content', () => {
       fail('todo')
     })
-  })
-
-  it('does not set constant parameters if the parameters are empty', () => {
-    fail('todo')
-  })
-
-  it('refreshes preview content when fetch parameters change', () => {
-    fail('todo')
   })
 })

@@ -2,7 +2,7 @@ import { Component, Inject, OnInit } from '@angular/core';
 import { MatDialog } from '@angular/material';
 import { StateService } from '@uirouter/angular';
 import { forkJoin } from 'rxjs';
-import { Feed, Service, ServiceType } from 'src/app/feed/feed.model';
+import { Feed, FeedExpanded, Service, ServiceType } from 'src/app/feed/feed.model';
 import { FeedService } from 'src/app/feed/feed.service';
 import { UserService } from 'src/app/upgrade/ajs-upgraded-providers';
 import _ from 'underscore';
@@ -45,7 +45,7 @@ export class AdminServiceComponent implements OnInit {
     private feedService: FeedService,
     private stateService: StateService,
     public dialog: MatDialog,
-    @Inject(UserService) userService: { myself: { id: string, role: { permissions: Array<string> } } }) { 
+    @Inject(UserService) userService: { myself: { id: string, role: { permissions: Array<string> } } }) {
     this.hasServiceEditPermission = _.contains(userService.myself.role.permissions, 'FEEDS_CREATE_SERVICE')
     this.hasServiceDeletePermission = _.contains(userService.myself.role.permissions, 'FEEDS_CREATE_SERVICE')
   }
@@ -89,7 +89,7 @@ export class AdminServiceComponent implements OnInit {
     this.stateService.go('admin.feeds')
   }
 
-  goToFeed(feed: Feed): void {
+  goToFeed(feed: Feed | FeedExpanded): void {
     this.stateService.go('admin.feed', { feedId: feed.id })
   }
 

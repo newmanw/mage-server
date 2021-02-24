@@ -5,7 +5,7 @@ import { MatCardModule, MatDialog, MatDialogModule, MatDialogRef, MatIconModule,
 import { RawParams, StateOrName, StateService, TransitionOptions, TransitionPromise } from '@uirouter/angular';
 import { of } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
-import { Feed, ServiceType } from 'src/app/feed/feed.model';
+import { Feed, FeedExpanded, ServiceType } from 'src/app/feed/feed.model';
 import { JsonSchemaModule } from 'src/app/json-schema/json-schema.module';
 import { UserService } from 'src/app/upgrade/ajs-upgraded-providers';
 import { AdminBreadcrumbModule } from '../../admin-breadcrumb/admin-breadcrumb.module';
@@ -145,7 +145,7 @@ describe('AdminServiceComponent', () => {
     config: 'https://example.com',
     id: 'serviceid1234'
   };
-  const feed: Feed = {
+  const feed: FeedExpanded = {
     title: 'Feed 1234',
     service: {
       title: 'Service title',

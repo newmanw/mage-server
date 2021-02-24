@@ -1,4 +1,4 @@
-import { Feed, FeedTopic } from '../../../../feed/feed.model'
+import { Feed, FeedExpanded, FeedPreview, FeedTopic, Service } from '../../../../feed/feed.model'
 
 type RequiredKeys<T> = { [K in keyof T]-?: {} extends { [P in K]: T[K] } ? never : K }[keyof T];
 type OptionalKeys<T> = { [K in keyof T]-?: {} extends { [P in K]: T[K] } ? K : never }[keyof T];
@@ -30,7 +30,7 @@ export type FeedMetaDataNullable = Required<NullableOptional<FeedMetaData>>
  * @param source another `FeedMetaData` object, `FeedTopic`, or `Feed`
  */
 export const feedMetaDataLean = <T extends FeedMetaDataNullable | FeedMetaData>(source: T): FeedMetaData => {
-  const metaData: FeedMetaData = { }
+  const metaData: FeedMetaData = {}
   source.title && (metaData.title = source.title)
   source.summary && (metaData.summary = source.summary)
   typeof source.itemsHaveIdentity === 'boolean' && (metaData.itemsHaveIdentity = source.itemsHaveIdentity)
@@ -43,4 +43,37 @@ export const feedMetaDataLean = <T extends FeedMetaDataNullable | FeedMetaData>(
   source.icon && (metaData.icon = source.icon)
   // TODO: mapStyle
   return metaData
+}
+
+export interface FeedEditState {
+  originalFeed: FeedExpanded | null
+  availableServices: Service[]
+  selectedService: Service | null
+  availableTopics: FeedTopic[]
+  selectedTopic: FeedTopic | null
+  fetchParameters: any | null
+  itemPropertiesSchema: any | null
+  topicMetaData: FeedMetaData | null
+  feedMetaData: FeedMetaData | null
+  preview: FeedPreview | null
+}
+
+export type FeedPost = Partial<Omit<Feed, 'service' | 'topic'>> & Pick<Feed, 'service' | 'topic'>
+
+export const feedPostFromEditState = (state: FeedEditState): FeedPost => {
+  const post: FeedPost = {
+    service: state.selectedService.id,
+    topic: state.selectedTopic.id,
+    ...feedMetaDataLean(state.feedMetaData || {})
+  }
+  if (state.originalFeed) {
+    post.id = state.originalFeed.id
+  }
+  if (state.fetchParameters) {
+    post.constantParams = state.fetchParameters
+  }
+  if (state.itemPropertiesSchema) {
+    post.itemPropertiesSchema = state.itemPropertiesSchema
+  }
+  return post
 }
