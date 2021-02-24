@@ -30,7 +30,7 @@
     "start": "ng serve",
     "build": "ng build --prod=false",
     "ng": "ng",
-    "test": "ng test",
+    "test": "ng test --codeCoverage=false",
     "test-headless": "ng test --watch=false --browsers=ChromeHeadless",
     "lint": "ng lint",
     "e2e": "ng e2e",
