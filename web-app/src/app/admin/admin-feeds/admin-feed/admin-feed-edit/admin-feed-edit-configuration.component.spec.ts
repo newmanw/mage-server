@@ -5,6 +5,7 @@ import { FormsModule, ReactiveFormsModule } from '@angular/forms'
 import { MatAutocompleteModule, MatCheckboxModule, MatExpansionModule, MatFormFieldModule, MatInputModule } from '@angular/material';
 import { By } from '@angular/platform-browser'
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import { FeedTopic } from '../../../../feed/feed.model'
 import { JsonSchemaComponent } from '../../../../json-schema/json-schema.component';
 import { AdminFeedEditConfigurationComponent } from './admin-feed-edit-configuration.component';
 import { FeedMetaData, FeedMetaDataNullable } from './feed-edit.model'
@@ -12,16 +13,16 @@ import { FeedMetaDataBooleanKeys } from './feed-edit.model.spec'
 
 const debounceTime = 500
 
-describe('FeedMetaDataComponent', () => {
+fdescribe('FeedMetaDataComponent', () => {
 
   @Component({
     selector: 'test-feed-meta-data-host',
     template: `
-      <app-feed-configuration #target [topicMetaData]="topicMetaData" [feedMetaData]="feedMetaData"></app-feed-configuration>
+      <app-feed-configuration #target [topic]="topic" [feedMetaData]="feedMetaData"></app-feed-configuration>
       `,
   })
   class TestFeedMetaDataHostComponent {
-    topicMetaData: FeedMetaData | null = null
+    topic: FeedTopic | null = null
     feedMetaData: FeedMetaData | null = null
   }
 
@@ -208,11 +209,15 @@ describe('FeedMetaDataComponent', () => {
 
     it('sets boolean checkboxes from topic meta-data when not present in feed meta-data', () => {
 
-      const topicMetaData: Required<Pick<FeedMetaData, FeedMetaDataBooleanKeys>> = {
+      const topicMetaData: Required<Pick<FeedTopic, FeedMetaDataBooleanKeys>> = {
         itemsHaveIdentity: true,
         itemsHaveSpatialDimension: true
       }
-      host.topicMetaData = topicMetaData
+      host.topic = {
+        id: 'topic1',
+        title: 'Topic 1',
+        ...topicMetaData
+      }
       host.feedMetaData = {}
       fixture.detectChanges()
 
@@ -241,7 +246,11 @@ describe('FeedMetaDataComponent', () => {
         itemsHaveSpatialDimension: false
       }
 
-      host.topicMetaData = topicMetaData
+      host.topic = {
+        id: 'topic1',
+        title: 'Topic 1',
+        ...topicMetaData
+      }
       host.feedMetaData = feedMetaData
       fixture.detectChanges()
 
@@ -264,7 +273,11 @@ describe('FeedMetaDataComponent', () => {
         itemsHaveIdentity: false,
         itemsHaveSpatialDimension: false
       }
-      host.topicMetaData = topicMetaData
+      host.topic = {
+        id: 'topic1',
+        title: 'Topic 1',
+        ...topicMetaData
+      }
       host.feedMetaData = feedMetaDataWithCheckboxKeys
       fixture.detectChanges()
 
@@ -308,7 +321,11 @@ describe('FeedMetaDataComponent', () => {
         itemsHaveIdentity: true,
         itemsHaveSpatialDimension: true
       })
-      host.topicMetaData = topicMetaData
+      host.topic = {
+        id: 'topic1',
+        title: 'Topic 1',
+        ...topicMetaData
+      }
       fixture.detectChanges()
 
       expect(target.feedMetaData).toBeNull()

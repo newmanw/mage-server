@@ -21,7 +21,6 @@ const freshState = (): Readonly<FeedEditState> => {
     selectedTopic: null,
     fetchParameters: null,
     itemPropertiesSchema: null,
-    topicMetaData: null,
     feedMetaData: null,
     preview: null
   })
@@ -66,7 +65,6 @@ export class FeedEditService {
           selectedTopic: topic,
           fetchParameters: feed.constantParams || null,
           itemPropertiesSchema: feed.itemPropertiesSchema || null,
-          topicMetaData: feedMetaDataLean(topic),
           feedMetaData: feedMetaDataLean(feed)
         }
         this.patchState(patch)
@@ -143,7 +141,6 @@ export class FeedEditService {
     const patch: StatePatch = {
       selectedTopic: topic,
       itemPropertiesSchema: null,
-      topicMetaData: topic ? feedMetaDataLean(topic) : null,
       fetchParameters: null,
       feedMetaData: null,
       preview: null

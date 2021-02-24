@@ -53,7 +53,6 @@ export interface FeedEditState {
   selectedTopic: FeedTopic | null
   fetchParameters: any | null
   itemPropertiesSchema: any | null
-  topicMetaData: FeedMetaData | null
   feedMetaData: FeedMetaData | null
   preview: FeedPreview | null
 }

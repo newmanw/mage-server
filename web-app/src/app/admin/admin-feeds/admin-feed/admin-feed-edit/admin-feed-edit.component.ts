@@ -34,7 +34,6 @@ export class AdminFeedEditComponent implements OnInit {
     selectedTopic: null,
     fetchParameters: null,
     itemPropertiesSchema: null,
-    topicMetaData: null,
     feedMetaData: null,
     preview: null
   }
@@ -102,11 +101,11 @@ export class AdminFeedEditComponent implements OnInit {
     };
   }
 
-  serviceSelected(service: Service): void {
+  onServiceSelected(service: Service): void {
     this.feedEdit.selectService(service.id)
   }
 
-  topicSelected(topic: FeedTopic): void {
+  onTopicSelected(topic: FeedTopic): void {
     this.feedEdit.selectTopic(topic.id)
     if (topic) {
       this.nextStep();

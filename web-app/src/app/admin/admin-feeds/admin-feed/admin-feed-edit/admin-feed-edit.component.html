@@ -2,9 +2,9 @@
   <admin-breadcrumb [breadcrumbs]="breadcrumbs"></admin-breadcrumb>
 
   <div class="page-container">
-    <div class="header" *ngIf="feed">
-      <img class="icon" *ngIf="feed.mapStyle?.iconUrl" [src]="feed.mapStyle?.iconUrl"/>
-      <span class="header__title">{{feed.title}}</span>
+    <div class="header" *ngIf="editState.originalFeed">
+      <img class="icon" *ngIf="editState.originalFeed.mapStyle?.iconUrl" [src]="editState.originalFeed.mapStyle?.iconUrl"/>
+      <span class="header__title">{{editState.originalFeed.title}}</span>
     </div>
 
     <div class="page-content">
@@ -16,7 +16,7 @@
           <app-choose-service-topic *ngIf="!editState.originalFeed"
             [services]="editState.availableServices" [topics]="editState.availableTopics"
             [selectedService]="editState.selectedService" [expanded]="step === 0"
-            (opened)="setStep(0)" (serviceSelected)="serviceSelected($event)" (topicSelected)="topicSelected($event)"
+            (opened)="setStep(0)" (serviceSelected)="onServiceSelected($event)" (topicSelected)="onTopicSelected($event)"
             (noServicesExist)="noServicesExist()">
           </app-choose-service-topic>
           <app-topic-configuration [expanded]="step === 1" [showPrevious]="!editState.originalFeed" (opened)="setStep(1)" (cancelled)="setStep(0)"
@@ -30,7 +30,8 @@
             (itemPropertiesSchemaChanged)="onItemPropertiesSchemaChanged($event)"
             (itemPropertiesSchemaAccepted)="onItemPropertiesSchemaAccepted($event)">
           </app-feed-item-properties-configuration>
-          <app-feed-configuration [expanded]="step === 3" [buttonText]="feed ? 'Update Feed' : 'Create Feed'"
+          <app-feed-configuration [expanded]="step === 3" [buttonText]="editState.originalFeed ? 'Update Feed' : 'Create Feed'"
+            [topic]="editState.selectedTopic"
             [itemPropertiesSchema]="editState.itemPropertiesSchema"
             [feedMetaData]="editState.feedMetaData"
             (opened)="setStep(3)" (cancelled)="setStep(2)"
@@ -40,11 +41,11 @@
         </mat-accordion>
       </div>
       <div class="feed__preview">
-        <div *ngIf="preview else elseBlockPreview">
+        <div *ngIf="editState.preview else elseBlockPreview">
           <div class="preview--list">
             <mat-nav-list>
-              <div *ngFor="let feature of preview?.content?.items?.features | slice:0:10">
-                <feed-item-summary [item]="feature" [feed]="preview.feed"></feed-item-summary>
+              <div *ngFor="let feature of editState.preview?.content?.items?.features | slice:0:10">
+                <feed-item-summary [item]="feature" [feed]="editState.preview.feed"></feed-item-summary>
                 <mat-divider></mat-divider>
               </div>
             </mat-nav-list>

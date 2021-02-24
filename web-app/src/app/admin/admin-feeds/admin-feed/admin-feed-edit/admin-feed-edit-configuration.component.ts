@@ -1,6 +1,7 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms'
 import { debounceTime } from 'rxjs/operators'
+import { FeedTopic } from 'src/app/feed/feed.model'
 import { FeedMetaData, feedMetaDataLean, FeedMetaDataNullable } from './feed-edit.model'
 
 export type IconModel = Readonly<
@@ -20,10 +21,10 @@ export interface MapStyle {
 })
 export class AdminFeedEditConfigurationComponent implements OnInit, OnChanges {
 
-  @Input() expanded: boolean;
+  @Input() topic: FeedTopic | null;
   @Input() itemPropertiesSchema: any;
-  @Input() topicMetaData: FeedMetaData | null;
   @Input() feedMetaData: FeedMetaData | null;
+  @Input() expanded: boolean;
   @Input() buttonText: string;
   @Output() feedMetaDataAccepted = new EventEmitter<any>();
   @Output() feedMetaDataChanged = new EventEmitter<FeedMetaData>();
@@ -71,7 +72,7 @@ export class AdminFeedEditConfigurationComponent implements OnInit, OnChanges {
         this.feedMetaDataForm.reset(clear, { emitEvent: false })
       }
     }
-    if (changes.topicMetaData || changes.feedMetaData) {
+    if (changes.topic || changes.feedMetaData) {
       this.updateCheckboxesFromTopicForUnspecifiedMetaDataKeys()
     }
   }
@@ -89,7 +90,7 @@ export class AdminFeedEditConfigurationComponent implements OnInit, OnChanges {
    * potentially user-confusing `indeterminate` state on checkboxes.
    */
   private updateCheckboxesFromTopicForUnspecifiedMetaDataKeys() {
-    const topicMetaData = this.topicMetaData || {}
+    const topicMetaData = this.topic ? feedMetaDataLean(this.topic) : {}
     const feedMetaData = this.feedMetaData || {}
     const checkboxes: Pick<FeedMetaData, keyof typeof checkboxKeys> = {}
     for (const key of Object.getOwnPropertyNames(checkboxKeys)) {

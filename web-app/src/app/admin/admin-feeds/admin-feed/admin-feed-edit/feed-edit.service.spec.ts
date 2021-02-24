@@ -15,7 +15,6 @@ const emptyState: Readonly<FeedEditState> = Object.freeze({
   selectedTopic: null,
   fetchParameters: null,
   itemPropertiesSchema: null,
-  topicMetaData: null,
   feedMetaData: null,
   preview: null,
 })
@@ -174,7 +173,6 @@ class FeedEditChangeRecorder implements FeedEditStateObservers {
   selectedTopic: Recorder<FeedTopic | null>
   fetchParameters: Recorder<any | null>
   itemPropertiesSchema: Recorder<any | null>
-  topicMetaData: Recorder<FeedMetaData | null>
   feedMetaData: Recorder<FeedMetaData | null>
   preview: Recorder<FeedPreview | null>
 
@@ -187,7 +185,6 @@ class FeedEditChangeRecorder implements FeedEditStateObservers {
     this.selectedTopic = Recorder.of(feedEdit.state$.pipe(pluck('selectedTopic'), distinctUntilChangedCheckEmpty()))
     this.fetchParameters = Recorder.of(feedEdit.state$.pipe(pluck('fetchParameters'), distinctUntilChangedCheckEmpty()))
     this.itemPropertiesSchema = Recorder.of(feedEdit.state$.pipe(pluck('itemPropertiesSchema'), distinctUntilChangedCheckEmpty()))
-    this.topicMetaData = Recorder.of(feedEdit.state$.pipe(pluck('topicMetaData'), distinctUntilChangedCheckEmpty()))
     this.feedMetaData = Recorder.of(feedEdit.state$.pipe(pluck('feedMetaData'), distinctUntilChangedCheckEmpty()))
     this.preview = Recorder.of(feedEdit.state$.pipe(pluck('preview'), distinctUntilChangedCheckEmpty()))
   }
@@ -201,14 +198,13 @@ class FeedEditChangeRecorder implements FeedEditStateObservers {
       selectedTopic: this.selectedTopic.observed,
       fetchParameters: this.fetchParameters.observed,
       itemPropertiesSchema: this.itemPropertiesSchema.observed,
-      topicMetaData: this.topicMetaData.observed,
       feedMetaData: this.feedMetaData.observed,
       preview: this.preview.observed
     }
   }
 }
 
-describe('FeedEditService', () => {
+fdescribe('FeedEditService', () => {
 
   let feedEdit: FeedEditService
   let stateChanges: FeedEditChangeRecorder
@@ -314,12 +310,10 @@ describe('FeedEditService', () => {
         selectedTopic: topic,
         fetchParameters: null,
         itemPropertiesSchema: null,
-        topicMetaData: feedMetaDataLean(topic),
         feedMetaData: null,
         preview: null
       })
       expect(stateChanges.selectedTopic.latest).toEqual(topic)
-      expect(stateChanges.topicMetaData.latest).toEqual(feedMetaDataLean(topic))
     })
 
     it('resets the fetch parameters, item properties schema, feed meta-data, and preview when the selected topic changes', () => {
@@ -354,7 +348,6 @@ describe('FeedEditService', () => {
         availableTopics: topics,
         selectedTopic: topics[0],
         fetchParameters,
-        topicMetaData: feedMetaDataLean(topics[0]),
         feedMetaData,
         itemPropertiesSchema: {
           properties: {
@@ -377,7 +370,6 @@ describe('FeedEditService', () => {
         selectedTopic: topics[1],
         itemPropertiesSchema: null,
         fetchParameters: null,
-        topicMetaData: feedMetaDataLean(topics[1]),
         feedMetaData: null,
         originalFeed: null,
         preview: null
@@ -398,7 +390,6 @@ describe('FeedEditService', () => {
         selectedTopic: topicsForService[services[0].id][0],
         fetchParameters: { firstService: true },
         itemPropertiesSchema: { properties: { test: { type: 'boolean', title: 'Test' }}},
-        topicMetaData: feedMetaDataLean(topicsForService[services[0].id][0]),
         feedMetaData: { title: 'Test', itemPrimaryProperty: 'test' },
         originalFeed: null,
         preview: emptyPreview
@@ -475,7 +466,6 @@ describe('FeedEditService', () => {
         selectedTopic: topicsForService[services[0].id][0],
         fetchParameters: { firstService: true },
         itemPropertiesSchema: { properties: { test: { type: 'boolean', title: 'Test' }}},
-        topicMetaData: feedMetaDataLean(topicsForService[services[0].id][0]),
         feedMetaData: { title: 'Test', itemPrimaryProperty: 'test' },
         originalFeed: null,
         preview: emptyPreview
@@ -591,7 +581,6 @@ describe('FeedEditService', () => {
         originalFeed: fetchedFeed,
         fetchParameters: fetchedFeed.constantParams,
         itemPropertiesSchema: fetchedFeed.itemPropertiesSchema,
-        topicMetaData: feedMetaDataLean(fetchedFeed.topic),
         feedMetaData: feedMetaDataLean(fetchedFeed),
         preview: emptyPreview
       }
@@ -641,7 +630,6 @@ describe('FeedEditService', () => {
           selectedService: feed.service,
           availableTopics: [ feed.topic ],
           selectedTopic: feed.topic,
-          topicMetaData: feedMetaDataLean(feed.topic),
           feedMetaData: feedMetaDataLean(feed)
         },
         {
@@ -651,7 +639,6 @@ describe('FeedEditService', () => {
           selectedService: feed.service,
           availableTopics: [ feed.topic ],
           selectedTopic: feed.topic,
-          topicMetaData: feedMetaDataLean(feed.topic),
           feedMetaData: feedMetaDataLean(feed),
           preview: emptyPreview,
         }
@@ -702,7 +689,6 @@ describe('FeedEditService', () => {
           selectedService: feed.service,
           availableTopics: [ feed.topic ],
           selectedTopic: feed.topic,
-          topicMetaData: feedMetaDataLean(feed.topic),
           feedMetaData: feedMetaDataLean(feed)
         },
         {
@@ -712,7 +698,6 @@ describe('FeedEditService', () => {
           selectedService: feed.service,
           availableTopics: [ feed.topic ],
           selectedTopic: feed.topic,
-          topicMetaData: feedMetaDataLean(feed.topic),
           feedMetaData: feedMetaDataLean(feed),
           preview: emptyPreview,
         }

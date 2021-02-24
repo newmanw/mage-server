@@ -197,7 +197,6 @@ describe('feedPostFromEditState', () => {
       availableTopics: [],
       selectedService: service,
       selectedTopic: topic,
-      topicMetaData: feedMetaDataLean(topic),
       feedMetaData,
       fetchParameters: { test: 'yes' },
       itemPropertiesSchema: {
@@ -260,7 +259,6 @@ describe('feedPostFromEditState', () => {
       availableTopics: [],
       selectedService: service,
       selectedTopic: topic,
-      topicMetaData: feedMetaDataLean(topic),
       feedMetaData: null,
       fetchParameters: null,
       itemPropertiesSchema: null,
