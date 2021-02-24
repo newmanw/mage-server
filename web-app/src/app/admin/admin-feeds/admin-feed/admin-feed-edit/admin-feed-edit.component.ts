@@ -20,12 +20,8 @@ export class AdminFeedEditComponent implements OnInit {
       name: 'admin.feeds'
     }
   }]
-
-  hasFeedDeletePermission: boolean;
-
-
   step = 0;
-
+  hasFeedDeletePermission: boolean;
   editState: FeedEditState = {
     originalFeed: null,
     availableServices: [],
