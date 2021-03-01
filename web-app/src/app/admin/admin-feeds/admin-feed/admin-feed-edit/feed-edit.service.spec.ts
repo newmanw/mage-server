@@ -204,7 +204,7 @@ class FeedEditChangeRecorder implements FeedEditStateObservers {
   }
 }
 
-fdescribe('FeedEditService', () => {
+describe('FeedEditService', () => {
 
   let feedEdit: FeedEditService
   let stateChanges: FeedEditChangeRecorder

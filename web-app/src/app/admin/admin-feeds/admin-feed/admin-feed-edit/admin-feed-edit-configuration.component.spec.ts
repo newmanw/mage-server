@@ -13,7 +13,7 @@ import { FeedMetaDataBooleanKeys } from './feed-edit.model.spec'
 
 const debounceTime = 500
 
-fdescribe('FeedMetaDataComponent', () => {
+describe('FeedMetaDataComponent', () => {
 
   @Component({
     selector: 'test-feed-meta-data-host',
