@@ -1,7 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { FeedTopic, Service } from 'src/app/feed/feed.model';
-import { FeedService } from 'src/app/feed/feed.service';
 
 @Component({
   selector: 'app-choose-service-topic',
@@ -24,7 +23,7 @@ export class AdminFeedEditTopicComponent implements OnInit, OnChanges {
   serviceSearchControl: FormControl = new FormControl();
   topicSearchControl: FormControl = new FormControl();
 
-  constructor(private feedService: FeedService) {
+  constructor() {
     this.services = [];
     this.topics = [];
   }

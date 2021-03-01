@@ -26,9 +26,10 @@
             (fetchParametersAccepted)="onFetchParametersAccepted($event)">
           </app-topic-configuration>
           <app-feed-item-properties-configuration [expanded]="step === 2" (opened)="setStep(2)" (cancelled)="setStep(1)"
-            [itemPropertiesSchema]="editState.itemPropertiesSchema"
-            (itemPropertiesSchemaChanged)="onItemPropertiesSchemaChanged($event)"
-            (itemPropertiesSchemaAccepted)="onItemPropertiesSchemaAccepted($event)">
+            [topicSchema]="editState.selectedTopic?.itemPropertiesSchema || null"
+            [feedSchema]="editState.itemPropertiesSchema"
+            (feedSchemaChanged)="onItemPropertiesSchemaChanged($event)"
+            (feedSchemaAccepted)="onItemPropertiesSchemaAccepted($event)">
           </app-feed-item-properties-configuration>
           <app-feed-configuration [expanded]="step === 3" [buttonText]="editState.originalFeed ? 'Update Feed' : 'Create Feed'"
             [topic]="editState.selectedTopic"

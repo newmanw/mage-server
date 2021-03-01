@@ -4,13 +4,13 @@
     <mat-panel-description>
     </mat-panel-description>
   </mat-expansion-panel-header>
-  <div class="item-property-list" [formGroup]="itemPropertiesForm">
+  <div class="item-property-list" [formGroup]="schemaForm">
     <span class="item-property-key-heading">Property Key (Type)</span><span class="item-property-title-heading">Display Title</span>
-    <ng-container *ngFor="let propertySchema of itemPropertiesSchemas">
-      <span class="item-property-key">{{propertySchema.key}} ({{propertySchema.schema.type}}):</span>
+    <ng-container *ngFor="let propertyForm of schemaForm.controls">
+      <span class="item-property-key">{{propertyForm.value.key}} ({{propertyForm.value.schema.type}}):</span>
       <div class="item-property-title">
         <mat-form-field>
-          <input type="text" matInput [formControl]="itemPropertiesForm.get([propertySchema.key, 'schema', 'title'])"/>
+          <input type="text" matInput [formControl]="propertyForm.get(['schema', 'title'])"/>
         </mat-form-field>
       </div>
     </ng-container>
