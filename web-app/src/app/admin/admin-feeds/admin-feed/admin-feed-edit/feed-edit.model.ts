@@ -57,6 +57,20 @@ export interface FeedEditState {
   preview: FeedPreview | null
 }
 
+export const freshEditState = (): Readonly<FeedEditState> => {
+  return Object.freeze({
+    originalFeed: null,
+    availableServices: [],
+    selectedService: null,
+    availableTopics: [],
+    selectedTopic: null,
+    fetchParameters: null,
+    itemPropertiesSchema: null,
+    feedMetaData: null,
+    preview: null
+  })
+}
+
 export type FeedPost = Partial<Omit<Feed, 'service' | 'topic'>> & Pick<Feed, 'service' | 'topic'>
 
 export const feedPostFromEditState = (state: FeedEditState): FeedPost => {

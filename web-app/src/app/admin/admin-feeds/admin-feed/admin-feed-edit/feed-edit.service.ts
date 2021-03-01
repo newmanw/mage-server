@@ -3,7 +3,7 @@ import * as _ from 'lodash'
 import { BehaviorSubject, Observable, PartialObserver } from 'rxjs'
 import { FeedTopic, Service } from '../../../../feed/feed.model'
 import { FeedPreviewOptions, FeedService } from '../../../../feed/feed.service'
-import { FeedEditState, FeedMetaData, feedMetaDataLean, feedPostFromEditState } from './feed-edit.model'
+import { FeedEditState, FeedMetaData, feedMetaDataLean, feedPostFromEditState, freshEditState } from './feed-edit.model'
 
 
 export type FeedEditStateObservers = {
@@ -12,27 +12,13 @@ export type FeedEditStateObservers = {
 
 type StatePatch = Partial<FeedEditState>
 
-const freshState = (): Readonly<FeedEditState> => {
-  return Object.freeze({
-    originalFeed: null,
-    availableServices: [],
-    selectedService: null,
-    availableTopics: [],
-    selectedTopic: null,
-    fetchParameters: null,
-    itemPropertiesSchema: null,
-    feedMetaData: null,
-    preview: null
-  })
-}
-
 /**
  * This is a stateful service that implements the process of creating or
  * editing a feed.
  */
 export class FeedEditService {
 
-  private stateSubject = new BehaviorSubject<FeedEditState>(freshState())
+  private stateSubject = new BehaviorSubject<FeedEditState>(freshEditState())
   private _state$ = this.stateSubject.pipe()
 
   private patchState(patch: StatePatch) {
@@ -103,7 +89,7 @@ export class FeedEditService {
     if (!patchService && !nextAvailableServices) {
       return
     }
-    const patch: StatePatch = { ...freshState() }
+    const patch: StatePatch = { ...freshEditState() }
     patch.availableServices = services
     if (patchService) {
       patch.selectedService = nextService
@@ -184,7 +170,7 @@ export class FeedEditService {
   }
 
   private resetState(): void {
-    this.patchState(freshState())
+    this.patchState(freshEditState())
   }
 
   private resetAndFetchServices(serviceIdToSelect?: string | null): void {
