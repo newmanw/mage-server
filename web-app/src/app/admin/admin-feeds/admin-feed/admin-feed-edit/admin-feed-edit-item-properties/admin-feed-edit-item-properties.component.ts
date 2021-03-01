@@ -1,7 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { FormArray, FormControl, FormGroup } from '@angular/forms'
 import * as _ from 'lodash'
-import { Subscription } from 'rxjs'
 import { debounceTime, filter } from 'rxjs/operators'
 
 type JsonSchemaPropertyType = 'string' | 'number' | 'integer' | 'boolean' | 'null'
@@ -52,16 +51,6 @@ export class AdminFeedEditItemPropertiesComponent implements OnInit, OnChanges {
   @Output() cancelled = new EventEmitter<void>();
   @Output() opened = new EventEmitter<void>();
 
-  newProperty: KeyedPropertySchema = {
-    key: '',
-    schema: {
-      type: null,
-      title: null,
-      description: null,
-      format: null
-    }
-  }
-  valid: boolean = false
   readonly schemaForm: FormArray = new FormArray([])
   readonly changeDebounceInterval = 500
 
@@ -74,12 +63,11 @@ export class AdminFeedEditItemPropertiesComponent implements OnInit, OnChanges {
         debounceTime(500)
       )
       .subscribe((x: SchemaFormValue) => {
-        this.feedSchema = applyFormValueToSchema(x, this.feedSchema)
+        this.applyFormValueToSchema()
         this.feedSchemaChanged.emit(this.feedSchema)
       })
     this.buildFreshForm()
   }
-
 
   ngOnChanges(changes: SimpleChanges): void {
     this.schemaChangesEnabled = false
@@ -100,29 +88,27 @@ export class AdminFeedEditItemPropertiesComponent implements OnInit, OnChanges {
 
   closed(): void { }
 
-  isValid(valid: boolean): void {
-    this.valid = valid;
-  }
-
-  addProperty(): void {
-    // TODO: revisit this later if we find it is necessary
-    // this.initialProperties.push(this.newProperty);
-    // this.propertiesChanged(this.newProperty, this.initialProperties.length - 1);
-    // this.newProperty = {};
-  }
-
   prevStep(): void {
-    // TODO should probably save properties changes here
     this.cancelled.emit();
   }
 
   nextStep(): void {
-    this.feedSchemaAccepted.emit(this.feedSchema);
+    if (this.schemaForm.dirty) {
+      this.applyFormValueToSchema()
+      this.feedSchemaAccepted.emit(this.feedSchema)
+    }
+    else {
+      this.feedSchemaAccepted.emit(null)
+    }
   }
 
   private buildFreshForm() {
     this.schemaForm.clear()
     syncPropertiesFormToSchemaProperties(this.schemaForm, this.feedSchema || this.topicSchema)
+  }
+
+  private applyFormValueToSchema() {
+    this.feedSchema = applyFormValueToSchema(this.schemaForm.value, this.feedSchema || this.topicSchema)
   }
 }
 
@@ -169,8 +155,11 @@ function formGroupForPropertySchema(key: string, schema: SimplePropertyJsonSchem
   return schemaForm
 }
 
-function applyFormValueToSchema(schemaFormValue: SchemaFormValue, schema: SimpleJsonSchema | null): SimpleJsonSchema {
-  schema = { ...schema } || { type: 'object', properties: {} }
+function applyFormValueToSchema(schemaFormValue: SchemaFormValue, schema: SimpleJsonSchema | null): SimpleJsonSchema | null {
+  if (!schema) {
+    return null
+  }
+  schema = { ...schema }
   const properties = schema.properties = { ...schema.properties } || {}
   for (const propertyFormValue of schemaFormValue) {
     const key = propertyFormValue.key

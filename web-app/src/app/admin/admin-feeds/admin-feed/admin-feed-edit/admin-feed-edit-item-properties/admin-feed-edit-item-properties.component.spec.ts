@@ -1,7 +1,7 @@
 import { JsonSchemaFormModule } from '@ajsf/core';
 import { Component, ViewChild } from '@angular/core';
-import { async, ComponentFixture, fakeAsync, TestBed, tick } from '@angular/core/testing';
-import { FormArray, FormGroup, FormsModule, ReactiveFormsModule } from '@angular/forms'
+import { async, ComponentFixture, TestBed } from '@angular/core/testing';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms'
 import {
   MatCardModule,
   MatDividerModule,
@@ -9,11 +9,43 @@ import {
   MatFormFieldModule,
   MatInputModule
 } from '@angular/material';
+import { By } from '@angular/platform-browser'
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import * as _ from 'lodash'
 import { JsonSchemaModule } from 'src/app/json-schema/json-schema.module';
-import { AdminFeedEditItemPropertiesComponent, KeyedPropertySchema, SchemaFormValue, SimpleJsonSchema, SimplePropertyJsonSchema } from './admin-feed-edit-item-properties.component';
+import { AdminFeedEditItemPropertiesComponent, SchemaFormValue, SimpleJsonSchema, SimplePropertyJsonSchema } from './admin-feed-edit-item-properties.component';
 
-describe('AdminFeedEditItemPropertiesComponent', () => {
+
+const topicSchema = Object.freeze({
+  type: 'object',
+  properties: {
+    date: {
+      title: 'Date Of Occurrence',
+      type: 'string',
+      format: 'date-time',
+      pattern: 'dddd-dd-dd'
+    },
+    reference: { title: 'Reference Number', type: 'string' },
+    subreg: { title: 'Geographical Subregion', type: 'number' },
+    description: { title: 'Description', type: 'string' },
+    hostilityVictim: { title: 'Aggressor-Victim', type: 'string' },
+    hostility: { title: 'Agressor', type: 'string' },
+    victim: { title: 'Victim', type: 'string' },
+    navArea: { title: 'Navigation Area', type: 'string' },
+    position: {
+      title: 'Position',
+      type: 'string',
+    },
+    timestamp: {
+      title: 'Date Of Occurrence',
+      type: 'number',
+    }
+  }
+})
+
+
+fdescribe('AdminFeedEditItemPropertiesComponent', () => {
+
   @Component({
     selector: 'app-host-component',
     template: `
@@ -34,93 +66,9 @@ describe('AdminFeedEditItemPropertiesComponent', () => {
     public target: AdminFeedEditItemPropertiesComponent
   }
 
-  let host: TestHostComponent;
-  let target: AdminFeedEditItemPropertiesComponent;
-  let fixture: ComponentFixture<TestHostComponent>;
-
-  const feedItemPropertiesSchema = {
-    type: 'object',
-    properties: {
-      newProperty: {
-        title: 'New Property',
-        type: 'string'
-      },
-      date: {
-        title: 'Date It Happened',
-        type: 'string',
-        format: 'date-time'
-      },
-      reference: { title: 'Reference Number', type: 'string' },
-      subreg: { title: 'Geographical Subregion', type: 'number' },
-      description: { title: 'Description', type: 'string' },
-      hostilityVictim: { title: 'Aggressor-Victim', type: 'string' },
-      hostility: { title: 'Agressor', type: 'string' },
-      victim: { title: 'Victim', type: 'string' },
-      navArea: { title: 'Navigation Area', type: 'string' },
-      position: {
-        title: 'Position',
-        type: 'string',
-      },
-      timestamp: {
-        title: 'Date Of Occurrence',
-        type: 'number',
-        format: 'date-time'
-      }
-    }
-  } as SimpleJsonSchema
-
-  const topicSchema = {
-    type: 'object',
-    properties: {
-      date: {
-        title: 'Date Of Occurrence',
-        type: 'string',
-        format: 'date-time',
-        pattern: 'dddd-dd-dd'
-      },
-      reference: { title: 'Reference Number', type: 'string' },
-      subreg: { title: 'Geographical Subregion', type: 'number' },
-      description: { title: 'Description', type: 'string' },
-      hostilityVictim: { title: 'Aggressor-Victim', type: 'string' },
-      hostility: { title: 'Agressor', type: 'string' },
-      victim: { title: 'Victim', type: 'string' },
-      navArea: { title: 'Navigation Area', type: 'string' },
-      position: {
-        title: 'Position',
-        type: 'string',
-      },
-      timestamp: {
-        title: 'Date Of Occurrence',
-        type: 'number',
-      }
-    }
-  } as SimpleJsonSchema;
-
-  const topic = {
-    id: 'asam',
-    title: 'ASAMs',
-    summary: 'summary',
-    paramsSchema: {
-      type: 'object',
-      properties: {
-        newerThanDays: {
-          type: 'number',
-          default: 56
-        }
-      }
-    },
-    itemsHaveIdentity: true,
-    itemsHaveSpatialDimension: true,
-    itemPrimaryProperty: 'description',
-    itemSecondaryProperty: 'hostilityVictim',
-    itemTemporalProperty: 'timestamp',
-    updateFrequencySeconds: 915,
-    mapStyle: {
-      iconUrl: 'https://mage-msi.geointservices.io/icons/asam.png'
-    },
-    itemPropertiesSchema: topicSchema
-  };
-
+  let host: TestHostComponent
+  let target: AdminFeedEditItemPropertiesComponent
+  let fixture: ComponentFixture<TestHostComponent>
   let tickPastDebounce: () => void
 
   beforeEach(async(() => {
@@ -573,16 +521,78 @@ describe('AdminFeedEditItemPropertiesComponent', () => {
           })
         ]
         expect(formChanges).toEqual(expectedFormChanges)
+        expect(target.feedSchema).toBeNull()
 
         tickPastDebounce()
 
-        expect(schemaChanges).toEqual([
-          {
-            properties: {
-              prop1: { type: 'string', title: 'Prop 1 Mod' }
+        expect(target.feedSchema).toEqual({
+          properties: {
+            prop1: { type: 'string', title: 'Prop 1 Mod' }
+          }
+        })
+        expect(schemaChanges).toEqual([ target.feedSchema ])
+      })
+
+      it('retains extra properties from topic schema in emitted schema changes', () => {
+
+        const extendedSchema = {
+          type: 'object',
+          extraInfo: {
+            more: true
+          },
+          properties: {
+            prop1: {
+              type: 'string',
+              title: 'Prop 1',
+              extra: true
             }
           }
-        ])
+        }
+        host.topicSchema = extendedSchema as SimpleJsonSchema
+        fixture.detectChanges()
+        tickPastDebounce()
+
+        expect(schemaChanges).toEqual([])
+
+        target.schemaForm.get([0, 'schema', 'title']).setValue('Prop 1 M')
+        target.schemaForm.get([0, 'schema', 'title']).setValue('Prop 1 Mod')
+
+        const expectedFormChanges: SchemaFormValue[] = [
+          formValueForSchema(extendedSchema as SimpleJsonSchema),
+          formValueForSchema({
+            type: 'object',
+            extraInfo: {
+              more: true
+            },
+            properties: {
+              prop1: { type: 'string', title: 'Prop 1 M', extra: true }
+            }
+          } as SimpleJsonSchema),
+          formValueForSchema({
+            type: 'object',
+            extraInfo: {
+              more: true
+            },
+            properties: {
+              prop1: { type: 'string', title: 'Prop 1 Mod', extra: true }
+            }
+          } as SimpleJsonSchema)
+        ]
+        expect(formChanges).toEqual(expectedFormChanges)
+        expect(target.feedSchema).toBeNull()
+
+        tickPastDebounce()
+
+        expect(target.feedSchema).toEqual({
+          type: 'object',
+          extraInfo: {
+            more: true
+          },
+          properties: {
+            prop1: { type: 'string', title: 'Prop 1 Mod', extra: true }
+          }
+        } as SimpleJsonSchema)
+        expect(schemaChanges).toEqual([ target.feedSchema ])
       })
 
       it('does not emit a change when populating the form from the topic schema', () => {
@@ -706,20 +716,206 @@ describe('AdminFeedEditItemPropertiesComponent', () => {
       })
     })
   })
-});
+
+  describe('accepting the schema', () => {
+
+    let accepted: SimpleJsonSchema[]
+
+    beforeEach(() => {
+      jasmine.clock().install()
+      accepted = []
+      target.feedSchemaAccepted.subscribe(x => {
+        accepted.push(x)
+      })
+    })
+
+    afterEach(() => {
+      jasmine.clock().uninstall()
+    })
+
+    it('emits a null schema if the user never changed the form from the topic schema', () => {
+
+      host.topicSchema = topicSchema as SimpleJsonSchema
+      fixture.detectChanges()
+      tickPastDebounce()
+
+      expect(target.schemaForm.value).toEqual(formValueForSchema(topicSchema as SimpleJsonSchema))
+      expect(accepted).toEqual([])
+
+      target.nextStep()
+
+      expect(accepted).toEqual([ null ])
+    })
+
+    it('emits a null schema if the user never changed the form from the feed schema', () => {
+
+      host.topicSchema = topicSchema as SimpleJsonSchema
+      host.feedSchema = topicSchema as SimpleJsonSchema
+      fixture.detectChanges()
+      tickPastDebounce()
+
+      expect(target.schemaForm.value).toEqual(formValueForSchema(topicSchema as SimpleJsonSchema))
+      expect(accepted).toEqual([])
+
+      target.nextStep()
+
+      expect(accepted).toEqual([ null ])
+    })
+
+    it('emits the schema with changed form values applied', () => {
+
+      host.topicSchema = topicSchema as SimpleJsonSchema
+      host.feedSchema = topicSchema as SimpleJsonSchema
+      fixture.detectChanges()
+      tickPastDebounce()
+
+      expect(target.schemaForm.value).toEqual(formValueForSchema(topicSchema as SimpleJsonSchema))
+      expect(accepted).toEqual([])
+
+      const titleInputOrder = formValueForSchema(topicSchema as SimpleJsonSchema)
+      const allTitleInputs = fixture.debugElement.queryAll(By.css('.item-property-title input'))
+      const timestampInput = allTitleInputs[titleInputOrder.findIndex(x => x.key === 'timestamp')].nativeElement as HTMLInputElement
+      const referenceInput = allTitleInputs[titleInputOrder.findIndex(x => x.key === 'reference')].nativeElement as HTMLInputElement
+      timestampInput.value = 'Mod ' + timestampInput.value
+      referenceInput.value = 'Mod ' + referenceInput.value
+      timestampInput.dispatchEvent(new Event('input'))
+      referenceInput.dispatchEvent(new Event('input'))
+      tickPastDebounce()
+
+      target.nextStep()
+
+      expect(target.schemaForm.dirty).toEqual(true)
+      expect(accepted).toEqual([
+        {
+          type: topicSchema.type,
+          properties: {
+            ...topicSchema.properties,
+            timestamp: {
+              ...topicSchema.properties.timestamp,
+              title: 'Mod ' + topicSchema.properties.timestamp.title
+            },
+            reference: {
+              ...topicSchema.properties.reference,
+              title: 'Mod ' + topicSchema.properties.reference.title
+            }
+          }
+        } as SimpleJsonSchema
+      ])
+    })
+
+    it('emits the correct schema if accepted before the debounce interval', () => {
+
+      host.topicSchema = topicSchema as SimpleJsonSchema
+      host.feedSchema = topicSchema as SimpleJsonSchema
+      fixture.detectChanges()
+      tickPastDebounce()
+
+      expect(target.schemaForm.value).toEqual(formValueForSchema(topicSchema as SimpleJsonSchema))
+      expect(accepted).toEqual([])
+
+      const titleInputOrder = formValueForSchema(topicSchema as SimpleJsonSchema)
+      const allTitleInputs = fixture.debugElement.queryAll(By.css('.item-property-title input'))
+      const timestampInput = allTitleInputs[titleInputOrder.findIndex(x => x.key === 'timestamp')].nativeElement as HTMLInputElement
+      timestampInput.value = 'Mod ' + timestampInput.value
+      timestampInput.dispatchEvent(new Event('input'))
+      jasmine.clock().tick(target.changeDebounceInterval / 2)
+
+      expect(target.schemaForm.value).toEqual(formValueForSchema({
+        ...topicSchema,
+        properties: {
+          ...topicSchema.properties,
+          timestamp: {
+            ...topicSchema.properties.timestamp,
+            title: 'Mod ' + topicSchema.properties.timestamp.title
+          }
+        }
+      } as SimpleJsonSchema))
+      expect(target.feedSchema).toEqual(topicSchema)
+
+      target.nextStep()
+
+      expect(target.schemaForm.dirty).toEqual(true)
+      expect(accepted).toEqual([
+        {
+          type: topicSchema.type,
+          properties: {
+            ...topicSchema.properties,
+            timestamp: {
+              ...topicSchema.properties.timestamp,
+              title: 'Mod ' + topicSchema.properties.timestamp.title
+            }
+          }
+        } as SimpleJsonSchema
+      ])
+    })
+
+    it('emits the correct schema when accepted before debounce interval and feed schema is null', () => {
+
+      host.topicSchema = topicSchema as SimpleJsonSchema
+      host.feedSchema = null
+      fixture.detectChanges()
+      tickPastDebounce()
+
+      expect(target.schemaForm.value).toEqual(formValueForSchema(topicSchema as SimpleJsonSchema))
+      expect(accepted).toEqual([])
+
+      const titleInputOrder = formValueForSchema(topicSchema as SimpleJsonSchema)
+      const allTitleInputs = fixture.debugElement.queryAll(By.css('.item-property-title input'))
+      const timestampInput = allTitleInputs[titleInputOrder.findIndex(x => x.key === 'timestamp')].nativeElement as HTMLInputElement
+      timestampInput.value = 'Mod ' + timestampInput.value
+      timestampInput.dispatchEvent(new Event('input'))
+      jasmine.clock().tick(target.changeDebounceInterval / 2)
+
+      expect(target.schemaForm.value).toEqual(formValueForSchema({
+        ...topicSchema,
+        properties: {
+          ...topicSchema.properties,
+          timestamp: {
+            ...topicSchema.properties.timestamp,
+            title: 'Mod ' + topicSchema.properties.timestamp.title
+          }
+        }
+      } as SimpleJsonSchema))
+      expect(target.feedSchema).toEqual(null)
+
+      target.nextStep()
+
+      expect(target.schemaForm.dirty).toEqual(true)
+      expect(target.feedSchema).toEqual({
+        type: topicSchema.type,
+        properties: {
+          ...topicSchema.properties,
+          timestamp: {
+            ...topicSchema.properties.timestamp,
+            title: 'Mod ' + topicSchema.properties.timestamp.title
+          }
+        }
+      })
+      expect(accepted).toEqual([ target.feedSchema ])
+    })
+  })
+})
 
 function formValueForSchema(schema: SimpleJsonSchema): SchemaFormValue {
   if (!schema || !schema.properties) {
     return []
   }
+  const schemaKeys: Record<keyof SimplePropertyJsonSchema, true> = {
+    type: true,
+    title: true,
+    description: true,
+    format: true
+  }
   return Object.getOwnPropertyNames(schema.properties).sort().map(key => {
+    const propertySchema = schema.properties[key]
     return {
       key,
       schema: {
+        type: null,
         title: null,
         description: null,
         format: null,
-        ...schema.properties[key]
+        ..._.pickBy(propertySchema, (value, schemaKey) => schemaKey in schemaKeys && !_.isUndefined(propertySchema[schemaKey]))
       }
     }
   })
@@ -786,6 +982,59 @@ describe('formValueForSchema test function', () => {
         }
       }
     ]
+    expect(formValueForSchema(schema)).toEqual(expectedFormValue)
+  })
+
+  it('omits unsupported schema keys', () => {
+
+    const schema: SimpleJsonSchema = {
+      properties: {
+        prop2: {
+          type: 'boolean',
+          extra: 'omit'
+        },
+        prop3: {
+          type: 'number',
+          format: 'date-time',
+          pattern: 'omitAlso'
+        },
+        prop1: {
+          extra1: true,
+          extra2: 'never',
+          extra3: 'not for the form'
+        }
+      }
+    } as SimpleJsonSchema
+    const expectedFormValue: SchemaFormValue = [
+      {
+        key: 'prop1',
+        schema: {
+          type: null,
+          title: null,
+          description: null,
+          format: null
+        }
+      },
+      {
+        key: 'prop2',
+        schema: {
+          type: 'boolean',
+          title: null,
+          description: null,
+          format: null
+        }
+      },
+      {
+        key: 'prop3',
+        schema: {
+          type: 'number',
+          title: null,
+          description: null,
+          format: 'date-time'
+        }
+      }
+    ]
+
     expect(formValueForSchema(schema)).toEqual(expectedFormValue)
   })
 })
