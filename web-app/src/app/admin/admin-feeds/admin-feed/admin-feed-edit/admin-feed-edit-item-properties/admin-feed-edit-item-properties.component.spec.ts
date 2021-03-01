@@ -44,7 +44,7 @@ const topicSchema = Object.freeze({
 })
 
 
-fdescribe('AdminFeedEditItemPropertiesComponent', () => {
+describe('AdminFeedEditItemPropertiesComponent', () => {
 
   @Component({
     selector: 'app-host-component',
