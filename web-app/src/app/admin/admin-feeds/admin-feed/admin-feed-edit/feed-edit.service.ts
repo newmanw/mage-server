@@ -1,7 +1,7 @@
 import { forwardRef, Inject } from '@angular/core'
 import * as _ from 'lodash'
 import { BehaviorSubject, Observable, PartialObserver } from 'rxjs'
-import { FeedTopic, Service } from '../../../../feed/feed.model'
+import { Feed, FeedTopic, Service } from '../../../../feed/feed.model'
 import { FeedPreviewOptions, FeedService } from '../../../../feed/feed.service'
 import { FeedEditState, FeedMetaData, feedMetaDataLean, feedPostFromEditState, freshEditState } from './feed-edit.model'
 
@@ -167,6 +167,10 @@ export class FeedEditService {
     }
     this.patchState({ feedMetaData: feedMetaDataLean(feedMetaData) })
     this.fetchNewPreview({ skipContentFetch: true })
+  }
+
+  saveFeed(): Observable<Feed> {
+    throw new Error('unimplemented')
   }
 
   private resetState(): void {

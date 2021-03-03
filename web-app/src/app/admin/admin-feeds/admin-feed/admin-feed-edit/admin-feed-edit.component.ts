@@ -143,38 +143,16 @@ export class AdminFeedEditComponent implements OnInit {
   }
 
   onFeedMetaDataChanged(metaData: FeedMetaData): void {
-    // if (this.preview) {
-    //   this.preview.feed = metaData;
-    // }
     this.feedEdit.feedMetaDataChanged(metaData)
   }
 
-  onFeedMetaDataAccepted(): void {
-    // this.feedConfiguration = metaData;
-    // if (this.feed) {
-    //   this.updateFeed();
-    // } else {
-    //   this.createFeed();
-    // }
-  }
-
-  createFeed(): void {
-    // this.feedConfiguration.service = this.selectedService.id;
-    // this.feedConfiguration.topic = this.selectedTopic.id;
-    // this.feedConfiguration.constantParams = this.fetchParametersMod;
-    // this.feedConfiguration.itemPropertiesSchema = this.currentItemProperties;
-    // this.feedService.createFeed(this.selectedService.id, this.selectedTopic.id, this.feedConfiguration).subscribe(feed => {
-    //   this.stateService.go('admin.feed', { feedId: feed.id });
-    // });
-  }
-
-  updateFeed(): void {
-    // this.feed.constantParams = this.fetchParametersMod;
-    // this.feed.itemPropertiesSchema = this.currentItemProperties;
-    // Object.assign(this.feed, this.feedConfiguration);
-    // this.feedService.updateFeed(this.feed).subscribe(feed => {
-    //   this.stateService.go('admin.feed', { feedId: feed.id });
-    // });
+  onFeedMetaDataAccepted(metaData: FeedMetaData): void {
+    if (metaData) {
+      this.feedEdit.feedMetaDataChanged(metaData)
+    }
+    this.feedEdit.saveFeed().subscribe(feed => {
+      this.stateService.go('admin.feed', { feedId: feed.id })
+    })
   }
 
   setStep(index: number): void {
