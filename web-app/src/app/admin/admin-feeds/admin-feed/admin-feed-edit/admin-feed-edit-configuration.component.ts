@@ -1,6 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms'
-import { merge } from 'lodash'
 import { debounceTime, map } from 'rxjs/operators'
 import { FeedTopic } from 'src/app/feed/feed.model'
 import { FeedMetaData, feedMetaDataLean, FeedMetaDataNullable } from './feed-edit.model'
@@ -49,12 +48,11 @@ export class AdminFeedEditConfigurationComponent implements OnInit, OnChanges {
   ngOnInit(): void {
     this.feedMetaDataForm.valueChanges.pipe(
       debounceTime(this.changeDebounceInterval),
-      map(formValue => metaDataFromFormValue(this.feedMetaDataForm, this.feedMetaData)),
-    ).subscribe({
-      next: metaDataFromForm => {
-        this.feedMetaData = metaDataFromForm
-        this.feedMetaDataChanged.emit(this.feedMetaData)
-      }
+      map(metaDataFromFormValue)
+    )
+    .subscribe(metaDataFromForm => {
+      this.feedMetaData = metaDataFromForm
+      this.feedMetaDataChanged.emit(this.feedMetaData)
     })
   }
 
@@ -90,7 +88,7 @@ export class AdminFeedEditConfigurationComponent implements OnInit, OnChanges {
 
   onAccepted(): void {
     if (this.feedMetaDataForm.dirty) {
-      this.feedMetaData = metaDataFromFormValue(this.feedMetaDataForm, this.feedMetaData)
+      this.feedMetaData = metaDataFromFormValue(this.feedMetaDataForm.value)
       this.feedMetaDataAccepted.emit(this.feedMetaData)
     }
     else {
@@ -99,10 +97,8 @@ export class AdminFeedEditConfigurationComponent implements OnInit, OnChanges {
   }
 
   private resetFormWithMergedMetaData(): void {
-    const topicMetaData = feedMetaDataLean(this.topic || {})
-    const feedMetaData = feedMetaDataLean(this.feedMetaData || {})
-    const mergedMetaData = { ...topicMetaData, ...feedMetaData }
-    this.feedMetaDataForm.reset(mergedMetaData, { emitEvent: false })
+    const merged = mergedMetaData(this.feedMetaData, this.topic || {})
+    this.feedMetaDataForm.reset(merged, { emitEvent: false })
   }
 
   private updateFormFromMetaDataRespectingUserChanges(): void {
@@ -163,20 +159,14 @@ export function formValueForMetaData(metaData: FeedMetaData): Required<FeedMetaD
   }
 }
 
-function metaDataFromFormValue(form: FormGroup, previousMetaData: FeedMetaData): FeedMetaData | null {
-  if (form.pristine) {
-    return previousMetaData
-  }
-  const metaData: FeedMetaData = Object.getOwnPropertyNames(form.value).reduce((metaData, key) => {
-    const control = form.get(key)
-    if (control.dirty && control.value !== null && control.value !== undefined) {
-      metaData[key] = control.value
-    }
-    return metaData
-  }, {})
-  const merged = feedMetaDataLean({
-    ...previousMetaData,
-    ...metaData
-  })
-  return merged
+function metaDataFromFormValue(formValue: FeedMetaDataNullable): FeedMetaData {
+  return feedMetaDataLean(formValue)
 }
+
+function mergedMetaData(feedMetaData: FeedMetaData | null, topic: FeedMetaData | null): FeedMetaData {
+  const topicMetaData = feedMetaDataLean(topic || {})
+  const mergedMetaData = { ...topicMetaData, ...feedMetaData }
+  return mergedMetaData
+}
+
+
