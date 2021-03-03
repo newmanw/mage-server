@@ -1,6 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms'
-import { debounceTime } from 'rxjs/operators'
+import { debounceTime, map } from 'rxjs/operators'
 import { FeedTopic } from 'src/app/feed/feed.model'
 import { FeedMetaData, feedMetaDataLean, FeedMetaDataNullable } from './feed-edit.model'
 
@@ -43,12 +43,15 @@ export class AdminFeedEditConfigurationComponent implements OnInit, OnChanges {
     updateFrequencySeconds: new FormControl()
   })
   itemSchemaPropertyTitles: { key: string, title: string }[] = [];
+  readonly changeDebounceInterval = 500
 
   ngOnInit(): void {
-    this.feedMetaDataForm.valueChanges.pipe(debounceTime(500)).subscribe({
-      next: formValue => {
-        formValue = formValueWithoutCheckboxValuesAssignedFromTopicOfForm(this.feedMetaDataForm)
-        this.feedMetaData = feedMetaDataLean(formValue)
+    this.feedMetaDataForm.valueChanges.pipe(
+      debounceTime(this.changeDebounceInterval),
+      map(formValue => metaDataFromDirtyValues(this.feedMetaDataForm, this.feedMetaData)),
+    ).subscribe({
+      next: metaDataFromForm => {
+        this.feedMetaData = metaDataFromForm
         this.feedMetaDataChanged.emit(this.feedMetaData)
       }
     })
@@ -63,49 +66,47 @@ export class AdminFeedEditConfigurationComponent implements OnInit, OnChanges {
         return { key, title: schemaProperty.title || key }
       })
     }
-    if (changes.feedMetaData) {
+    if (changes.topic) {
+      if (!changes.feedMetaData) {
+        // leave feed meta-data if changing at the same time as the topic
+        this.feedMetaData = null
+      }
+      this.feedMetaDataForm.reset(this.mergedMetaDataFormValue(), { emitEvent: false })
+    }
+    else if (changes.feedMetaData) {
       if (this.feedMetaData) {
-        this.feedMetaDataForm.setValue(formValueForMetaData(this.feedMetaData), { emitEvent: false })
+        this.feedMetaDataForm.setValue(this.mergedMetaDataFormValue(), { emitEvent: false })
       }
       else {
-        const clear = formValueForMetaData({})
-        this.feedMetaDataForm.reset(clear, { emitEvent: false })
+        this.feedMetaDataForm.reset(this.mergedMetaDataFormValue(), { emitEvent: false })
       }
-    }
-    if (changes.topic || changes.feedMetaData) {
-      this.updateCheckboxesFromTopicForUnspecifiedMetaDataKeys()
     }
   }
 
   onPreviousStep(): void {
-    this.cancelled.emit();
+    this.cancelled.emit()
   }
 
   onAccepted(): void {
-    this.feedMetaDataAccepted.emit(this.feedMetaData);
+    if (this.feedMetaDataForm.dirty) {
+      this.feedMetaData = metaDataFromDirtyValues(this.feedMetaDataForm, this.feedMetaData)
+      this.feedMetaDataAccepted.emit(this.feedMetaData)
+    }
+    else {
+      this.feedMetaDataAccepted.emit(null)
+    }
   }
 
-  /**
-   * Use the topic values to initialize the checkboxes to avoid using the
-   * potentially user-confusing `indeterminate` state on checkboxes.
-   */
-  private updateCheckboxesFromTopicForUnspecifiedMetaDataKeys() {
-    const topicMetaData = this.topic ? feedMetaDataLean(this.topic) : {}
-    const feedMetaData = this.feedMetaData || {}
-    const checkboxes: Pick<FeedMetaData, keyof typeof checkboxKeys> = {}
-    for (const key of Object.getOwnPropertyNames(checkboxKeys)) {
-      if (typeof feedMetaData[key] === 'boolean') {
-        checkboxes[key] = feedMetaData[key]
-      }
-      else if (typeof topicMetaData[key] === 'boolean') {
-        checkboxes[key] = topicMetaData[key]
-      }
-    }
-    this.feedMetaDataForm.patchValue(checkboxes, { emitEvent: false })
+  private mergedMetaDataFormValue() {
+    const topicMetaData = feedMetaDataLean(this.topic || {})
+    const feedMetaData = feedMetaDataLean(this.feedMetaData || {})
+    const mergedMetaData = { ...topicMetaData, ...feedMetaData }
+    return formValueForMetaData(mergedMetaData)
   }
 }
 
-function formValueForMetaData(metaData: FeedMetaData): Required<FeedMetaDataNullable> {
+export function formValueForMetaData(metaData: FeedMetaData): Required<FeedMetaDataNullable> {
+  metaData = metaData || {}
   return {
     title: metaData.title || null,
     summary: metaData.summary || null,
@@ -119,20 +120,20 @@ function formValueForMetaData(metaData: FeedMetaData): Required<FeedMetaDataNull
   }
 }
 
-type FeedMetaDataBooleanKeys = { [K in keyof FeedMetaData]: FeedMetaData[K] extends boolean ? K : never }[keyof FeedMetaData]
-
-const checkboxKeys: Record<FeedMetaDataBooleanKeys, null> = {
-  itemsHaveIdentity: null,
-  itemsHaveSpatialDimension: null
-}
-
-function formValueWithoutCheckboxValuesAssignedFromTopicOfForm(feedMetaDataForm: FormGroup): FeedMetaDataNullable {
-  const formValue = { ...feedMetaDataForm.value }
-  for (const checkboxKey of Object.getOwnPropertyNames(checkboxKeys)) {
-    const checkbox = feedMetaDataForm.get(checkboxKey)
-    if (checkbox.pristine) {
-      delete formValue[checkboxKey]
-    }
+function metaDataFromDirtyValues(form: FormGroup, previousMetaData: FeedMetaData): FeedMetaData | null {
+  if (form.pristine) {
+    return previousMetaData
   }
-  return formValue
+  const metaData: FeedMetaData = Object.getOwnPropertyNames(form.value).reduce((metaData, key) => {
+    const control = form.get(key)
+    if (control.dirty && control.value !== null && control.value !== undefined) {
+      metaData[key] = control.value
+    }
+    return metaData
+  }, {})
+  const merged = feedMetaDataLean({
+    ...previousMetaData,
+    ...metaData
+  })
+  return merged
 }
