@@ -4,6 +4,7 @@ import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms'
 import { MatAutocompleteModule, MatButton, MatCheckboxModule, MatExpansionModule, MatFormFieldModule, MatInputModule } from '@angular/material'
 import { By } from '@angular/platform-browser'
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
+import * as _ from 'lodash'
 import { FeedTopic } from '../../../../feed/feed.model'
 import { AdminFeedEditConfigurationComponent, formValueForMetaData } from './admin-feed-edit-configuration.component'
 import { FeedMetaData, feedMetaDataLean, FeedMetaDataNullable } from './feed-edit.model'
@@ -409,6 +410,66 @@ fdescribe('FeedMetaDataComponent', () => {
     }))
     expect(formChanges).toEqual([])
     expect(metaDataChanges).toEqual([])
+  })
+
+  it('does not populate form fields from topic or previous meta-data after user clears the values', () => {
+
+    const topic: FeedTopic = Object.freeze({
+      id: 'topic1',
+      title: 'Topic Title',
+      itemsHaveIdentity: true,
+      itemsHaveSpatialDimension: false,
+      itemPrimaryProperty: 'prop1',
+      itemSecondaryProperty: 'prop2Topic',
+      updateFrequencySeconds: 3000
+    })
+    const feedMetaData: FeedMetaData = Object.freeze({
+      title: 'Feed Title',
+      summary: 'Feed summary',
+      itemsHaveSpatialDimension: true,
+      itemSecondaryProperty: 'prop2',
+      icon: 'feedicon1',
+      updateFrequencySeconds: 0
+    })
+
+    host.topic = topic
+    host.feedMetaData = feedMetaData
+    fixture.detectChanges()
+    tickPastDebounce()
+
+    expect(target.topic).toEqual(topic)
+    expect(target.feedMetaData).toEqual(feedMetaData)
+    expect(target.feedMetaDataForm.value).toEqual(formValueForMetaData({
+      title: feedMetaData.title,
+      summary: feedMetaData.summary,
+      icon: feedMetaData.icon,
+      itemsHaveIdentity: topic.itemsHaveIdentity,
+      itemsHaveSpatialDimension: feedMetaData.itemsHaveSpatialDimension,
+      itemPrimaryProperty: topic.itemPrimaryProperty,
+      itemSecondaryProperty: feedMetaData.itemSecondaryProperty,
+      updateFrequencySeconds: feedMetaData.updateFrequencySeconds
+    }))
+    expect(formChanges).toEqual([])
+    expect(metaDataChanges).toEqual([])
+
+    const input = fixture.debugElement.query(x => x.attributes.formControlName === 'itemSecondaryProperty').nativeElement as HTMLInputElement
+    input.value = ''
+    input.dispatchEvent(new Event('input'))
+    tickPastDebounce()
+    host.feedMetaData = target.feedMetaData
+    fixture.detectChanges()
+
+    expect(target.feedMetaDataForm.value).toEqual(formValueForMetaData({
+      title: feedMetaData.title,
+      summary: feedMetaData.summary,
+      icon: feedMetaData.icon,
+      itemsHaveIdentity: topic.itemsHaveIdentity,
+      itemsHaveSpatialDimension: feedMetaData.itemsHaveSpatialDimension,
+      itemPrimaryProperty: topic.itemPrimaryProperty,
+      itemSecondaryProperty: null,
+      updateFrequencySeconds: feedMetaData.updateFrequencySeconds
+    }))
+    expect(target.feedMetaData).toEqual(_.omit(feedMetaData, 'itemSecondaryProperty'))
   })
 
   it('resets form from topic and sets feed meta-data to null without emitting change when topic changes and feed meta-data does not change', () => {
@@ -860,6 +921,10 @@ fdescribe('FeedMetaDataComponent', () => {
         itemSecondaryProperty: 'prop3',
         itemTemporalProperty: 'prop4'
       })
+    })
+
+    it('emits empty meta-data if all values were cleared', () => {
+      fail('todo')
     })
   })
 })

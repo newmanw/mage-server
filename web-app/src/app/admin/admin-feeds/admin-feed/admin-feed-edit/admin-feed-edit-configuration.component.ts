@@ -1,5 +1,6 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms'
+import { merge } from 'lodash'
 import { debounceTime, map } from 'rxjs/operators'
 import { FeedTopic } from 'src/app/feed/feed.model'
 import { FeedMetaData, feedMetaDataLean, FeedMetaDataNullable } from './feed-edit.model'
@@ -48,7 +49,7 @@ export class AdminFeedEditConfigurationComponent implements OnInit, OnChanges {
   ngOnInit(): void {
     this.feedMetaDataForm.valueChanges.pipe(
       debounceTime(this.changeDebounceInterval),
-      map(formValue => metaDataFromDirtyValues(this.feedMetaDataForm, this.feedMetaData)),
+      map(formValue => metaDataFromFormValue(this.feedMetaDataForm, this.feedMetaData)),
     ).subscribe({
       next: metaDataFromForm => {
         this.feedMetaData = metaDataFromForm
@@ -71,14 +72,14 @@ export class AdminFeedEditConfigurationComponent implements OnInit, OnChanges {
         // leave feed meta-data if changing at the same time as the topic
         this.feedMetaData = null
       }
-      this.feedMetaDataForm.reset(this.mergedMetaDataFormValue(), { emitEvent: false })
+      this.resetFormWithMergedMetaData()
     }
     else if (changes.feedMetaData) {
       if (this.feedMetaData) {
-        this.feedMetaDataForm.setValue(this.mergedMetaDataFormValue(), { emitEvent: false })
+        this.updateFormFromMetaDataRespectingUserChanges()
       }
       else {
-        this.feedMetaDataForm.reset(this.mergedMetaDataFormValue(), { emitEvent: false })
+        this.resetFormWithMergedMetaData()
       }
     }
   }
@@ -89,7 +90,7 @@ export class AdminFeedEditConfigurationComponent implements OnInit, OnChanges {
 
   onAccepted(): void {
     if (this.feedMetaDataForm.dirty) {
-      this.feedMetaData = metaDataFromDirtyValues(this.feedMetaDataForm, this.feedMetaData)
+      this.feedMetaData = metaDataFromFormValue(this.feedMetaDataForm, this.feedMetaData)
       this.feedMetaDataAccepted.emit(this.feedMetaData)
     }
     else {
@@ -97,12 +98,54 @@ export class AdminFeedEditConfigurationComponent implements OnInit, OnChanges {
     }
   }
 
-  private mergedMetaDataFormValue() {
+  private resetFormWithMergedMetaData(): void {
     const topicMetaData = feedMetaDataLean(this.topic || {})
     const feedMetaData = feedMetaDataLean(this.feedMetaData || {})
     const mergedMetaData = { ...topicMetaData, ...feedMetaData }
-    return formValueForMetaData(mergedMetaData)
+    this.feedMetaDataForm.reset(mergedMetaData, { emitEvent: false })
   }
+
+  private updateFormFromMetaDataRespectingUserChanges(): void {
+    const metaData = {
+      ...feedMetaDataLean(this.topic || {}),
+      ...feedMetaDataLean(this.feedMetaData || {})
+    } as FeedMetaData
+    const form = this.feedMetaDataForm
+    const updateValue: FeedMetaDataNullable = {
+      title: formUpdateValueForTextControl('title', form, metaData),
+      summary: formUpdateValueForTextControl('summary', form, metaData),
+      icon: formUpdateValueForTextControl('icon', form, metaData),
+      itemPrimaryProperty: formUpdateValueForTextControl('itemPrimaryProperty', form, metaData),
+      itemSecondaryProperty: formUpdateValueForTextControl('itemSecondaryProperty', form, metaData),
+      itemTemporalProperty: formUpdateValueForTextControl('itemTemporalProperty', form, metaData),
+      itemsHaveIdentity: formUpdateValueForBooleanControl('itemsHaveIdentity', form, metaData),
+      itemsHaveSpatialDimension: formUpdateValueForBooleanControl('itemsHaveSpatialDimension', form, metaData),
+      updateFrequencySeconds: formUpdateValueForNumberControl('updateFrequencySeconds', form, metaData)
+    }
+    form.setValue(updateValue, { emitEvent: false })
+  }
+}
+
+type FeedMetaDataStringKeys = { [K in keyof FeedMetaData]: FeedMetaData[K] extends string ? K : never }[keyof FeedMetaData]
+type FeedMetaDataBooleanKeys = { [K in keyof FeedMetaData]: FeedMetaData[K] extends boolean ? K : never }[keyof FeedMetaData]
+type FeedMetaDataNumberKeys = { [K in keyof FeedMetaData]: FeedMetaData[K] extends number ? K : never }[keyof FeedMetaData]
+
+function formUpdateValueForTextControl(key: FeedMetaDataStringKeys, form: FormGroup, updateMetaData: FeedMetaData): string | null {
+  const control = form.get(key)
+  return control.dirty ? control.value as string || null : updateMetaData[key] || null
+}
+
+function formUpdateValueForBooleanControl(key: FeedMetaDataBooleanKeys, form: FormGroup, updateMetaData: FeedMetaData): boolean | null {
+  const control = form.get(key)
+  return control.dirty ? control.value : (typeof updateMetaData[key] === 'boolean' ? updateMetaData[key] : null)
+}
+
+function formUpdateValueForNumberControl(key: FeedMetaDataNumberKeys, form: FormGroup, updateMetaData: FeedMetaData): number | null {
+  const control = form.get(key)
+  if (control.dirty) {
+    return typeof control.value === 'number' ? control.value : null
+  }
+  return typeof updateMetaData[key] === 'number' ? updateMetaData[key] : null
 }
 
 export function formValueForMetaData(metaData: FeedMetaData): Required<FeedMetaDataNullable> {
@@ -120,7 +163,7 @@ export function formValueForMetaData(metaData: FeedMetaData): Required<FeedMetaD
   }
 }
 
-function metaDataFromDirtyValues(form: FormGroup, previousMetaData: FeedMetaData): FeedMetaData | null {
+function metaDataFromFormValue(form: FormGroup, previousMetaData: FeedMetaData): FeedMetaData | null {
   if (form.pristine) {
     return previousMetaData
   }
