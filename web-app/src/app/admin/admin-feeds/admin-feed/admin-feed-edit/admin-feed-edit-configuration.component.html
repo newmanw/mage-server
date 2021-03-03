@@ -12,34 +12,34 @@
     <mat-form-field>
       <mat-label>Title</mat-label>
       <input matInput type="text" formControlName="title"/>
-      <mat-hint>Assign a title to identify the feed. From topic: {{topic?.title}}</mat-hint>
+      <mat-hint>Assign a title to identify the feed.</mat-hint>
     </mat-form-field>
     <mat-form-field>
       <mat-label>Summary</mat-label>
       <input matInput type="text" formControlName="summary"/>
-      <mat-hint>Summarize the purpose and content of the feed. From topic: {{topic?.summary}}</mat-hint>
+      <mat-hint>Summarize the purpose and content of the feed.</mat-hint>
     </mat-form-field>
     <mat-checkbox formControlName="itemsHaveIdentity">Items have unique ID</mat-checkbox>
     <mat-checkbox formControlName="itemsHaveSpatialDimension">Items are geospatial features</mat-checkbox>
     <mat-form-field>
       <mat-label>Primary property</mat-label>
       <input matInput type="text" formControlName="itemPrimaryProperty" [matAutocomplete]="itemPropertyAutoComplete"/>
-      <mat-hint>Set the value that appears as the main text on the feed's items. From topic: {{topic?.itemPrimaryProperty}}</mat-hint>
+      <mat-hint>Set the value that appears as the main text on the feed's items.</mat-hint>
     </mat-form-field>
     <mat-form-field>
       <mat-label>Secondary property</mat-label>
       <input matInput type="text" formControlName="itemSecondaryProperty" [matAutocomplete]="itemPropertyAutoComplete"/>
-      <mat-hint>Set the value that appears as ancillary text on the feed's items. From topic: {{topic?.itemSecondaryProperty}}</mat-hint>
+      <mat-hint>Set the value that appears as ancillary text on the feed's items.</mat-hint>
     </mat-form-field>
     <mat-form-field>
       <mat-label>Date/time property</mat-label>
       <input matInput type="text" formControlName="itemTemporalProperty" [matAutocomplete]="itemPropertyAutoComplete"/>
-      <mat-hint>Set the property used for sorting items chronologically. From topic: {{topic?.itemTemporalProperty}}</mat-hint>
+      <mat-hint>Set the property used for sorting items chronologically.</mat-hint>
     </mat-form-field>
     <mat-form-field>
       <mat-label>Refresh interval hint (seconds)</mat-label>
       <input matInput type="number" formControlName="updateFrequencySeconds"/>
-      <mat-hint>Hint to consumers how often to query for new feed data. From topic: {{topic?.updateFrequencySeconds}}</mat-hint>
+      <mat-hint>Hint to consumers how often to query for new feed data.</mat-hint>
     </mat-form-field>
     <mat-form-field>
       <mat-label>Icon</mat-label>
