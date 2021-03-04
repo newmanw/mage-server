@@ -2,3 +2,12 @@
     display: flex;
     flex-direction: column;
 }
+
+.meta-data-form {
+  .mat-form-field {
+    margin-bottom: 1em;
+  }
+  .mat-checkbox {
+    margin-bottom: 0.5em;
+  }
+}
