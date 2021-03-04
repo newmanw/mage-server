@@ -33,7 +33,7 @@
           </app-feed-item-properties-configuration>
           <app-feed-configuration [expanded]="step === 3" [buttonText]="editState.originalFeed ? 'Update Feed' : 'Create Feed'"
             [topic]="editState.selectedTopic"
-            [itemPropertiesSchema]="editState.itemPropertiesSchema"
+            [itemPropertiesSchema]="editState.itemPropertiesSchema || editState.selectedTopic?.itemPropertiesSchema"
             [feedMetaData]="editState.feedMetaData"
             (opened)="setStep(3)" (cancelled)="setStep(2)"
             (feedMetaDataChanged)="onFeedMetaDataChanged($event)"
