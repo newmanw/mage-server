@@ -573,7 +573,7 @@ invalid request
     })
   })
 
-  describe.only('POST /services/{serviceId}/topics/{topicId}/feed_preview', function() {
+  describe('POST /services/{serviceId}/topics/{topicId}/feed_preview', function() {
 
     type CompletePreviewFeedRequestParams = Required<Omit<PreviewFeedRequest, 'context' | 'skipContentFetch'>> & {
       feed: Omit<Required<PreviewFeedRequest['feed']>, 'id'>
@@ -873,10 +873,19 @@ invalid request
         itemPropertiesSchema: undefined
       }
       const appReq: CreateFeedRequest = createAdminRequest({ feed: feedMinimal })
-      const feed: Feed = {
+      const feed: FeedExpanded = {
         id: uniqid(),
-        service,
-        topic,
+        service: {
+          id: service,
+          serviceType: 'servicetype1',
+          title: 'Service 1',
+          summary: 'Service 1 summary',
+          config: { test: true }
+        },
+        topic: {
+          id: topic,
+          title: 'Topic 1'
+        },
         title: appReq.feed.title!,
         summary: appReq.feed.summary!,
         itemsHaveIdentity: false,
@@ -885,7 +894,7 @@ invalid request
         variableParamsSchema: appReq.feed.variableParamsSchema || undefined
       }
       appRequestFactory.createRequest(Arg.any(), Arg.deepEquals({ feed: appReq.feed })).returns(appReq)
-      appLayer.createFeed(Arg.requestTokenMatches(appReq)).resolves(AppResponse.success<Feed, unknown>(feed))
+      appLayer.createFeed(Arg.requestTokenMatches(appReq)).resolves(AppResponse.success<FeedExpanded, unknown>(feed))
 
       const res = await client
         .post(`${rootPath}/services/${service}/topics/${topic}/feeds`)

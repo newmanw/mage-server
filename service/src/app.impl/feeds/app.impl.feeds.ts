@@ -281,13 +281,13 @@ export function PreviewFeed(permissionService: api.FeedsPermissionService, servi
 export function CreateFeed(permissionService: api.FeedsPermissionService, serviceTypeRepo: FeedServiceTypeRepository, serviceRepo: FeedServiceRepository, feedRepo: FeedRepository, jsonSchemaService: JsonSchemaService, iconRepo: StaticIconRepository): api.CreateFeed {
   return async function createFeed(req: api.CreateFeedRequest): ReturnType<api.CreateFeed> {
     const reqFeed = req.feed
-    return await withPermission<Feed, KnownErrorsOf<api.CreateFeed>>(
+    return await withPermission<api.FeedExpanded, KnownErrorsOf<api.CreateFeed>>(
       permissionService.ensureCreateFeedPermissionFor(req.context, reqFeed.service),
-      withFetchContext<Feed>({ serviceRepo, serviceTypeRepo, jsonSchemaService }, reqFeed)
-        .then(async (context: ContentFetchContext): Promise<Feed> => {
+      withFetchContext<api.FeedExpanded>({ serviceRepo, serviceTypeRepo, jsonSchemaService }, reqFeed)
+        .then(async (context: ContentFetchContext): Promise<api.FeedExpanded> => {
           const feedResolved = await resolveFeedCreate(context.topic, reqFeed, iconRepo, StaticIconImportFetch.EagerAwait)
           const feed = await feedRepo.create(feedResolved)
-          return feed
+          return { ...feed, service: context.service, topic: context.topic }
         })
     )
   }

@@ -92,7 +92,7 @@ function requestBy<RequestType>(principal: TestPrincipal, params?: RequestType):
   )
 }
 
-describe.only('feeds use case interactions', function() {
+describe('feeds use case interactions', function() {
 
   let app: TestApp
   let someServiceTypes: SubstituteOf<RegisteredFeedServiceType>[]
@@ -961,7 +961,7 @@ describe.only('feeds use case interactions', function() {
               registeredIconId = (res.success as FeedPreview).feed.icon as StaticIconId
             }
             else {
-              registeredIconId = (res.success as Feed).icon as StaticIconId
+              registeredIconId = (res.success as FeedExpanded).icon as StaticIconId
             }
             expect(registeredIconId).to.equal(registeredIcon.id)
             app.iconRepo.received(1).findOrImportBySourceUrl(iconUrl, StaticIconImportFetch.EagerAwait)
@@ -1001,8 +1001,8 @@ describe.only('feeds use case interactions', function() {
               resMapIconId = (res.success as FeedPreview).feed.mapStyle?.icon
             }
             else {
-              resFeedIconId = (res.success as Feed).icon as StaticIconId
-              resMapIconId = (res.success as Feed).mapStyle?.icon
+              resFeedIconId = (res.success as FeedExpanded).icon as StaticIconId
+              resMapIconId = (res.success as FeedExpanded).mapStyle?.icon
             }
             expect(resFeedIconId).to.be.undefined
             expect(resMapIconId).to.equal(registeredIcon.id)
@@ -1050,8 +1050,8 @@ describe.only('feeds use case interactions', function() {
               resMapIconId = (res.success as FeedPreview).feed.mapStyle?.icon
             }
             else {
-              resFeedIconId = (res.success as Feed).icon as StaticIconId
-              resMapIconId = (res.success as Feed).mapStyle?.icon
+              resFeedIconId = (res.success as FeedExpanded).icon as StaticIconId
+              resMapIconId = (res.success as FeedExpanded).mapStyle?.icon
             }
             expect(resFeedIconId).to.equal(topicIcon.id)
             expect(resMapIconId).to.equal(mapIcon.id)
@@ -1090,8 +1090,8 @@ describe.only('feeds use case interactions', function() {
               resMapIconId = (res.success as FeedPreview).feed.mapStyle?.icon
             }
             else {
-              resFeedIconId = (res.success as Feed).icon as StaticIconId
-              resMapIconId = (res.success as Feed).mapStyle?.icon
+              resFeedIconId = (res.success as FeedExpanded).icon as StaticIconId
+              resMapIconId = (res.success as FeedExpanded).mapStyle?.icon
             }
             expect(resFeedIconId).to.equal('feed_icon')
             expect(resMapIconId).to.equal('map_icon')
@@ -1499,18 +1499,19 @@ describe.only('feeds use case interactions', function() {
 
           expect(res.error).to.be.null
           expect(res.success).to.be.instanceOf(Object)
-          const created = res.success as Feed
+          const created = res.success!
           expect(created.id).to.be.a('string')
           expect(created.id).to.not.equal('preview')
           expect(created).to.deep.include({
-            service: service.id,
+            service,
+            topic: topics[1],
             title: topics[1].title,
             summary: topics[1].summary,
             itemsHaveIdentity: false,
             itemsHaveSpatialDimension: true,
           })
           const inDb = app.feedRepo.db.get(created.id)
-          expect(inDb).to.deep.include(created)
+          expect(inDb).to.deep.include({ ...created, service: created.service.id, topic: created.topic.id })
         })
 
         it('saves a feed from a preview', async function() {
@@ -1540,7 +1541,7 @@ describe.only('feeds use case interactions', function() {
 
           expect(createRes.error).to.be.null
           expect(createRes.success).to.be.an('object')
-          expect(createRes.success).to.deep.include(feed)
+          expect(createRes.success).to.deep.include({ ...feed, service, topic: topics[1] })
           expect(app.feedRepo.db.get(createRes.success!.id)).to.deep.include(feed)
         })
 

@@ -77,7 +77,7 @@ export interface PreviewFeed {
 }
 
 export interface CreateFeed {
-  (req: CreateFeedRequest): Promise<AppResponse<Feed, PermissionDeniedError | EntityNotFoundError | InvalidInputError>>
+  (req: CreateFeedRequest): Promise<AppResponse<FeedExpanded, PermissionDeniedError | EntityNotFoundError | InvalidInputError>>
 }
 
 export interface ListAllFeeds {
