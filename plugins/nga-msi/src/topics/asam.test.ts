@@ -48,11 +48,12 @@ describe('asam topic module', function() {
       expect(req.method).toEqual('get')
       expect(req.path).toEqual('/api/publications/asam')
       expect(req.body).toBeUndefined()
-      expect(req.queryParams?.minOccurDate).toEqual('2020-07-02')
-      expect(req.queryParams?.maxOccurDate).toEqual('2020-07-14')
+      expect(req.queryParams).toEqual({
+        minOccurDate: '2020-07-02',
+        sort: 'date',
+        output: 'json'
+      })
       expect(dateSpy).toBeCalledWith(dateNow.getTime() - params.newerThanDays! * 24 * 60 * 60 * 1000)
-      expect(req.queryParams?.sort).toEqual('date')
-      expect(req.queryParams?.output).toEqual('json')
     })
 
     xit('needs more tests', function() {
