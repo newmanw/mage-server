@@ -1,4 +1,4 @@
-import { Observable, of, NextObserver, MonoTypeOperatorFunction } from 'rxjs'
+import { Observable, of, NextObserver, MonoTypeOperatorFunction, throwError } from 'rxjs'
 import { distinctUntilChanged, pluck } from 'rxjs/operators'
 import { FeedEditService, FeedEditStateObservers } from './feed-edit.service'
 import { FeedService } from '../../../../feed/feed.service'
@@ -215,7 +215,9 @@ describe('FeedEditService', () => {
       'fetchServices',
       'fetchTopics',
       'fetchFeed',
-      'previewFeed'
+      'previewFeed',
+      'createFeed',
+      'updateFeed'
     ])
     feedEdit = new FeedEditService(feedService)
     stateChanges = new FeedEditChangeRecorder(feedEdit)
@@ -995,6 +997,329 @@ describe('FeedEditService', () => {
       expect(stateChanges.fetchParameters.observed).toEqual([ null, {}, null ])
       expect(stateChanges.preview.observed).toEqual([ null, emptyPreview, previewWithEmptyContent ])
       expect(feedService.previewFeed).toHaveBeenCalledTimes(1)
+    })
+  })
+
+  describe('saving the feed', () => {
+
+    beforeEach(() => {
+      feedService.fetchServices.and.returnValue(of(services))
+      feedService.fetchTopics.and.callFake(serviceId => of(topicsForService[serviceId] || []))
+      feedService.previewFeed.and.returnValue(of(emptyPreview))
+    })
+
+    describe('after initiating new feed', () => {
+
+      it('sends a create feed request', () => {
+
+        const service = services[0]
+        const topic = topicsForService[service.id][0]
+        const created: FeedExpanded = {
+          id: 'feed1',
+          service,
+          topic,
+          title: 'Create Test'
+        }
+        feedEdit.newFeed()
+        feedEdit.selectService(services[0].id)
+        feedEdit.selectTopic(topic.id)
+        feedService.createFeed.and.returnValue(of(created))
+
+        let saveResult: FeedExpanded
+        feedEdit.saveFeed().subscribe(x => {
+          saveResult = x
+        })
+
+        expect(saveResult).toEqual(created)
+        const expectedRequest: Parameters<FeedService['createFeed']> = [
+          service.id,
+          topic.id,
+          { service: service.id, topic: topic.id }
+        ]
+        expect(feedService.createFeed).toHaveBeenCalledWith(...expectedRequest)
+      })
+
+      it('adds all parameters to the create request', () => {
+
+        const service = services[0]
+        const topic = topicsForService[service.id][0]
+        const created: FeedExpanded = {
+          id: 'feed1',
+          service,
+          topic,
+          title: 'Create Test'
+        }
+        const updateFrequencySeconds = Math.floor(Math.random() * 1000)
+        feedEdit.newFeed()
+        feedEdit.selectService(services[0].id)
+        feedEdit.selectTopic(topic.id)
+        feedEdit.feedMetaDataChanged({
+          title: 'Custom Title',
+          summary: 'Custom summary',
+          updateFrequencySeconds
+        })
+        feedEdit.itemPropertiesSchemaChanged({
+          properties: {
+            prop1: {
+              title: 'Prop 1 ' + updateFrequencySeconds
+            },
+            prop2: {
+              title: 'Prop 2 ' + updateFrequencySeconds
+            }
+          }
+        })
+        feedEdit.fetchParametersChanged({
+          createTest: updateFrequencySeconds
+        })
+        const feedPost = feedPostFromEditState(feedEdit.currentState)
+        feedService.createFeed.and.returnValue(of(created))
+
+        let saveResult: FeedExpanded
+        feedEdit.saveFeed().subscribe(x => {
+          saveResult = x
+        })
+
+        expect(saveResult).toEqual(created)
+        const expectedRequest: Parameters<FeedService['createFeed']> = [
+          service.id,
+          topic.id,
+          feedPost
+        ]
+        expect(feedService.createFeed).toHaveBeenCalledWith(...expectedRequest)
+      })
+
+      it('resets the edit state after successful save', () => {
+
+        const service = services[0]
+        const topic = topicsForService[service.id][0]
+        const created: FeedExpanded = {
+          id: String(Date.now()),
+          service,
+          topic,
+          title: 'Original Updated'
+        }
+        feedService.createFeed.and.returnValue(of(created))
+
+        feedEdit.newFeed()
+        feedEdit.selectService(services[0].id)
+        feedEdit.selectTopic(topic.id)
+        feedEdit.saveFeed().subscribe(() => {})
+
+        expect(feedEdit.currentState).toEqual(emptyState)
+      })
+
+      it('preserves edit state after save error', () => {
+
+        const service = services[0]
+        const topic = topicsForService[service.id][0]
+        feedService.createFeed.and.returnValue(throwError(new Error('oh no')))
+
+        feedEdit.newFeed()
+        feedEdit.selectService(services[0].id)
+        feedEdit.selectTopic(topic.id)
+        feedEdit.fetchParametersChanged({ retainState: true })
+        const stateBeforeSave = _.cloneDeep(feedEdit.currentState)
+        feedEdit.saveFeed().subscribe({ error: () => {} })
+
+        expect(stateBeforeSave).toEqual(jasmine.objectContaining({
+          originalFeed: null,
+          fetchParameters: { retainState: true }
+        }))
+        expect(feedEdit.currentState).toEqual(stateBeforeSave)
+      })
+    })
+
+    describe('after initiating feed edit', () => {
+
+      it('sends an update feed request', () => {
+
+        const service = services[0]
+        const topic = topicsForService[service.id][0]
+        const original: FeedExpanded = {
+          id: String(Date.now()),
+          service,
+          topic,
+          title: 'Original'
+        }
+        const updated: FeedExpanded = {
+          id: original.id,
+          service,
+          topic,
+          title: 'Original Updated'
+        }
+        feedService.fetchFeed.withArgs(original.id).and.returnValue(of(original))
+        feedService.updateFeed.and.returnValue(of(updated))
+
+        feedEdit.editFeed(original.id)
+
+        let saveResult: FeedExpanded
+        feedEdit.saveFeed().subscribe(x => {
+          saveResult = x
+        })
+
+        expect(saveResult).toEqual(updated)
+        const expectedRequest: Parameters<FeedService['updateFeed']> = [
+          { ...original, service: service.id, topic: topic.id }
+        ]
+        expect(feedService.updateFeed).toHaveBeenCalledWith(...expectedRequest)
+      })
+
+      it('adds all parameters to the update request', () => {
+
+        const service = services[0]
+        const topic = topicsForService[service.id][0]
+        const original: FeedExpanded = {
+          id: String(Date.now()),
+          service,
+          topic,
+          title: 'Original'
+        }
+        const updated: FeedExpanded = {
+          id: original.id,
+          service,
+          topic,
+          title: 'Original Updated'
+        }
+        feedService.fetchFeed.withArgs(original.id).and.returnValue(of(original))
+        feedService.updateFeed.and.returnValue(of(updated))
+
+        feedEdit.editFeed(original.id)
+        const fetchParameters = { updateTest: true }
+        feedEdit.fetchParametersChanged(fetchParameters)
+        const itemPropertiesSchema = {
+          properties: {
+            updatedPrimary: { title: 'Updated Primary' }
+          }
+        }
+        feedEdit.itemPropertiesSchemaChanged(itemPropertiesSchema)
+        const metaData: FeedMetaData = {
+          title: 'Original Updated',
+          itemPrimaryProperty: 'updatedPrimary',
+          itemsHaveIdentity: true,
+          updateFrequencySeconds: Math.random()
+        }
+        feedEdit.feedMetaDataChanged(metaData)
+
+        const update = feedPostFromEditState(feedEdit.currentState)
+        expect(update).toEqual(jasmine.objectContaining({
+          id: original.id,
+          constantParams: fetchParameters,
+          itemPropertiesSchema,
+          ...metaData,
+        }))
+
+        const expectedRequest: Parameters<FeedService['updateFeed']> = [
+          { ...update, id: original.id, service: service.id, topic: topic.id }
+        ]
+        let saveResult: FeedExpanded
+        feedEdit.saveFeed().subscribe(x => {
+          saveResult = x
+        })
+
+        expect(saveResult).toEqual(updated)
+        expect(feedService.updateFeed).toHaveBeenCalledWith(...expectedRequest)
+      })
+
+      it('resets the edit state after successful save', () => {
+
+        const service = services[0]
+        const topic = topicsForService[service.id][0]
+        const original: FeedExpanded = {
+          id: String(Date.now()),
+          service,
+          topic,
+          title: 'Original'
+        }
+        const updated: FeedExpanded = {
+          id: original.id,
+          service,
+          topic,
+          title: 'Original Updated'
+        }
+        feedService.fetchFeed.withArgs(original.id).and.returnValue(of(original))
+        feedService.updateFeed.and.returnValue(of(updated))
+
+        feedEdit.editFeed(original.id)
+        feedEdit.saveFeed().subscribe(() => {})
+
+        expect(feedEdit.currentState).toEqual(emptyState)
+      })
+
+      it('preserves edit state after save error', () => {
+
+        const service = services[0]
+        const topic = topicsForService[service.id][0]
+        const original: FeedExpanded = {
+          id: String(Date.now()),
+          service,
+          topic,
+          title: 'Original'
+        }
+        feedService.fetchFeed.withArgs(original.id).and.returnValue(of(original))
+        feedService.updateFeed.and.returnValue(throwError(new Error('oh no')))
+
+        feedEdit.editFeed(original.id)
+        feedEdit.fetchParametersChanged({ retainState: true })
+        const stateBeforeSave = _.cloneDeep(feedEdit.currentState)
+        feedEdit.saveFeed().subscribe({ error: () => {} })
+
+        expect(stateBeforeSave).toEqual(jasmine.objectContaining({
+          originalFeed: original,
+          fetchParameters: { retainState: true }
+        }))
+        expect(feedEdit.currentState).toEqual(stateBeforeSave)
+      })
+    })
+
+    it('emits an error without a selected service', () => {
+
+      let error: Error | null
+      feedEdit.saveFeed().subscribe({
+        next: () => {
+          fail('unexpected observed value')
+        },
+        error: e => {
+          error = e
+        }
+      })
+
+      expect(error.message).toEqual('no service selected')
+      expect(feedService.createFeed).not.toHaveBeenCalled()
+      expect(feedService.updateFeed).not.toHaveBeenCalled()
+
+      error = null
+      feedEdit.newFeed()
+      feedEdit.saveFeed().subscribe({
+        next: () => {
+          fail('unexpected observed value')
+        },
+        error: e => {
+          error = e
+        }
+      })
+
+      expect(error.message).toEqual('no service selected')
+      expect(feedService.createFeed).not.toHaveBeenCalled()
+      expect(feedService.updateFeed).not.toHaveBeenCalled()
+    })
+
+    it('does nothing without a selected topic', () => {
+
+      let error: Error | null = null
+      feedEdit.newFeed()
+      feedEdit.selectService(services[0].id)
+      feedEdit.saveFeed().subscribe({
+        next: () => {
+          fail('unexpected observed value')
+        },
+        error: e => {
+          error = e
+        }
+      })
+
+      expect(error.message).toEqual('no topic selected')
+      expect(feedService.createFeed).not.toHaveBeenCalled()
+      expect(feedService.updateFeed).not.toHaveBeenCalled()
     })
   })
 })

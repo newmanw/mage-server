@@ -1,7 +1,8 @@
 import { forwardRef, Inject } from '@angular/core'
 import * as _ from 'lodash'
-import { BehaviorSubject, Observable, PartialObserver } from 'rxjs'
-import { Feed, FeedTopic, Service } from '../../../../feed/feed.model'
+import { BehaviorSubject, Observable, PartialObserver, throwError } from 'rxjs'
+import { tap } from 'rxjs/operators'
+import { FeedExpanded, FeedTopic, Service } from '../../../../feed/feed.model'
 import { FeedPreviewOptions, FeedService } from '../../../../feed/feed.service'
 import { FeedEditState, FeedMetaData, feedMetaDataLean, feedPostFromEditState, freshEditState } from './feed-edit.model'
 
@@ -150,7 +151,7 @@ export class FeedEditService {
       }
     }
     this.patchState({ fetchParameters, preview })
-    this.patchState({ fetchParameters })
+    // this.patchState({ fetchParameters })
     if (fetchParameters === null) {
       return
     }
@@ -169,8 +170,22 @@ export class FeedEditService {
     this.fetchNewPreview({ skipContentFetch: true })
   }
 
-  saveFeed(): Observable<Feed> {
-    throw new Error('unimplemented')
+  saveFeed(): Observable<FeedExpanded> {
+    const { selectedService: service, selectedTopic: topic, originalFeed } = this.currentState
+    if (!service) {
+      return throwError(new Error('no service selected'))
+    }
+    if (!topic) {
+      return throwError(new Error('no topic selected'))
+    }
+    const post = feedPostFromEditState(this.currentState)
+    const resetOnSuccess = tap((x: FeedExpanded) => {
+      this.resetState()
+    })
+    if (originalFeed) {
+      return this.feedService.updateFeed({ ...post, id: originalFeed.id }).pipe(resetOnSuccess)
+    }
+    return this.feedService.createFeed(service.id, topic.id, post).pipe(resetOnSuccess)
   }
 
   private resetState(): void {

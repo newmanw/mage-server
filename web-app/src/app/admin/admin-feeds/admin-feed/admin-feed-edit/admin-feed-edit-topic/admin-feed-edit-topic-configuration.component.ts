@@ -37,13 +37,9 @@ export class AdminFeedEditTopicConfigurationComponent implements OnChanges, OnIn
   }
 
   ngOnChanges(changes: SimpleChanges) {
-    if (changes.initialFetchParameters && changes.initialFetchParameters.currentValue !== changes.initialFetchParameters.previousValue) {
-      console.log('fetch parameters changed ', Date.now(), changes.initialFetchParameters.currentValue === this.initialFetchParameters, changes.initialFetchParameters.currentValue)
-    }
   }
 
   onFetchParametersChanged($event: any): void {
-    console.log('changes ', $event === this.initialFetchParameters, $event)
     this.fetchParametersMod = $event;
     this.fetchParametersChanged.emit($event);
   }

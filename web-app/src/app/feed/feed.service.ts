@@ -72,12 +72,12 @@ export class FeedService {
     return this.http.get<Array<ServiceType>>(`/api/feeds/service_types`);
   }
 
-  createFeed(serviceId: string, topicId: string, feedConfiguration: any): Observable<Feed> {
-    return this.http.post<Feed>(`/api/feeds/services/${serviceId}/topics/${topicId}/feeds`, feedConfiguration);
+  createFeed(serviceId: string, topicId: string, feedConfiguration: any): Observable<FeedExpanded> {
+    return this.http.post<FeedExpanded>(`/api/feeds/services/${serviceId}/topics/${topicId}/feeds`, feedConfiguration);
   }
 
-  updateFeed(feed: Feed): Observable<Feed> {
-    return this.http.put<Feed>(`/api/feeds/${feed.id}`, feed);
+  updateFeed(feed: Partial<Omit<Feed, 'id'>> & Pick<Feed, 'id'>): Observable<FeedExpanded> {
+    return this.http.put<FeedExpanded>(`/api/feeds/${feed.id}`, feed);
   }
 
   deleteFeed(feed: Feed | FeedExpanded): Observable<{}> {
