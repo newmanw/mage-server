@@ -1,4 +1,5 @@
 import { URL } from 'url'
+import { PageOf, PagingParameters } from '../entities.global'
 
 export interface IconPluginHooks {
   icons: {
@@ -97,6 +98,7 @@ export interface StaticIconRepository {
   findOrImportBySourceUrl(stub: StaticIconStub | URL, fetch?: StaticIconImportFetch): Promise<StaticIcon>
   createLocal(stub: LocalStaticIconStub, content: NodeJS.ReadableStream): Promise<StaticIcon>
   findById(id: StaticIconId): Promise<StaticIcon | null>
+  find(paging?: PagingParameters): Promise<PageOf<StaticIcon>>
   resolveFromSourceUrl(id: StaticIconId): Promise<NodeJS.ReadableStream | null>
   resolveFromSourceUrlAndStore(id: StaticIconId): Promise<StaticIcon | null>
   loadContent(id: StaticIconId): Promise<NodeJS.ReadableStream | null>

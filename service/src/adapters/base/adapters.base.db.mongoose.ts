@@ -1,4 +1,5 @@
 import mongoose from 'mongoose'
+import { pageOf, PageOf, PagingParameters } from '../../entities/entities.global'
 
 type EntityReference = { id: string | number }
 
@@ -9,17 +10,13 @@ function createDefaultDocMapping<D extends mongoose.Document, E extends object>(
 }
 
 export async function waitForMongooseConnection(): Promise<mongoose.Connection> {
-
   throw new Error('unimplemented')
 }
 
 export class BaseMongooseRepository<D extends mongoose.Document, M extends mongoose.Model<D>, E extends object> {
 
   readonly model: M
-  /**
-   * Maybe this becomes public later.
-   */
-  private readonly docToEntity: DocumentMapping<D, E>
+  readonly docToEntity: DocumentMapping<D, E>
 
   constructor(model: M, docToEntity?: DocumentMapping<D, E>) {
     this.model = model
@@ -32,8 +29,12 @@ export class BaseMongooseRepository<D extends mongoose.Document, M extends mongo
   }
 
   async findAll(): Promise<E[]> {
-    const docs = await this.model.find()
-    return docs.map(this.docToEntity)
+    const docs = await this.model.find().cursor()
+    const entities: E[] = []
+    for await (const doc of docs) {
+      entities.push(this.docToEntity(doc))
+    }
+    return entities
   }
 
   async findById(id: any): Promise<E | null> {
@@ -58,4 +59,20 @@ export class BaseMongooseRepository<D extends mongoose.Document, M extends mongo
     }
     return null
   }
+}
+
+export const pageQuery = <T>(query: mongoose.Query<T>, paging: PagingParameters): Promise<{ totalCount: number | null, query: mongoose.Query<T> }> => {
+  const BaseQuery = query.toConstructor()
+  const pageQuery = new BaseQuery().limit(paging.pageSize).skip(paging.pageIndex * paging.pageSize) as mongoose.Query<T>
+  const includeTotalCount = typeof paging.includeTotalCount === 'boolean' ? paging.includeTotalCount : paging.pageIndex === 0
+  if (includeTotalCount) {
+    const countQuery = new BaseQuery().count()
+    return countQuery.then(totalCount => {
+      return { totalCount, query: pageQuery }
+    })
+  }
+  return Promise.resolve({
+    totalCount: null,
+    query: pageQuery
+  })
 }

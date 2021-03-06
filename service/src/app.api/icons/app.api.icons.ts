@@ -1,3 +1,4 @@
+import { PagingParameters } from '../../entities/entities.global'
 import { LocalStaticIconStub, StaticIcon, StaticIconId } from '../../entities/icons/entities.icons'
 import { EntityNotFoundError, InvalidInputError, PermissionDeniedError } from '../app.api.errors'
 import { AppRequest, AppRequestContext, AppResponse } from '../app.api.global'
@@ -17,6 +18,20 @@ export interface GetStaticIconContentRequest extends AppRequest {
 
 export interface GetStaticIconContent {
   (req: GetStaticIconContentRequest): Promise<AppResponse<NodeJS.ReadableStream, PermissionDeniedError | EntityNotFoundError>>
+}
+
+export interface StaticIconPage {
+  paging: PagingParameters
+  icons: StaticIcon[]
+}
+
+export interface FindStaticIconsRequest extends AppRequest {
+  // TODO: full-text search on title, file name, tag, etc.
+  paging?: PagingParameters
+}
+
+export interface FindStaticIcons {
+  (req: FindStaticIconsRequest): Promise<AppResponse<StaticIconPage, PermissionDeniedError>>
 }
 
 export interface StaticIconPermissionsService {

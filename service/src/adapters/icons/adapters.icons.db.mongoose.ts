@@ -2,9 +2,9 @@
 import { URL } from 'url'
 import mongoose from 'mongoose'
 import mongodb from 'mongodb'
-import { EntityIdFactory } from '../../entities/entities.global'
+import { EntityIdFactory, pageOf, PageOf, PagingParameters } from '../../entities/entities.global'
 import { StaticIcon, StaticIconStub, StaticIconId, StaticIconRepository, LocalStaticIconStub } from '../../entities/icons/entities.icons'
-import { BaseMongooseRepository } from '../base/adapters.base.db.mongoose'
+import { BaseMongooseRepository, pageQuery } from '../base/adapters.base.db.mongoose'
 
 export type StaticIconDocument = Omit<StaticIcon, 'sourceUrl'> & mongoose.Document & {
   sourceUrl: string
@@ -100,6 +100,16 @@ export class MongooseStaticIconRepository extends BaseMongooseRepository<StaticI
 
   async findBySourceUrl(url: URL): Promise<StaticIcon | null> {
     return await this.findDocBySourceUrl(url).then(x => x?.toJSON())
+  }
+
+  async find(paging?: PagingParameters): Promise<PageOf<StaticIcon>> {
+    paging = paging || { pageSize: 100, pageIndex: 0, includeTotalCount: false }
+    const counted = await pageQuery(this.model.find().sort({ sourceUrl: 1 }), paging)
+    const items: StaticIcon[] = []
+    for await (const doc of counted.query.cursor()) {
+      items.push(this.docToEntity(doc))
+    }
+    return pageOf(items, paging, counted.totalCount)
   }
 
   private async findDocBySourceUrl(url: URL): Promise<StaticIconDocument | null> {

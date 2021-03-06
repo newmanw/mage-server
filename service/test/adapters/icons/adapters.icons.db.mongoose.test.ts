@@ -4,10 +4,11 @@ import _ from 'lodash'
 import { MongoMemoryServer } from 'mongodb-memory-server'
 import mongoose from 'mongoose'
 import uniqid from 'uniqid'
-import { IconUrlScheme, StaticIconStub } from '../../../lib/entities/icons/entities.icons'
+import { IconUrlScheme, StaticIcon, StaticIconStub } from '../../../lib/entities/icons/entities.icons'
 import { MongooseStaticIconRepository, StaticIconDocument, StaticIconModel } from '../../../lib/adapters/icons/adapters.icons.db.mongoose'
 import { Substitute as Sub, SubstituteOf } from '@fluffy-spoon/substitute'
 import { EntityIdFactory } from '../../../lib/entities/entities.global'
+import x from 'uniqid'
 
 
 describe('static icon mongoose repository', function() {
@@ -351,6 +352,33 @@ describe('static icon mongoose repository', function() {
     const all = await model.find({})
 
     expect(all).to.have.length(1)
+  })
+
+  describe('finding icons', function() {
+
+    beforeEach(async function() {
+    })
+
+    it('supports paging', async function() {
+
+      const icons: StaticIconStub[] = []
+      let remaining = 100
+      while (remaining--) {
+        const countPadded = String(100 - remaining).padStart(3, '0')
+        icons.push({
+          sourceUrl: new URL(`test://${countPadded}`)
+        })
+      }
+      const docs = await model.insertMany(icons.map(x => ({ ...x, _id: uniqid(), registeredTimestamp: Date.now()})))
+
+      expect(docs.length).to.equal(100)
+
+      const page = await repo.find({ pageSize: 23, pageIndex: 2, includeTotalCount: true })
+
+      expect(page.totalCount).to.equal(100)
+      expect(page.items.length).to.equal(23)
+      expect(page.items.map(x => ({ sourceUrl: x.sourceUrl }))).to.deep.equal(icons.slice(46, 69))
+    })
   })
 
   describe('loading icon content', function() {

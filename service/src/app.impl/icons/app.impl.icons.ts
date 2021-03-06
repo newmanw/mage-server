@@ -1,5 +1,5 @@
 import { withPermission } from '../../app.api/app.api.global'
-import { CreateLocalStaticIcon, CreateLocalStaticIconRequest, GetStaticIconContent, GetStaticIconContentRequest, StaticIconPermissionsService } from '../../app.api/icons/app.api.icons'
+import { CreateLocalStaticIcon, CreateLocalStaticIconRequest, FindStaticIcons, FindStaticIconsRequest, GetStaticIconContent, GetStaticIconContentRequest, StaticIconPermissionsService } from '../../app.api/icons/app.api.icons'
 
 
 export function CreateStaticIcon(permissions: StaticIconPermissionsService): CreateLocalStaticIcon {
@@ -15,6 +15,17 @@ export function CreateStaticIcon(permissions: StaticIconPermissionsService): Cre
 
 export function GetStaticIconContent(permissions: StaticIconPermissionsService): GetStaticIconContent {
   return function getStaticIconContent(req: GetStaticIconContentRequest): ReturnType<GetStaticIconContent> {
+    return withPermission(
+      permissions.ensureGetStaticIconContentPermission(req.context),
+      () => {
+        throw new Error('todo')
+      }
+    )
+  }
+}
+
+export function FindStaticIcons(permissions: StaticIconPermissionsService): FindStaticIcons {
+  return function findStaticIcons(req: FindStaticIconsRequest): ReturnType<FindStaticIcons> {
     return withPermission(
       permissions.ensureGetStaticIconContentPermission(req.context),
       () => {
