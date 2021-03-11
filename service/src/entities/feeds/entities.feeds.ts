@@ -3,7 +3,7 @@ import { Json, JsonObject } from '../entities.json_types'
 import { FeatureCollection } from 'geojson'
 import { JSONSchema4 } from 'json-schema'
 import { URL } from 'url'
-import { StaticIconId } from '../icons/entities.icons'
+import { RegisteredStaticIconReference, SourceUrlStaticIconReference, StaticIconId, StaticIconReference } from '../icons/entities.icons'
 
 interface LoadFeedServiceTypes {
   (): Promise<FeedServiceType[]>
@@ -132,7 +132,7 @@ export interface FeedTopic {
    * topic on a map or in a list if no item style assigns an icon to content
    * items.
    */
-  readonly icon?: URL
+  readonly icon?: SourceUrlStaticIconReference
   /**
    * The paramters schema defines the parameters MAGE can use to fetch and
    * filter content from the topic.
@@ -205,7 +205,7 @@ export interface Feed {
   topic: FeedTopicId
   title: string
   summary?: string
-  icon?: StaticIconId
+  icon?: RegisteredStaticIconReference
   /**
    * The constant paramters are a subset of a topic's parameters that an
    * administrative user defines and that MAGE will apply to every fetch
@@ -262,11 +262,11 @@ export interface MapStyle {
   strokeWidth?: number
   fill?: HexRgb
   fillOpacity?: number
-  icon?: URL
+  icon?: SourceUrlStaticIconReference
 }
 
 export type ResolvedMapStyle = Omit<MapStyle, 'icon'> & {
-  icon?: StaticIconId
+  icon?: RegisteredStaticIconReference
 }
 
 /**
@@ -288,23 +288,21 @@ export interface FeedRepository {
 }
 
 type OptionalPropertyOf<T extends object> = Exclude<{
-  [K in keyof T]: T extends Record<K, T[K]>
-    ? never
-    : K
+  [K in keyof T]: T extends Record<K, T[K]> ? never : K
 }[keyof T], undefined>
 
 export type FeedOverrideTopicNullableKeys = OptionalPropertyOf<Feed>
 
-export type FeedCreateMinimal = Partial<Omit<Feed, 'id' | FeedOverrideTopicNullableKeys>> & Pick<Feed, 'topic' | 'service'> &
-  {
-    [nullable in keyof Pick<Feed, FeedOverrideTopicNullableKeys>]: FeedCreateUnresolved[nullable] | null
+export type FeedCreateMinimal = Partial<Omit<Feed, 'id' | FeedOverrideTopicNullableKeys>> & Pick<Feed, 'topic' | 'service'>
+  & {
+    [nullable in FeedOverrideTopicNullableKeys]?: FeedCreateUnresolved[nullable] | null
   }
 
 export type FeedUpdateMinimal = Omit<FeedCreateMinimal, 'service' | 'topic' | 'id'> & Pick<Feed, 'id'>
 
 export type FeedCreateUnresolved = Omit<FeedCreateAttrs, 'icon' | 'mapStyle'> & {
-  icon?: FeedCreateAttrs['icon'] | FeedTopic['icon'],
-  mapStyle?: FeedCreateAttrs['mapStyle'] | FeedTopic['mapStyle'],
+  icon?: StaticIconReference,
+  mapStyle?: MapStyle | ResolvedMapStyle,
   unresolvedIcons: URL[]
 }
 
@@ -330,7 +328,7 @@ export const FeedCreateUnresolved = (topic: FeedTopic, feedMinimal: Readonly<Fee
     itemsHaveIdentity: feedMinimal.itemsHaveIdentity === undefined ? topic.itemsHaveIdentity || false : feedMinimal.itemsHaveIdentity,
     itemsHaveSpatialDimension: feedMinimal.itemsHaveSpatialDimension === undefined ? topic.itemsHaveSpatialDimension || false : feedMinimal.itemsHaveSpatialDimension,
   }
-  const nullable: { [key in FeedOverrideTopicNullableKeys]: FeedCreateUnresolved[key] } = {
+  const nullable: { [key in FeedOverrideTopicNullableKeys]?: FeedCreateUnresolved[key] } = {
     summary: feedMinimal.summary === null ? undefined : feedMinimal.summary || topic.summary,
     constantParams: feedMinimal.constantParams || undefined,
     variableParamsSchema: feedMinimal.variableParamsSchema || undefined,
@@ -339,14 +337,27 @@ export const FeedCreateUnresolved = (topic: FeedTopic, feedMinimal: Readonly<Fee
     itemSecondaryProperty: feedMinimal.itemSecondaryProperty === null ? undefined : feedMinimal.itemSecondaryProperty || topic.itemSecondaryProperty,
     itemTemporalProperty: feedMinimal.itemTemporalProperty === null ? undefined : feedMinimal.itemTemporalProperty || topic.itemTemporalProperty,
     updateFrequencySeconds: feedMinimal.updateFrequencySeconds === null ? undefined : feedMinimal.updateFrequencySeconds || topic.updateFrequencySeconds,
-    icon: feedMinimal.icon === null ? undefined : feedMinimal.icon || topic.icon,
     mapStyle: feedMinimal.mapStyle === null ? undefined :
       feedMinimal.mapStyle ? { ...feedMinimal.mapStyle } :
       topic.mapStyle ? { ...topic.mapStyle } : undefined
   }
+  if (feedMinimal.icon !== null) {
+    if (feedMinimal.icon) {
+      nullable.icon = feedMinimal.icon
+    }
+    else if (topic.icon) {
+      nullable.icon = topic.icon
+    }
+  }
   const unresolvedIcons: URL[] = []
-  nullable.icon instanceof URL && unresolvedIcons.push(nullable.icon)
-  nullable.mapStyle?.icon instanceof URL && unresolvedIcons.push(nullable.mapStyle.icon)
+  let icon = nullable.icon || { sourceUrl: null }
+  if (icon.sourceUrl) {
+    unresolvedIcons.push(icon.sourceUrl)
+  }
+  icon = nullable.mapStyle?.icon || { sourceUrl: null }
+  if (icon.sourceUrl) {
+    unresolvedIcons.push(icon.sourceUrl)
+  }
   const unresolvedAttrs = {
     ...nonNullable,
     ...nullable,
@@ -361,19 +372,43 @@ export const FeedCreateUnresolved = (topic: FeedTopic, feedMinimal: Readonly<Fee
   return unresolvedAttrs
 }
 
+const resolvedMapStyle = (unresolved: MapStyle | ResolvedMapStyle, icons: { [iconUrl: string]: StaticIconId }): ResolvedMapStyle => {
+  const { icon, ...rest } = unresolved
+  if (!icon) {
+    return rest
+  }
+  const resolved: ResolvedMapStyle = rest
+  if (icon.sourceUrl) {
+    const id = icons[String(icon.sourceUrl)]
+    if (id) {
+      resolved.icon = { id }
+    }
+  }
+  else {
+    resolved.icon = { ...icon }
+  }
+  return resolved
+}
+
 export const FeedCreateAttrs = (unresolved: FeedCreateUnresolved, icons: { [iconUrl: string]: StaticIconId }): FeedCreateAttrs => {
   icons = icons || {}
-  const { unresolvedIcons, ...resolved } = { ...unresolved }
-  if (unresolved.mapStyle) {
-    resolved.mapStyle = { ...unresolved.mapStyle }
+  const { unresolvedIcons, icon, mapStyle, ...rest } = unresolved
+  const resolved = rest as FeedCreateAttrs
+  if (mapStyle) {
+    resolved.mapStyle = resolvedMapStyle(mapStyle, icons)
   }
-  if (resolved.icon instanceof URL) {
-    resolved.icon = icons[String(resolved.icon)]
+  if (icon) {
+    if (icon.sourceUrl) {
+      const id = icons[String(icon.sourceUrl)]
+      if (id) {
+        resolved.icon = { id }
+      }
+    }
+    else {
+      resolved.icon = { ...icon }
+    }
   }
-  if (resolved.mapStyle?.icon instanceof URL) {
-    resolved.mapStyle.icon = icons[String(resolved.mapStyle.icon)]
-  }
-  return resolved as FeedCreateAttrs
+  return resolved
 }
 
 export type FeedContentParams = JsonObject

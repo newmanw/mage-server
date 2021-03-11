@@ -5,6 +5,7 @@ import { FeedServiceType, FeedService, FeedServiceTypeId, RegisteredFeedServiceT
 import { FeedServiceTypeRepository, FeedServiceRepository } from '../../entities/feeds/entities.feeds'
 import { FeedServiceDescriptor } from '../../app.api/feeds/app.api.feeds'
 import { EntityIdFactory } from '../../entities/entities.global'
+import { StaticIconId } from '../../entities/icons/entities.icons'
 
 
 
@@ -53,8 +54,9 @@ export function FeedServiceModel(conn: mongoose.Connection, collection?: string)
   return conn.model(FeedsModels.FeedService, FeedServiceSchema, collection || 'feed_services')
 }
 
-export type FeedDocument = Omit<Feed, 'service'> & mongoose.Document & {
-  service: mongoose.Types.ObjectId
+export type FeedDocument = Omit<Feed, 'service' | 'icon'> & mongoose.Document & {
+  service: mongoose.Types.ObjectId,
+  icon?: string
 }
 export type FeedModel = Model<FeedDocument>
 export const FeedSchema = new mongoose.Schema(
@@ -83,6 +85,9 @@ export const FeedSchema = new mongoose.Schema(
       transform: (doc: FeedDocument, json: any & Feed, options: SchemaOptions): void => {
         delete json._id
         json.service = doc.service.toHexString()
+        if (doc.icon) {
+          json.icon = { id: doc.icon }
+        }
       }
     }
   })
@@ -138,7 +143,7 @@ export class MongooseFeedServiceRepository extends BaseMongooseRepository<FeedSe
 export class MongooseFeedRepository extends BaseMongooseRepository<FeedDocument, FeedModel, Feed> implements FeedRepository {
 
   constructor(model: FeedModel, private readonly idFactory: EntityIdFactory) {
-    super(model)
+    super(model, { entityToDocStub: e => ({ ...e, icon: e.icon?.id  }) })
   }
 
   async create(attrs: Partial<Feed>): Promise<Feed> {
@@ -165,7 +170,7 @@ export class MongooseFeedRepository extends BaseMongooseRepository<FeedDocument,
       mapStyle: feed.mapStyle,
       updateFrequencySeconds: feed.updateFrequencySeconds
     }
-    return await super.update({ id: feed.id, ...explicit })
+    return await super.update({ ...explicit, id: feed.id })
   }
 
   async findFeedsByIds(...feedIds: FeedId[]): Promise<Feed[]> {

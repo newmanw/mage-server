@@ -281,7 +281,7 @@ describe('feeds repositories', function() {
           topic: uniqid(),
           title: uniqid(),
           summary: 'everything is required',
-          icon: uniqid(),
+          icon: { id: uniqid() },
           itemsHaveIdentity: true,
           itemsHaveSpatialDimension: true,
           updateFrequencySeconds: 60,
@@ -302,7 +302,7 @@ describe('feeds repositories', function() {
             strokeWidth: 1,
             fill: 'abc123',
             fillOpacity: 0.5,
-            icon: uniqid()
+            icon: { id: uniqid() }
           },
           itemPropertiesSchema: {
             title: 'Save Me',
@@ -343,7 +343,7 @@ describe('feeds repositories', function() {
                 [uniqid()]: { type: 'string' }
               }
             },
-            icon: uniqid(),
+            icon: { id: uniqid() },
             mapStyle: {
               stroke: uniqid()
             },
@@ -371,7 +371,7 @@ describe('feeds repositories', function() {
                 [uniqid()]: { type: 'string' }
               }
             },
-            icon: uniqid(),
+            icon: { id: uniqid() },
             mapStyle: {
               stroke: uniqid()
             },
@@ -383,7 +383,7 @@ describe('feeds repositories', function() {
               }
             }
           })
-          const origDoc: FeedDocument = await model.create({ _id: origAttrs.id, ...origAttrs })
+          const origDoc: FeedDocument = await model.create({ _id: origAttrs.id, ...origAttrs, icon: origAttrs.icon.id })
           const updated = await repo.put(updatedAttrs)
           const updatedDoc = await model.findById(origAttrs.id)
 
@@ -410,7 +410,7 @@ describe('feeds repositories', function() {
                 [uniqid()]: { type: 'string' }
               }
             },
-            icon: uniqid(),
+            icon: { id: uniqid() },
             mapStyle: {
               stroke: uniqid()
             },
@@ -430,7 +430,7 @@ describe('feeds repositories', function() {
             itemsHaveIdentity: true,
             itemsHaveSpatialDimension: true
           })
-          const origDoc = await model.create({ ...origAttrs, _id: origAttrs.id })
+          const origDoc = await model.create({ ...origAttrs, _id: origAttrs.id, icon: origAttrs.icon.id })
           const updated = await repo.put(updatedAttrs)
           const updatedDoc = await model.findById(origDoc.id)
 

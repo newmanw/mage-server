@@ -97,12 +97,24 @@ export enum StaticIconImportFetch {
 export interface StaticIconRepository {
   findOrImportBySourceUrl(stub: StaticIconStub | URL, fetch?: StaticIconImportFetch): Promise<StaticIcon>
   createLocal(stub: LocalStaticIconStub, content: NodeJS.ReadableStream): Promise<StaticIcon>
-  findById(id: StaticIconId): Promise<StaticIcon | null>
+  findByReference(ref: StaticIconReference): Promise<StaticIcon | null>
   find(paging?: PagingParameters): Promise<PageOf<StaticIcon>>
   resolveFromSourceUrl(id: StaticIconId): Promise<NodeJS.ReadableStream | null>
   resolveFromSourceUrlAndStore(id: StaticIconId): Promise<StaticIcon | null>
   loadContent(id: StaticIconId): Promise<NodeJS.ReadableStream | null>
 }
+
+export interface RegisteredStaticIconReference {
+  id: StaticIconId
+  sourceUrl?: never
+}
+
+export interface SourceUrlStaticIconReference {
+  sourceUrl: URL
+  id?: never
+}
+
+export type StaticIconReference = RegisteredStaticIconReference | SourceUrlStaticIconReference
 
 export interface IconUrlScheme {
   /**

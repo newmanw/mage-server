@@ -593,7 +593,7 @@ invalid request
           topic,
           title: 'Title of Feed',
           summary: 'Testing the feed preview',
-          icon: uniqid(),
+          icon: { id: uniqid() },
           itemsHaveIdentity: false,
           itemsHaveSpatialDimension: true,
           itemTemporalProperty: 'when',
@@ -630,7 +630,7 @@ invalid request
           topic,
           title: appReqParams.feed.title,
           summary: appReqParams.feed.summary as string,
-          icon: appReqParams.feed.icon as string,
+          icon: { id: appReqParams.feed.icon!.id! },
           itemsHaveIdentity: appReqParams.feed.itemsHaveIdentity,
           itemsHaveSpatialDimension: appReqParams.feed.itemsHaveSpatialDimension,
           itemPrimaryProperty: appReqParams.feed.itemTemporalProperty as string,
@@ -1083,7 +1083,7 @@ invalid request
         id: uniqid(),
         title: 'Update Title',
         summary: 'Update summary',
-        icon: uniqid(),
+        icon: { id: uniqid() },
         itemsHaveIdentity: true,
         itemsHaveSpatialDimension: true,
         itemPrimaryProperty: 'updated1',
@@ -1094,7 +1094,7 @@ invalid request
           properties: { updated: { type: 'object' }}
         },
         mapStyle: {
-          icon: uniqid()
+          icon: { id: uniqid() }
         },
         updateFrequencySeconds: 987,
         itemPropertiesSchema: {
@@ -1123,7 +1123,7 @@ invalid request
           properties: { updated: { type: 'object' }}
         },
         mapStyle: {
-          icon: body.mapStyle?.icon as string
+          icon: { id: body.mapStyle?.icon?.id! }
         },
         updateFrequencySeconds: 987,
         service: {

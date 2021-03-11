@@ -2,7 +2,7 @@ import uniqid from 'uniqid'
 import { FeedCreateUnresolved, FeedTopic, FeedCreateMinimal, MapStyle, ResolvedMapStyle, FeedCreateAttrs } from '../../../lib/entities/feeds/entities.feeds'
 import { expect } from 'chai'
 import { URL } from 'url'
-import { min } from 'lodash'
+import { min, uniq } from 'lodash'
 
 describe('feed-create attribute factory', function() {
 
@@ -12,7 +12,7 @@ describe('feed-create attribute factory', function() {
       id: uniqid(),
       title: 'Topic Title',
       summary: 'About the topic',
-      icon: new URL('test:///topic.png'),
+      icon: { sourceUrl: new URL('test:///topic.png') },
       itemsHaveIdentity: true,
       itemsHaveSpatialDimension: true,
       itemPrimaryProperty: 'topicPrimary',
@@ -37,7 +37,7 @@ describe('feed-create attribute factory', function() {
       topic: topic.id,
       title: 'Feed Title',
       summary: 'About the feed',
-      icon: uniqid(),
+      icon: { id: uniqid() },
       itemsHaveIdentity: false,
       itemsHaveSpatialDimension: false,
       itemPrimaryProperty: null,
@@ -59,7 +59,7 @@ describe('feed-create attribute factory', function() {
         strokeWidth: 1.5,
         fill: 'aaa111',
         fillOpacity: 0.2,
-        icon: uniqid()
+        icon: { id: uniqid() }
       },
       itemPropertiesSchema: {
         type: 'object',
@@ -99,7 +99,7 @@ describe('feed-create attribute factory', function() {
       id: uniqid(),
       title: 'Topic Title',
       summary: 'About the topic',
-      icon: new URL('test://icons/topic.png'),
+      icon: { sourceUrl: new URL('test://icons/topic.png') },
       itemsHaveIdentity: true,
       itemsHaveSpatialDimension: true,
       itemPrimaryProperty: 'topicPrimary',
@@ -115,7 +115,7 @@ describe('feed-create attribute factory', function() {
         required: [ 'key' ]
       },
       mapStyle: {
-        icon: new URL('https://icons.net/building.png'),
+        icon: { sourceUrl: new URL('https://icons.net/building.png') },
         stroke: 'abcabc',
         strokeOpacity: 0.5
       },
@@ -148,7 +148,7 @@ describe('feed-create attribute factory', function() {
       },
       itemPropertiesSchema: topic.itemPropertiesSchema,
       icon: topic.icon,
-      unresolvedIcons: [ topic.icon, topic.mapStyle.icon ]
+      unresolvedIcons: [ topic.icon.sourceUrl, topic.mapStyle.icon?.sourceUrl ]
     })
   })
 
@@ -158,7 +158,7 @@ describe('feed-create attribute factory', function() {
       id: uniqid(),
       title: 'Topic Title',
       summary: 'About the topic',
-      icon: new URL('test:///topic.png'),
+      icon: { sourceUrl: new URL('test:///topic.png') },
       itemsHaveIdentity: true,
       itemsHaveSpatialDimension: true,
       itemPrimaryProperty: 'topicPrimary',
@@ -174,7 +174,7 @@ describe('feed-create attribute factory', function() {
         required: [ 'key' ]
       },
       mapStyle: {
-        icon: new URL('https://icons.net/building.png'),
+        icon: { sourceUrl: new URL('https://icons.net/building.png') },
         fill: 'abc123'
       },
       itemPropertiesSchema: {
@@ -189,9 +189,8 @@ describe('feed-create attribute factory', function() {
     }
     const createAttrs = FeedCreateUnresolved(topic, minimal)
 
-    expect(topic.mapStyle.icon).to.be.instanceOf(URL)
     expect(createAttrs.mapStyle).to.deep.equal({
-      icon: topic.mapStyle.icon,
+      icon: { sourceUrl: topic.mapStyle.icon?.sourceUrl },
       fill: topic.mapStyle.fill
     })
     expect(createAttrs.mapStyle).to.not.equal(topic.mapStyle)
@@ -210,15 +209,44 @@ describe('feed-create attribute factory', function() {
       title: 'Test',
       itemsHaveIdentity: true,
       itemsHaveSpatialDimension: true,
-      icon: unresolvedIcons[0],
+      icon: { sourceUrl: unresolvedIcons[0] },
       mapStyle: {
-        icon: unresolvedIcons[1]
+        icon: { sourceUrl: unresolvedIcons[1] }
       },
       unresolvedIcons
     }
     const resolved = FeedCreateAttrs(unresolved, resolvedIcons)
 
-    expect(resolved.icon).to.equal(resolvedIcons[String(unresolvedIcons[0])])
-    expect(resolved.mapStyle?.icon).to.equal(resolvedIcons[String(unresolvedIcons[1])])
+    expect(resolved.icon?.id).to.equal(resolvedIcons[String(unresolvedIcons[0])])
+    expect(resolved.mapStyle?.icon?.id).to.equal(resolvedIcons[String(unresolvedIcons[1])])
+  })
+
+  it('leaves registered icon references intact', function() {
+
+    const unresolvedIcons: URL[] = [ new URL('test://register.png') ]
+    const resolvedIcons = {
+      [String(unresolvedIcons[0])]: uniqid()
+    }
+    const unresolved: FeedCreateUnresolved = {
+      service: uniqid(),
+      topic: uniqid(),
+      title: 'Test',
+      itemsHaveIdentity: true,
+      itemsHaveSpatialDimension: true,
+      icon: { sourceUrl: unresolvedIcons[0] },
+      mapStyle: {
+        icon: { id: 'registered1' }
+      },
+      unresolvedIcons
+    }
+    const resolved = FeedCreateAttrs(unresolved, resolvedIcons)
+
+    expect(resolved.icon?.id).to.equal(resolvedIcons[String(unresolvedIcons[0])])
+    expect(resolved.mapStyle?.icon?.id).to.equal('registered1')
+
+    const resolvedAgain = FeedCreateAttrs({ ...resolved, unresolvedIcons }, {})
+
+    expect(resolvedAgain.icon?.id).to.equal(resolvedIcons[String(unresolvedIcons[0])])
+    expect(resolvedAgain.mapStyle?.icon?.id).to.equal('registered1')
   })
 })

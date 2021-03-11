@@ -3,7 +3,7 @@ import { URL } from 'url'
 import mongoose from 'mongoose'
 import mongodb from 'mongodb'
 import { EntityIdFactory, pageOf, PageOf, PagingParameters } from '../../entities/entities.global'
-import { StaticIcon, StaticIconStub, StaticIconId, StaticIconRepository, LocalStaticIconStub } from '../../entities/icons/entities.icons'
+import { StaticIcon, StaticIconStub, StaticIconId, StaticIconRepository, LocalStaticIconStub, StaticIconReference } from '../../entities/icons/entities.icons'
 import { BaseMongooseRepository, pageQuery } from '../base/adapters.base.db.mongoose'
 
 export type StaticIconDocument = Omit<StaticIcon, 'sourceUrl'> & mongoose.Document & {
@@ -102,12 +102,22 @@ export class MongooseStaticIconRepository extends BaseMongooseRepository<StaticI
     return await this.findDocBySourceUrl(url).then(x => x?.toJSON())
   }
 
+  async findByReference(ref: StaticIconReference): Promise<StaticIcon | null> {
+    if (ref.id) {
+      return await this.findById(ref.id)
+    }
+    if (ref.sourceUrl) {
+      return await this.findBySourceUrl(ref.sourceUrl)
+    }
+    return null
+  }
+
   async find(paging?: PagingParameters): Promise<PageOf<StaticIcon>> {
     paging = paging || { pageSize: 100, pageIndex: 0, includeTotalCount: false }
     const counted = await pageQuery(this.model.find().sort({ sourceUrl: 1 }), paging)
     const items: StaticIcon[] = []
     for await (const doc of counted.query.cursor()) {
-      items.push(this.docToEntity(doc))
+      items.push(this.entityForDocument(doc))
     }
     return pageOf(items, paging, counted.totalCount)
   }
