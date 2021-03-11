@@ -29,9 +29,6 @@ export const topicDescriptor: FeedTopic = {
   itemSecondaryProperty: 'rigStatus',
   itemTemporalProperty: 'timestamp',
   updateFrequencySeconds: 60 * 15,
-  mapStyle: {
-    icon: new PluginResourceUrl('@ngageoint/mage.nga-msi', 'icons/asam.png')
-  },
   itemPropertiesSchema: {
     type: 'object',
     properties: {

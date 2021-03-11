@@ -15,7 +15,7 @@ export const topicDescriptor: FeedTopic = {
   id: 'asam',
   title: 'ASAMs',
   summary: 'Anti-Shipping Acitivty Messages (ASAMs) include the locations and descriptive accounts of specific hostile acts against ships and mariners and may be useful for recognition, prevention and avoidance of potential hostile activity.',
-  icon: new PluginResourceUrl('@ngageoint/mage.nga-msi', 'icons/asam.png'),
+  icon: { sourceUrl: new PluginResourceUrl('@ngageoint/mage.nga-msi', 'icons/asam.png') },
   paramsSchema: {
     type: 'object',
     properties: {
@@ -32,7 +32,7 @@ export const topicDescriptor: FeedTopic = {
   itemTemporalProperty: 'timestamp',
   updateFrequencySeconds: 61 * 15,
   mapStyle: {
-    icon: new PluginResourceUrl('@ngageoint/mage.nga-msi', 'icons/asam.png')
+    icon: { sourceUrl: new PluginResourceUrl('@ngageoint/mage.nga-msi', 'icons/asam.png') }
   },
   itemPropertiesSchema: {
     type: 'object',
