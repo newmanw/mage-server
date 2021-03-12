@@ -249,7 +249,7 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
       return next(appRes.error)
     })
     .put(async (req, res, next) => {
-      const updateParams = Object.assign({ ...feedCreateParamsFromRequestBody('remove', 'remove', req.body).feed }, { id: req.body.id as string })
+      const updateParams = Object.assign({ ...feedCreateParamsFromRequestBody('remove', 'remove', req.body).feed }, { id: req.body.id as string }) as any
       delete updateParams.service
       delete updateParams.topic
       const appReq: UpdateFeedRequest = createAppRequest(req, { feed: updateParams })
