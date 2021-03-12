@@ -80,7 +80,7 @@
     "yaml": "^1.8.2"
   },
   "devDependencies": {
-    "@fluffy-spoon/substitute": "^1.145.0",
+    "@fluffy-spoon/substitute": "^1.196.0",
     "@types/async": "^3.0.5",
     "@types/chai": "^4.2.7",
     "@types/chai-as-promised": "^7.1.2",
