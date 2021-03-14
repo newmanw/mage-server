@@ -1,13 +1,12 @@
 import { URL } from 'url'
-import { FeedServiceTypeRepository, FeedServiceRepository, FeedTopic, FeedService, InvalidServiceConfigError, FeedContent, Feed, FeedTopicId, FeedServiceConnection, FeedRepository, FeedCreateUnresolved, FeedCreateMinimal, FeedServiceType, FeedServiceId, FeedCreateAttrs, FeedTopicContent } from '../../entities/feeds/entities.feeds';
+import { FeedServiceTypeRepository, FeedServiceRepository, FeedTopic, FeedService, InvalidServiceConfigError, FeedContent, Feed, FeedTopicId, FeedServiceConnection, FeedRepository, FeedCreateUnresolved, FeedCreateMinimal, FeedServiceType, FeedServiceId, FeedCreateAttrs, MapStyle } from '../../entities/feeds/entities.feeds';
 import * as api from '../../app.api/feeds/app.api.feeds'
 import { AppRequest, KnownErrorsOf, withPermission, AppResponse } from '../../app.api/app.api.global'
-import { PermissionDeniedError, EntityNotFoundError, InvalidInputError, entityNotFound, invalidInput, MageError, ErrInvalidInput, KeyPathError } from '../../app.api/app.api.errors'
+import { PermissionDeniedError, EntityNotFoundError, InvalidInputError, entityNotFound, invalidInput, MageError, KeyPathError } from '../../app.api/app.api.errors'
 import { FeedServiceTypeDescriptor } from '../../app.api/feeds/app.api.feeds'
 import { JsonSchemaService, JsonValidator, JSONSchema4 } from '../../entities/entities.json_types'
 import { MageEventRepository } from '../../entities/events/entities.events'
-import { MongooseFeedRepository } from '../../adapters/feeds/adapters.feeds.db.mongoose'
-import { StaticIcon, StaticIconId, StaticIconImportFetch, StaticIconRepository } from '../../entities/icons/entities.icons'
+import { SourceUrlStaticIconReference, StaticIconImportFetch, StaticIconReference, StaticIconRepository } from '../../entities/icons/entities.icons'
 
 
 export function ListFeedServiceTypes(permissionService: api.FeedsPermissionService, repo: FeedServiceTypeRepository): api.ListFeedServiceTypes {
@@ -219,8 +218,58 @@ function withFetchContext<R>(deps: ContentFetchDependencies, { service, topic, v
   }
 }
 
-async function resolveFeedCreate(topic: FeedTopic, feedMinimal: FeedCreateMinimal, iconRepo: StaticIconRepository, iconFetch: StaticIconImportFetch = StaticIconImportFetch.Lazy): Promise<FeedCreateAttrs> {
-  const unresolved = FeedCreateUnresolved(topic, feedMinimal)
+function tryParseIconSourceUrlRef(ref: { sourceUrl: string }): SourceUrlStaticIconReference | null {
+  try {
+    return { sourceUrl: new URL(ref.sourceUrl) }
+  }
+  catch (err) {
+    console.error(`error parsing icon url ${ref.sourceUrl} --`, err)
+  }
+  return null
+}
+
+function parseIconUrlsIfNecessary(feedMinimal: api.FeedCreateMinimalAcceptingStringUrls): FeedCreateMinimal | KeyPathError[] {
+  const keyErrors: KeyPathError[] = []
+  let { icon, mapStyle, ...rest } = feedMinimal
+  if (icon) {
+    if (typeof icon.sourceUrl === 'string') {
+      icon = tryParseIconSourceUrlRef(icon as { sourceUrl: string })
+      if (!icon) {
+        keyErrors.push([ 'invalid icon url', 'feed', 'icon' ])
+      }
+    }
+  }
+  let mapIcon = mapStyle?.icon as api.AcceptStringUrls<MapStyle['icon']> | null
+  if (mapIcon) {
+    if (typeof mapIcon.sourceUrl === 'string') {
+      mapIcon = tryParseIconSourceUrlRef(mapIcon as { sourceUrl: string })
+      if (!mapIcon) {
+        keyErrors.push([ 'invalid icon url', 'feed', 'mapStyle', 'icon'])
+      }
+    }
+  }
+  if (keyErrors.length) {
+    return keyErrors
+  }
+  const parsed: FeedCreateMinimal = rest
+  if (icon !== undefined) {
+    parsed.icon = icon as StaticIconReference | null
+  }
+  if (mapStyle !== undefined) {
+    if (mapIcon) {
+      mapStyle = { ...mapStyle, icon: mapIcon }
+    }
+    parsed.mapStyle = mapStyle as FeedCreateMinimal['mapStyle']
+  }
+  return parsed
+}
+
+async function resolveFeedCreate(topic: FeedTopic, feedMinimal: api.FeedCreateMinimalAcceptingStringUrls, iconRepo: StaticIconRepository, iconFetch: StaticIconImportFetch = StaticIconImportFetch.Lazy): Promise<FeedCreateAttrs | KeyPathError[]> {
+  const feedMinimalParsed = parseIconUrlsIfNecessary(feedMinimal)
+  if (Array.isArray(feedMinimalParsed)) {
+    return feedMinimalParsed
+  }
+  const unresolved = FeedCreateUnresolved(topic, feedMinimalParsed)
   const icons = await Promise.all(unresolved.unresolvedIcons.map(iconUrl => {
     return iconRepo.findOrImportBySourceUrl(iconUrl, iconFetch).then(icon => ({ [String(iconUrl)]: icon.id }))
   }))
@@ -255,6 +304,9 @@ export function PreviewFeed(permissionService: api.FeedsPermissionService, servi
             }
           }
           const previewCreateAttrs = await resolveFeedCreate(context.topic, reqFeed, iconRepo, StaticIconImportFetch.EagerAwait)
+          if (Array.isArray(previewCreateAttrs)) {
+            return invalidInput('invalid icon urls', ...previewCreateAttrs)
+          }
           const feedPreview: api.FeedPreview = {
             feed: previewCreateAttrs
           }
@@ -283,9 +335,12 @@ export function CreateFeed(permissionService: api.FeedsPermissionService, servic
     const reqFeed = req.feed
     return await withPermission<api.FeedExpanded, KnownErrorsOf<api.CreateFeed>>(
       permissionService.ensureCreateFeedPermissionFor(req.context, reqFeed.service),
-      withFetchContext<api.FeedExpanded>({ serviceRepo, serviceTypeRepo, jsonSchemaService }, reqFeed)
-        .then(async (context: ContentFetchContext): Promise<api.FeedExpanded> => {
+      withFetchContext<api.FeedExpanded | InvalidInputError>({ serviceRepo, serviceTypeRepo, jsonSchemaService }, reqFeed)
+        .then(async (context: ContentFetchContext): Promise<api.FeedExpanded | InvalidInputError> => {
           const feedResolved = await resolveFeedCreate(context.topic, reqFeed, iconRepo, StaticIconImportFetch.EagerAwait)
+          if (Array.isArray(feedResolved)) {
+            return invalidInput('invalid icon urls', ...feedResolved)
+          }
           const feed = await feedRepo.create(feedResolved)
           return { ...feed, service: context.service, topic: context.topic }
         })
@@ -357,10 +412,13 @@ export function UpdateFeed(permissionService: api.FeedsPermissionService, servic
     }
     return await withPermission<api.FeedExpanded, KnownErrorsOf<api.UpdateFeed>>(
       permissionService.ensureCreateFeedPermissionFor(req.context, feed.service),
-      withFetchContext<api.FeedExpanded | EntityNotFoundError>({ serviceTypeRepo, serviceRepo }, { service: feed.service, topic: feed.topic }).then(
-        async (fetchContext): Promise<api.FeedExpanded | EntityNotFoundError> => {
+      withFetchContext<api.FeedExpanded | EntityNotFoundError | InvalidInputError>({ serviceTypeRepo, serviceRepo }, { service: feed.service, topic: feed.topic }).then(
+        async (fetchContext): Promise<api.FeedExpanded | EntityNotFoundError | InvalidInputError> => {
           const updateUnresolved = { ...req.feed, service: feed.service, topic: feed.topic }
-          const updateResolved = await resolveFeedCreate(fetchContext.topic, updateUnresolved, iconRepo, StaticIconImportFetch.EagerAwait)
+          const updateResolved = await resolveFeedCreate(fetchContext.topic, updateUnresolved as FeedCreateMinimal, iconRepo, StaticIconImportFetch.EagerAwait)
+          if (Array.isArray(updateResolved)) {
+            return invalidInput('invalid update request', ...updateResolved)
+          }
           const updated = await feedRepo.put({ ...updateResolved, id: feed.id })
           if (!updated) {
             return entityNotFound(feed.id, 'Feed', 'feed deleted before update')

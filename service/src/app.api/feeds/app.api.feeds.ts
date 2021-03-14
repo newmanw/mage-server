@@ -2,6 +2,7 @@ import { AppRequest, AppResponse, Descriptor, AppRequestContext, KnownErrorsOf }
 import { FeedService, FeedTopic, FeedContent, FeedId, FeedServiceTypeId, FeedServiceId, Feed, FeedServiceType, FeedContentParams, FeedCreateMinimal, FeedUpdateMinimal, FeedCreateAttrs } from '../../entities/feeds/entities.feeds'
 import { Json, JsonObject } from '../../entities/entities.json_types'
 import { PermissionDeniedError, EntityNotFoundError, InvalidInputError } from '../app.api.errors'
+import { StaticIconReference } from '../../entities/icons/entities.icons'
 
 
 export interface ListFeedServiceTypes {
@@ -58,8 +59,13 @@ export interface ListServiceTopics {
   (req: ListServiceTopicsRequest): Promise<AppResponse<FeedTopic[], PermissionDeniedError | EntityNotFoundError>>
 }
 
+export type FeedCreateMinimalAcceptingStringUrls = Omit<FeedCreateMinimal, 'icon' | 'mapStyle'> & {
+  icon?: FeedUpdateMinimal['icon'] | AcceptStringUrls<FeedUpdateMinimal['icon']>
+  mapStyle?: FeedUpdateMinimal['mapStyle'] | AcceptStringIconUrls<FeedUpdateMinimal['mapStyle']>
+}
+
 export interface CreateFeedRequest extends AppRequest {
-  feed: FeedCreateMinimal
+  feed: FeedCreateMinimalAcceptingStringUrls
 }
 
 export interface PreviewFeedRequest extends CreateFeedRequest {
@@ -106,7 +112,10 @@ export interface GetFeed {
 }
 
 export interface UpdateFeedRequest extends AppRequest {
-  feed: FeedUpdateMinimal
+  feed: Omit<FeedUpdateMinimal, 'icon' | 'mapStyle'> & {
+    icon?: FeedUpdateMinimal['icon'] | AcceptStringUrls<FeedUpdateMinimal['icon']>
+    mapStyle?: FeedUpdateMinimal['mapStyle'] | AcceptStringIconUrls<FeedUpdateMinimal['mapStyle']>
+  }
 }
 
 export interface UpdateFeed {
@@ -169,3 +178,6 @@ export interface FeedsPermissionService {
   ensureListAllFeedsPermissionFor(context: AppRequestContext): Promise<PermissionDeniedError | null>
   ensureFetchFeedContentPermissionFor(context: AppRequestContext, feed: FeedId): Promise<PermissionDeniedError | null>
 }
+
+export type AcceptStringIconUrls<T> = { [K in keyof T]: T[K] extends StaticIconReference | null | undefined ? AcceptStringUrls<T[K]> : T[K] }
+export type AcceptStringUrls<T> = { [K in keyof T]: T[K] extends URL | undefined | null ? T[K] | string : T[K] }

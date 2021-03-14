@@ -14,7 +14,6 @@ import _ from 'lodash'
 import { MageEventRepository } from '../../../lib/entities/events/entities.events'
 import { URL } from 'url'
 import { StaticIcon, StaticIconId, StaticIconImportFetch, StaticIconRepository } from '../../../lib/entities/icons/entities.icons'
-import { validate } from 'json-schema'
 
 
 function mockServiceType(descriptor: FeedServiceTypeDescriptor): SubstituteOf<RegisteredFeedServiceType> {
@@ -92,7 +91,7 @@ function requestBy<RequestType>(principal: TestPrincipal, params?: RequestType):
   )
 }
 
-describe('feeds use case interactions', function() {
+describe.only('feeds use case interactions', function() {
 
   let app: TestApp
   let someServiceTypes: SubstituteOf<RegisteredFeedServiceType>[]
@@ -1097,6 +1096,78 @@ describe('feeds use case interactions', function() {
             expect(resMapIconId).to.equal('map_icon')
             app.iconRepo.received(0).findOrImportBySourceUrl(Arg.any())
           }
+        ],
+        [
+          'accepts and parses icon urls as strings',
+          async function(appOperation: PreviewOrCreateOp) {
+            const feedIcon: StaticIcon = {
+              id: uniqid(),
+              sourceUrl: new URL('test:///icons/topic.png'),
+              registeredTimestamp: Date.now(),
+              tags: []
+            }
+            const mapIcon: StaticIcon = {
+              id: uniqid(),
+              sourceUrl: new URL('test:///icons/map_marker.png'),
+              registeredTimestamp: Date.now(),
+              tags: []
+            }
+            app.iconRepo.findOrImportBySourceUrl(Arg.is(x => String(x) === String(feedIcon.sourceUrl)), StaticIconImportFetch.EagerAwait).resolves(feedIcon)
+            app.iconRepo.findOrImportBySourceUrl(Arg.is(x => String(x) === String(mapIcon.sourceUrl)), StaticIconImportFetch.EagerAwait).resolves(mapIcon)
+            serviceConn.fetchAvailableTopics().resolves([ topics[0] ])
+            const feed = {
+              service: service.id,
+              topic: topics[0].id,
+              icon: { sourceUrl: String(feedIcon.sourceUrl) },
+              mapStyle: {
+                icon: { sourceUrl: String(mapIcon.sourceUrl) }
+              }
+            }
+            const req: PreviewFeedRequest = requestBy(adminPrincipal, { feed })
+            const res = await app[appOperation](req)
+
+            expect(res.error).to.be.null
+            let resFeedIconId: StaticIconId | undefined
+            let resMapIconId: StaticIconId | undefined
+            if ('feed' in res.success!) {
+              resFeedIconId = (res.success as FeedPreview).feed?.icon?.id
+              resMapIconId = (res.success as FeedPreview).feed?.mapStyle?.icon?.id
+            }
+            else {
+              resFeedIconId = (res.success as FeedExpanded).icon?.id
+              resMapIconId = (res.success as FeedExpanded).mapStyle?.icon?.id
+            }
+            expect(resFeedIconId).to.equal(feedIcon.id)
+            expect(resMapIconId).to.equal(mapIcon.id)
+            app.iconRepo.received(1).findOrImportBySourceUrl(Arg.is(x => String(x) === String(feedIcon.sourceUrl)), StaticIconImportFetch.EagerAwait)
+            app.iconRepo.received(1).findOrImportBySourceUrl(Arg.is(x => String(x) === String(mapIcon.sourceUrl)), StaticIconImportFetch.EagerAwait)
+            app.iconRepo.received(2).findOrImportBySourceUrl(Arg.all())
+          }
+        ],
+        [
+          'returns invalid input error if icon url strings are invalid',
+          async function(appOperation: PreviewOrCreateOp) {
+            const feedMod: PreviewFeedRequest['feed'] = {
+              service: service.id,
+              topic: topics[0].id,
+              icon: { sourceUrl: 'bad url' },
+              mapStyle: {
+                icon: { sourceUrl: 'bad url' }
+              }
+            }
+            const req: PreviewFeedRequest = requestBy(adminPrincipal, { feed: feedMod })
+            serviceConn.fetchAvailableTopics().resolves([ topics[0] ])
+            const res = await app[appOperation](req)
+
+            expect(res.success).to.be.null
+            const err = res.error as InvalidInputError
+            console.log(err)
+            expect(err.code).to.equal(ErrInvalidInput)
+            expect(err.data).to.have.lengthOf(2)
+            expect(err.data).to.deep.include([ 'invalid icon url', 'feed', 'icon' ])
+            expect(err.data).to.deep.include([ 'invalid icon url', 'feed', 'mapStyle', 'icon' ])
+            app.iconRepo.didNotReceive().findOrImportBySourceUrl(Arg.all())
+          }
         ]
       ]
 
@@ -1942,6 +2013,55 @@ describe('feeds use case interactions', function() {
           app.iconRepo.received(1).findOrImportBySourceUrl(Arg.is(x => String(x) === String(feedMod.icon?.sourceUrl)), StaticIconImportFetch.EagerAwait)
           app.iconRepo.received(1).findOrImportBySourceUrl(Arg.is(x => String(x) === String(feedMod.mapStyle?.icon?.sourceUrl)), StaticIconImportFetch.EagerAwait)
           app.iconRepo.received(2).findOrImportBySourceUrl(Arg.all())
+        })
+
+        it('accepts and parses icon urls as strings', async function() {
+
+          const feedMod: UpdateFeedRequest['feed'] = {
+            id: feeds[0].id,
+            icon: { sourceUrl: 'test://icons/parse1' },
+            mapStyle: {
+              icon: { sourceUrl: 'test://icons/parse2' }
+            }
+          }
+          const parsedIcon = new URL(feedMod.icon?.sourceUrl as string)
+          const parsedMapIcon = new URL(feedMod.mapStyle?.icon?.sourceUrl as string)
+          const iconId = uniqid()
+          const mapIconId = uniqid()
+          app.iconRepo.findOrImportBySourceUrl(Arg.is(x => String(x) === String(parsedIcon)), Arg.any()).resolves({ id: iconId } as StaticIcon)
+          app.iconRepo.findOrImportBySourceUrl(Arg.is(x => String(x) === String(parsedMapIcon)), Arg.any()).resolves({ id: mapIconId } as StaticIcon)
+          const req: UpdateFeedRequest = requestBy(adminPrincipal, { feed: feedMod })
+          const res = await app.updateFeed(req)
+
+          expect(res.error).to.be.null
+          expect(res.success).to.deep.include({
+            id: feeds[0].id,
+            icon: { id: iconId },
+            mapStyle: {
+              icon: { id: mapIconId }
+            }
+          })
+        })
+
+        it('returns invalid input error if icon url strings are invalid', async function() {
+
+          const feedMod: UpdateFeedRequest['feed'] = {
+            id: feeds[0].id,
+            icon: { sourceUrl: 'bad url' },
+            mapStyle: {
+              icon: { sourceUrl: 'bad url' }
+            }
+          }
+          const req: UpdateFeedRequest = requestBy(adminPrincipal, { feed: feedMod })
+          const res = await app.updateFeed(req)
+
+          expect(res.success).to.be.null
+          const err = res.error as InvalidInputError
+          expect(err.code).to.equal(ErrInvalidInput)
+          expect(err.data).to.have.lengthOf(2)
+          expect(err.data).to.deep.include([ 'invalid icon url', 'feed', 'icon' ])
+          expect(err.data).to.deep.include([ 'invalid icon url', 'feed', 'mapStyle', 'icon' ])
+          app.iconRepo.didNotReceive().findOrImportBySourceUrl(Arg.all())
         })
 
         it('checks permission for updating the feed', async function() {

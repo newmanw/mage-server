@@ -20,7 +20,7 @@ const iconJson: (icon: StaticIcon) => Omit<StaticIcon, 'sourceUrl'> & { sourceUr
   }
 }
 
-describe.only('icons web controller', function() {
+describe('icons web controller', function() {
 
   const root = '/icons-test'
   const jsonMimeType = /^application\/json/
