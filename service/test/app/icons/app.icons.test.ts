@@ -4,7 +4,7 @@ import { expect } from 'chai'
 import { Arg, Substitute as Sub, SubstituteOf } from '@fluffy-spoon/substitute'
 import * as api from '../../../lib/app.api/icons/app.api.icons'
 import * as impl from '../../../lib/app.impl/icons/app.impl.icons'
-import { ErrPermissionDenied, MageError, permissionDenied } from '../../../lib/app.api/app.api.errors'
+import { ErrPermissionDenied, InvalidInputError, MageError, permissionDenied } from '../../../lib/app.api/app.api.errors'
 import { AppRequest } from '../../../lib/app.api/app.api.global'
 import { LocalStaticIconStub, StaticIcon, StaticIconRepository } from '../../../lib/entities/icons/entities.icons'
 
@@ -21,7 +21,7 @@ function requestBy<T extends object>(principal: string, params?: T): AppRequest<
   }
 }
 
-describe('icons use case interactions', function() {
+describe.only('icons use case interactions', function() {
 
   let permissions: SubstituteOf<api.StaticIconPermissionsService>
   let iconRepo: SubstituteOf<StaticIconRepository>
@@ -102,6 +102,85 @@ describe('icons use case interactions', function() {
     })
   })
 
+  describe('getting an icon', function() {
+
+    let getIcon: api.GetStaticIcon
+
+    beforeEach(function() {
+      getIcon = impl.GetStaticIcon(permissions, iconRepo)
+    })
+
+    it('gets an icon by id', async function() {
+
+      const icon: StaticIcon = {
+        id: uniqid(),
+        sourceUrl: new URL('test://get/me'),
+        registeredTimestamp: Date.now()
+      }
+      const req: api.GetStaticIconRequest = requestBy('user1', {
+        iconRef: { id: icon.id }
+      })
+      permissions.ensureGetStaticIconPermission(Arg.requestTokenMatches(req.context)).resolves(null)
+      iconRepo.findByReference(Arg.deepEquals({ id: icon.id })).resolves(icon)
+      const res = await getIcon(req)
+
+      expect(res.error).to.be.null
+      expect(res.success).to.deep.equal(icon)
+    })
+
+    it('gets an icon by source url', async function() {
+
+      const icon: StaticIcon = {
+        id: uniqid(),
+        sourceUrl: new URL('test://get/me'),
+        registeredTimestamp: Date.now()
+      }
+      const req: api.GetStaticIconRequest = requestBy('user1', {
+        iconRef: { sourceUrl: icon.sourceUrl }
+      })
+      permissions.ensureGetStaticIconPermission(Arg.requestTokenMatches(req.context)).resolves(null)
+      iconRepo.findByReference(Arg.deepEquals({ sourceUrl: icon.sourceUrl })).resolves(icon)
+      const res = await getIcon(req)
+
+      expect(res.error).to.be.null
+      expect(res.success).to.deep.equal(icon)
+    })
+
+    it('gets an icon by source url string', async function() {
+
+      const icon: StaticIcon = {
+        id: uniqid(),
+        sourceUrl: new URL('test://get/me'),
+        registeredTimestamp: Date.now()
+      }
+      const req: api.GetStaticIconRequest = requestBy('user1', {
+        iconRef: { sourceUrl: String(icon.sourceUrl) }
+      })
+      permissions.ensureGetStaticIconPermission(Arg.requestTokenMatches(req.context)).resolves(null)
+      iconRepo.findByReference(Arg.deepEquals({ sourceUrl: icon.sourceUrl })).resolves(icon)
+      const res = await getIcon(req)
+
+      expect(res.error).to.be.null
+      expect(res.success).to.deep.equal(icon)
+    })
+
+    it('returns invalid input error if source url string is invalid', async function() {
+
+      const req: api.GetStaticIconRequest = requestBy('user1', {
+        iconRef: { sourceUrl: 'bad url' }
+      })
+      permissions.ensureGetStaticIconPermission(Arg.requestTokenMatches(req.context)).resolves(null)
+      const res = await getIcon(req)
+
+      expect(res.success).to.be.null
+      const err = res.error as InvalidInputError
+      expect(err.message).to.contain('invalid icon source url')
+      expect(err.data).to.deep.equal([
+        [ 'invalid url: bad url', 'iconRef', 'sourceUrl' ]
+      ])
+    })
+  })
+
   describe('getting icon content', function() {
 
     let getIconContent: api.GetStaticIconContent
@@ -113,14 +192,14 @@ describe('icons use case interactions', function() {
     it('checks permission for getting an icon', async function() {
 
       const req: api.GetStaticIconContentRequest = requestBy('admin', { iconId: uniqid() })
-      permissions.ensureGetStaticIconContentPermission(Arg.requestTokenMatches(req.context))
+      permissions.ensureGetStaticIconPermission(Arg.requestTokenMatches(req.context))
         .resolves(permissionDenied('get static icon content', req.context.requestingPrincipal() as string))
       const res = await getIconContent(req)
 
       expect(res.success).to.be.null
       expect(res.error).to.be.instanceOf(MageError)
       expect(res.error?.code).to.equal(ErrPermissionDenied)
-      permissions.received(1).ensureGetStaticIconContentPermission(Arg.requestTokenMatches(req.context))
+      permissions.received(1).ensureGetStaticIconPermission(Arg.requestTokenMatches(req.context))
       iconRepo.didNotReceive().loadContent(Arg.all())
     })
 
@@ -128,7 +207,7 @@ describe('icons use case interactions', function() {
 
       it('returns the stored content', async function() {
 
-        permissions.ensureGetStaticIconContentPermission(Arg.all()).resolves(null)
+        permissions.ensureGetStaticIconPermission(Arg.all()).resolves(null)
         const req: api.GetStaticIconContentRequest = requestBy('admin', { iconId: uniqid() })
         const res = await getIconContent(req)
 

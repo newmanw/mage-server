@@ -1,5 +1,8 @@
-import { withPermission } from '../../app.api/app.api.global'
+import { URL } from 'url'
+import { invalidInput } from '../../app.api/app.api.errors'
+import { KnownErrorsOf, withPermission } from '../../app.api/app.api.global'
 import { CreateLocalStaticIcon, CreateLocalStaticIconRequest, ListStaticIcons, ListStaticIconsRequest, GetStaticIcon, GetStaticIconContent, GetStaticIconContentRequest, GetStaticIconRequest, StaticIconPermissionsService } from '../../app.api/icons/app.api.icons'
+import { StaticIcon, StaticIconReference, StaticIconRepository } from '../../entities/icons/entities.icons'
 
 
 export function CreateStaticIcon(permissions: StaticIconPermissionsService): CreateLocalStaticIcon {
@@ -13,12 +16,21 @@ export function CreateStaticIcon(permissions: StaticIconPermissionsService): Cre
   }
 }
 
-export function GetStaticIcon(permissions: StaticIconPermissionsService): GetStaticIcon {
+export function GetStaticIcon(permissions: StaticIconPermissionsService, repo: StaticIconRepository): GetStaticIcon {
   return function getStaticIcon(req: GetStaticIconRequest): ReturnType<GetStaticIcon> {
-    return withPermission(
-      permissions.ensureGetStaticIconContentPermission(req.context),
-      () => {
-        throw new Error('todo')
+    return withPermission<StaticIcon | null, KnownErrorsOf<GetStaticIcon>>(
+      permissions.ensureGetStaticIconPermission(req.context),
+      async () => {
+        let ref = req.iconRef
+        if (typeof ref.sourceUrl === 'string') {
+          try {
+            ref = { sourceUrl: new URL(ref.sourceUrl) }
+          }
+          catch (err) {
+            return invalidInput('invalid icon source url', [ `invalid url: ${ref.sourceUrl}`, 'iconRef', 'sourceUrl' ])
+          }
+        }
+        return await repo.findByReference(ref as StaticIconReference)
       }
     )
   }
@@ -27,7 +39,7 @@ export function GetStaticIcon(permissions: StaticIconPermissionsService): GetSta
 export function GetStaticIconContent(permissions: StaticIconPermissionsService): GetStaticIconContent {
   return function getStaticIconContent(req: GetStaticIconContentRequest): ReturnType<GetStaticIconContent> {
     return withPermission(
-      permissions.ensureGetStaticIconContentPermission(req.context),
+      permissions.ensureGetStaticIconPermission(req.context),
       () => {
         throw new Error('todo')
       }
@@ -38,7 +50,7 @@ export function GetStaticIconContent(permissions: StaticIconPermissionsService):
 export function FindStaticIcons(permissions: StaticIconPermissionsService): ListStaticIcons {
   return function findStaticIcons(req: ListStaticIconsRequest): ReturnType<ListStaticIcons> {
     return withPermission(
-      permissions.ensureGetStaticIconContentPermission(req.context),
+      permissions.ensureGetStaticIconPermission(req.context),
       () => {
         throw new Error('todo')
       }

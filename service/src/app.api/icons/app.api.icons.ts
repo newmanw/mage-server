@@ -13,11 +13,11 @@ export interface CreateLocalStaticIcon {
 }
 
 export interface GetStaticIconRequest extends AppRequest {
-  iconRef: StaticIconReference
+  iconRef: StaticIconReference | { sourceUrl: string }
 }
 
 export interface GetStaticIcon {
-  (req: GetStaticIconRequest): Promise<AppResponse<StaticIcon, PermissionDeniedError | EntityNotFoundError | InvalidInputError>>
+  (req: GetStaticIconRequest): Promise<AppResponse<StaticIcon | null, PermissionDeniedError | EntityNotFoundError | InvalidInputError>>
 }
 
 export interface GetStaticIconContentRequest extends AppRequest {
@@ -39,5 +39,5 @@ export interface ListStaticIcons {
 
 export interface StaticIconPermissionsService {
   ensureCreateStaticIconPermission(context: AppRequestContext): Promise<null | PermissionDeniedError>
-  ensureGetStaticIconContentPermission(context: AppRequestContext): Promise<null | PermissionDeniedError>
+  ensureGetStaticIconPermission(context: AppRequestContext): Promise<null | PermissionDeniedError>
 }
