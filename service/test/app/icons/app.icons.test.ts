@@ -4,9 +4,10 @@ import { expect } from 'chai'
 import { Arg, Substitute as Sub, SubstituteOf } from '@fluffy-spoon/substitute'
 import * as api from '../../../lib/app.api/icons/app.api.icons'
 import * as impl from '../../../lib/app.impl/icons/app.impl.icons'
-import { ErrPermissionDenied, InvalidInputError, MageError, permissionDenied } from '../../../lib/app.api/app.api.errors'
+import { EntityNotFoundError, ErrEntityNotFound, ErrPermissionDenied, InvalidInputError, MageError, permissionDenied } from '../../../lib/app.api/app.api.errors'
 import { AppRequest } from '../../../lib/app.api/app.api.global'
 import { LocalStaticIconStub, StaticIcon, StaticIconRepository } from '../../../lib/entities/icons/entities.icons'
+import { Readable } from 'stream'
 
 function requestBy<T extends object>(principal: string, params?: T): AppRequest<string> & T {
   if (!params) {
@@ -179,6 +180,37 @@ describe.only('icons use case interactions', function() {
         [ 'invalid url: bad url', 'iconRef', 'sourceUrl' ]
       ])
     })
+
+    it('returns entity not found for request by id when icon does not exist', async function() {
+
+      const id = uniqid()
+      const req: api.GetStaticIconRequest = requestBy('user1', {
+        iconRef: { id }
+      })
+      permissions.ensureGetStaticIconPermission(Arg.requestTokenMatches(req.context)).resolves(null)
+      iconRepo.findByReference(Arg.deepEquals({ id })).resolves(null)
+      const res = await getIcon(req)
+
+      expect(res.success).to.be.null
+      const err = res.error as EntityNotFoundError
+      expect(err.code).to.equal(ErrEntityNotFound)
+      expect(err.data.entityId).to.equal(id)
+      expect(err.data.entityType).to.equal('StaticIcon')
+    })
+
+    it('returns null for request by source url when icon does not exist', async function() {
+
+      const sourceUrl = new URL('test://not/there')
+      const req: api.GetStaticIconRequest = requestBy('user1', {
+        iconRef: { sourceUrl }
+      })
+      permissions.ensureGetStaticIconPermission(Arg.requestTokenMatches(req.context)).resolves(null)
+      iconRepo.findByReference(Arg.deepEquals({ sourceUrl })).resolves(null)
+      const res = await getIcon(req)
+
+      expect(res.success).to.be.null
+      expect(res.error).to.be.null
+    })
   })
 
   describe('getting icon content', function() {
@@ -186,7 +218,7 @@ describe.only('icons use case interactions', function() {
     let getIconContent: api.GetStaticIconContent
 
     beforeEach(function() {
-      getIconContent = impl.GetStaticIconContent(permissions)
+      getIconContent = impl.GetStaticIconContent(permissions, iconRepo)
     })
 
     it('checks permission for getting an icon', async function() {
@@ -207,12 +239,30 @@ describe.only('icons use case interactions', function() {
 
       it('returns the stored content', async function() {
 
+        const req: api.GetStaticIconContentRequest = requestBy('user1', { iconId: uniqid() })
         permissions.ensureGetStaticIconPermission(Arg.all()).resolves(null)
-        const req: api.GetStaticIconContentRequest = requestBy('admin', { iconId: uniqid() })
+        const iconBytes = Readable.from('icon bytes')
+        iconRepo.loadContent(req.iconId).resolves(iconBytes)
         const res = await getIconContent(req)
 
-        expect.fail('todo')
+        expect(res.error).to.be.null
+        expect(res.success).to.equal(iconBytes)
       })
+    })
+
+    it('returns entity not found error if icon id does not exist', async function() {
+
+      const iconId = uniqid()
+      const req: api.GetStaticIconContentRequest = requestBy('user1', { iconId })
+      permissions.ensureGetStaticIconPermission(Arg.requestTokenMatches(req.context)).resolves(null)
+      iconRepo.loadContent(iconId).resolves(null)
+      const res = await getIconContent(req)
+
+      expect(res.success).to.be.null
+      const err = res.error as EntityNotFoundError
+      expect(err.code).to.equal(ErrEntityNotFound)
+      expect(err.data.entityId).to.equal(iconId)
+      expect(err.data.entityType).to.equal('StaticIcon')
     })
   })
 })

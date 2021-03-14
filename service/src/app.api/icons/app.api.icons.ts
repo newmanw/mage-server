@@ -16,6 +16,11 @@ export interface GetStaticIconRequest extends AppRequest {
   iconRef: StaticIconReference | { sourceUrl: string }
 }
 
+/**
+ * If the request references an icon by ID and the icon does not exist, return
+ * an `EntityNotFoundError`.  If the request is looking up an icon by source
+ * URL and no icon with the source URL exists, return null.
+ */
 export interface GetStaticIcon {
   (req: GetStaticIconRequest): Promise<AppResponse<StaticIcon | null, PermissionDeniedError | EntityNotFoundError | InvalidInputError>>
 }
@@ -27,6 +32,7 @@ export interface GetStaticIconContentRequest extends AppRequest {
 export interface GetStaticIconContent {
   (req: GetStaticIconContentRequest): Promise<AppResponse<NodeJS.ReadableStream, PermissionDeniedError | EntityNotFoundError>>
 }
+
 export interface ListStaticIconsRequest extends AppRequest {
   // TODO: full-text search on title, file name, tag, etc.
   searchText?: string
