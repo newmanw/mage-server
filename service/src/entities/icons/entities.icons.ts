@@ -99,8 +99,6 @@ export interface StaticIconRepository {
   createLocal(stub: LocalStaticIconStub, content: NodeJS.ReadableStream): Promise<StaticIcon>
   findByReference(ref: StaticIconReference): Promise<StaticIcon | null>
   find(paging?: PagingParameters): Promise<PageOf<StaticIcon>>
-  resolveFromSourceUrl(id: StaticIconId): Promise<NodeJS.ReadableStream | null>
-  resolveFromSourceUrlAndStore(id: StaticIconId): Promise<StaticIcon | null>
   loadContent(id: StaticIconId): Promise<NodeJS.ReadableStream | null>
 }
 

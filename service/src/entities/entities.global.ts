@@ -60,7 +60,10 @@ export const pageOf = <T>(items: T[], paging: PagingParameters, totalCount?: num
 
 export interface UrlScheme {
   /**
-   * TODO: this should hopefully go away
+   * TODO: maybe this should go away, but for now is used to determine
+   * whether content should be cached locally or not.  for example, the
+   * mage-plugin:// scheme is just local files resolved by node module names so
+   * storing the content in a cache would be redundant.
    */
   isLocalScheme: boolean
   canResolve(url: URL): boolean

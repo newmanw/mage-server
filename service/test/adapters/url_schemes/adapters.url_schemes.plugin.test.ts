@@ -3,19 +3,9 @@ import { expect } from 'chai'
 import { URL } from 'url'
 import { PluginUrlScheme } from '../../../lib/adapters/url_schemes/adapters.url_schemes.plugin'
 
-describe.only('plugin url scheme', function() {
+describe('plugin url scheme', function() {
 
   const testNodeModules = path.resolve(__dirname, '..', '..', 'node_modules')
-  const origPath = process.env.NODE_PATH || ''
-
-  before(function() {
-    process.env.NODE_PATH = `${testNodeModules}${path.delimiter}${origPath}`
-    console.log('NODE_PATH', process.env.NODE_PATH)
-  })
-
-  after(function() {
-    process.env.NODE_PATH = origPath
-  })
 
   it('resolves content relative to dirname of the plugin main file', async function() {
 

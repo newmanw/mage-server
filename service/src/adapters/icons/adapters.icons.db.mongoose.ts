@@ -81,51 +81,68 @@ export class MongooseStaticIconRepository extends BaseMongooseRepository<StaticI
     }
     switch (fetch) {
       case StaticIconImportFetch.EagerAwait:
-        const stored = await this.fetchAndStore(doc.toJSON())
+        const stored = await this.fetchAndStore(doc)
         if (stored instanceof UrlResolutionError) {
           throw stored
         }
+        doc = stored
         break
       case StaticIconImportFetch.Eager:
-        this.fetchAndStore(doc.toJSON())
+        this.fetchAndStore(doc)
         break
       case StaticIconImportFetch.Lazy:
       default:
     }
-    return doc.toJSON()
+    return this.entityForDocument(doc)
   }
 
-  private async fetchAndStore(icon: StaticIcon): Promise<StaticIcon | UrlResolutionError> {
-    const resolver = this.resolvers.find(x => x.canResolve(icon.sourceUrl))
-    if (!resolver) {
-      throw new Error(`no resolver for icon url ${icon.sourceUrl}`)
+  private async fetchAndStore(iconDoc: StaticIconDocument): Promise<StaticIconDocument | UrlResolutionError> {
+    if (typeof iconDoc.resolvedTimestamp === 'number') {
+      return iconDoc
     }
-    const content = await resolver.resolveContent(icon.sourceUrl)
+    const sourceUrl = new URL(iconDoc.sourceUrl)
+    const resolver = this.resolvers.find(x => x.canResolve(sourceUrl))
+    if (!resolver) {
+      return new UrlResolutionError(sourceUrl, `no resolver for icon url ${iconDoc.sourceUrl}`)
+    }
+    const content = await resolver.resolveContent(sourceUrl)
     if (content instanceof UrlResolutionError) {
       return content
     }
-    await this.contentStore.putContent(icon, content)
-    return icon
+    if (!resolver.isLocalScheme) {
+      await this.contentStore.putContent(this.entityForDocument(iconDoc), content)
+    }
+    iconDoc.resolvedTimestamp = Date.now()
+    return await iconDoc.save()
   }
 
   async createLocal(stub: LocalStaticIconStub, content: NodeJS.ReadableStream): Promise<StaticIcon> {
     throw new Error('Method not implemented.')
   }
 
-  async resolveFromSourceUrl(id: string): Promise<NodeJS.ReadableStream | null> {
-    throw new Error('Method not implemented.')
-  }
-
-  async resolveFromSourceUrlAndStore(id: string): Promise<StaticIcon | null> {
-    throw new Error('Method not implemented.')
-  }
-
   async loadContent(id: StaticIconId): Promise<NodeJS.ReadableStream | null> {
-    throw new Error('Method not implemented.')
+    const icon = await this.findById(id)
+    if (!icon) {
+      return null
+    }
+    const resolver = this.resolvers.find(x => x.canResolve(icon.sourceUrl))
+    if (!resolver) {
+      console.warn(`no resolver for registerd icon`, icon)
+      return null
+    }
+    if (resolver.isLocalScheme) {
+      const content = await resolver.resolveContent(icon.sourceUrl)
+      if (content instanceof UrlResolutionError) {
+        console.error(`failed to resolve local icon url`, content)
+        return null
+      }
+      return content
+    }
+    return await this.contentStore.loadContent(id)
   }
 
   async findBySourceUrl(url: URL): Promise<StaticIcon | null> {
-    return await this.findDocBySourceUrl(url).then(x => x?.toJSON())
+    return await this.findDocBySourceUrl(url).then(x => x ? this.entityForDocument(x) : null)
   }
 
   async findByReference(ref: StaticIconReference): Promise<StaticIcon | null> {
