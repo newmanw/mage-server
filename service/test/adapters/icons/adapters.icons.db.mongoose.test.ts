@@ -4,11 +4,10 @@ import _ from 'lodash'
 import { MongoMemoryServer } from 'mongodb-memory-server'
 import mongoose from 'mongoose'
 import uniqid from 'uniqid'
-import { IconUrlScheme, StaticIcon, StaticIconStub } from '../../../lib/entities/icons/entities.icons'
+import { Arg, Substitute as Sub, SubstituteOf } from '@fluffy-spoon/substitute'
+import { StaticIconContentStore, StaticIconImportFetch, StaticIconStub } from '../../../lib/entities/icons/entities.icons'
 import { MongooseStaticIconRepository, StaticIconDocument, StaticIconModel } from '../../../lib/adapters/icons/adapters.icons.db.mongoose'
-import { Substitute as Sub, SubstituteOf } from '@fluffy-spoon/substitute'
-import { EntityIdFactory } from '../../../lib/entities/entities.global'
-import x from 'uniqid'
+import { EntityIdFactory, UrlScheme } from '../../../lib/entities/entities.global'
 
 
 describe('static icon mongoose repository', function() {
@@ -19,7 +18,8 @@ describe('static icon mongoose repository', function() {
   let model: mongoose.Model<StaticIconDocument>
   let idFactory: SubstituteOf<EntityIdFactory>
   let repo: MongooseStaticIconRepository
-  let resolvers: IconUrlScheme[]
+  let resolvers: SubstituteOf<UrlScheme>[]
+  let contentStore: SubstituteOf<StaticIconContentStore>
 
   before(async function() {
     mongo = new MongoMemoryServer()
@@ -33,8 +33,9 @@ describe('static icon mongoose repository', function() {
     })
     model = StaticIconModel(conn, 'test_static_icons')
     idFactory = Sub.for<EntityIdFactory>()
-    resolvers = []
-    repo = new MongooseStaticIconRepository(model, idFactory)
+    contentStore = Sub.for<StaticIconContentStore>()
+    resolvers = [ Sub.for<UrlScheme>(), Sub.for<UrlScheme>() ]
+    repo = new MongooseStaticIconRepository(model, idFactory, contentStore, resolvers)
     model.findOne({})
   })
 
@@ -324,6 +325,48 @@ describe('static icon mongoose repository', function() {
       expect(updatedFound[0].toJSON()).to.deep.equal(origFound[0].toJSON())
       idFactory.received(1).nextId()
     })
+
+    describe('fetch strategies', function() {
+
+      describe(StaticIconImportFetch.Lazy, function () {
+
+        it('does not fetch and store the icon content', async function() {
+
+          const sourceUrl = new URL('test0://icons/lazy')
+          const iconId = uniqid()
+          idFactory.nextId().resolves(iconId)
+          resolvers[0].canResolve(sourceUrl).returns(true)
+          const icon = await repo.findOrImportBySourceUrl(sourceUrl, StaticIconImportFetch.Lazy)
+
+          expect(icon.id).to.equal(iconId)
+          resolvers[0].didNotReceive().resolveContent(Arg.all())
+          resolvers[1].didNotReceive().resolveContent(Arg.all())
+          contentStore.didNotReceive().putContent(Arg.all())
+        })
+
+        it('is the default strategy', async function() {
+
+          const sourceUrl = new URL('test0://icons/lazy')
+          const iconId = uniqid()
+          idFactory.nextId().resolves(iconId)
+          resolvers[0].canResolve(sourceUrl).returns(true)
+          const icon = await repo.findOrImportBySourceUrl(sourceUrl)
+
+          expect(icon.id).to.equal(iconId)
+          resolvers[0].didNotReceive().resolveContent(Arg.all())
+          resolvers[1].didNotReceive().resolveContent(Arg.all())
+          contentStore.didNotReceive().putContent(Arg.all())
+        })
+      })
+
+      describe(StaticIconImportFetch.Eager, function() {
+
+      })
+
+      describe(StaticIconImportFetch.EagerAwait, function() {
+
+      })
+    })
   })
 
   it('enforces unique source url', async function() {
@@ -383,12 +426,12 @@ describe('static icon mongoose repository', function() {
 
   describe('loading icon content', function() {
 
-    let resolverA = Sub.for<IconUrlScheme>()
-    let resolverB = Sub.for<IconUrlScheme>()
+    let resolverA = Sub.for<UrlScheme>()
+    let resolverB = Sub.for<UrlScheme>()
 
     beforeEach(function() {
-      resolverA = Sub.for<IconUrlScheme>()
-      resolverB = Sub.for<IconUrlScheme>()
+      resolverA = Sub.for<UrlScheme>()
+      resolverB = Sub.for<UrlScheme>()
       resolvers = [ resolverA, resolverB ]
     })
 

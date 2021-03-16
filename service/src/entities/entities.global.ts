@@ -12,6 +12,13 @@ export class PluginResourceUrl extends URL {
 
   static readonly pluginProtocol = 'mage-plugin:'
 
+  static pluginPathOf(source: URL): string | undefined {
+    if (source.protocol !== PluginResourceUrl.pluginProtocol) {
+      return
+    }
+    return source.pathname.slice(1)
+  }
+
   constructor(readonly pluginModuleName: string, readonly resourcePath: string) {
     super(`${PluginResourceUrl.pluginProtocol}///${pluginModuleName}/${resourcePath}`)
   }
@@ -48,5 +55,21 @@ export const pageOf = <T>(items: T[], paging: PagingParameters, totalCount?: num
     pageSize: paging.pageSize,
     pageIndex: paging.pageIndex,
     items
+  }
+}
+
+export interface UrlScheme {
+  /**
+   * TODO: this should hopefully go away
+   */
+  isLocalScheme: boolean
+  canResolve(url: URL): boolean
+  resolveContent(url: URL): Promise<NodeJS.ReadableStream | UrlResolutionError>
+}
+
+export class UrlResolutionError extends Error {
+
+  constructor(public readonly sourceUrl: URL, message?: string) {
+    super(`error loading url ${sourceUrl}: ${message}`)
   }
 }

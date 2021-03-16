@@ -1,9 +1,9 @@
 import environment from './environment/env'
 import log from './logger'
-import { loadPlugins, PluginDependencies } from './main.impl/main.impl.plugins'
+import { loadPlugins } from './main.impl/main.impl.plugins'
 import http from 'http'
 import fs from 'fs-extra'
-import mongoose, { ConnectionOptions } from 'mongoose'
+import mongoose from 'mongoose'
 import express from 'express'
 import { MongooseFeedServiceTypeRepository, FeedServiceTypeIdentityModel, MongooseFeedServiceRepository, FeedServiceModel, MongooseFeedRepository, FeedModel } from './adapters/feeds/adapters.feeds.db.mongoose'
 import { waitForDefaultMongooseConnection } from './adapters/adapters.db.mongoose'
@@ -24,6 +24,7 @@ import { MageEventRepository } from './entities/events/entities.events'
 import { EventFeedsRoutes } from './adapters/events/adapters.events.controllers.web'
 import { MongooseStaticIconRepository, StaticIconModel } from './adapters/icons/adapters.icons.db.mongoose'
 import { StaticIconRepository } from './entities/icons/entities.icons'
+import { FileSystemIconContentStore } from './adapters/icons/adapters.icons.content_store.file_system'
 
 
 export interface MageService {
@@ -216,7 +217,7 @@ async function initRepositories(models: DatabaseModels): Promise<Repositories> {
   const serviceRepo = new MongooseFeedServiceRepository(models.feeds.feedService)
   const feedRepo = new MongooseFeedRepository(models.feeds.feed, new SimpleIdFactory())
   const eventRepo = new MongooseMageEventRepository(models.events.event)
-  const staticIconRepo = new MongooseStaticIconRepository(models.icons.staticIcon, new SimpleIdFactory())
+  const staticIconRepo = new MongooseStaticIconRepository(models.icons.staticIcon, new SimpleIdFactory(), new FileSystemIconContentStore(), [])
   return {
     feeds: {
       serviceTypeRepo, serviceRepo, feedRepo

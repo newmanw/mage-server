@@ -116,19 +116,9 @@ export interface SourceUrlStaticIconReference {
 
 export type StaticIconReference = RegisteredStaticIconReference | SourceUrlStaticIconReference
 
-export interface IconUrlScheme {
-  /**
-   * TODO: this should hopefully go away
-   */
-  isLocalScheme: boolean
-  canResolve(url: URL): boolean
-  resolveContent(url: URL): Promise<NodeJS.ReadableStream | IconContentNotFoundError>
-}
-
 export const IconContentNotFound = Symbol.for('icon.content_not_found')
 
 export type IconErrorCode = typeof IconContentNotFound
-
 export class IconError<Code extends IconErrorCode = IconErrorCode> extends Error {
   constructor(readonly code: Code, message?: string) {
     super(message)
@@ -138,4 +128,9 @@ export class IconError<Code extends IconErrorCode = IconErrorCode> extends Error
 export type IconContentNotFoundError = IconError<typeof IconContentNotFound>
 export function IconContentNotFoundError(sourceUrl: URL): IconContentNotFoundError {
   return new IconError(IconContentNotFound, `no content found for icon url ${sourceUrl}`)
+}
+
+export interface StaticIconContentStore {
+  putContent(icon: StaticIcon, content: NodeJS.ReadableStream): Promise<void>
+  loadContent(id: StaticIconId): Promise<NodeJS.ReadableStream | null>
 }

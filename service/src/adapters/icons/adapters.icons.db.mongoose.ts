@@ -2,8 +2,8 @@
 import { URL } from 'url'
 import mongoose from 'mongoose'
 import mongodb from 'mongodb'
-import { EntityIdFactory, pageOf, PageOf, PagingParameters } from '../../entities/entities.global'
-import { StaticIcon, StaticIconStub, StaticIconId, StaticIconRepository, LocalStaticIconStub, StaticIconReference } from '../../entities/icons/entities.icons'
+import { EntityIdFactory, pageOf, PageOf, PagingParameters, UrlScheme } from '../../entities/entities.global'
+import { StaticIcon, StaticIconStub, StaticIconId, StaticIconRepository, LocalStaticIconStub, StaticIconReference, StaticIconContentStore, StaticIconImportFetch } from '../../entities/icons/entities.icons'
 import { BaseMongooseRepository, pageQuery } from '../base/adapters.base.db.mongoose'
 
 export type StaticIconDocument = Omit<StaticIcon, 'sourceUrl'> & mongoose.Document & {
@@ -51,7 +51,7 @@ export function StaticIconModel(conn: mongoose.Connection, collection?: string):
 
 export class MongooseStaticIconRepository extends BaseMongooseRepository<StaticIconDocument, StaticIconModel, StaticIcon> implements StaticIconRepository {
 
-  constructor(readonly model: StaticIconModel, private readonly idFactory: EntityIdFactory) {
+  constructor(readonly model: StaticIconModel, private readonly idFactory: EntityIdFactory, private readonly contentStore: StaticIconContentStore, private readonly resolvers: UrlScheme[]) {
     super(model)
   }
 
@@ -61,7 +61,7 @@ export class MongooseStaticIconRepository extends BaseMongooseRepository<StaticI
     return super.create(withId)
   }
 
-  async findOrImportBySourceUrl(stub: StaticIconStub | URL): Promise<StaticIcon> {
+  async findOrImportBySourceUrl(stub: StaticIconStub | URL, fetch: StaticIconImportFetch = StaticIconImportFetch.Lazy): Promise<StaticIcon> {
     if (!('sourceUrl' in stub)) {
       stub = { sourceUrl: stub }
     }
