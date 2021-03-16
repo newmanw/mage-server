@@ -7,10 +7,11 @@ import uniqid from 'uniqid'
 import { Arg, Substitute as Sub, SubstituteOf } from '@fluffy-spoon/substitute'
 import { StaticIconContentStore, StaticIconImportFetch, StaticIconStub } from '../../../lib/entities/icons/entities.icons'
 import { MongooseStaticIconRepository, StaticIconDocument, StaticIconModel } from '../../../lib/adapters/icons/adapters.icons.db.mongoose'
-import { EntityIdFactory, UrlScheme } from '../../../lib/entities/entities.global'
+import { EntityIdFactory, UrlResolutionError, UrlScheme } from '../../../lib/entities/entities.global'
+import { Readable } from 'stream'
 
 
-describe('static icon mongoose repository', function() {
+describe.only('static icon mongoose repository', function() {
 
   let mongo: MongoMemoryServer
   let uri: string
@@ -361,6 +362,42 @@ describe('static icon mongoose repository', function() {
 
       describe(StaticIconImportFetch.Eager, function() {
 
+        it.only('fetches the icon immediately asynchronously', async function() {
+
+          const sourceUrl = new URL('test0://icons/lazy')
+          const iconId = uniqid()
+          idFactory.nextId().resolves(iconId)
+          resolvers[0].canResolve(sourceUrl).returns(false)
+          resolvers[1].canResolve(sourceUrl).returns(true)
+          let fetchResolved = false
+          let resolveFetch = () => {}
+          const content = Readable.from('')
+          const fetch = function(resolve: (x: NodeJS.ReadableStream) => any): any {
+            resolveFetch = () => {
+              fetchResolved = true
+              resolve(content)
+            }
+          }
+          const fetchPromise = new Promise(fetch)
+          resolvers[1].resolveContent(sourceUrl).returns(fetchPromise)
+          contentStore.putContent(Arg.all()).resolves()
+          const icon = await repo.findOrImportBySourceUrl(sourceUrl, StaticIconImportFetch.Eager)
+          const saved = await model.findById(iconId)
+
+          expect(icon).to.deep.include({ id: iconId, sourceUrl })
+          expect(saved?.toJSON()).to.deep.include({ id: iconId, sourceUrl })
+          expect(fetchResolved).to.be.false
+          resolvers[1].received(1).resolveContent(sourceUrl)
+          contentStore.didNotReceive().putContent(Arg.all())
+
+          resolveFetch()
+          await fetchPromise
+
+          resolvers[0].didNotReceive().resolveContent(Arg.all())
+          resolvers[1].received(1).resolveContent(sourceUrl)
+          contentStore.received(1).putContent(icon, content)
+          expect(fetchResolved).to.equal(true)
+        })
       })
 
       describe(StaticIconImportFetch.EagerAwait, function() {

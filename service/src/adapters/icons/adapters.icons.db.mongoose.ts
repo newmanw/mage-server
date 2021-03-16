@@ -2,7 +2,7 @@
 import { URL } from 'url'
 import mongoose from 'mongoose'
 import mongodb from 'mongodb'
-import { EntityIdFactory, pageOf, PageOf, PagingParameters, UrlScheme } from '../../entities/entities.global'
+import { EntityIdFactory, pageOf, PageOf, PagingParameters, UrlResolutionError, UrlScheme } from '../../entities/entities.global'
 import { StaticIcon, StaticIconStub, StaticIconId, StaticIconRepository, LocalStaticIconStub, StaticIconReference, StaticIconContentStore, StaticIconImportFetch } from '../../entities/icons/entities.icons'
 import { BaseMongooseRepository, pageQuery } from '../base/adapters.base.db.mongoose'
 
@@ -71,15 +71,41 @@ export class MongooseStaticIconRepository extends BaseMongooseRepository<StaticI
     if (typeof stub.contentHash === 'string' && typeof stub.contentTimestamp !== 'number') {
       stub.contentTimestamp = Date.now()
     }
-    let registered = await this.findDocBySourceUrl(stub.sourceUrl)
-    if (registered) {
-      registered = await updateRegisteredIconIfChanged.call(this, registered, stub)
+    let doc = await this.findDocBySourceUrl(stub.sourceUrl)
+    if (doc) {
+      doc = await updateRegisteredIconIfChanged.call(this, doc, stub)
     }
     else {
       const _id = await this.idFactory.nextId()
-      registered = await this.model.create({ _id, registeredTimestamp: Date.now(), ...stub })
+      doc = await this.model.create({ _id, registeredTimestamp: Date.now(), ...stub })
     }
-    return registered?.toJSON()
+    switch (fetch) {
+      case StaticIconImportFetch.EagerAwait:
+        const stored = await this.fetchAndStore(doc.toJSON())
+        if (stored instanceof UrlResolutionError) {
+          throw stored
+        }
+        break
+      case StaticIconImportFetch.Eager:
+        this.fetchAndStore(doc.toJSON())
+        break
+      case StaticIconImportFetch.Lazy:
+      default:
+    }
+    return doc.toJSON()
+  }
+
+  private async fetchAndStore(icon: StaticIcon): Promise<StaticIcon | UrlResolutionError> {
+    const resolver = this.resolvers.find(x => x.canResolve(icon.sourceUrl))
+    if (!resolver) {
+      throw new Error(`no resolver for icon url ${icon.sourceUrl}`)
+    }
+    const content = await resolver.resolveContent(icon.sourceUrl)
+    if (content instanceof UrlResolutionError) {
+      return content
+    }
+    await this.contentStore.putContent(icon, content)
+    return icon
   }
 
   async createLocal(stub: LocalStaticIconStub, content: NodeJS.ReadableStream): Promise<StaticIcon> {
