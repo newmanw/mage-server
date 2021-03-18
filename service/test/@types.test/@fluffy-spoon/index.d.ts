@@ -26,6 +26,13 @@ declare module '@fluffy-spoon/substitute' {
   // use namespace to effectively merge a static function to an existing class
   namespace Arg {
     function deepEquals<T>(x: T): Argument<T> & T
+    /**
+     * Match if the actual argument's string value `==` the string value of the
+     * given expected value.  The matcher computes strings by wrapping the
+     * acutal and expected values with JavaScript's `String()` function.
+     * @param expected
+     */
+    function sameStringValueAs<T>(expected: any): Argument<T> & T
     function requestTokenMatches<T extends AppRequest>(expectedRequest: T): Argument<T> & T
     function requestTokenMatches<T extends AppRequestContext>(expectedContext: T): Argument<T> & T
   }

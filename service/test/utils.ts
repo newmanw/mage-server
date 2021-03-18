@@ -22,3 +22,7 @@ Arg.requestTokenMatches = (expected: AppRequest | AppRequestContext) => {
     }
   )
 }
+
+Arg.sameStringValueAs = <T>(expected: T) => {
+  return Arg.is(x => String(x) === String(expected))
+}
