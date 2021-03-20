@@ -1,6 +1,6 @@
-import { PageOf, PagingParameters } from '../../entities/entities.global'
+import { PageOf, PagingParameters, UrlResolutionError } from '../../entities/entities.global'
 import { LocalStaticIconStub, StaticIcon, StaticIconId, StaticIconReference } from '../../entities/icons/entities.icons'
-import { EntityNotFoundError, InvalidInputError, PermissionDeniedError } from '../app.api.errors'
+import { EntityNotFoundError, InvalidInputError, MageError, PermissionDeniedError } from '../app.api.errors'
 import { AppRequest, AppRequestContext, AppResponse } from '../app.api.global'
 
 export interface CreateLocalStaticIconRequest extends AppRequest {
@@ -30,7 +30,7 @@ export interface GetStaticIconContentRequest extends AppRequest {
 }
 
 export interface GetStaticIconContent {
-  (req: GetStaticIconContentRequest): Promise<AppResponse<NodeJS.ReadableStream, PermissionDeniedError | EntityNotFoundError>>
+  (req: GetStaticIconContentRequest): Promise<AppResponse<NodeJS.ReadableStream, PermissionDeniedError | EntityNotFoundError | IconSourceUrlFetchError>>
 }
 
 export interface ListStaticIconsRequest extends AppRequest {
@@ -46,4 +46,33 @@ export interface ListStaticIcons {
 export interface StaticIconPermissionsService {
   ensureCreateStaticIconPermission(context: AppRequestContext): Promise<null | PermissionDeniedError>
   ensureGetStaticIconPermission(context: AppRequestContext): Promise<null | PermissionDeniedError>
+}
+
+export const ErrIconSourceUrlFetch = Symbol.for('icon.source_url_fetch')
+export interface IconSourceUrlFetchErrorData {
+  sourceUrl: URL | string
+  iconId?: StaticIconId
+}
+export type IconSourceUrlFetchError = MageError<typeof ErrIconSourceUrlFetch, IconSourceUrlFetchErrorData>
+
+export function iconSourceUrlFetchError(sourceUrl: URL | string | UrlResolutionError, iconId: StaticIconId | null | undefined, message?: string): IconSourceUrlFetchError {
+  let urlError: UrlResolutionError | null = null
+  if (sourceUrl instanceof UrlResolutionError) {
+    urlError = sourceUrl
+    sourceUrl = urlError.sourceUrl
+  }
+  const data: IconSourceUrlFetchErrorData = { sourceUrl }
+  if (typeof iconId === 'string') {
+    data.iconId = iconId
+  }
+  if (!message) {
+    message = `error retrieving content for icon source url ${sourceUrl}`
+    if (data.iconId) {
+      message = `${message} for icon ${iconId}`
+    }
+    if (urlError) {
+      message = `${message}: ${urlError.message || 'unknown error'}`
+    }
+  }
+  return new MageError(ErrIconSourceUrlFetch, data, message)
 }

@@ -1,7 +1,8 @@
 import { URL } from 'url'
 import { entityNotFound, invalidInput } from '../../app.api/app.api.errors'
 import { KnownErrorsOf, withPermission } from '../../app.api/app.api.global'
-import { CreateLocalStaticIcon, CreateLocalStaticIconRequest, ListStaticIcons, ListStaticIconsRequest, GetStaticIcon, GetStaticIconContent, GetStaticIconContentRequest, GetStaticIconRequest, StaticIconPermissionsService } from '../../app.api/icons/app.api.icons'
+import { CreateLocalStaticIcon, CreateLocalStaticIconRequest, ListStaticIcons, ListStaticIconsRequest, GetStaticIcon, GetStaticIconContent, GetStaticIconContentRequest, GetStaticIconRequest, StaticIconPermissionsService, iconSourceUrlFetchError } from '../../app.api/icons/app.api.icons'
+import { UrlResolutionError } from '../../entities/entities.global'
 import { StaticIcon, StaticIconReference, StaticIconRepository } from '../../entities/icons/entities.icons'
 
 
@@ -53,6 +54,9 @@ export function GetStaticIconContent(permissions: StaticIconPermissionsService, 
       permissions.ensureGetStaticIconPermission(req.context),
       async () => {
         const content = await repo.loadContent(req.iconId)
+        if (content instanceof UrlResolutionError) {
+          return iconSourceUrlFetchError(content, req.iconId)
+        }
         if (content) {
           return content
         }

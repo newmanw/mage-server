@@ -7,6 +7,7 @@ import { FeedServiceTypeDescriptor } from '../../app.api/feeds/app.api.feeds'
 import { JsonSchemaService, JsonValidator, JSONSchema4 } from '../../entities/entities.json_types'
 import { MageEventRepository } from '../../entities/events/entities.events'
 import { SourceUrlStaticIconReference, StaticIconImportFetch, StaticIconReference, StaticIconRepository } from '../../entities/icons/entities.icons'
+import { UrlResolutionError } from '../../entities/entities.global'
 
 
 export function ListFeedServiceTypes(permissionService: api.FeedsPermissionService, repo: FeedServiceTypeRepository): api.ListFeedServiceTypes {
@@ -264,14 +265,33 @@ function parseIconUrlsIfNecessary(feedMinimal: api.FeedCreateMinimalAcceptingStr
   return parsed
 }
 
+function keyPathOfIconUrl(url: URL | string, feedMinimal: api.FeedCreateMinimalAcceptingStringUrls): string[] {
+  const urlStr = String(url)
+  if (urlStr === String(feedMinimal.icon)) {
+    return [ 'feed', 'icon' ]
+  }
+  if (urlStr === String(feedMinimal.mapStyle?.icon)) {
+    return [ 'feed', 'mapStyle', 'icon' ]
+  }
+  return []
+}
+
 async function resolveFeedCreate(topic: FeedTopic, feedMinimal: api.FeedCreateMinimalAcceptingStringUrls, iconRepo: StaticIconRepository, iconFetch: StaticIconImportFetch = StaticIconImportFetch.Lazy): Promise<FeedCreateAttrs | KeyPathError[]> {
   const feedMinimalParsed = parseIconUrlsIfNecessary(feedMinimal)
   if (Array.isArray(feedMinimalParsed)) {
     return feedMinimalParsed
   }
   const unresolved = FeedCreateUnresolved(topic, feedMinimalParsed)
+  const errors: KeyPathError[] = []
   const icons = await Promise.all(unresolved.unresolvedIcons.map(iconUrl => {
-    return iconRepo.findOrImportBySourceUrl(iconUrl, iconFetch).then(icon => ({ [String(iconUrl)]: icon.id }))
+    return iconRepo.findOrImportBySourceUrl(iconUrl, iconFetch).then(icon => {
+      if (icon instanceof UrlResolutionError) {
+        return errors.push([ `error resolving icon url: ${iconUrl}`, ...keyPathOfIconUrl(iconUrl, feedMinimal) ])
+      }
+      else {
+        return ({ [String(iconUrl)]: icon.id })
+      }
+    })
   }))
   const iconsMerged = Object.assign({}, ...icons)
   const resolved = FeedCreateAttrs(unresolved, iconsMerged)

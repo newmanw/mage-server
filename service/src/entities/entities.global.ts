@@ -58,12 +58,21 @@ export const pageOf = <T>(items: T[], paging: PagingParameters, totalCount?: num
   }
 }
 
+/**
+ * This interface is a simple mechanism to support referencing and fetching
+ * content from URLs, especially custom schemes.  The need arose because feed
+ * plugins can reference icons that are bundled within a plugin library.  Those
+ * icons exist in their own plugin context separate from any MAGE server or
+ * file system, so the plugin needs to reference and register the icons with
+ * any given MAGE server runtime in a portable and context-independent way.
+ */
 export interface UrlScheme {
   /**
    * TODO: maybe this should go away, but for now is used to determine
    * whether content should be cached locally or not.  for example, the
    * mage-plugin:// scheme is just local files resolved by node module names so
-   * storing the content in a cache would be redundant.
+   * storing the content in a cache would be redundant.  or maybe this should
+   * more accurately be called something like `isCacheable`.
    */
   isLocalScheme: boolean
   canResolve(url: URL): boolean

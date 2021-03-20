@@ -49,6 +49,12 @@ export function StaticIconModel(conn: mongoose.Connection, collection?: string):
   return conn.model(StaticIconModelName, StaticIconSchema, collection || 'static_icons')
 }
 
+/**
+ * TODO:
+ * This class is doing too much.  The fetching and caching logic should belong
+ * in one or more entity layer domain services of some kind.  This repository
+ * should deal only with database operations.
+ */
 export class MongooseStaticIconRepository extends BaseMongooseRepository<StaticIconDocument, StaticIconModel, StaticIcon> implements StaticIconRepository {
 
   constructor(readonly model: StaticIconModel, private readonly idFactory: EntityIdFactory, private readonly contentStore: StaticIconContentStore, private readonly resolvers: UrlScheme[]) {
@@ -61,7 +67,7 @@ export class MongooseStaticIconRepository extends BaseMongooseRepository<StaticI
     return super.create(withId)
   }
 
-  async findOrImportBySourceUrl(stub: StaticIconStub | URL, fetch: StaticIconImportFetch = StaticIconImportFetch.Lazy): Promise<StaticIcon> {
+  async findOrImportBySourceUrl(stub: StaticIconStub | URL, fetch: StaticIconImportFetch = StaticIconImportFetch.Lazy): Promise<StaticIcon | UrlResolutionError> {
     if (!('sourceUrl' in stub)) {
       stub = { sourceUrl: stub }
     }
@@ -83,7 +89,7 @@ export class MongooseStaticIconRepository extends BaseMongooseRepository<StaticI
       case StaticIconImportFetch.EagerAwait:
         const stored = await this.fetchAndStore(doc)
         if (stored instanceof UrlResolutionError) {
-          throw stored
+          return stored
         }
         doc = stored
         break
@@ -120,21 +126,37 @@ export class MongooseStaticIconRepository extends BaseMongooseRepository<StaticI
     throw new Error('Method not implemented.')
   }
 
-  async loadContent(id: StaticIconId): Promise<NodeJS.ReadableStream | null> {
-    const icon = await this.findById(id)
+  async loadContent(id: StaticIconId): Promise<NodeJS.ReadableStream | null | UrlResolutionError> {
+    let icon = await this.model.findById(id)
     if (!icon) {
       return null
     }
-    const resolver = this.resolvers.find(x => x.canResolve(icon.sourceUrl))
+    let sourceUrl: URL
+    try {
+      sourceUrl = new URL(icon.sourceUrl)
+    }
+    catch (err) {
+      console.error(`error parsing source url ${icon.sourceUrl} of registered icon ${id}:`, err)
+      throw err
+    }
+    const resolver = this.resolvers.find(x => x.canResolve(sourceUrl))
     if (!resolver) {
-      console.warn(`no resolver for registerd icon`, icon)
-      return null
+      console.warn(`no scheme for registerd icon`, icon)
+      return new UrlResolutionError(sourceUrl, `no scheme found to resolve source url ${icon.sourceUrl} of icon ${icon.id}`)
+    }
+    let resolved: StaticIconDocument | UrlResolutionError = icon
+    if (typeof icon.resolvedTimestamp !== 'number') {
+      resolved = await this.fetchAndStore(icon)
+      if (resolved instanceof UrlResolutionError) {
+        console.error(`error fetching and storing icon to load content`, resolved)
+        return resolved
+      }
     }
     if (resolver.isLocalScheme) {
-      const content = await resolver.resolveContent(icon.sourceUrl)
+      const content = await resolver.resolveContent(sourceUrl)
       if (content instanceof UrlResolutionError) {
         console.error(`failed to resolve local icon url`, content)
-        return null
+        return content
       }
       return content
     }

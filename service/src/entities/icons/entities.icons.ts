@@ -1,5 +1,5 @@
 import { URL } from 'url'
-import { PageOf, PagingParameters } from '../entities.global'
+import { PageOf, PagingParameters, UrlResolutionError } from '../entities.global'
 
 export interface IconPluginHooks {
   icons: {
@@ -43,6 +43,10 @@ export interface StaticIcon {
   sourceUrl: URL
   id: StaticIconId
   registeredTimestamp: number
+  /**
+   * The epoch timestamp that the icon's content was last successfully fetched
+   * and stored (if necessary) from its source URL.
+   */
   resolvedTimestamp?: number
   imageType?: 'raster' | 'vector'
   /**
@@ -95,11 +99,20 @@ export enum StaticIconImportFetch {
 }
 
 export interface StaticIconRepository {
-  findOrImportBySourceUrl(stub: StaticIconStub | URL, fetch?: StaticIconImportFetch): Promise<StaticIcon>
+  findOrImportBySourceUrl(stub: StaticIconStub | URL, fetch?: StaticIconImportFetch): Promise<StaticIcon | UrlResolutionError>
   createLocal(stub: LocalStaticIconStub, content: NodeJS.ReadableStream): Promise<StaticIcon>
   findByReference(ref: StaticIconReference): Promise<StaticIcon | null>
   find(paging?: PagingParameters): Promise<PageOf<StaticIcon>>
-  loadContent(id: StaticIconId): Promise<NodeJS.ReadableStream | null>
+  /**
+   * Load the image content for the given icon ID.  If the given ID does not
+   * exist in the database, return null.  If no URL scheme can resolve the
+   * icon's source URL, return a `UrlResolutionError`.  If an icon with the
+   * given ID exists but its content is not yet resolved, attempt to fetch
+   * and store the content.  If an error occurs fetching the content, return
+   * a `UrlResolutionError`.
+   * @param id
+   */
+  loadContent(id: StaticIconId): Promise<NodeJS.ReadableStream | null | UrlResolutionError>
 }
 
 export interface RegisteredStaticIconReference {
@@ -113,20 +126,6 @@ export interface SourceUrlStaticIconReference {
 }
 
 export type StaticIconReference = RegisteredStaticIconReference | SourceUrlStaticIconReference
-
-export const IconContentNotFound = Symbol.for('icon.content_not_found')
-
-export type IconErrorCode = typeof IconContentNotFound
-export class IconError<Code extends IconErrorCode = IconErrorCode> extends Error {
-  constructor(readonly code: Code, message?: string) {
-    super(message)
-  }
-}
-
-export type IconContentNotFoundError = IconError<typeof IconContentNotFound>
-export function IconContentNotFoundError(sourceUrl: URL): IconContentNotFoundError {
-  return new IconError(IconContentNotFound, `no content found for icon url ${sourceUrl}`)
-}
 
 export interface StaticIconContentStore {
   putContent(icon: StaticIcon, content: NodeJS.ReadableStream): Promise<void>
