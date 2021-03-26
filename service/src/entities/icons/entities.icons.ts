@@ -60,6 +60,11 @@ export interface StaticIcon {
   sizePixels?: ImageSize
   sizeBytes?: number
   contentHash?: string
+  /**
+   * The intention of content timestamp is to be a last-modified timestamp of
+   * the source content, such as the timestamp extracted from the
+   * `Last-Modified` header of an icon fetched from a remote HTTP server.
+   */
   contentTimestamp?: number
   title?: string
   summary?: string
@@ -112,7 +117,7 @@ export interface StaticIconRepository {
    * a `UrlResolutionError`.
    * @param id
    */
-  loadContent(id: StaticIconId): Promise<NodeJS.ReadableStream | null | UrlResolutionError>
+  loadContent(id: StaticIconId): Promise<[StaticIcon, NodeJS.ReadableStream] | null | UrlResolutionError>
 }
 
 export interface RegisteredStaticIconReference {

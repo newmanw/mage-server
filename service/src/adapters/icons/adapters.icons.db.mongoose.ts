@@ -126,7 +126,7 @@ export class MongooseStaticIconRepository extends BaseMongooseRepository<StaticI
     throw new Error('Method not implemented.')
   }
 
-  async loadContent(id: StaticIconId): Promise<NodeJS.ReadableStream | null | UrlResolutionError> {
+  async loadContent(id: StaticIconId): Promise<[StaticIcon, NodeJS.ReadableStream] | null | UrlResolutionError> {
     let icon = await this.model.findById(id)
     if (!icon) {
       return null
@@ -141,7 +141,7 @@ export class MongooseStaticIconRepository extends BaseMongooseRepository<StaticI
     }
     const resolver = this.resolvers.find(x => x.canResolve(sourceUrl))
     if (!resolver) {
-      console.warn(`no scheme for registerd icon`, icon)
+      console.warn(`no scheme for registered icon`, icon)
       return new UrlResolutionError(sourceUrl, `no scheme found to resolve source url ${icon.sourceUrl} of icon ${icon.id}`)
     }
     let resolved: StaticIconDocument | UrlResolutionError = icon
@@ -152,15 +152,20 @@ export class MongooseStaticIconRepository extends BaseMongooseRepository<StaticI
         return resolved
       }
     }
+    let content: NodeJS.ReadableStream | UrlResolutionError | null = null
     if (resolver.isLocalScheme) {
       const content = await resolver.resolveContent(sourceUrl)
       if (content instanceof UrlResolutionError) {
         console.error(`failed to resolve local icon url`, content)
         return content
       }
-      return content
+      return [ this.entityForDocument(icon), content ]
     }
-    return await this.contentStore.loadContent(id)
+    content = await this.contentStore.loadContent(id)
+    if (content) {
+      return [ this.entityForDocument(resolved), content ]
+    }
+    return null
   }
 
   async findBySourceUrl(url: URL): Promise<StaticIcon | null> {

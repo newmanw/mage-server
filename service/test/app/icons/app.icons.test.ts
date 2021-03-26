@@ -24,11 +24,11 @@ function requestBy<T extends object>(principal: string, params?: T): AppRequest<
 
 describe.only('icons use case interactions', function() {
 
-  let permissions: SubstituteOf<api.StaticIconPermissionsService>
+  let permissions: SubstituteOf<api.StaticIconPermissionService>
   let iconRepo: SubstituteOf<StaticIconRepository>
 
   beforeEach(function() {
-    permissions = Sub.for<api.StaticIconPermissionsService>()
+    permissions = Sub.for<api.StaticIconPermissionService>()
     iconRepo = Sub.for<StaticIconRepository>()
   })
 
@@ -239,14 +239,19 @@ describe.only('icons use case interactions', function() {
 
       it('returns the stored content', async function() {
 
+        const icon: StaticIcon = {
+          id: uniqid(),
+          sourceUrl: new URL('test:///wut.png'),
+          registeredTimestamp: Date.now()
+        }
+        const content = Readable.from('icon bytes')
         const req: api.GetStaticIconContentRequest = requestBy('user1', { iconId: uniqid() })
         permissions.ensureGetStaticIconPermission(Arg.all()).resolves(null)
-        const iconBytes = Readable.from('icon bytes')
-        iconRepo.loadContent(req.iconId).resolves(iconBytes)
+        iconRepo.loadContent(req.iconId).resolves([ icon, content ])
         const res = await getIconContent(req)
 
         expect(res.error).to.be.null
-        expect(res.success).to.equal(iconBytes)
+        expect(res.success).to.deep.equal({ iconInfo: icon, iconContent: content })
       })
     })
 
@@ -263,6 +268,10 @@ describe.only('icons use case interactions', function() {
       expect(err.code).to.equal(ErrEntityNotFound)
       expect(err.data.entityId).to.equal(iconId)
       expect(err.data.entityType).to.equal('StaticIcon')
+    })
+
+    it('does not fetch and load content when client cache parameters are valid', async function() {
+      expect.fail('todo')
     })
   })
 })

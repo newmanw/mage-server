@@ -12,7 +12,7 @@ Arg.requestTokenMatches = (expected: AppRequest | AppRequestContext) => {
   if ('context' in expectedContext) {
     expectedContext = expectedContext.context
   }
-  return new Argument(`request token ${JSON.stringify(expectedContext.requestToken)}`,
+  return new Argument(`request token ${JSON.stringify(expectedContext.requestToken) || String(expectedContext.requestToken)}`,
     (actual: AppRequest | AppRequestContext): boolean => {
       let actualContext = actual
       if ('context' in actualContext) {

@@ -25,6 +25,9 @@ import { EventFeedsRoutes } from './adapters/events/adapters.events.controllers.
 import { MongooseStaticIconRepository, StaticIconModel } from './adapters/icons/adapters.icons.db.mongoose'
 import { StaticIconRepository } from './entities/icons/entities.icons'
 import { FileSystemIconContentStore } from './adapters/icons/adapters.icons.content_store.file_system'
+import { StaticIconRoutes, StaticIconsAppLayer } from './adapters/icons/adapters.icons.controllers.web'
+import { ListStaticIcons, GetStaticIcon, GetStaticIconContent } from './app.impl/icons/app.impl.icons'
+import { RoleBasedStaticIconPermissionService } from './permissions/permissions.icons'
 
 
 export interface MageService {
@@ -161,7 +164,8 @@ type AppLayer = {
     listEventFeeds: eventsApi.ListEventFeeds
     removeFeedFromEvent: eventsApi.RemoveFeedFromEvent
     fetchFeedContent: feedsApi.FetchFeedContent
-  }
+  },
+  icons: StaticIconsAppLayer
 }
 
 async function initDatabase(): Promise<DatabaseModels> {
@@ -232,10 +236,12 @@ async function initRepositories(models: DatabaseModels): Promise<Repositories> {
 }
 
 async function initAppLayer(repos: Repositories): Promise<AppLayer> {
-  const feeds = await initFeedsAppLayer(repos)
   const events = await initEventsAppLayer(repos)
+  const icons = await initIconsAppLayer(repos)
+  const feeds = await initFeedsAppLayer(repos)
   return {
     events,
+    icons,
     feeds,
   }
 }
@@ -248,6 +254,15 @@ async function initEventsAppLayer(repos: Repositories): Promise<AppLayer['events
     listEventFeeds: eventsImpl.ListEventFeeds(eventPermissions.defaultEventPermissionsSevice, repos.events.eventRepo, repos.feeds.feedRepo),
     removeFeedFromEvent: eventsImpl.RemoveFeedFromEvent(eventPermissions.defaultEventPermissionsSevice, repos.events.eventRepo),
     fetchFeedContent: feedsImpl.FetchFeedContent(eventFeedsPermissions, repos.feeds.serviceTypeRepo, repos.feeds.serviceRepo, repos.feeds.feedRepo, jsonSchemaService)
+  }
+}
+
+function initIconsAppLayer(repos: Repositories): StaticIconsAppLayer {
+  const permissions = new RoleBasedStaticIconPermissionService()
+  return {
+    getIcon: GetStaticIcon(permissions, repos.icons.staticIconRepo),
+    getIconContent: GetStaticIconContent(permissions, repos.icons.staticIconRepo),
+    listIcons: ListStaticIcons(permissions)
   }
 }
 
@@ -305,13 +320,19 @@ async function initRestInterface(repos: Repositories, app: AppLayer): Promise<ex
     }
   }
   const feedsRoutes = FeedsRoutes(app.feeds, appRequestFactory)
+  const iconsRoutes = StaticIconRoutes(app.icons, appRequestFactory)
   const eventFeedsRoutes = EventFeedsRoutes({ ...app.events, eventRepo: repos.events.eventRepo }, appRequestFactory)
+  const bearerAuth = webAuth.passport.authenticate('bearer')
   webApp.use('/api/feeds', [
-    webAuth.passport.authenticate('bearer'),
+    bearerAuth,
     feedsRoutes
   ])
+  webApp.use('/api/icons', [
+    bearerAuth,
+    iconsRoutes
+  ])
   webApp.use('/api/events', [
-    webAuth.passport.authenticate('bearer'),
+    bearerAuth,
     eventFeedsRoutes
   ])
   return webApp

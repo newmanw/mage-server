@@ -1,13 +1,13 @@
 
 import { describe, it } from 'mocha'
 import { expect } from 'chai'
-import { Substitute as Sub, SubstituteOf } from '@fluffy-spoon/substitute'
+import { Substitute as Sub } from '@fluffy-spoon/substitute'
 import uniqid from 'uniqid'
 import { PreFetchedUserRoleFeedsPermissionService, UserWithRole } from '../../lib/permissions/permissions.feeds'
 import { AppRequestContext } from '../../lib/app.api/app.api.global'
-import { RoleDocument } from '../../src/models/role'
 import { MageError, ErrPermissionDenied } from '../../lib/app.api/app.api.errors'
 import { AnyPermission } from '../../lib/models/permission'
+import { RoleDocument } from '../../src/models/role'
 
 describe('feeds permission service', function() {
 

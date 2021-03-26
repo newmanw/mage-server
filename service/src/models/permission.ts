@@ -75,24 +75,19 @@ const settingPermissions = {
   UPDATE_SETTINGS: 'UPDATE_SETTINGS'
 }
 
-export type FeedsPermission =
-  | 'FEEDS_LIST_SERVICE_TYPES'
-  | 'FEEDS_CREATE_SERVICE'
-  | 'FEEDS_LIST_SERVICES'
-  | 'FEEDS_LIST_TOPICS'
-  | 'FEEDS_CREATE_FEED'
-  | 'FEEDS_LIST_ALL'
-  | 'FEEDS_FETCH_CONTENT'
+export enum FeedsPermission {
+  FEEDS_LIST_SERVICE_TYPES = 'FEEDS_LIST_SERVICE_TYPES',
+  FEEDS_CREATE_SERVICE = 'FEEDS_CREATE_SERVICE',
+  FEEDS_LIST_SERVICES = 'FEEDS_LIST_SERVICES',
+  FEEDS_LIST_TOPICS = 'FEEDS_LIST_TOPICS',
+  FEEDS_CREATE_FEED = 'FEEDS_CREATE_FEED',
+  FEEDS_LIST_ALL = 'FEEDS_LIST_ALL',
+  FEEDS_FETCH_CONTENT = 'FEEDS_FETCH_CONTENT',
+}
 
-export const feedsPermissions: Readonly<Record<FeedsPermission, FeedsPermission>> = Object.freeze({
-  FEEDS_LIST_SERVICE_TYPES: 'FEEDS_LIST_SERVICE_TYPES',
-  FEEDS_CREATE_SERVICE: 'FEEDS_CREATE_SERVICE',
-  FEEDS_LIST_SERVICES: 'FEEDS_LIST_SERVICES',
-  FEEDS_LIST_TOPICS: 'FEEDS_LIST_TOPICS',
-  FEEDS_CREATE_FEED: 'FEEDS_CREATE_FEED',
-  FEEDS_LIST_ALL: 'FEEDS_LIST_ALL',
-  FEEDS_FETCH_CONTENT: 'FEEDS_FETCH_CONTENT',
-})
+export enum StaticIconPermission {
+  STATIC_ICON_WRITE = 'STATIC_ICON_WRITE',
+}
 
 export const allPermissions = Object.freeze({
   ...devicePermissions,
@@ -104,7 +99,8 @@ export const allPermissions = Object.freeze({
   ...locationPermissions,
   ...teamPermissions,
   ...settingPermissions,
-  ...feedsPermissions,
+  ...FeedsPermission,
+  ...StaticIconPermission
 })
 
 export type AnyPermission = keyof typeof allPermissions

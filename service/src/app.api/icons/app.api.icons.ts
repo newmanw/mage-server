@@ -27,10 +27,21 @@ export interface GetStaticIcon {
 
 export interface GetStaticIconContentRequest extends AppRequest {
   iconId: StaticIconId
+  // TODO: suppress fetching/loading content if client-cached content is valid
+  cached?: {
+    contentHash?: StaticIcon['contentHash'],
+    contentTimestamp?: StaticIcon['contentTimestamp'],
+    resolvedTimestamp?: StaticIcon['resolvedTimestamp']
+  }
+}
+
+export interface StaticIconWithContent {
+  iconInfo: StaticIcon
+  iconContent: NodeJS.ReadableStream
 }
 
 export interface GetStaticIconContent {
-  (req: GetStaticIconContentRequest): Promise<AppResponse<NodeJS.ReadableStream, PermissionDeniedError | EntityNotFoundError | IconSourceUrlFetchError>>
+  (req: GetStaticIconContentRequest): Promise<AppResponse<StaticIconWithContent, PermissionDeniedError | EntityNotFoundError | IconSourceUrlFetchError>>
 }
 
 export interface ListStaticIconsRequest extends AppRequest {
@@ -43,7 +54,7 @@ export interface ListStaticIcons {
   (req: ListStaticIconsRequest): Promise<AppResponse<PageOf<StaticIcon>, PermissionDeniedError>>
 }
 
-export interface StaticIconPermissionsService {
+export interface StaticIconPermissionService {
   ensureCreateStaticIconPermission(context: AppRequestContext): Promise<null | PermissionDeniedError>
   ensureGetStaticIconPermission(context: AppRequestContext): Promise<null | PermissionDeniedError>
 }

@@ -2,8 +2,8 @@
 import { URL } from 'url'
 import express from 'express'
 import { ErrEntityNotFound } from '../../app.api/app.api.errors'
-import { GetStaticIcon, GetStaticIconContent, GetStaticIconRequest, ListStaticIcons, ListStaticIconsRequest } from '../../app.api/icons/app.api.icons'
-import { WebAppRequestFactory } from '../adapters.controllers.web'
+import { GetStaticIcon, GetStaticIconContent, GetStaticIconContentRequest, GetStaticIconRequest, ListStaticIcons, ListStaticIconsRequest } from '../../app.api/icons/app.api.icons'
+import { mageAppErrorHandler, WebAppRequestFactory } from '../adapters.controllers.web'
 import { PagingParameters } from '../../entities/entities.global'
 
 export interface StaticIconsAppLayer {
@@ -15,6 +15,27 @@ export interface StaticIconsAppLayer {
 export function StaticIconRoutes(appLayer: StaticIconsAppLayer, createAppRequest: WebAppRequestFactory): express.Router {
 
   const routes = express.Router()
+
+  routes.route('/:iconId/content')
+    .get(async (req, res, next) => {
+      const iconId = req.params.iconId
+      const appReq: GetStaticIconContentRequest = createAppRequest(req, { iconId })
+      const appRes = await appLayer.getIconContent(appReq)
+      if (appRes.success) {
+        const { iconInfo: icon, iconContent: content } = appRes.success
+        if (typeof icon.mediaType === 'string') {
+          res.type(icon.mediaType)
+        }
+        const oneYearInSeconds = 365 * 24 * 60 * 60
+        const etag = `${icon.id}.${icon.contentHash || icon.resolvedTimestamp}`
+        content.pipe(res
+          .header('cache-control', `private; max-age=${oneYearInSeconds}`)
+          // TODO: need app layer support for this
+          // .header('etag', etag)
+          .status(200))
+      }
+      next(appRes.error)
+    })
 
   routes.route('/:iconId')
     .get(async (req, res, next) => {
@@ -85,6 +106,8 @@ export function StaticIconRoutes(appLayer: StaticIconsAppLayer, createAppRequest
         next(appRes.error)
       }
     )
+
+  routes.use(mageAppErrorHandler)
 
   return routes
 }

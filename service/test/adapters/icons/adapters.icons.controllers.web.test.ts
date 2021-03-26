@@ -8,10 +8,11 @@ import supertest from 'supertest'
 import uniqid from 'uniqid'
 import express from 'express'
 import { StaticIcon } from '../../../lib/entities/icons/entities.icons'
-import { GetStaticIconRequest, ListStaticIconsRequest } from '../../../lib/app.api/icons/app.api.icons'
+import { ErrIconSourceUrlFetch, GetStaticIconContent, GetStaticIconContentRequest, GetStaticIconRequest, ListStaticIconsRequest, StaticIconWithContent } from '../../../lib/app.api/icons/app.api.icons'
 import _ from 'lodash'
 import { entityNotFound, EntityNotFoundError } from '../../../lib/app.api/app.api.errors'
-import { PageOf } from '../../../src/entities/entities.global'
+import { PageOf } from '../../../lib/entities/entities.global'
+import { Readable } from 'stream'
 
 const iconJson: (icon: StaticIcon) => Omit<StaticIcon, 'sourceUrl'> & { sourceUrl: string } = (icon) => {
   return {
@@ -20,7 +21,7 @@ const iconJson: (icon: StaticIcon) => Omit<StaticIcon, 'sourceUrl'> & { sourceUr
   }
 }
 
-describe('icons web controller', function() {
+describe.only('icons web controller', function() {
 
   const root = '/icons-test'
   const jsonMimeType = /^application\/json/
@@ -86,7 +87,7 @@ describe('icons web controller', function() {
       appLayer.received(1).getIcon(Arg.all())
     })
 
-    it('returns 404 if the icon does not exist', async function() {
+    it('responds with 404 if the icon does not exist', async function() {
 
       const id = uniqid()
       const appReq: GetStaticIconRequest = createAppRequest({ iconRef: { id }})
@@ -101,6 +102,192 @@ describe('icons web controller', function() {
       appReqFactory.received(1).createRequest(Arg.all())
       appLayer.received(1).getIcon(Arg.requestTokenMatches(appReq))
       appLayer.received(1).getIcon(Arg.all())
+    })
+  })
+
+  describe('GET /:iconId/content', function() {
+
+    it('gets the content for the icon id in the path', async function() {
+
+      const icon: StaticIcon = {
+        id: uniqid(),
+        sourceUrl: new URL('test:///get_content.png'),
+        registeredTimestamp: Date.now(),
+        mediaType: 'image/png'
+      }
+      const appReq: GetStaticIconContentRequest = createAppRequest({ iconId: icon.id })
+      appReqFactory.createRequest(Arg.any(), Arg.deepEquals({ iconId: icon.id })).returns(appReq)
+      const iconBytes = Readable.from('1234567890')
+      appLayer.getIconContent(Arg.all()).resolves(AppResponse.success({ iconInfo: icon, iconContent: iconBytes }))
+      const res = await client.get(`${root}/${icon.id}/content`)
+
+      expect(res.status).to.equal(200)
+      const body = res.body as Buffer
+      expect(body.toString('utf-8')).to.equal('1234567890')
+      appReqFactory.received(1).createRequest(Arg.any(), Arg.deepEquals({ iconId: icon.id }))
+      appLayer.received(1).getIconContent(Arg.requestTokenMatches(appReq))
+    })
+
+    it('sets the response content type from the icon meta-data', async function() {
+
+      const icon: StaticIcon = {
+        id: uniqid(),
+        sourceUrl: new URL('test:///get_content.png'),
+        registeredTimestamp: Date.now(),
+        mediaType: 'image/test-type'
+      }
+      const appReq: GetStaticIconContentRequest = createAppRequest({ iconId: icon.id })
+      appReqFactory.createRequest(Arg.any(), Arg.deepEquals({ iconId: icon.id })).returns(appReq)
+      const iconBytes = Readable.from('1234567890')
+      appLayer.getIconContent(Arg.all()).resolves(AppResponse.success({ iconInfo: icon, iconContent: iconBytes }))
+      const res = await client.get(`${root}/${icon.id}/content`)
+
+      expect(res.status).to.equal(200)
+      expect(res.type).to.equal('image/test-type')
+    })
+
+    it('sets the response content length to the size of the content stream', async function() {
+
+      const icon: StaticIcon = {
+        id: uniqid(),
+        sourceUrl: new URL('test:///get_content.png'),
+        registeredTimestamp: Date.now(),
+        mediaType: 'image/test-type',
+        sizeBytes: 100
+      }
+      const appReq: GetStaticIconContentRequest = createAppRequest({ iconId: icon.id })
+      appReqFactory.createRequest(Arg.any(), Arg.deepEquals({ iconId: icon.id })).returns(appReq)
+      const iconBytes = Readable.from('1234567890')
+      appLayer.getIconContent(Arg.all()).resolves(AppResponse.success({ iconInfo: icon, iconContent: iconBytes }))
+      const res = await client.get(`${root}/${icon.id}/content`)
+
+      expect(res.status).to.equal(200)
+      expect(res.header['content-length']).to.equal(iconBytes.readableLength)
+    })
+
+    describe('caching behavior', function() {
+
+      it('sets cache control header with max age', async function() {
+
+        const icon: StaticIcon = {
+          id: uniqid(),
+          sourceUrl: new URL('test:///get_content.png'),
+          registeredTimestamp: Date.now(),
+          mediaType: 'image/test-type',
+          contentHash: uniqid()
+        }
+        const appReq: GetStaticIconContentRequest = createAppRequest({ iconId: icon.id })
+        appReqFactory.createRequest(Arg.any(), Arg.deepEquals({ iconId: icon.id })).returns(appReq)
+        const iconBytes = Readable.from('1234567890')
+        appLayer.getIconContent(Arg.all()).resolves(AppResponse.success({ iconInfo: icon, iconContent: iconBytes }))
+        const res = await client.get(`${root}/${icon.id}/content`)
+
+        const oneYearInSeconds = 365 * 24 * 60 * 60
+        expect(res.status).to.equal(200)
+        expect(res.header).to.haveOwnProperty('cache-control', `private; max-age=${oneYearInSeconds}`)
+        expect(res.header).to.have.ownProperty('etag')
+      })
+
+      it('uses the icon content hash for etag when available', async function() {
+
+        const icon: StaticIcon = {
+          id: uniqid(),
+          sourceUrl: new URL('test:///get_content.png'),
+          registeredTimestamp: Date.now(),
+          mediaType: 'image/test-type',
+          contentHash: uniqid()
+        }
+        const appReq: GetStaticIconContentRequest = createAppRequest({ iconId: icon.id })
+        appReqFactory.createRequest(Arg.any(), Arg.deepEquals({ iconId: icon.id })).returns(appReq)
+        const iconBytes = Readable.from('1234567890')
+        appLayer.getIconContent(Arg.all()).resolves(AppResponse.success({ iconInfo: icon, iconContent: iconBytes }))
+        const res = await client.get(`${root}/${icon.id}/content`)
+
+        expect(res.status).to.equal(200)
+        expect(res.header).to.haveOwnProperty('etag', `${icon.id}.${icon.contentHash}`)
+
+        expect.fail('todo: need app layer support')
+      })
+
+      it('uses resolved timestamp for etag when content hash is not available', async function() {
+
+        const icon: StaticIcon = {
+          id: uniqid(),
+          sourceUrl: new URL('test:///get_content.png'),
+          registeredTimestamp: Date.now(),
+          mediaType: 'image/test-type',
+          resolvedTimestamp: Date.now(),
+        }
+        const appReq: GetStaticIconContentRequest = createAppRequest({ iconId: icon.id })
+        appReqFactory.createRequest(Arg.any(), Arg.deepEquals({ iconId: icon.id })).returns(appReq)
+        const iconBytes = Readable.from('1234567890')
+        appLayer.getIconContent(Arg.all()).resolves(AppResponse.success({ iconInfo: icon, iconContent: iconBytes }))
+        const res = await client.get(`${root}/${icon.id}/content`)
+
+        expect(res.status).to.equal(200)
+        expect(res.header).to.haveOwnProperty('etag', `${icon.id}.${icon.resolvedTimestamp}`)
+
+        expect.fail('todo: need app layer support')
+      })
+
+      it('supports if-none-match conditional request with content hash', async function() {
+
+        const icon: StaticIcon = {
+          id: uniqid(),
+          sourceUrl: new URL('test:///get_content.png'),
+          registeredTimestamp: Date.now(),
+          mediaType: 'image/test-type',
+          contentHash: uniqid(),
+          resolvedTimestamp: Date.now()
+        }
+        const appReq: GetStaticIconContentRequest = createAppRequest({ iconId: icon.id })
+        appReqFactory.createRequest(Arg.any(), Arg.deepEquals({ iconId: icon.id })).returns(appReq)
+        const iconBytes = Readable.from('1234567890')
+        appLayer.getIconContent(Arg.all()).resolves(AppResponse.success({ iconInfo: icon, iconContent: iconBytes }))
+        const res = await client.get(`${root}/${icon.id}/content`).set('if-none-match', `${icon.id}.${icon.contentHash}`)
+
+        expect(res.status).to.equal(304)
+        expect(res.noContent).to.be.true
+        expect(res.header).to.haveOwnProperty('etag', `${icon.id}.${icon.contentHash}`)
+
+        expect.fail('todo: need app layer support')
+      })
+
+      it('supports if-none-match conditional request with resolved timestamp', async function() {
+
+        const icon: StaticIcon = {
+          id: uniqid(),
+          sourceUrl: new URL('test:///get_content.png'),
+          registeredTimestamp: Date.now(),
+          mediaType: 'image/test-type',
+          contentHash: uniqid(),
+          resolvedTimestamp: Date.now()
+        }
+        const appReq: GetStaticIconContentRequest = createAppRequest({ iconId: icon.id })
+        appReqFactory.createRequest(Arg.any(), Arg.deepEquals({ iconId: icon.id })).returns(appReq)
+        const iconBytes = Readable.from('1234567890')
+        appLayer.getIconContent(Arg.all()).resolves(AppResponse.success({ iconInfo: icon, iconContent: iconBytes }))
+        const res = await client.get(`${root}/${icon.id}/content`).set('if-none-match', `${icon.id}.${icon.resolvedTimestamp}`)
+
+        expect(res.status).to.equal(304)
+        expect(res.noContent).to.be.true
+        expect(res.header).to.haveOwnProperty('etag', `${icon.id}.${icon.resolvedTimestamp}`)
+
+        expect.fail('todo: need app layer support')
+      })
+    })
+
+    it('responds with 404 if the icon does not exist', async function() {
+
+      const iconId = 'not_there'
+      const appReq: GetStaticIconContentRequest = createAppRequest({ iconId })
+      appReqFactory.createRequest(Arg.any(), Arg.deepEquals({ iconId })).returns(appReq)
+      appLayer.getIconContent(Arg.all()).resolves(AppResponse.error<StaticIconWithContent, EntityNotFoundError>(entityNotFound(iconId, 'StaticIcon')))
+      const res = await client.get(`${root}/${iconId}/content`)
+
+      expect(res.status).to.equal(404)
+      expect(res.type).to.match(jsonMimeType)
+      expect(res.body).to.equal(`StaticIcon not found: ${iconId}`)
     })
   })
 
@@ -296,6 +483,13 @@ describe('icons web controller', function() {
         appLayer.received(1).listIcons(Arg.all())
         appLayer.didNotReceive().getIcon(Arg.all())
       })
+    })
+  })
+
+  describe('POST /', function() {
+
+    it('should register an icon', async function() {
+      expect.fail('todo')
     })
   })
 })

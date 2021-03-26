@@ -692,7 +692,8 @@ describe.only('static icon mongoose repository', function() {
         id: uniqid(),
         sourceUrl: scheme1.urlWithPath('test1.png'),
         registeredTimestamp: Date.now(),
-        resolvedTimestamp: Date.now()
+        resolvedTimestamp: Date.now(),
+        tags: []
       }
       scheme1IconUnresolved = {
         id: uniqid(),
@@ -704,7 +705,8 @@ describe.only('static icon mongoose repository', function() {
         id: uniqueId(),
         sourceUrl: scheme2Local.urlWithPath('test2.png'),
         registeredTimestamp: Date.now(),
-        resolvedTimestamp: Date.now()
+        resolvedTimestamp: Date.now(),
+        tags: []
       }
       await model.insertMany([
         { ...scheme1Icon, _id: scheme1Icon.id },
@@ -760,11 +762,11 @@ describe.only('static icon mongoose repository', function() {
 
     it('loads content from url if the source url scheme is local', async function() {
 
-      const content = Readable.from('')
+      const content = Readable.from('an image')
       scheme2Local.resolveContent(Arg.sameStringValueAs(scheme2LocalIcon.sourceUrl)).resolves(content)
       const loaded = await repo.loadContent(scheme2LocalIcon.id)
 
-      expect(loaded).to.equal(content)
+      expect(loaded).to.deep.equal([ scheme2LocalIcon, content ])
       scheme2Local.received(1).resolveContent(Arg.sameStringValueAs(scheme2LocalIcon.sourceUrl))
       contentStore.didNotReceive().loadContent(Arg.all())
     })
@@ -775,7 +777,7 @@ describe.only('static icon mongoose repository', function() {
       contentStore.loadContent(scheme1Icon.id).resolves(content)
       const loaded = await repo.loadContent(scheme1Icon.id)
 
-      expect(loaded).to.equal(content)
+      expect(loaded).to.deep.equal([ scheme1Icon, content ])
       contentStore.received(1).loadContent(scheme1Icon.id)
       scheme1.didNotReceive().resolveContent(Arg.all())
     })
@@ -788,8 +790,10 @@ describe.only('static icon mongoose repository', function() {
       contentStore.putContent(Arg.is(x => x.id === scheme1IconUnresolved.id), fetchedContent).resolves()
       contentStore.loadContent(scheme1IconUnresolved.id).resolves(storedContent)
       const loaded = await repo.loadContent(scheme1IconUnresolved.id)
+      const resolvedIcon = await repo.findById(scheme1IconUnresolved.id)
 
-      expect(loaded).to.equal(storedContent)
+      expect(resolvedIcon?.resolvedTimestamp).to.be.closeTo(Date.now(), 100)
+      expect(loaded).to.deep.equal([ resolvedIcon, storedContent ])
       scheme1.received(1).resolveContent(Arg.sameStringValueAs(scheme1IconUnresolved.sourceUrl))
       contentStore.received(1).putContent(Arg.deepEquals(scheme1IconUnresolved), fetchedContent)
     })

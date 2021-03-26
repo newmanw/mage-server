@@ -10,7 +10,7 @@ declare global {
 import express from 'express'
 import { ListFeedServiceTypes, ListServiceTopics, CreateFeedService, ListFeedServices, PreviewTopics, PreviewTopicsRequest, CreateFeed, CreateFeedRequest, ListServiceTopicsRequest, ListAllFeeds, PreviewFeedRequest, PreviewFeed, GetFeed, UpdateFeed, UpdateFeedRequest, DeleteFeed, DeleteFeedRequest, ListServiceFeeds, ListServiceFeedsRequest, DeleteFeedService, GetFeedService } from '../../app.api/feeds/app.api.feeds'
 import { ErrPermissionDenied, MageError, PermissionDeniedError, ErrInvalidInput, invalidInput, ErrEntityNotFound } from '../../app.api/app.api.errors'
-import { WebAppRequestFactory } from '../adapters.controllers.web'
+import { mageAppErrorHandler, WebAppRequestFactory } from '../adapters.controllers.web'
 import { FeedServiceId, FeedTopicId } from '../../entities/feeds/entities.feeds'
 
 export interface FeedsAppLayer {
@@ -33,21 +33,6 @@ export interface FeedsAppLayer {
 export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppRequestFactory): express.Router {
   const routes = express.Router()
   routes.use(express.json())
-
-  function errorHandler(err: PermissionDeniedError | any, req: express.Request, res: express.Response, next: express.NextFunction): any {
-    if (!(err instanceof MageError)) {
-      return next(err)
-    }
-    switch (err.code) {
-      case ErrPermissionDenied:
-        return res.status(403).json(`permission denied: ${(err as PermissionDeniedError).data.permission}`)
-      case ErrEntityNotFound:
-        return res.status(404).json(err.message)
-      case ErrInvalidInput:
-        return res.status(400).json(err.message)
-    }
-    next(err)
-  }
 
   routes.route('/service_types')
     .get(async (req, res, next): Promise<any> => {
@@ -269,7 +254,7 @@ export function FeedsRoutes(appLayer: FeedsAppLayer, createAppRequest: WebAppReq
       return next(appRes.error)
     })
 
-  routes.use(errorHandler)
+  routes.use(mageAppErrorHandler)
 
   return routes
 }
