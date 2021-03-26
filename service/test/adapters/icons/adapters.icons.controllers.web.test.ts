@@ -14,16 +14,18 @@ import { entityNotFound, EntityNotFoundError } from '../../../lib/app.api/app.ap
 import { PageOf } from '../../../lib/entities/entities.global'
 import { Readable } from 'stream'
 
-const iconJson: (icon: StaticIcon) => Omit<StaticIcon, 'sourceUrl'> & { sourceUrl: string } = (icon) => {
-  return {
-    ...icon,
-    sourceUrl: String(icon.sourceUrl)
-  }
-}
+
 
 describe.only('icons web controller', function() {
 
   const root = '/icons-test'
+  const iconJson: (icon: StaticIcon) => Omit<StaticIcon, 'sourceUrl'> & { sourceUrl: string } = (icon) => {
+    return {
+      ...icon,
+      sourceUrl: String(icon.sourceUrl),
+      contentPath: `${root}/${icon.id}/content`
+    }
+  }
   const jsonMimeType = /^application\/json/
   const validPrincipal = {
     user: 'test.user'

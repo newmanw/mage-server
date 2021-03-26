@@ -5,11 +5,19 @@ import { ErrEntityNotFound } from '../../app.api/app.api.errors'
 import { GetStaticIcon, GetStaticIconContent, GetStaticIconContentRequest, GetStaticIconRequest, ListStaticIcons, ListStaticIconsRequest } from '../../app.api/icons/app.api.icons'
 import { mageAppErrorHandler, WebAppRequestFactory } from '../adapters.controllers.web'
 import { PagingParameters } from '../../entities/entities.global'
+import { StaticIcon } from '../../entities/icons/entities.icons'
 
 export interface StaticIconsAppLayer {
   getIcon: GetStaticIcon
   listIcons: ListStaticIcons
   getIconContent: GetStaticIconContent
+}
+
+function addContentPathToIcon(req: express.Request, icon: StaticIcon): StaticIcon & { contentPath: string } {
+  return {
+    ...icon,
+    contentPath: `${req.baseUrl}/${icon.id}/content`
+  }
 }
 
 export function StaticIconRoutes(appLayer: StaticIconsAppLayer, createAppRequest: WebAppRequestFactory): express.Router {
@@ -43,7 +51,7 @@ export function StaticIconRoutes(appLayer: StaticIconsAppLayer, createAppRequest
       const appReq: GetStaticIconRequest = createAppRequest(req, { iconRef: { id: iconId }})
       const appRes = await appLayer.getIcon(appReq)
       if (appRes.success) {
-        return res.json(appRes.success)
+        return res.json(addContentPathToIcon(req, appRes.success))
       }
       if (appRes.error?.code === ErrEntityNotFound) {
         return res.status(404).json(`icon not found: ${iconId}`)
@@ -73,7 +81,7 @@ export function StaticIconRoutes(appLayer: StaticIconsAppLayer, createAppRequest
         const appReq: GetStaticIconRequest = createAppRequest(req, { iconRef: { sourceUrl }})
         const appRes = await appLayer.getIcon(appReq)
         if (appRes.success) {
-          return res.json(appRes.success)
+          return res.json(addContentPathToIcon(req, appRes.success))
         }
         if (appRes.error?.code === ErrEntityNotFound) {
           return res.json(null)
@@ -101,7 +109,9 @@ export function StaticIconRoutes(appLayer: StaticIconsAppLayer, createAppRequest
         const appReq: ListStaticIconsRequest = createAppRequest(req, listParams)
         const appRes = await appLayer.listIcons(appReq)
         if (appRes.success) {
-          return res.json(appRes.success)
+          const icons = appRes.success.items
+          const iconsWithContentPath = icons.map(x => addContentPathToIcon(req, x))
+          return res.json({ ...appRes.success, items: iconsWithContentPath })
         }
         next(appRes.error)
       }
