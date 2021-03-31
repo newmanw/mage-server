@@ -36,7 +36,7 @@ export function StaticIconRoutes(appLayer: StaticIconsAppLayer, createAppRequest
         }
         const oneYearInSeconds = 365 * 24 * 60 * 60
         const etag = `${icon.id}.${icon.contentHash || icon.resolvedTimestamp}`
-        content.pipe(res
+        return content.pipe(res
           .header('cache-control', `private; max-age=${oneYearInSeconds}`)
           // TODO: need app layer support for this
           // .header('etag', etag)
