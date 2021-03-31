@@ -13,7 +13,7 @@ export class PluginUrlScheme implements UrlScheme {
    * resolution of only intended resources.
    * @param pluginNames
    */
-  constructor(pluginNames: string[], private extraSearchPaths: string[] = []) {
+  constructor(pluginNames: string[], private extraSearchPaths: string[] | null = null) {
     this.pluginNamesDescending = pluginNames.sort().reverse()
   }
 
@@ -36,7 +36,11 @@ export class PluginUrlScheme implements UrlScheme {
       return new UrlResolutionError(url, 'no matching plugin module')
     }
     const contentRelPath = pluginPath.slice(longestMatchingPlugin.length + 1)
-    const pluginMainFilePath = require.resolve(longestMatchingPlugin, { paths: this.extraSearchPaths })
+    const resolveOpts: { paths?: string[] } = {}
+    if (Array.isArray(this.extraSearchPaths)) {
+      resolveOpts.paths = this.extraSearchPaths
+    }
+    const pluginMainFilePath = require.resolve(longestMatchingPlugin, resolveOpts)
     const pluginBaseDirPath = path.dirname(pluginMainFilePath)
     const contentPath = path.join(pluginBaseDirPath, contentRelPath)
     console.log(`resolved url ${url} to file path ${contentPath}`)
