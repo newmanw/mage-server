@@ -28,6 +28,7 @@ import { FileSystemIconContentStore } from './adapters/icons/adapters.icons.cont
 import { StaticIconRoutes, StaticIconsAppLayer } from './adapters/icons/adapters.icons.controllers.web'
 import { ListStaticIcons, GetStaticIcon, GetStaticIconContent } from './app.impl/icons/app.impl.icons'
 import { RoleBasedStaticIconPermissionService } from './permissions/permissions.icons'
+import { PluginUrlScheme } from './adapters/url_schemes/adapters.url_schemes.plugin'
 
 
 export interface MageService {
@@ -85,7 +86,7 @@ export const boot = async function(config: BootConfig): Promise<MageService> {
   }
 
   const models = await initDatabase()
-  const repos = await initRepositories(models)
+  const repos = await initRepositories(models, config.plugins)
   const appLayer = await initAppLayer(repos)
 
   // load routes the old way
@@ -216,12 +217,16 @@ const jsonSchemaService: JsonSchemaService = {
   }
 }
 
-async function initRepositories(models: DatabaseModels): Promise<Repositories> {
+async function initRepositories(models: DatabaseModels, pluginNames: string[]): Promise<Repositories> {
   const serviceTypeRepo = new MongooseFeedServiceTypeRepository(models.feeds.feedServiceTypeIdentity)
   const serviceRepo = new MongooseFeedServiceRepository(models.feeds.feedService)
   const feedRepo = new MongooseFeedRepository(models.feeds.feed, new SimpleIdFactory())
   const eventRepo = new MongooseMageEventRepository(models.events.event)
-  const staticIconRepo = new MongooseStaticIconRepository(models.icons.staticIcon, new SimpleIdFactory(), new FileSystemIconContentStore(), [])
+  const staticIconRepo = new MongooseStaticIconRepository(
+    models.icons.staticIcon,
+    new SimpleIdFactory(),
+    new FileSystemIconContentStore(),
+    [ new PluginUrlScheme(pluginNames) ])
   return {
     feeds: {
       serviceTypeRepo, serviceRepo, feedRepo
