@@ -17,5 +17,5 @@ describe('FeedService', () => {
 
     const service: FeedService = TestBed.get(FeedService);
     expect(service).toBeTruthy();
-  });
-});
+  })
+})

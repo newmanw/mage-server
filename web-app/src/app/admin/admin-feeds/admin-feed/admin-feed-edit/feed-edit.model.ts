@@ -1,4 +1,5 @@
-import { Feed, FeedExpanded, FeedPreview, FeedTopic, Service } from '../../../../feed/feed.model'
+import { StaticIconReference } from '../../../../static-icon/static-icon.model'
+import { Feed, FeedExpanded, FeedPost, FeedPreview, FeedTopic, Service } from '../../../../feed/feed.model'
 
 type RequiredKeys<T> = { [K in keyof T]-?: {} extends { [P in K]: T[K] } ? never : K }[keyof T];
 type OptionalKeys<T> = { [K in keyof T]-?: {} extends { [P in K]: T[K] } ? K : never }[keyof T];
@@ -13,7 +14,6 @@ type NullableOptional<T> = PickRequired<T> & Nullable<PickOptional<T>>;
 type FeedMetaDataKeys =
   | 'title'
   | 'summary'
-  | 'icon'
   | 'itemsHaveIdentity'
   | 'itemsHaveSpatialDimension'
   | 'itemPrimaryProperty'
@@ -21,7 +21,9 @@ type FeedMetaDataKeys =
   | 'itemTemporalProperty'
   | 'updateFrequencySeconds'
 
-export type FeedMetaData = Partial<Pick<Feed, FeedMetaDataKeys>>
+export type FeedMetaData = Partial<Pick<Feed, FeedMetaDataKeys>> & {
+  icon?: StaticIconReference
+}
 export type FeedMetaDataNullable = Required<NullableOptional<FeedMetaData>>
 
 /**
@@ -70,8 +72,6 @@ export const freshEditState = (): Readonly<FeedEditState> => {
     preview: null
   })
 }
-
-export type FeedPost = Partial<Omit<Feed, 'service' | 'topic'>> & Pick<Feed, 'service' | 'topic'>
 
 export const feedPostFromEditState = (state: FeedEditState): FeedPost => {
   const post: FeedPost = {

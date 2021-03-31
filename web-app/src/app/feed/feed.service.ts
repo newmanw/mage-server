@@ -2,7 +2,7 @@ import { HttpClient } from '@angular/common/http';
 import { Injectable } from '@angular/core';
 import { Feature } from 'geojson';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
-import { Feed, FeedContent, FeedExpanded, FeedPreview, FeedTopic, Service, ServiceType, StyledFeature } from './feed.model';
+import { Feed, FeedContent, FeedExpanded, FeedPost, FeedPreview, FeedTopic, Service, ServiceType, StyledFeature } from './feed.model';
 
 
 export interface FeedPreviewOptions {
@@ -56,7 +56,7 @@ export class FeedService {
     return this.http.get<Array<FeedTopic>>(`/api/feeds/services/${serviceId}/topics`);
   }
 
-  previewFeed(serviceId: string, topicId: string, feedSpec: Partial<Omit<Feed, 'service' | 'topic'>>, opts?: FeedPreviewOptions): Observable<FeedPreview> {
+  previewFeed(serviceId: string, topicId: string, feedSpec: Partial<Omit<FeedPost, 'service' | 'topic'>>, opts?: FeedPreviewOptions): Observable<FeedPreview> {
     opts = opts || {}
     const skipContentFetch: boolean = opts.skipContentFetch === true
     return this.http.post<FeedPreview>(
@@ -76,7 +76,7 @@ export class FeedService {
     return this.http.post<FeedExpanded>(`/api/feeds/services/${serviceId}/topics/${topicId}/feeds`, feedConfiguration);
   }
 
-  updateFeed(feed: Partial<Omit<Feed, 'id'>> & Pick<Feed, 'id'>): Observable<FeedExpanded> {
+  updateFeed(feed: Partial<Omit<FeedPost, 'id'>> & Pick<Feed, 'id'>): Observable<FeedExpanded> {
     return this.http.put<FeedExpanded>(`/api/feeds/${feed.id}`, feed);
   }
 

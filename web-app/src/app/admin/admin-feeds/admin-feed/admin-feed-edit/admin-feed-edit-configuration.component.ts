@@ -2,6 +2,7 @@ import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChange
 import { FormControl, FormGroup } from '@angular/forms'
 import { debounceTime, map } from 'rxjs/operators'
 import { FeedTopic } from 'src/app/feed/feed.model'
+import { StaticIconReference } from '../../../../static-icon/static-icon.model'
 import { FeedMetaData, feedMetaDataLean, FeedMetaDataNullable } from './feed-edit.model'
 
 export type IconModel = Readonly<
@@ -110,7 +111,7 @@ export class AdminFeedEditConfigurationComponent implements OnInit, OnChanges {
     const updateValue: FeedMetaDataNullable = {
       title: formUpdateValueForTextControl('title', form, metaData),
       summary: formUpdateValueForTextControl('summary', form, metaData),
-      icon: formUpdateValueForTextControl('icon', form, metaData),
+      icon: formUpdateValueForIconControl('icon', form, metaData),
       itemPrimaryProperty: formUpdateValueForTextControl('itemPrimaryProperty', form, metaData),
       itemSecondaryProperty: formUpdateValueForTextControl('itemSecondaryProperty', form, metaData),
       itemTemporalProperty: formUpdateValueForTextControl('itemTemporalProperty', form, metaData),
@@ -142,6 +143,11 @@ function formUpdateValueForNumberControl(key: FeedMetaDataNumberKeys, form: Form
     return typeof control.value === 'number' ? control.value : null
   }
   return typeof updateMetaData[key] === 'number' ? updateMetaData[key] : null
+}
+
+function formUpdateValueForIconControl(key: keyof Pick<FeedMetaData, 'icon'>, form: FormGroup, updateMetaData: FeedMetaData): StaticIconReference | null {
+  const control = form.get(key)
+  return control.dirty ? control.value as StaticIconReference : (updateMetaData.icon || null)
 }
 
 export function formValueForMetaData(metaData: FeedMetaData): Required<FeedMetaDataNullable> {

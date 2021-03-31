@@ -1,0 +1,5 @@
+<div [formGroup]="form">
+  <img class="icon-form-field__image" [mageXhrBlobSrc]="icon?.contentPath" #blobSrc="mageXhrBlobSrc" [attr.src]="blobSrc.safeBlobUrl"/>
+  <input type="hidden" formControlName="iconRefType"/>
+  <input type="hidden" formControlName="iconRefToken"/>
+</div>

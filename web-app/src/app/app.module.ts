@@ -144,7 +144,8 @@ import { AdminFeedsModule } from './admin/admin-feeds/admin-feeds.module';
 import { ObservationPopupComponent } from './observation/observation-popup/observation-popup.component';
 import { UserPopupComponent } from './user/user-popup/user-popup.component';
 import { CdkDetailRowDirective } from './export/directives/cdk-detail-row.directive';
-import { StaticIconSelectComponent } from './static-icon/static-icon-select/static-icon-select.component';
+import { StaticIconFormFieldComponent } from './static-icon/static-icon-form-field/static-icon-form-field.component'
+import { StaticIconModule } from './static-icon/static-icon.module'
 
 @NgModule({
   declarations: [
@@ -213,7 +214,6 @@ import { StaticIconSelectComponent } from './static-icon/static-icon-select/stat
     ExportMetadataDialogComponent,
     CdkDetailRowDirective,
     FeedPanelComponent,
-    StaticIconSelectComponent
   ],
   imports: [
     BrowserModule,
@@ -271,7 +271,8 @@ import { StaticIconSelectComponent } from './static-icon/static-icon-select/stat
     MomentModule,
     GeometryModule,
     AdminFeedsModule,
-    FeedItemSummaryModule
+    FeedItemSummaryModule,
+    StaticIconModule,
   ],
   providers: [
     mapServiceProvider,
@@ -314,7 +315,8 @@ import { StaticIconSelectComponent } from './static-icon/static-icon-select/stat
     ColorPickerComponent,
     FeedItemMapPopupComponent,
     ExportsComponent,
-    ExportMetadataDialogComponent
+    ExportMetadataDialogComponent,
+    StaticIconFormFieldComponent
   ]
 })
 export class AppModule {

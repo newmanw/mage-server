@@ -1,41 +1,87 @@
+import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http'
 import { Injectable } from '@angular/core';
-import { Observable } from 'rxjs'
-import { StaticIcon } from './static-icon.model'
+import { Observable, of, throwError } from 'rxjs'
+import { catchError } from 'rxjs/operators'
+import { PageOf, PagingParameters } from '../paging.model'
+import { StaticIcon, StaticIconReference } from './static-icon.model'
+
+
+export interface IconFetch extends PagingParameters {
+  searchText?: string
+}
 
 @Injectable({
   providedIn: 'root'
 })
 export class StaticIconService {
 
-  constructor() { }
+  constructor(private http: HttpClient) { }
 
-  fetchIcons(keyWordFilter?: string): Observable<StaticIcon[]> {
+  fetchIcons(fetch?: IconFetch): Observable<PageOf<StaticIcon>> {
     const now = Date.now()
-    const fetch = new Observable<StaticIcon[]>(observer => {
+    const results = new Observable<PageOf<StaticIcon>>(observer => {
       const icons: StaticIcon[] = []
       let remaining = 100
       while (remaining--) {
         const id = now - remaining
         icons.unshift({
           id: String(id),
-          path: '/default-icon.png',
           title: `Icon ${id}`,
           fileName: `icon-${id}.png`,
-          sourceUrl: `https://test.mage/${id}.png`
+          sourceUrl: `https://test.mage/${id}.png`,
+          contentPath: `/icons/${id}/content`
         })
       }
       setTimeout(() => {
-        observer.next(icons)
+        observer.next({
+          pageSize: 100,
+          pageIndex: 0,
+          totalCount: 100,
+          items: icons
+        })
         observer.complete()
       }, 0)
       return {
         unsubscribe() { }
       }
     })
-    return fetch
+    return results
   }
 
-  registerIconUrl(url: string): void {
+  fetchIconById(id: string): Observable<StaticIcon> {
+    return this.http.get<StaticIcon>(`/api/icons/${id}`).pipe(
+      catchError((err, caught) => {
+        // if (err instanceof HttpErrorResponse) {
+        //   if (err.status === 404) {
+        //     return of(null)
+        //   }
+        // }
+        return throwError(err)
+      })
+    )
+  }
 
+  fetchIconBySourceUrl(url: string): Observable<StaticIcon> {
+    return this.http.get<StaticIcon | null>(`/api/icons`, {
+      params: new HttpParams().set('source_url', url)
+    })
+  }
+
+  fetchIconByReference(ref: StaticIconReference): Observable<StaticIcon | null> {
+    if (ref.id) {
+      return this.fetchIconById(ref.id)
+    }
+    else if (ref.sourceUrl) {
+      return this.fetchIconBySourceUrl(ref.sourceUrl)
+    }
+    throw new Error('no icon id source url')
+  }
+
+  registerIconUrl(url: string): Observable<StaticIcon> {
+    throw new Error('unimplemented')
+  }
+
+  uploadIcon(): void {
+    throw new Error('unimplemented')
   }
 }

@@ -1,5 +1,5 @@
-<div>
-  <cdk-virtual-scroll-viewport [itemSize]="25">
+<div class="icon-select">
+  <cdk-virtual-scroll-viewport [itemSize]="40">
     <mat-card *cdkVirtualFor="let icon of icons" class=icon-select-item>
       <mat-card-header>
         <mat-card-title>{{icon.title}}</mat-card-title>
@@ -8,3 +8,9 @@
     </mat-card>
   </cdk-virtual-scroll-viewport>
 </div>
+<!--
+  <button mat-button class="add__button" type="button" color="primary" (click)="file.click()">
+    Upload Icon
+  </button>
+  <input [hidden]="true" type="file" #file multiple (change)="onAttachmentFile($event)">
+-->

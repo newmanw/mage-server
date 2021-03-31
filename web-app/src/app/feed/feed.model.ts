@@ -1,4 +1,5 @@
 import { Feature, FeatureCollection } from 'geojson';
+import { RegisteredStaticIconReference, SourceUrlStaticIconReference, StaticIconReference } from '../static-icon/static-icon.model'
 
 export interface Feed {
   id: string;
@@ -6,7 +7,7 @@ export interface Feed {
   topic: string;
   title: string;
   summary?: string;
-  icon?: string;
+  icon?: RegisteredStaticIconReference;
   mapStyle?: MapStyle;
   itemTemporalProperty?: string;
   itemPrimaryProperty?: string;
@@ -47,7 +48,7 @@ export interface FeedTopic {
   id: string;
   title: string;
   summary?: string;
-  icon?: string;
+  icon?: SourceUrlStaticIconReference;
   paramsSchema?: any;
   updateFrequencySeconds?: number;
   itemsHaveIdentity?: boolean;
@@ -73,4 +74,8 @@ export interface FeedContent {
 export interface FeedPreview {
   feed: Feed
   content?: FeedContent
+}
+
+export type FeedPost = Partial<Omit<Feed, 'service' | 'topic' | 'icon'>> & Pick<Feed, 'service' | 'topic'> & {
+  icon?: StaticIconReference
 }

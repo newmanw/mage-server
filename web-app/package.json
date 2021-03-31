@@ -93,6 +93,7 @@
     "ngx-build-plus": "^9.0.4",
     "ngx-color": "^5.0.1",
     "ngx-mat-select-search": "^2.1.1",
+    "ngx-virtual-scroller": "^3.0.3",
     "papaparse": "4.1.4",
     "select2": "4.0.7",
     "swagger-ui": "3.24.0",

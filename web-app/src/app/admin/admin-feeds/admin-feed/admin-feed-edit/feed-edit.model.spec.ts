@@ -1,4 +1,4 @@
-import { Feed, FeedTopic, Service } from '../../../../feed/feed.model'
+import { Feed, FeedPost, FeedTopic, Service } from '../../../../feed/feed.model'
 import { FeedEditState, FeedMetaData, feedMetaDataLean, FeedMetaDataNullable, feedPostFromEditState } from './feed-edit.model'
 
 export type FeedMetaDataBooleanKeys = { [K in keyof FeedMetaData]: FeedMetaData[K] extends boolean ? K : never }[keyof FeedMetaData]
@@ -11,7 +11,7 @@ describe('feedMetaDataLean', () => {
       id: 'abc123',
       title: 'A Topic',
       summary: 'Topic for testing',
-      icon: 'hurr://durr/derp.png',
+      icon: { sourceUrl: 'hurr://durr/derp.png' },
       itemPrimaryProperty: 'primary',
       itemSecondaryProperty: 'secondary',
       itemTemporalProperty: 'temporal',
@@ -39,7 +39,7 @@ describe('feedMetaDataLean', () => {
       itemsHaveIdentity: true,
       itemsHaveSpatialDimension: true,
       updateFrequencySeconds: 10000,
-      icon: 'hurr://durr/derp.png'
+      icon: { sourceUrl: 'hurr://durr/derp.png' }
     })
   })
 
@@ -51,7 +51,7 @@ describe('feedMetaDataLean', () => {
       topic: 'topic1',
       title: 'A Topic',
       summary: 'Topic for testing',
-      icon: 'hurr://durr/derp.png',
+      icon: { id: 'icon1' },
       itemPrimaryProperty: 'primary',
       itemSecondaryProperty: 'secondary',
       itemTemporalProperty: 'temporal',
@@ -82,7 +82,7 @@ describe('feedMetaDataLean', () => {
       itemsHaveIdentity: true,
       itemsHaveSpatialDimension: true,
       updateFrequencySeconds: 10000,
-      icon: 'hurr://durr/derp.png'
+      icon: { id: 'icon1' }
     })
   })
 
@@ -131,8 +131,7 @@ describe('feedMetaDataLean', () => {
       summary: '',
       itemPrimaryProperty: '',
       itemSecondaryProperty: '',
-      itemTemporalProperty: '',
-      icon: ''
+      itemTemporalProperty: ''
     }
     const lean = feedMetaDataLean(source)
 
@@ -160,7 +159,7 @@ describe('feedPostFromEditState', () => {
       id: 'topic1',
       title: 'Test Topic',
       summary: 'A topic for testing',
-      icon: 'icon1',
+      icon: { sourceUrl: 'test://icon1' },
       itemPrimaryProperty: 'prop1',
       itemSecondaryProperty: 'prop2',
       itemTemporalProperty: 'time',
@@ -184,7 +183,7 @@ describe('feedPostFromEditState', () => {
     const feedMetaData: Required<FeedMetaData> = {
       title: 'Test Feed',
       summary: 'A feed for testing',
-      icon: 'icon5',
+      icon: { id: 'icon5' },
       itemPrimaryProperty:  'feedProp1',
       itemSecondaryProperty: 'feedProp2',
       itemTemporalProperty: 'feedTime',
@@ -215,7 +214,7 @@ describe('feedPostFromEditState', () => {
 
     const feedFromState = feedPostFromEditState(state)
 
-    const expectedFeed: Required<Omit<Feed, 'mapStyle' | 'variableParamsSchema'>> = {
+    const expectedFeed: Required<Omit<FeedPost, 'mapStyle' | 'variableParamsSchema'>> = {
       id: state.originalFeed.id,
       service: state.selectedService.id,
       topic: state.selectedTopic.id,
@@ -233,7 +232,7 @@ describe('feedPostFromEditState', () => {
       id: 'topic1',
       title: 'Test Topic',
       summary: 'A topic for testing',
-      icon: 'icon1',
+      icon: { sourceUrl: 'icon1' },
       itemPrimaryProperty: 'prop1',
       itemSecondaryProperty: 'prop2',
       itemTemporalProperty: 'time',

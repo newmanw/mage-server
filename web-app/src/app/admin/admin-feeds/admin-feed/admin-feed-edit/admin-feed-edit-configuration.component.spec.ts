@@ -1,3 +1,4 @@
+import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing'
 import { Component } from '@angular/core'
 import { async, ComponentFixture, TestBed } from '@angular/core/testing'
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms'
@@ -5,6 +6,7 @@ import { MatAutocompleteModule, MatButton, MatCheckboxModule, MatExpansionModule
 import { By } from '@angular/platform-browser'
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import * as _ from 'lodash'
+import { StaticIconModule } from 'src/app/static-icon/static-icon.module'
 import { FeedTopic } from '../../../../feed/feed.model'
 import { AdminFeedEditConfigurationComponent, formValueForMetaData } from './admin-feed-edit-configuration.component'
 import { FeedMetaData, feedMetaDataLean, FeedMetaDataNullable } from './feed-edit.model'
@@ -22,7 +24,7 @@ const emptyMetaDataFormValue: FeedMetaDataNullable = {
   updateFrequencySeconds: null
 }
 
-describe('FeedMetaDataComponent', () => {
+fdescribe('FeedMetaDataComponent', () => {
 
   let debounceTime: number
   @Component({
@@ -54,7 +56,9 @@ describe('FeedMetaDataComponent', () => {
         MatFormFieldModule,
         MatInputModule,
         NoopAnimationsModule,
-        ReactiveFormsModule
+        ReactiveFormsModule,
+        StaticIconModule,
+        HttpClientTestingModule
       ],
       declarations: [
         TestFeedMetaDataHostComponent,
@@ -120,7 +124,7 @@ describe('FeedMetaDataComponent', () => {
       const metaData: Required<FeedMetaData> = {
         title: 'Topic 1',
         summary: 'Testing topic 1',
-        icon: 'test://icon1.png',
+        icon: { sourceUrl: 'test://icon1.png' },
         itemPrimaryProperty: 'prop1',
         itemSecondaryProperty: 'prop2',
         itemTemporalProperty: 'prop3',
@@ -137,7 +141,7 @@ describe('FeedMetaDataComponent', () => {
       const metaData: FeedMetaData = {
         title: 'Topic 1',
         summary: undefined,
-        icon: 'test://icon1.png',
+        icon: { sourceUrl: 'test://icon1.png' },
         itemPrimaryProperty: 'prop1',
         itemTemporalProperty: 'prop3',
         itemsHaveIdentity: false,
@@ -186,7 +190,8 @@ describe('FeedMetaDataComponent', () => {
       ...feedMetaDataLean(topic),
       title: 'Feed 1',
       itemPrimaryProperty: 'neverChanged',
-      itemTemporalProperty: 'removed'
+      itemTemporalProperty: 'removed',
+      icon: { id: 'icon123' }
     }
     host.topic = topic
     host.feedMetaData = initFeedMetaData
@@ -309,7 +314,7 @@ describe('FeedMetaDataComponent', () => {
     const topicMetaData: Required<FeedMetaData> = {
       title: 'Topic 1',
       summary: 'Testing topic 1',
-      icon: 'test://icon1.png',
+      icon: { sourceUrl: 'test://icon1.png' },
       itemPrimaryProperty: 'prop1',
       itemSecondaryProperty: 'prop2',
       itemTemporalProperty: 'prop3',
@@ -319,7 +324,8 @@ describe('FeedMetaDataComponent', () => {
     }
     const topic: FeedTopic = {
       id: 'topic1',
-      ...topicMetaData
+      ...topicMetaData,
+      icon: { sourceUrl: 'test://icon1.png' }
     }
     host.topic = topic
     fixture.detectChanges()
@@ -334,7 +340,7 @@ describe('FeedMetaDataComponent', () => {
     const feedMetaData: Required<FeedMetaData> = Object.freeze({
       title: 'Test',
       summary: 'Test summary',
-      icon: 'icon1',
+      icon: { id: 'icon1' },
       itemPrimaryProperty: 'prop1',
       itemSecondaryProperty: 'prop2',
       itemTemporalProperty: 'prop3',
@@ -345,7 +351,7 @@ describe('FeedMetaDataComponent', () => {
     const feedMetaDataMod: Required<FeedMetaData> = Object.freeze({
       title: 'Test Mod',
       summary: 'Test summary mod',
-      icon: 'icon2',
+      icon: { id: 'icon2' },
       itemPrimaryProperty: 'prop3',
       itemSecondaryProperty: 'prop1',
       itemTemporalProperty: 'prop2',
@@ -385,7 +391,7 @@ describe('FeedMetaDataComponent', () => {
       summary: 'Feed summary',
       itemsHaveSpatialDimension: true,
       itemSecondaryProperty: 'prop2',
-      icon: 'feedicon1',
+      iconRef: { id: 'feedicon1' },
       updateFrequencySeconds: 0
     })
 
@@ -430,7 +436,7 @@ describe('FeedMetaDataComponent', () => {
       summary: 'Feed summary',
       itemsHaveSpatialDimension: true,
       itemSecondaryProperty: 'prop2',
-      icon: 'feedicon1',
+      icon: { id: 'feedicon1' },
       updateFrequencySeconds: 0
     })
 

@@ -1,26 +1,81 @@
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-
-import { StaticIconSelectComponent } from './static-icon-select.component';
+import { ScrollingModule } from '@angular/cdk/scrolling'
+import { async, ComponentFixture, TestBed } from '@angular/core/testing'
+import { MatCardModule } from '@angular/material'
+import { of } from 'rxjs'
+import { StaticIcon } from '../static-icon.model'
+import { StaticIconService } from '../static-icon.service'
+import { StaticIconSelectComponent } from './static-icon-select.component'
 
 describe('StaticIconSelectComponent', () => {
 
-  let component: StaticIconSelectComponent;
-  let fixture: ComponentFixture<StaticIconSelectComponent>;
+  let target: StaticIconSelectComponent
+  let fixture: ComponentFixture<StaticIconSelectComponent>
+  let iconService: jasmine.SpyObj<StaticIconService>
 
   beforeEach(async(() => {
+    iconService = jasmine.createSpyObj<StaticIconService>('MockStaticIconService', [
+      'fetchIcons'
+    ])
     TestBed.configureTestingModule({
-      declarations: [ StaticIconSelectComponent ]
+      imports: [
+        MatCardModule,
+        ScrollingModule
+      ],
+      declarations: [
+        StaticIconSelectComponent
+      ],
+      providers: [
+        {
+          provide: StaticIconService,
+          useValue: iconService
+        }
+      ]
     })
-    .compileComponents();
-  }));
+    .compileComponents()
+  }))
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(StaticIconSelectComponent);
-    component = fixture.componentInstance;
-    fixture.detectChanges();
-  });
+    iconService.fetchIcons.and.returnValue(of({
+      pageIndex: 0,
+      pageSize: 0,
+      totalCount: 0,
+      items: []
+    }))
+    fixture = TestBed.createComponent(StaticIconSelectComponent)
+    target = fixture.componentInstance
+    fixture.detectChanges()
+  })
 
   it('should create', () => {
-    expect(component).toBeTruthy();
-  });
-});
+    expect(target).toBeTruthy()
+  })
+
+  it('fetches the icons on init', () => {
+
+    const icons: StaticIcon[] = [
+      {
+        id: 'icon1',
+        sourceUrl: 'test://icon1.png',
+        contentPath: '/icons/icon1.png'
+      },
+      {
+        id: 'icon2',
+        sourceUrl: 'test://icon2.png',
+        contentPath: '/icons/icon2.png'
+      }
+    ]
+    iconService.fetchIcons.and.returnValue(of({
+      pageIndex: 0,
+      pageSize: 2,
+      items: icons
+    }))
+    target.ngOnInit()
+
+    expect(target.icons).toEqual(icons)
+    expect(iconService.fetchIcons).toHaveBeenCalledTimes(2)
+  })
+
+  it('opens a file chooser to upload an icon', () => {
+    target.onBrowseForUploadIcon()
+  })
+})

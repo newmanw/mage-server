@@ -43,6 +43,7 @@ import { AdminServiceDeleteComponent } from './admin-service/admin-service-delet
 import { AdminFeedEditTopicConfigurationComponent } from './admin-feed/admin-feed-edit/admin-feed-edit-topic/admin-feed-edit-topic-configuration.component';
 import { JsonSchemaModule } from 'src/app/json-schema/json-schema.module';
 import { FeedItemSummaryModule } from 'src/app/feed/feed-item/feed-item-summary/feed-item-summary.module';
+import { StaticIconModule } from '../../static-icon/static-icon.module'
 
 @NgModule({
   declarations: [
@@ -92,7 +93,8 @@ import { FeedItemSummaryModule } from 'src/app/feed/feed-item/feed-item-summary/
     MatSidenavModule,
     MomentModule,
     FeedItemSummaryModule,
-    JsonSchemaModule
+    JsonSchemaModule,
+    StaticIconModule
   ],
   entryComponents: [
     AdminFeedsComponent,
