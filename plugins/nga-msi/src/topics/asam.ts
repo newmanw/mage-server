@@ -91,7 +91,7 @@ export interface AsamTopicParams {
 
 export interface AsamQueryParams extends ParsedUrlQuery {
   minOccurDate: string
-  maxOccurDate?: string
+  maxOccurDate: string
   reference?: string
   navArea?: string
   subreg?: string
@@ -171,6 +171,7 @@ export const createContentRequest = (params?: AsamTopicParams): MsiRequest => {
   const minOccur = new Date(maxOccur.getTime() - newerThanDays * 24 * 60 * 60 * 1000)
   const queryParams: AsamQueryParams = {
     minOccurDate: formatDateQueryParam(minOccur),
+    maxOccurDate: formatDateQueryParam(maxOccur),
     sort: 'date',
     output: 'json'
   }

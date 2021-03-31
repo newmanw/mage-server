@@ -50,6 +50,7 @@ describe('asam topic module', function() {
       expect(req.body).toBeUndefined()
       expect(req.queryParams).toEqual({
         minOccurDate: '2020-07-02',
+        maxOccurDate: '2020-07-14',
         sort: 'date',
         output: 'json'
       })
