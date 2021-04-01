@@ -22,7 +22,7 @@ function requestBy<T extends object>(principal: string, params?: T): AppRequest<
   }
 }
 
-describe.only('icons use case interactions', function() {
+describe('icons use case interactions', function() {
 
   let permissions: SubstituteOf<api.StaticIconPermissionService>
   let iconRepo: SubstituteOf<StaticIconRepository>

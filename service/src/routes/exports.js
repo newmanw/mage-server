@@ -32,7 +32,7 @@ module.exports = function (app, security) {
     mapUsers,
     mapDevices,
     function (req, res) {
-      log.warn('DEPRECATED - /api/:exportType called.  Please use /api/exports/:exportType instead.');
+      log.warn('DEPRECATED - /api/:exportType called.  Please use /api/exports instead.');
 
       const options = {
         event: req.event,
@@ -150,6 +150,7 @@ module.exports = function (app, security) {
     access.authorize('DELETE_EXPORT'),
     function (req, res, next) {
       ExportMetadata.removeMetadata(req.param("exportId")).then(meta => {
+        fs.unlinkSync(meta.physicalPath);
         res.json(meta);
         return next();
       }).catch(err => {
@@ -256,6 +257,12 @@ async function validateEventAccess(req, res, next) {
 
 function getEvent(req, res, next) {
   Event.getById(req.parameters.filter.eventId, {}, function (err, event) {
+    if (err || !event) {
+      const msg = "Event with id " + req.parameters.filter.eventId + " does not exist";
+      res.status(400).send(msg);
+      return next(msg);
+    }
+
     req.event = event;
 
     // form map
@@ -348,13 +355,10 @@ function exportInBackground(exportId, event, users, devices) {
     };
     log.info('Begining actual export of ' + exportId + ' (' + data.meta.exportType + ')');
     const exporter = exporterFactory.createExporter(data.meta.exportType.toLowerCase(), options);
-    exporter.export(data.stream);
-
-    return true;
+    return exporter.export(data.stream);
   }).catch(err => {
     log.warn('Failed export of ' + exportId, err);
 
     ExportMetadata.updateExportMetadataStatus(exportId, ExportMetadata.ExportStatus.Failed);
-    return Promise.reject(err);
   });
 }

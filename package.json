@@ -1,6 +1,6 @@
 {
   "name": "@ngageoint/mage.project",
-  "description": "This is the root package definition for the Yarn-based mage-server monorepo.",
+  "description": "This is the root package definition for the mage-server monorepo.",
   "private": true,
   "scripts": {
     "start": "npm run service:build && npm run instance:build && npm run instance:start",

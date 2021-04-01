@@ -16,7 +16,7 @@ import { Readable } from 'stream'
 
 
 
-describe.only('icons web controller', function() {
+describe('icons web controller', function() {
 
   const root = '/icons-test'
   const iconJson: (icon: StaticIcon) => Omit<StaticIcon, 'sourceUrl'> & { sourceUrl: string } = (icon) => {

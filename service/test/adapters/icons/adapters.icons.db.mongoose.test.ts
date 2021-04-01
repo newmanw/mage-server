@@ -25,7 +25,7 @@ function MockTestUrlScheme(protocolPrefix: string, isLocal = false): SubstituteO
 
 
 
-describe.only('static icon mongoose repository', function() {
+describe('static icon mongoose repository', function() {
 
   let mongo: MongoMemoryServer
   let uri: string

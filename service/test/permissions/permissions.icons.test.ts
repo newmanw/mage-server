@@ -6,7 +6,7 @@ import { expect } from 'chai'
 import { ErrPermissionDenied } from '../../lib/app.api/app.api.errors'
 
 
-describe.only('static icon role-based permission service', function() {
+describe('static icon role-based permission service', function() {
 
   let permissions: RoleBasedStaticIconPermissionService
 

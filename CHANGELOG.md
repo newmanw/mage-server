@@ -6,10 +6,19 @@ MAGE adheres to [Semantic Versioning](http://semver.org/).
 ## Pending on [`develop`](https://github.com/ngageoint/mage-server/tree/develop)
 
 ##### Features
-* New export UI to view previous exports
-* Exports are now done in the background to allow for larger exports
+* Local user signup captcha
+* Ability to export as a GeoPackage.
+* New export UI to view previous exports.
+* Exports are now done in the background to allow for larger exports.
+* Minor performance enhancements to existing export types.
+* Adding icons to search results on admin pages.
 
 ##### Bug Fixes
+* Login search on device page correctly filters on device.
+* Display device uid, not user-agent, when filtering on devices from admin dashboard.
+* Default admin approval as enabled for new user accounts.  This was causing new user account creation to fail.
+* User map icon now appears on the map.  Default icon is also displayed instead of a missing icon image.
+* Fixing grammar and misspellings on various admin pages.
 
 ## [5.4.4](https://github.com/ngageoint/mage-server/releases/tag/5.4.4)
 

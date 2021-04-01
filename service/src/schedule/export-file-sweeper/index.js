@@ -7,7 +7,8 @@ const async = require('async')
     , path = require('path')
     , exportDirectory = require('../../environment/env').exportDirectory
     , exportTtl = require('../../environment/env').exportTtl
-    , exportSweepInterval = require('../../environment/env').exportSweepInterval;
+    , exportSweepInterval = require('../../environment/env').exportSweepInterval
+    , ProcessSyncer = require('./process-syncer');
 
 // TODO: inject config instead of importing directly from env
 
@@ -46,8 +47,14 @@ function sweep() {
 exports.initialize = function (app, done) {
 
     const intervalMs = exportSweepInterval*1000;
-    log.info('export-file-sweeper: Initializing job to check ' + exportDirectory + ' for expired export files every ' + intervalMs + 'ms');
+    log.info(`export-file-sweeper: initializing job to check ${exportDirectory} for expired export files every ${intervalMs}ms`);
 
+    if (!fs.existsSync(exportDirectory)) {
+      log.info('creating export directory ' + exportDirectory);
+      fs.mkdirSync(exportDirectory);
+    }
+
+    ProcessSyncer.sync();
     sweep();
     setInterval(sweep, intervalMs);
 
