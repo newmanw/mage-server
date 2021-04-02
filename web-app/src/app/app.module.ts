@@ -298,7 +298,6 @@ import { MageCommonModule } from './common/mage-common.module'
     MatSidenav,
     MatSidenavContent,
     MatSidenavContainer,
-    BootstrapComponent,
     FeedPanelComponent,
     ObservationDeleteComponent,
     ObservationFavoritesComponent,
