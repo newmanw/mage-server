@@ -2,6 +2,7 @@ import { Component, Input, Inject, OnChanges, SimpleChanges } from '@angular/cor
 import { Feed, StyledFeature } from '../feed.model';
 import { MapService } from '../../upgrade/ajs-upgraded-providers';
 import { FeedPanelService } from 'src/app/feed-panel/feed-panel.service';
+import { contentPathOfIcon } from 'src/app/static-icon/static-icon.model'
 
 @Component({
   selector: 'feed-item',
@@ -16,7 +17,7 @@ export class FeedItemComponent implements OnChanges {
   timestamp: number;
   primary: string;
   secondary: string;
-  iconUrl: string;
+  iconUrl?: string;
   mapFeature: StyledFeature;
   properties = []
 
@@ -34,9 +35,10 @@ export class FeedItemComponent implements OnChanges {
 
     if (!this.item.properties) return;
 
-    if (this.feed.mapStyle) {
-      this.iconUrl = this.feed.mapStyle.iconUrl;
-    }
+    // if (this.feed.mapStyle) {
+    //   this.iconUrl = this.feed.mapStyle.i;
+    // }
+    this.iconUrl = contentPathOfIcon(this.feed.icon)
 
     if (this.feed.itemTemporalProperty && this.item.properties[this.feed.itemTemporalProperty] != null) {
       this.timestamp = this.item.properties[this.feed.itemTemporalProperty];

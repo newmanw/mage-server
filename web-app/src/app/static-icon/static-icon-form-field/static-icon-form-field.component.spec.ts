@@ -20,7 +20,7 @@ class TestHostComponent {
   })
 }
 
-fdescribe('StaticIconFormFieldComponent', () => {
+describe('StaticIconFormFieldComponent', () => {
 
   let host: TestHostComponent
   let target: StaticIconFormFieldComponent

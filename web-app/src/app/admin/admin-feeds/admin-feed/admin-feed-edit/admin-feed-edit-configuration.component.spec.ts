@@ -24,7 +24,7 @@ const emptyMetaDataFormValue: FeedMetaDataNullable = {
   updateFrequencySeconds: null
 }
 
-fdescribe('FeedMetaDataComponent', () => {
+describe('FeedMetaDataComponent', () => {
 
   let debounceTime: number
   @Component({

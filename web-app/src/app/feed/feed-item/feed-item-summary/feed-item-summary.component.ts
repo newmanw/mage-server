@@ -3,6 +3,7 @@ import { Feed } from '../../feed.model';
 import { MapService } from 'src/app/upgrade/ajs-upgraded-providers';
 import { Feature } from 'geojson';
 import { FeedPanelService } from 'src/app/feed-panel/feed-panel.service';
+import { contentPathOfIcon } from 'src/app/static-icon/static-icon.model'
 
 @Component({
   selector: 'feed-item-summary',
@@ -17,16 +18,15 @@ export class FeedItemSummaryComponent implements OnChanges {
   timestamp: number;
   primary: string;
   secondary: string;
-  iconUrl: string;
+  iconUrl?: string;
 
   constructor(private feedPanelService: FeedPanelService, @Inject(MapService) private mapService: any) { }
 
   ngOnChanges(_changes: SimpleChanges): void {
     if (!this.feed || !this.item.properties) return;
 
-    if (this.feed.mapStyle) {
-      this.iconUrl = this.feed.mapStyle.iconUrl;
-    }
+    // TODO: use mapStyle when that works
+    this.iconUrl = contentPathOfIcon(this.feed.icon);
 
     if (this.feed.itemTemporalProperty && this.item.properties[this.feed.itemTemporalProperty] != null) {
       this.timestamp = this.item.properties[this.feed.itemTemporalProperty];

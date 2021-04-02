@@ -14,7 +14,7 @@
       <div class="card-subtitle">{{secondary}}</div>
     </div>
     <mat-icon mat-card-avatar *ngIf="!iconUrl" color="primary">place</mat-icon>
-    <img mat-card-avatar *ngIf="iconUrl" [src]="iconUrl" />
+    <img mat-card-avatar *ngIf="iconUrl" #blobSrc="mageXhrBlobSrc" [mageXhrBlobSrc]="iconUrl" [attr.src]="blobSrc.safeBlobUrl" />
   </div>
   <div mat-card-image>
     <map-clip class="map" [feature]=mapFeature></map-clip>

@@ -146,6 +146,7 @@ import { UserPopupComponent } from './user/user-popup/user-popup.component';
 import { CdkDetailRowDirective } from './export/directives/cdk-detail-row.directive';
 import { StaticIconFormFieldComponent } from './static-icon/static-icon-form-field/static-icon-form-field.component'
 import { StaticIconModule } from './static-icon/static-icon.module'
+import { MageCommonModule } from './common/mage-common.module'
 
 @NgModule({
   declarations: [
@@ -261,6 +262,7 @@ import { StaticIconModule } from './static-icon/static-icon.module'
     MatTableModule,
     MatPaginatorModule,
     MatSortModule,
+    MageCommonModule,
     MomentModule,
     GeometryModule,
     ScrollingModule,
