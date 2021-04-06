@@ -85,14 +85,14 @@ export class FeedEditService {
     if (serviceId) {
       nextService = services.find(x => x.id === serviceId) || null
     }
-    const patchService: boolean = (selectedService && !nextService) || (nextService && !selectedService)
+    const serviceWillChange: boolean = (selectedService && !nextService) || (nextService && !selectedService)
       || (selectedService && nextService && selectedService.id !== nextService.id)
-    if (!patchService && !nextAvailableServices) {
+    if (!serviceWillChange && !nextAvailableServices) {
       return
     }
     const patch: StatePatch = { ...freshEditState() }
     patch.availableServices = services
-    if (patchService) {
+    if (serviceWillChange) {
       patch.selectedService = nextService
     }
     this.patchState(patch)
@@ -151,7 +151,6 @@ export class FeedEditService {
       }
     }
     this.patchState({ fetchParameters, preview })
-    // this.patchState({ fetchParameters })
     if (fetchParameters === null) {
       return
     }

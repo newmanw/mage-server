@@ -15,9 +15,8 @@
           </app-create-service>
           <app-choose-service-topic *ngIf="!editState.originalFeed"
             [services]="editState.availableServices" [topics]="editState.availableTopics"
-            [selectedService]="editState.selectedService" [expanded]="step === 0"
-            (opened)="setStep(0)" (serviceSelected)="onServiceSelected($event)" (topicSelected)="onTopicSelected($event)"
-            (noServicesExist)="noServicesExist()">
+            [selectedService]="editState.selectedService" [selectedTopic]="editState.selectedTopic" [expanded]="step === 0"
+            (opened)="setStep(0)" (serviceSelected)="onServiceSelected($event)" (topicSelected)="onTopicSelected($event)">
           </app-choose-service-topic>
           <app-topic-configuration [expanded]="step === 1" [showPrevious]="!editState.originalFeed" (opened)="setStep(1)" (cancelled)="setStep(0)"
             [fetchParametersSchema]="editState.selectedTopic?.paramsSchema"

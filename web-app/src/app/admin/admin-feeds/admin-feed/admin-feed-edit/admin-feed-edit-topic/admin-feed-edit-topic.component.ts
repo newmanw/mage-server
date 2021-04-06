@@ -1,6 +1,6 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
-import { FormControl } from '@angular/forms';
-import { FeedTopic, Service } from 'src/app/feed/feed.model';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core'
+import { FormControl } from '@angular/forms'
+import { FeedTopic, Service } from 'src/app/feed/feed.model'
 
 @Component({
   selector: 'app-choose-service-topic',
@@ -9,38 +9,64 @@ import { FeedTopic, Service } from 'src/app/feed/feed.model';
 })
 export class AdminFeedEditTopicComponent implements OnInit, OnChanges {
 
-  @Input() expanded: boolean;
-  @Input() services: Service[];
-  @Input() topics: FeedTopic[];
-  @Input() selectedService: Service;
-  @Output() serviceSelected = new EventEmitter<Service>();
-  @Output() topicSelected = new EventEmitter<FeedTopic>();
-  @Output() noServicesExist = new EventEmitter();
-  @Output() opened = new EventEmitter();
+  @Input() services?: Service[] | null
+  @Input() topics?: FeedTopic[] | null
+  @Input() selectedService?: Service | null = null
+  @Input() selectedTopic?: FeedTopic | null = null
+  @Input() expanded: boolean
+  @Output() serviceSelected = new EventEmitter<string>()
+  @Output() topicSelected = new EventEmitter<string>()
+  @Output() opened = new EventEmitter()
 
-  selectedTopic: FeedTopic;
-
-  serviceSearchControl: FormControl = new FormControl();
-  topicSearchControl: FormControl = new FormControl();
-
-  constructor() {
-    this.services = [];
-    this.topics = [];
-  }
+  constructor() {}
 
   ngOnInit(): void {
-
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-
+    if (changes.services) {
+      if (this.services) {
+        if (changes.selectedService) {
+          if (!this.selectedService && this.services.length === 1) {
+            this.selectedService = this.services[0]
+            this.onServiceSelected()
+          }
+        }
+        else if (this.selectedService) {
+          const updatedService = this.services.find(x => x.id === this.selectedService.id)
+          if (updatedService) {
+            this.selectedService = updatedService
+          }
+        }
+      }
+    }
+    if (changes.topics) {
+      if (this.topics) {
+        if (changes.selectedTopic) {
+          if (!this.selectedTopic && this.topics.length === 1) {
+            this.selectedTopic = this.topics[0]
+            this.onTopicSelected()
+          }
+        }
+        else if (this.selectedTopic) {
+          const updatedTopic = this.topics.find(x => x.id === this.selectedTopic.id)
+          if (updatedTopic) {
+            this.selectedTopic = updatedTopic
+          }
+        }
+      }
+    }
   }
 
   onServiceSelected(): void {
-    this.serviceSelected.emit(this.selectedService || null)
+    if (this.selectedTopic) {
+      this.selectedTopic = null
+      this.onTopicSelected()
+    }
+    this.serviceSelected.emit(this.selectedService ? this.selectedService.id : null)
   }
 
   onTopicSelected(): void {
-    this.topicSelected.emit(this.selectedTopic || null)
+    this.topicSelected.emit(this.selectedTopic ? this.selectedTopic.id : null)
   }
 }

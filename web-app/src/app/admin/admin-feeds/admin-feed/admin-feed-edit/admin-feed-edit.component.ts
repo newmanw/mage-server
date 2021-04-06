@@ -97,13 +97,13 @@ export class AdminFeedEditComponent implements OnInit {
     };
   }
 
-  onServiceSelected(service: Service): void {
-    this.feedEdit.selectService(service.id)
+  onServiceSelected(serviceId: string): void {
+    this.feedEdit.selectService(serviceId)
   }
 
-  onTopicSelected(topic: FeedTopic): void {
-    this.feedEdit.selectTopic(topic.id)
-    if (topic) {
+  onTopicSelected(topicId: string): void {
+    this.feedEdit.selectTopic(topicId)
+    if (topicId) {
       this.nextStep();
     }
   }
