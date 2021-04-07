@@ -61,7 +61,7 @@ export class FeedService {
     const skipContentFetch: boolean = opts.skipContentFetch === true
     return this.http.post<FeedPreview>(
       `/api/feeds/services/${serviceId}/topics/${topicId}/feed_preview?skip_content_fetch=${skipContentFetch}`,
-      feedSpec);
+      { feed: feedSpec });
   }
 
   fetchTopic(serviceId: string, topicId: string): Observable<FeedTopic> {
