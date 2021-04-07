@@ -6,8 +6,9 @@ import {
   OnInit,
   Output,
   SimpleChanges,
-} from '@angular/core';
-import { Feed, FeedTopic } from 'src/app/feed/feed.model';
+} from '@angular/core'
+import { Subject } from 'rxjs'
+import { debounceTime } from 'rxjs/operators'
 
 @Component({
   selector: 'app-topic-configuration',
@@ -16,22 +17,29 @@ import { Feed, FeedTopic } from 'src/app/feed/feed.model';
 })
 export class AdminFeedEditTopicConfigurationComponent implements OnChanges, OnInit {
 
-  @Input() expanded: boolean
   @Input() fetchParametersSchema: any
-  @Input() initialFetchParameters: any;
-  @Input() showPrevious: boolean;
-  @Output() fetchParametersChanged = new EventEmitter<any>();
-  @Output() fetchParametersAccepted = new EventEmitter<any>();
-  @Output() cancelled = new EventEmitter();
-  @Output() opened = new EventEmitter();
+  @Input() initialFetchParameters: any
+  @Input() expanded: boolean
+  @Input() showPrevious: boolean
+  @Output() fetchParametersChanged = new EventEmitter<any>()
+  @Output() fetchParametersAccepted = new EventEmitter<any>()
+  @Output() cancelled = new EventEmitter()
+  @Output() opened = new EventEmitter()
 
-  fetchParametersMod: any = {}
+  readonly changeDebounceInterval = 500
+
+  private fetchParametersMod: any = {}
+  private debounceChange = new Subject<any>()
 
   formOptions = {
     addSubmit: false
   }
 
-  constructor() { }
+  constructor() {
+    this.debounceChange.pipe(
+      debounceTime(this.changeDebounceInterval)
+    ).subscribe(x => { this.fetchParametersChanged.emit(x) })
+  }
 
   ngOnInit() {
   }
@@ -40,15 +48,15 @@ export class AdminFeedEditTopicConfigurationComponent implements OnChanges, OnIn
   }
 
   onFetchParametersChanged($event: any): void {
-    this.fetchParametersMod = $event;
-    this.fetchParametersChanged.emit($event);
+    this.fetchParametersMod = $event
+    this.debounceChange.next(this.fetchParametersMod)
   }
 
   finish(): void {
-    this.fetchParametersAccepted.emit(this.fetchParametersMod);
+    this.fetchParametersAccepted.emit(this.fetchParametersMod)
   }
 
   cancel(): void {
-    this.cancelled.emit();
+    this.cancelled.emit()
   }
 }

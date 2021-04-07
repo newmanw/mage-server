@@ -109,29 +109,11 @@ export class AdminFeedEditComponent implements OnInit {
   }
 
   onFetchParametersAccepted(fetchParameters: any): void {
-    this.feedEdit.fetchParametersChanged(fetchParameters)
-    // this.fetchParametersMod = fetchParameters;
-    // this.configuredTopic.constantParams = fetchParameters;
-    // this.previewFeed();
-    this.nextStep();
+    this.nextStep()
   }
 
   onFetchParametersChanged(fetchParameters: any): void {
     this.feedEdit.fetchParametersChanged(fetchParameters)
-    // this.fetchParametersMod = fetchParameters;
-    // if (this.feed) {
-    //   this.debouncedPreview();
-    // }
-  }
-
-  previewFeed(): void {
-    // const feedPreviewRequest = {
-    //   feed: { constantParams: this.fetchParametersMod }
-    // };
-    // this.feedService.previewFeed(this.selectedService.id, this.selectedTopic.id, feedPreviewRequest)
-    //   .subscribe(preview => {
-    //     this.preview = preview;
-    //   });
   }
 
   onItemPropertiesSchemaChanged(itemProperties: any): void {

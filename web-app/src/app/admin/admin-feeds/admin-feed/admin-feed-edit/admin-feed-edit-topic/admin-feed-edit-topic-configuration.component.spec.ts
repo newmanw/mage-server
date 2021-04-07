@@ -1,13 +1,13 @@
-import { JsonSchemaFormModule } from '@ajsf/core';
-import { Component, ViewChild } from '@angular/core';
-import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { MatExpansionModule } from '@angular/material';
-import { NoopAnimationsModule } from '@angular/platform-browser/animations';
-import { Feed, FeedTopic } from '../../../../../feed/feed.model';
-import { JsonSchemaModule } from '../../../../../json-schema/json-schema.module';
-import { AdminFeedEditTopicConfigurationComponent } from './admin-feed-edit-topic-configuration.component';
+import { JsonSchemaFormModule } from '@ajsf/core'
+import { Component, ViewChild } from '@angular/core'
+import { async, ComponentFixture, TestBed } from '@angular/core/testing'
+import { MatExpansionModule } from '@angular/material'
+import { By } from '@angular/platform-browser'
+import { NoopAnimationsModule } from '@angular/platform-browser/animations'
+import { JsonSchemaModule } from '../../../../../json-schema/json-schema.module'
+import { AdminFeedEditTopicConfigurationComponent } from './admin-feed-edit-topic-configuration.component'
 
-describe('TopicConfigurationComponent', () => {
+fdescribe('TopicConfigurationComponent', () => {
 
   @Component({
     selector: 'app-host-component',
@@ -19,19 +19,19 @@ describe('TopicConfigurationComponent', () => {
               </app-topic-configuration>`
   })
   class TestHostComponent {
-    expanded: boolean;
-    showPrevious: boolean;
+    expanded: boolean
+    showPrevious: boolean
     fetchParametersSchema = { properties: { derp: { type: 'number' } } }
     initialFetchParameters = { derp: 100 }
 
     @ViewChild(AdminFeedEditTopicConfigurationComponent, { static: true })
-    public topicConfigurationComponent: AdminFeedEditTopicConfigurationComponent;
+    public target: AdminFeedEditTopicConfigurationComponent
   }
 
-  let hostComponent: TestHostComponent;
-  let fixture: ComponentFixture<TestHostComponent>;
-  let component: AdminFeedEditTopicConfigurationComponent;
-  let element: HTMLElement;
+  let host: TestHostComponent
+  let fixture: ComponentFixture<TestHostComponent>
+  let target: AdminFeedEditTopicConfigurationComponent
+  let element: HTMLElement
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
@@ -46,127 +46,105 @@ describe('TopicConfigurationComponent', () => {
         AdminFeedEditTopicConfigurationComponent,
       ]
     })
-    .compileComponents();
-  }));
+    .compileComponents()
+  }))
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(TestHostComponent);
-    hostComponent = fixture.componentInstance;
-    component = hostComponent.topicConfigurationComponent;
-    element = fixture.nativeElement;
-  });
+    fixture = TestBed.createComponent(TestHostComponent)
+    host = fixture.componentInstance
+    target = host.target
+    element = fixture.nativeElement
+  })
 
   it('should create', () => {
-    fixture.detectChanges();
-    expect(component).toBeTruthy();
-  });
+    fixture.detectChanges()
+    expect(target).toBeTruthy()
+  })
 
   it('should create but not show the previous button', () => {
-    hostComponent.showPrevious = false;
-    fixture.detectChanges();
-    expect(element.querySelectorAll('button').length).toEqual(1);
 
+    host.showPrevious = false
+    fixture.detectChanges()
+
+    expect(element.querySelectorAll('button').length).toEqual(1)
     element.querySelectorAll('button').forEach(button => {
-      expect(button.innerText).not.toEqual('Previous');
-    });
-  });
+      expect(button.innerText).not.toEqual('Previous')
+    })
+  })
 
-  it('should create but and show the previous button', () => {
-    hostComponent.showPrevious = true;
-    fixture.detectChanges();
-    expect(element.querySelectorAll('button').length).toEqual(2);
-  });
+  it('should create and show the previous button', () => {
 
-  it('should show no buttons if a feed exists', () => {
-    // hostComponent.feed = {
-    //   id: 'feedId',
-    //   title: 'feed title',
-    //   updateFrequencySeconds: 1,
-    //   service: {
-    //     id: 'serviceId',
-    //     title: 'title',
-    //     summary: 'summary',
-    //     serviceType: 'serviceType',
-    //     config: {}
-    //   },
-    //   topic: {
-    //     id: 'topicId',
-    //     title: 'topic'
-    //   }
-    // };
-    fixture.detectChanges();
-    expect(element.querySelector('mat-action-row')).toBeNull();
-    expect(element.querySelectorAll('button').length).toEqual(0);
-  });
+    host.showPrevious = true
+    fixture.detectChanges()
+    expect(element.querySelectorAll('button').length).toEqual(2)
+  })
 
-  it('should emit topicConfigurationChanged', () => {
-    spyOn(component.fetchParametersChanged, 'emit');
+  it('emits fetch parameters changed event', async () => {
 
-    // hostComponent.topic = {
-    //   id: 'topicId',
-    //   title: 'Topic Title',
-    //   paramsSchema: {
-    //     type: 'object',
-    //     properties: {
-    //       newerThanDays: {
-    //         type: 'number',
-    //         default: 56
-    //       }
-    //     }
-    //   }
-    // };
-    fixture.detectChanges();
-    expect(component.fetchParametersChanged.emit).toHaveBeenCalledWith({newerThanDays: 56});
-    expect(component.initialFetchParameters).toEqual({newerThanDays: 56});
-  });
+    const emitSpy = spyOn(target.fetchParametersChanged, 'emit')
+    fixture.detectChanges()
+    await fixture.whenStable()
+    const input = fixture.debugElement.query(By.css('input')).nativeElement as HTMLInputElement
+    input.value = '10'
+    input.dispatchEvent(new Event('input'))
+    await fixture.whenStable()
 
-  it('should emit topicConfigured', () => {
-    spyOn(component.fetchParametersAccepted, 'emit');
-    spyOn(component.fetchParametersChanged, 'emit');
+    expect(emitSpy).toHaveBeenCalledWith(host.initialFetchParameters)
+    expect(emitSpy.calls.mostRecent().args).toEqual([{ derp: 10 }])
+  })
 
-    // hostComponent.topic = {
-    //   id: 'topicId',
-    //   title: 'Topic Title',
-    //   paramsSchema: {
-    //     type: 'object',
-    //     properties: {
-    //       newerThanDays: {
-    //         type: 'number',
-    //         default: 56
-    //       }
-    //     }
-    //   }
-    // };
-    fixture.detectChanges();
-    component.finish();
-    expect(component.fetchParametersChanged.emit).toHaveBeenCalledWith({newerThanDays: 56});
-    expect(component.fetchParametersAccepted.emit).toHaveBeenCalledWith({newerThanDays: 56});
-    expect(component.initialFetchParameters).toEqual({newerThanDays: 56});
-  });
+  describe('debouncing the change event', () => {
 
-  it('should emit not topicConfigured and should emit cancelled', () => {
-    spyOn(component.fetchParametersAccepted, 'emit');
-    spyOn(component.fetchParametersChanged, 'emit');
-    spyOn(component.cancelled, 'emit');
+    beforeEach(() => {
+      jasmine.clock().install()
+    })
 
-    // hostComponent.topic = {
-    //   id: 'topicId',
-    //   title: 'Topic Title',
-    //   paramsSchema: {
-    //     type: 'object',
-    //     properties: {
-    //       newerThanDays: {
-    //         type: 'number',
-    //         default: 56
-    //       }
-    //     }
-    //   }
-    // };
-    fixture.detectChanges();
-    component.cancel();
-    expect(component.fetchParametersChanged.emit).toHaveBeenCalledWith({newerThanDays: 56});
-    expect(component.fetchParametersAccepted.emit).not.toHaveBeenCalled();
-    expect(component.cancelled.emit).toHaveBeenCalled();
-    expect(component.initialFetchParameters).toEqual({newerThanDays: 56});
-  });
-});
+    afterEach(() => {
+      jasmine.clock().uninstall()
+    })
+
+    it('debounces multiple change events', async () => {
+
+      fixture.detectChanges()
+      const changed = jasmine.createSpy('fetchParametersChanged')
+      target.fetchParametersChanged.subscribe(changed)
+      const input = fixture.debugElement.query(By.css('input')).nativeElement as HTMLInputElement
+      input.value = '10'
+      input.dispatchEvent(new Event('input'))
+
+      expect(changed).not.toHaveBeenCalled()
+
+      jasmine.clock().tick(target.changeDebounceInterval / 2)
+
+      expect(changed).not.toHaveBeenCalled()
+
+      jasmine.clock().tick(target.changeDebounceInterval / 2 + 2)
+
+      expect(changed).toHaveBeenCalledTimes(1)
+      expect(changed).toHaveBeenCalledWith({ derp: 10 })
+    })
+  })
+
+  it('emits fetch parameters accepted', () => {
+
+    spyOn(target.fetchParametersAccepted, 'emit')
+    fixture.detectChanges()
+    target.finish()
+
+    expect(target.fetchParametersAccepted.emit).toHaveBeenCalledWith(host.initialFetchParameters)
+  })
+
+  it('emits cancelled and not accepted', async () => {
+
+    spyOn(target.fetchParametersAccepted, 'emit')
+    spyOn(target.fetchParametersChanged, 'emit')
+    spyOn(target.cancelled, 'emit')
+    fixture.detectChanges()
+    await fixture.whenStable()
+    target.cancel()
+
+    expect(target.fetchParametersAccepted.emit).not.toHaveBeenCalled()
+    expect(target.fetchParametersChanged.emit).toHaveBeenCalledWith(host.initialFetchParameters)
+    expect(target.cancelled.emit).toHaveBeenCalledTimes(1)
+  })
+})
