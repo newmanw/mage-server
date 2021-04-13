@@ -24,7 +24,7 @@ export class LayerContentComponent {
   @Input() layer: any;
   @Input() style: SimpleStyle;
 
-  @ViewChild('color', { static: false }) color: ElementRef;
+  @ViewChild('color') color: ElementRef;
 
   showColorPicker = false;
   stroke = '#000000';

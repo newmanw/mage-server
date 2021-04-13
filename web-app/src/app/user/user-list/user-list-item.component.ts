@@ -15,7 +15,7 @@ export class UserListItemComponent {
 
   @Output() click = new EventEmitter<any>()
 
-  @ViewChild(MatRipple, { static: false }) ripple: MatRipple
+  @ViewChild(MatRipple) ripple: MatRipple
 
   token: string
   followingUser: any

@@ -17,7 +17,7 @@ class TestHostComponent {
     name: 'field1'
   }
 
-  @ViewChild(ObservationEditCheckboxComponent, { static: false }) component: ObservationEditCheckboxComponent
+  @ViewChild(ObservationEditCheckboxComponent) component: ObservationEditCheckboxComponent
 }
 
 describe('ObservationEditCheckboxComponent', () => {

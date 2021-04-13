@@ -23,7 +23,7 @@ class TestHostComponent {
     }]
   }
 
-  @ViewChild(ObservationEditSelectComponent, { static: false }) component: ObservationEditSelectComponent
+  @ViewChild(ObservationEditSelectComponent) component: ObservationEditSelectComponent
 }
 
 describe('ObservationEditSelectComponent', () => {

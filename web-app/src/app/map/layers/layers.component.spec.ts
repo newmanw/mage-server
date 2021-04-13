@@ -25,7 +25,7 @@ class TestHostComponent {
   tileOverlays = [];
   featureOverlays = [];
 
-  @ViewChild(LayersComponent, { static: false }) layers: LayersComponent;
+  @ViewChild(LayersComponent) layers: LayersComponent;
 }
 
 

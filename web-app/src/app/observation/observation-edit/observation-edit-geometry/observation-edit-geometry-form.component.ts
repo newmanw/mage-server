@@ -37,8 +37,8 @@ export class ObservationEditGeometryFormComponent implements OnChanges {
   @Output() save = new EventEmitter<any>()
   @Output() cancel = new EventEmitter<any>()
 
-  @ViewChild('mgrsModel', { static: false }) mgrsModel: NgModel;
-  @ViewChild('snackbarContainer', { read: ViewContainerRef, static: false }) snackBarContainer: ViewContainerRef;
+  @ViewChild('mgrsModel') mgrsModel: NgModel;
+  @ViewChild('snackbarContainer', { read: ViewContainerRef }) snackBarContainer: ViewContainerRef;
 
   selectedShapeType = 'Point'
   coordinateSystem = 'wgs84'

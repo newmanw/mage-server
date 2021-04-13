@@ -25,10 +25,10 @@ interface MultiSelectField {
 export class ObservationEditMultiselectComponent implements AfterViewInit {
   @Input() field: MultiSelectField
 
-  @ViewChild('dropdown', { static: false }) dropdown: FormControl
-  @ViewChild('chipList', { static: false }) chipList: MatChipList
-  @ViewChild('choiceInput', { static: false }) choiceInput: ElementRef<HTMLInputElement>
-  @ViewChild(MatAutocompleteTrigger, {static: false}) autocomplete: MatAutocompleteTrigger
+  @ViewChild('dropdown') dropdown: FormControl
+  @ViewChild('chipList') chipList: MatChipList
+  @ViewChild('choiceInput') choiceInput: ElementRef<HTMLInputElement>
+  @ViewChild(MatAutocompleteTrigger) autocomplete: MatAutocompleteTrigger
 
   visible = true
   removable = true

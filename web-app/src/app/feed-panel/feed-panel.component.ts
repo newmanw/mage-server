@@ -28,8 +28,8 @@ export class FeedPanelComponent implements OnInit, OnChanges {
 
   @Output() toggle = new EventEmitter<any>()
 
-  @ViewChild('tabGroup', { static: false }) tabGroup: MatTabGroup
-  @ViewChild('permissionDialog', { static: false }) permissionDialog: TemplateRef<any>
+  @ViewChild('tabGroup') tabGroup: MatTabGroup
+  @ViewChild('permissionDialog') permissionDialog: TemplateRef<any>
 
   currentFeedPanel = 'observations'
   

@@ -26,7 +26,7 @@ export class ObservationListItemComponent implements OnChanges {
   @Input() form: any
   @Input() observation: any
 
-  @ViewChild(MatRipple, { static: false }) ripple: MatRipple
+  @ViewChild(MatRipple) ripple: MatRipple
 
   edit = false
   canEdit = false

@@ -19,7 +19,7 @@ class TestHostComponent {
     }
   };
 
-  @ViewChild(LayerHeaderComponent, { static: false }) layerHeader: LayerHeaderComponent;
+  @ViewChild(LayerHeaderComponent) layerHeader: LayerHeaderComponent;
 }
 
 describe('LayerHeaderComponent', () => {

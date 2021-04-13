@@ -14,7 +14,7 @@ import { TinyColor } from '@ctrl/tinycolor';
 class TestHostComponent {
   hexColor = '#000000FF';
 
- @ViewChild(ColorPickerComponent, {static: false}) colorPicker: ColorPickerComponent;
+ @ViewChild(ColorPickerComponent) colorPicker: ColorPickerComponent;
 }
 
 describe('ColorPickerComponent', () => {

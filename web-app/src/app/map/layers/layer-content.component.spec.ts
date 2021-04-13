@@ -20,7 +20,7 @@ class TestHostComponent {
     }
   };
 
-  @ViewChild(LayerContentComponent, { static: false }) layerContent: LayerContentComponent;
+  @ViewChild(LayerContentComponent) layerContent: LayerContentComponent;
 }
 
 describe('LayerContentComponent', () => {

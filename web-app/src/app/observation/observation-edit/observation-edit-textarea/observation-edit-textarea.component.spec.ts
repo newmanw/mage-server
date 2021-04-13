@@ -18,7 +18,7 @@ class TestHostComponent {
     name: 'field1',
   }
 
-  @ViewChild(ObservationEditTextareaComponent, { static: false }) component: ObservationEditTextareaComponent
+  @ViewChild(ObservationEditTextareaComponent) component: ObservationEditTextareaComponent
 }
 
 describe('ObservationEditTextComponent', () => {

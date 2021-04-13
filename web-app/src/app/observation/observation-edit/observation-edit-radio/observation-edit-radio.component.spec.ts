@@ -22,7 +22,7 @@ class TestHostComponent {
     }]
   }
 
-  @ViewChild(ObservationEditRadioComponent, { static: false }) component: ObservationEditRadioComponent
+  @ViewChild(ObservationEditRadioComponent) component: ObservationEditRadioComponent
 }
 
 describe('ObservationEditRadioComponent', () => {

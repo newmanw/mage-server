@@ -20,7 +20,7 @@ export interface SearchEvent {
 export class SearchComponent implements AfterViewInit {
 
   @ViewChild('searchInput', { static: true }) searchInput: any;
-  @ViewChild(MatList, { read: ElementRef, static: false }) matList: ElementRef;
+  @ViewChild(MatList, { read: ElementRef }) matList: ElementRef;
 
   @Output() onSearch = new EventEmitter<SearchEvent>();
   @Output() onSearchClear = new EventEmitter<void>();
