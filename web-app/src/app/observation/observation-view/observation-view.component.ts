@@ -3,7 +3,7 @@ import { EventService, LocalStorageService, MapService, UserService } from 'src/
 import { FeedPanelService } from '../../feed-panel/feed-panel.service';
 import * as moment from 'moment'
 import { animate, style, transition, trigger } from '@angular/animations';
-import { MatDialog } from '@angular/material';
+import { MatDialog } from '@angular/material/dialog';
 import { ObservationFavoritesComponent } from '../observation-favorites/observation-favorites.component';
 
 @Component({

@@ -1,5 +1,5 @@
 import { Component, Input, ViewChild, ElementRef } from '@angular/core';
-import { MatSliderChange } from '@angular/material';
+import { MatSliderChange } from '@angular/material/slider';
 import { LayerService, SimpleStyle } from './layer.service';
 import { ColorEvent } from 'src/app/color-picker/color-picker.component';
 import { trigger, style, transition, animate } from '@angular/animations';

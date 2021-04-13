@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Inject, Input, Output, ViewChild } from '@angular/core';
-import { MatRipple } from '@angular/material';
+import { MatRipple } from '@angular/material/core';
 import { FeedPanelService } from 'src/app/feed-panel/feed-panel.service';
 import { LocalStorageService, MapService } from 'src/app/upgrade/ajs-upgraded-providers';
 

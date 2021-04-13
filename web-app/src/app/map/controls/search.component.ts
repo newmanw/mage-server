@@ -1,6 +1,6 @@
 import { Component, Output, EventEmitter, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
 import { NominatimService } from '../search/nominatim.service';
-import { MatList } from '@angular/material';
+import { MatList } from '@angular/material/list';
 import { DomEvent } from 'leaflet';
 
 export enum SearchState {

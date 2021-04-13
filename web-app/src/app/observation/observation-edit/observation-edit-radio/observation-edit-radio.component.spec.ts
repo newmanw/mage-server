@@ -1,7 +1,8 @@
 import { Component, ViewChild } from '@angular/core'
 import { async, ComponentFixture, TestBed } from '@angular/core/testing'
 import { FormsModule } from '@angular/forms'
-import { MatError, MatFormFieldModule, MatRadioGroup, MatRadioModule } from '@angular/material'
+import { MatError, MatFormFieldModule } from '@angular/material/form-field';
+import { MatRadioGroup, MatRadioModule } from '@angular/material/radio';
 import { By } from '@angular/platform-browser'
 
 import { ObservationEditRadioComponent } from './observation-edit-radio.component'

@@ -1,5 +1,5 @@
 import { Component, EventEmitter, Output, AfterViewInit, ElementRef, ViewChild } from '@angular/core';
-import { MatButton } from '@angular/material';
+import { MatButton } from '@angular/material/button';
 import { DomEvent } from 'leaflet';
 
 @Component({
