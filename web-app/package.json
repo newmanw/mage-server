@@ -34,7 +34,6 @@
     "bundle-report": "webpack-bundle-analyzer dist/stats.json"
   },
   "dependencies": {
-    "@angular-material-components/datetime-picker": "^2.0.4",
     "@angular/animations": "~8.2.14",
     "@angular/cdk": "~8.2.3",
     "@angular/common": "~8.2.14",
