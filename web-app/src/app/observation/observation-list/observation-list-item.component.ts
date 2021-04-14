@@ -40,9 +40,10 @@ export class ObservationListItemComponent implements OnChanges {
     description?: string
   } = { open: false}
 
+  // TODO: define some types for these
   observationForm: any
-  primaryFeedField = {}
-  secondaryFeedField = {}
+  primaryFeedField: any = {}
+  secondaryFeedField: any = {}
 
   constructor(
     @Inject(MapService) private mapService: any,
@@ -107,7 +108,7 @@ export class ObservationListItemComponent implements OnChanges {
     })
   }
 
-  viewObservation(): void {    
+  viewObservation(): void {
     this.onObservationLocationClick()
     this.feedPanelService.viewObservation(this.observation)
   }
@@ -118,7 +119,7 @@ export class ObservationListItemComponent implements OnChanges {
 
   updateItem(): void {
     if (!this.observation || !this.event) return
-    
+
     this.isUserFavorite = this.observation.favoriteUserIds && this.observation.favoriteUserIds.includes(this.userService.myself.id)
     this.canEdit = this.userService.hasPermission('UPDATE_OBSERVATION_EVENT') || this.userService.hasPermission('UPDATE_OBSERVATION_ALL')
 

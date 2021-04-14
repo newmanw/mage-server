@@ -95,7 +95,6 @@ export class ObservationEditGeometryFormComponent implements OnChanges {
         });
         return;
       }
-
       this.featureEdit.save();
       this.save.emit({ feature: this.feature });
     } else {
@@ -202,7 +201,7 @@ export class ObservationEditGeometryFormComponent implements OnChanges {
     }
   }
 
-  shapeTypeChanged(shapeType: string): void {
+  shapeTypeChanged(shapeType?: string): void {
     this.selectedShapeType = shapeType
     console.log('selected', shapeType)
 
@@ -227,8 +226,9 @@ export class ObservationEditGeometryFormComponent implements OnChanges {
         this.featureEdit.cancel()
         break;
     }
-
-    if (shapeType) this.onEditShape()
+    if (shapeType) {
+      this.onEditShape()
+    }
   }
 
   onEditShape(): void {

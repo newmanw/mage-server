@@ -33,7 +33,7 @@ export class FeedPanelComponent implements OnInit, OnChanges {
   @ViewChild('permissionDialog') permissionDialog: TemplateRef<any>
 
   currentFeedPanel = 'observations'
-  
+
   edit = false
   editForm: any
 
@@ -49,6 +49,7 @@ export class FeedPanelComponent implements OnInit, OnChanges {
   editObservation: any
 
   viewUser: any
+  userBadge?: any
 
   constructor(
     public dialog: MatDialog,
@@ -232,7 +233,7 @@ export class FeedPanelComponent implements OnInit, OnChanges {
   getIconUrl(event, form): void {
     // const primaryForm = forms.length ? forms[0] : {};
     const fields = form.fields || []
-    
+
     const primary = fields.find(field => {
       return field.name === form.primaryField
     }) || {}
@@ -258,7 +259,7 @@ export class FeedPanelComponent implements OnInit, OnChanges {
     this.viewObservation = null;
   }
 
-  onObservationEditClose(observation): void {
+  onObservationEditClose(observation?: any): void {
     this.newObservation = null;
     this.editObservation = null;
 
