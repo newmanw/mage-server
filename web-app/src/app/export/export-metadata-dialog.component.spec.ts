@@ -115,10 +115,10 @@ describe('Export Metadata Dialog Component', () => {
     }));
 
     beforeEach(() => {
-        expect(TestBed.get(LocalStorageService)).toBeTruthy();
-        expect(TestBed.get(ExportMetadataService)).toBeTruthy();
-        expect(TestBed.get(EventService)).toBeTruthy();
-        expect(TestBed.get(FilterService)).toBeTruthy();
+        expect(TestBed.inject(LocalStorageService)).toBeTruthy();
+        expect(TestBed.inject(ExportMetadataService)).toBeTruthy();
+        expect(TestBed.inject(EventService)).toBeTruthy();
+        expect(TestBed.inject(FilterService)).toBeTruthy();
 
         fixture = TestBed.createComponent(ExportMetadataDialogComponent);
         component = fixture.componentInstance;
