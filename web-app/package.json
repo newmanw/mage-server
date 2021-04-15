@@ -41,7 +41,8 @@
     "dist"
   ],
   "dependencies": {
-    "@ajsf/material": "^0.1.4",
+    "@ajsf/core": "^0.3.0-beta.3",
+    "@ajsf/material": "^0.3.0-beta.3",
     "@angular-material-components/datetime-picker": "^2.0.4",
     "@angular/animations": "~9.1.13",
     "@angular/cdk": "~9.2.4",
