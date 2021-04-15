@@ -2,6 +2,7 @@ import { Component, Input, OnChanges, SimpleChange, SimpleChanges } from '@angul
 import { async, ComponentFixture, TestBed } from '@angular/core/testing'
 import { FormsModule, ReactiveFormsModule } from '@angular/forms'
 import { By } from '@angular/platform-browser'
+import * as _ from 'lodash'
 import { BehaviorSubject } from 'rxjs'
 
 
@@ -54,7 +55,7 @@ class TestHostComponent {
   }
 }
 
-describe('change detection', () => {
+fdescribe('change detection', () => {
 
   let fixture: ComponentFixture<TestHostComponent>
   let host: TestHostComponent
@@ -79,12 +80,14 @@ describe('change detection', () => {
 
   beforeEach(() => {
     fixture = TestBed.createComponent(TestHostComponent)
+    fixture.autoDetectChanges(false)
     host = fixture.componentInstance
     target = fixture.debugElement.query(By.directive(ChangeConsumerComponent)).references.target
-    fixture.detectChanges()
     changes = []
-    target.changes.subscribe(x => {
-      changes.push(x)
+    target.changes.subscribe((x: SimpleChanges) => {
+      changes.push(_.mapValues(x, (change: SimpleChange) => {
+        return new SimpleChange(change.previousValue, change.currentValue, change.firstChange)
+      }))
     })
   })
 
@@ -94,6 +97,7 @@ describe('change detection', () => {
 
   it('detects changes', () => {
 
+    fixture.detectChanges()
     host.state = { ...host.state, key1: 'abc' }
     fixture.detectChanges()
     host.state = { ...host.state, key1: 'abc' }

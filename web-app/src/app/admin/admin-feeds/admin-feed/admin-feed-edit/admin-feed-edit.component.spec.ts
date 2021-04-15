@@ -2,7 +2,16 @@ import { JsonSchemaFormModule } from '@ajsf/core';
 import { HttpClientTestingModule } from '@angular/common/http/testing'
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { MatAutocompleteModule, MatCardModule, MatCheckboxModule, MatDividerModule, MatExpansionModule, MatFormFieldModule, MatIconModule, MatInputModule, MatListModule, MatSelectModule } from '@angular/material';
+import { MatAutocompleteModule } from '@angular/material/autocomplete'
+import { MatCardModule } from '@angular/material/card'
+import { MatCheckboxModule } from '@angular/material/checkbox'
+import { MatDividerModule } from '@angular/material/divider'
+import { MatExpansionModule } from '@angular/material/expansion'
+import { MatFormFieldModule } from '@angular/material/form-field'
+import { MatIconModule } from '@angular/material/icon'
+import { MatInputModule } from '@angular/material/input'
+import { MatListModule } from '@angular/material/list'
+import { MatSelectModule } from '@angular/material/select'
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { StateService } from '@uirouter/angular';
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
@@ -68,8 +77,9 @@ describe('FeedEditComponent', () => {
         }
       ],
       imports: [
-        MatExpansionModule,
+        MatAutocompleteModule,
         MatDividerModule,
+        MatExpansionModule,
         MatListModule,
         MatFormFieldModule,
         MatCheckboxModule,
@@ -87,7 +97,6 @@ describe('FeedEditComponent', () => {
         MomentModule,
         MageCommonModule,
         StaticIconModule,
-        MatAutocompleteModule,
         AdminBreadcrumbModule,
         HttpClientTestingModule
       ],

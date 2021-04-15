@@ -1,6 +1,6 @@
 import { Component, ViewChild } from '@angular/core';
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { MatIconModule } from '@angular/material';
+import { MatIconModule } from '@angular/material/icon';
 import { RawParams, StateOrName, StateService, TransitionOptions, TransitionPromise } from '@uirouter/angular';
 import { AdminBreadcrumbComponent } from './admin-breadcrumb.component';
 import { AdminBreadcrumb } from './admin-breadcrumb.model';

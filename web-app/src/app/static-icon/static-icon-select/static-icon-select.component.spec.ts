@@ -1,6 +1,6 @@
 import { ScrollingModule } from '@angular/cdk/scrolling'
 import { async, ComponentFixture, TestBed } from '@angular/core/testing'
-import { MatCardModule } from '@angular/material'
+import { MatCardModule } from '@angular/material/card'
 import { of } from 'rxjs'
 import { StaticIcon } from '../static-icon.model'
 import { StaticIconService } from '../static-icon.service'

@@ -1,7 +1,11 @@
 import { JsonSchemaFormModule } from '@ajsf/core';
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing';
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { MatCardModule, MatDialog, MatDialogModule, MatDialogRef, MatIconModule, MatListModule, MatPaginatorModule, MAT_DIALOG_DATA } from '@angular/material';
+import { MatCardModule } from '@angular/material/card'
+import { MatDialog, MatDialogModule, MatDialogRef, MAT_DIALOG_DATA } from '@angular/material/dialog'
+import { MatIconModule } from '@angular/material/icon'
+import { MatListModule } from '@angular/material/list'
+import { MatPaginatorModule } from '@angular/material/paginator'
 import { RawParams, StateOrName, StateService, TransitionOptions, TransitionPromise } from '@uirouter/angular';
 import { of } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';

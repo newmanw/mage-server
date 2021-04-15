@@ -2,7 +2,11 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { Component } from '@angular/core'
 import { async, ComponentFixture, TestBed } from '@angular/core/testing'
 import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms'
-import { MatAutocompleteModule, MatButton, MatCheckboxModule, MatExpansionModule, MatFormFieldModule, MatInputModule } from '@angular/material'
+import { MatAutocompleteModule } from '@angular/material/autocomplete'
+import { MatCheckboxModule } from '@angular/material/checkbox'
+import { MatExpansionModule } from '@angular/material/expansion'
+import { MatFormFieldModule } from '@angular/material/form-field'
+import { MatInputModule } from '@angular/material/input'
 import { By } from '@angular/platform-browser'
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import * as _ from 'lodash'

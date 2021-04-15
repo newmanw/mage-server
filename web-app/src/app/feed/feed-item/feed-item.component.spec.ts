@@ -1,5 +1,8 @@
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { MatCardModule, MatDividerModule, MatIconModule, MatToolbarModule } from '@angular/material';
+import { MatCardModule } from '@angular/material/card'
+import { MatDividerModule } from '@angular/material/divider'
+import { MatIconModule } from '@angular/material/icon'
+import { MatToolbarModule } from '@angular/material/toolbar'
 import { GeometryModule } from 'src/app/geometry/geometry.module';
 import { MapClipComponent } from 'src/app/map/clip/clip.component';
 import { MomentModule } from 'src/app/moment/moment.module';
@@ -24,11 +27,11 @@ class MockLocalStorageService {
 
 class MockMapService {
   addListener(listener: any): void {
-    
+
   }
 
   removeListener(listener: any): void {
-    
+
   }
 }
 
