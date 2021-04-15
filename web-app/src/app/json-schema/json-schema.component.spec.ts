@@ -1,25 +1,25 @@
 import { JsonSchemaFormModule } from '@ajsf/core';
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
-import { JsonSchemaComponent } from './json-schema.component';
+import { JsonSchemaFormWithServiceComponent } from './json-schema.component';
 
 
 
-describe('JsonSchemaComponent', () => {
-  let component: JsonSchemaComponent;
-  let fixture: ComponentFixture<JsonSchemaComponent>;
+describe('JsonSchemaFormWithServiceComponent', () => {
+  let component: JsonSchemaFormWithServiceComponent;
+  let fixture: ComponentFixture<JsonSchemaFormWithServiceComponent>;
 
   beforeEach(async(() => {
     TestBed.configureTestingModule({
       imports: [
         JsonSchemaFormModule
       ],
-      declarations: [ JsonSchemaComponent ]
+      declarations: [ JsonSchemaFormWithServiceComponent ]
     })
     .compileComponents();
   }));
 
   beforeEach(() => {
-    fixture = TestBed.createComponent(JsonSchemaComponent);
+    fixture = TestBed.createComponent(JsonSchemaFormWithServiceComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

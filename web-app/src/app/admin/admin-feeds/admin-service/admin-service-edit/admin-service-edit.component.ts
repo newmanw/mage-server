@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, OnInit, Output, ViewChild, ViewContainerRef } from '@angular/core';
+import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { forkJoin } from 'rxjs';
 import { Service, ServiceType } from 'src/app/feed/feed.model';

@@ -1,18 +1,18 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { MaterialDesignFrameworkModule } from '@ajsf/material';
-import { JsonSchemaComponent } from './json-schema.component';
+import { JsonSchemaFormWithServiceComponent } from './json-schema.component';
 
 @NgModule({
   declarations: [
-    JsonSchemaComponent
+    JsonSchemaFormWithServiceComponent
   ],
   imports: [
     CommonModule,
     MaterialDesignFrameworkModule
   ],
   exports: [
-    JsonSchemaComponent
+    JsonSchemaFormWithServiceComponent
   ]
 })
 export class JsonSchemaModule { }

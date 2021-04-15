@@ -3,12 +3,13 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { Component, ViewChild } from '@angular/core';
 import { async, ComponentFixture, TestBed } from '@angular/core/testing';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
-import { MatExpansionModule, MatFormFieldModule, MatSelectModule } from '@angular/material';
+import { MatSelectModule } from '@angular/material/select';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatFormFieldModule } from '@angular/material/form-field';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
 import { Service, ServiceType } from 'src/app/feed/feed.model';
 import { AdminServiceEditComponent } from './admin-service-edit.component';
-import { JsonSchemaComponent } from 'src/app/json-schema/json-schema.component';
 
 describe('AdminServiceEditComponent', () => {
   @Component({
@@ -45,8 +46,7 @@ describe('AdminServiceEditComponent', () => {
       ],
       declarations: [
         TestHostComponent,
-        AdminServiceEditComponent,
-        JsonSchemaComponent
+        AdminServiceEditComponent
       ]
     })
     .compileComponents();

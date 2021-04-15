@@ -21,4 +21,4 @@ import { Component } from '@angular/core';
 </div>
 `
 })
-export class JsonSchemaComponent extends JsonSchemaFormComponent {}
+export class JsonSchemaFormWithServiceComponent extends JsonSchemaFormComponent {}
