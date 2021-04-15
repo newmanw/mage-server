@@ -28,7 +28,7 @@
             [topicSchema]="editState.selectedTopic?.itemPropertiesSchema || null"
             [feedSchema]="editState.itemPropertiesSchema"
             (feedSchemaChanged)="onItemPropertiesSchemaChanged($event)"
-            (feedSchemaAccepted)="onItemPropertiesSchemaAccepted($event)">
+            (feedSchemaAccepted)="onItemPropertiesSchemaAccepted()">
           </app-feed-item-properties-configuration>
           <app-feed-configuration [expanded]="step === 3" [buttonText]="editState.originalFeed ? 'Update Feed' : 'Create Feed'"
             [topic]="editState.selectedTopic"

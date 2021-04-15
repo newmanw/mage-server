@@ -1,5 +1,5 @@
 import { Component, Inject, OnInit } from '@angular/core';
-import { MatDialog } from '@angular/material';
+import { MatDialog } from '@angular/material/dialog';
 import { StateService } from '@uirouter/angular';
 import { forkJoin } from 'rxjs';
 import { Feed, FeedExpanded, Service, ServiceType } from 'src/app/feed/feed.model';

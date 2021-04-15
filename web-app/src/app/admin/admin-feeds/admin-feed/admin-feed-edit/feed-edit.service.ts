@@ -1,4 +1,4 @@
-import { forwardRef, Inject } from '@angular/core'
+import { forwardRef, Inject, Injectable } from '@angular/core'
 import * as _ from 'lodash'
 import { BehaviorSubject, Observable, PartialObserver, throwError } from 'rxjs'
 import { tap } from 'rxjs/operators'
@@ -17,12 +17,13 @@ type StatePatch = Partial<FeedEditState>
  * This is a stateful service that implements the process of creating or
  * editing a feed.
  */
+@Injectable()
 export class FeedEditService {
 
   private stateSubject = new BehaviorSubject<FeedEditState>(freshEditState())
   private _state$ = this.stateSubject.pipe()
 
-  private patchState(patch: StatePatch) {
+  private patchState(patch: StatePatch): void {
     const state = { ...this.stateSubject.value, ...patch }
     this.stateSubject.next(state)
   }
@@ -37,7 +38,7 @@ export class FeedEditService {
 
   constructor(@Inject(forwardRef(() => FeedService)) private feedService: FeedService) {}
 
-  editFeed(feedId: string) {
+  editFeed(feedId: string): void {
     this.resetState()
     this.feedService.fetchFeed(feedId).subscribe({
       next: (feed) => {
@@ -106,7 +107,7 @@ export class FeedEditService {
     })
   }
 
-  selectTopic(topicId: string | null) {
+  selectTopic(topicId: string | null): void {
     const patch = this.patchToSelectTopic(topicId)
     if (patch) {
       this.patchState(patch)
@@ -136,7 +137,7 @@ export class FeedEditService {
     return patch
   }
 
-  fetchParametersChanged(fetchParameters: any) {
+  fetchParametersChanged(fetchParameters: any): void {
     if (!this.currentState.selectedTopic) {
       return
     }
@@ -157,11 +158,11 @@ export class FeedEditService {
     this.fetchNewPreview()
   }
 
-  itemPropertiesSchemaChanged(itemPropertiesSchema: any) {
+  itemPropertiesSchemaChanged(itemPropertiesSchema: any): void {
     this.patchState({ itemPropertiesSchema })
   }
 
-  feedMetaDataChanged(feedMetaData: FeedMetaData) {
+  feedMetaDataChanged(feedMetaData: FeedMetaData): void {
     if (!this.currentState.selectedTopic) {
       return
     }

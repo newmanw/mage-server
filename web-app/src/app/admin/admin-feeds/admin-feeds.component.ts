@@ -4,7 +4,7 @@ import { UserService } from '../../upgrade/ajs-upgraded-providers'
 import { FeedService } from '../../feed/feed.service'
 import { Feed, Service } from 'src/app/feed/feed.model'
 import { StateService } from '@uirouter/angular'
-import { MatDialog } from '@angular/material'
+import { MatDialog } from '@angular/material/dialog'
 import { forkJoin } from 'rxjs'
 import { AdminFeedDeleteComponent } from './admin-feed/admin-feed-delete/admin-feed-delete.component'
 import { AdminServiceDeleteComponent } from './admin-service/admin-service-delete/admin-service-delete.component'
@@ -52,10 +52,10 @@ export class AdminFeedsComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    forkJoin(
+    forkJoin([
       this.feedService.fetchServices(),
       this.feedService.fetchAllFeeds()
-    ).subscribe(result => {
+    ]).subscribe(result => {
       this._services = result[0].sort(this.sortByTitle)
       this.services = this._services.slice()
 

@@ -11,46 +11,36 @@ import { ScrollingModule } from '@angular/cdk/scrolling';
 import { DragDropModule } from '@angular/cdk/drag-drop';
 
 import { SaturationModule, HueModule, CheckboardModule, AlphaModule } from 'ngx-color';
-import {
-  MatIcon,
-  MatButton,
-  MatToolbar,
-  MatSpinner,
-  MatFormField,
-  MatIconModule,
-  MatButtonModule,
-  MatChipsModule,
-  MatToolbarModule,
-  MatProgressSpinnerModule,
-  MatFormFieldModule,
-  MatInputModule,
-  MatAutocompleteModule,
-  MatSelectModule,
-  MatTooltipModule,
-  MatCardModule,
-  MatListModule,
-  MatRippleModule,
-  MatSidenavModule,
-  MatSidenav,
-  MatSidenavContent,
-  MatSidenavContainer,
-  MatRadioModule,
-  MatCheckboxModule,
-  MatSliderModule,
-  MatExpansionModule,
-  MatSnackBarModule,
-  MatDatepickerModule,
-  MatNativeDateModule,
-  MatButtonToggleModule,
-  MatProgressBarModule,
-  MatGridListModule,
-  MatDialogModule,
-  MatTabsModule,
-  MatBadgeModule,
-  MatTableModule,
-  MatPaginatorModule,
-  MatSortModule
-} from '@angular/material';
+
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatBadgeModule } from '@angular/material/badge';
+import { MatButtonModule } from '@angular/material/button';
+import { MatButtonToggleModule } from '@angular/material/button-toggle';
+import { MatCardModule } from '@angular/material/card';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatChipsModule } from '@angular/material/chips';
+import { MatRippleModule, MatNativeDateModule } from '@angular/material/core';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import { MatDialogModule } from '@angular/material/dialog';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatGridListModule } from '@angular/material/grid-list';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatListModule } from '@angular/material/list';
+import { MatPaginatorModule } from '@angular/material/paginator';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
+import { MatRadioModule } from '@angular/material/radio';
+import { MatSelectModule } from '@angular/material/select';
+import { MatSidenavModule } from '@angular/material/sidenav';
+import { MatSliderModule } from '@angular/material/slider';
+import { MatSnackBarModule } from '@angular/material/snack-bar';
+import { MatSortModule } from '@angular/material/sort';
+import { MatTableModule } from '@angular/material/table';
+import { MatTabsModule } from '@angular/material/tabs';
+import { MatToolbarModule } from '@angular/material/toolbar';
+import { MatTooltipModule } from '@angular/material/tooltip';
 
 import { MatDatetimepickerModule } from '@nader-eloshaiker/mat-datetimepicker'
 import { MatMomentDatetimeModule } from '@nader-eloshaiker/mat-datetimepicker-moment'
@@ -98,13 +88,14 @@ import { FeedPanelComponent } from './feed-panel/feed-panel.component';
 
 import {
   mapServiceProvider,
+  eventResourceProvider,
   eventServiceProvider,
   localStorageServiceProvider,
   geometryServiceProvider,
   observationServiceProvider,
   filterServiceProvider,
   userServiceProvider,
-  eventResourceProvider } from './upgrade/ajs-upgraded-providers';
+} from './upgrade/ajs-upgraded-providers';
 
 import {
   ObservationViewCheckboxComponent,
@@ -270,8 +261,16 @@ import { MageCommonModule } from './common/mage-common.module'
     HueModule,
     AlphaModule,
     CheckboardModule,
-    MomentModule,
-    GeometryModule,
+    MatTableModule,
+    MatDialogModule,
+    MatPaginatorModule,
+    MatSortModule,
+    MatSnackBarModule,
+    MatDatepickerModule,
+    MatNativeDateModule,
+    NgxMatDatetimePickerModule,
+    NgxMatTimepickerModule,
+    NgxMatNativeDateModule,
     AdminFeedsModule,
     FeedItemSummaryModule,
     StaticIconModule,
@@ -280,44 +279,12 @@ import { MageCommonModule } from './common/mage-common.module'
     mapServiceProvider,
     userServiceProvider,
     filterServiceProvider,
-    eventServiceProvider,
     eventResourceProvider,
+    eventServiceProvider,
     geometryServiceProvider,
     observationServiceProvider,
     localStorageServiceProvider,
     { provide: HTTP_INTERCEPTORS, useClass: TokenInterceptorService, multi: true }
-  ],
-  bootstrap: [],
-  entryComponents: [
-    BootstrapComponent,
-    MatIcon,
-    MatButton,
-    MatToolbar,
-    MatSpinner,
-    MatFormField,
-    MatSidenav,
-    MatSidenavContent,
-    MatSidenavContainer,
-    FeedPanelComponent,
-    ObservationDeleteComponent,
-    ObservationFavoritesComponent,
-    ObservationListItemComponent,
-    ObservationPopupComponent,
-    UserViewComponent,
-    UserAvatarComponent,
-    UserPopupComponent,
-    LeafletComponent,
-    ZoomComponent,
-    SearchComponent,
-    LocationComponent,
-    AddObservationComponent,
-    LayersControlComponent,
-    SwaggerComponent,
-    ColorPickerComponent,
-    FeedItemMapPopupComponent,
-    ExportsComponent,
-    ExportMetadataDialogComponent,
-    StaticIconFormFieldComponent
   ]
 })
 export class AppModule {

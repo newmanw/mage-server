@@ -1,9 +1,10 @@
 import { animate, style, transition, trigger } from '@angular/animations';
 import { Component, EventEmitter, Inject, Input, OnChanges, OnInit, Output, SimpleChanges, TemplateRef, ViewChild } from '@angular/core';
-import { MatDialog, MatTabGroup } from '@angular/material';
+import { MatDialog } from '@angular/material/dialog';
+import { MatTabGroup } from '@angular/material/tabs';
+import * as moment from 'moment';
 import { EventService, FilterService, MapService, ObservationService, UserService } from '../upgrade/ajs-upgraded-providers';
 import { FeedAction, FeedPanelService } from './feed-panel.service';
-import * as moment from 'moment';
 import { FeedService } from '../feed/feed.service';
 import { FeedItemService } from '../feed/feed-item/feed-item.service';
 
@@ -30,8 +31,8 @@ export class FeedPanelComponent implements OnInit, OnChanges {
 
   @Output() toggle = new EventEmitter<any>()
 
-  @ViewChild('tabGroup', { static: false }) tabGroup: MatTabGroup
-  @ViewChild('permissionDialog', { static: false }) permissionDialog: TemplateRef<any>
+  @ViewChild('tabGroup') tabGroup: MatTabGroup
+  @ViewChild('permissionDialog') permissionDialog: TemplateRef<any>
 
   defaultTabs = [{
     id: 'observations',
@@ -63,6 +64,7 @@ export class FeedPanelComponent implements OnInit, OnChanges {
   editObservation: any
 
   viewUser: any
+  userBadge?: any
 
   constructor(
     public dialog: MatDialog,
@@ -291,7 +293,7 @@ export class FeedPanelComponent implements OnInit, OnChanges {
     this.viewObservation = null;
   }
 
-  onObservationEditClose(observation): void {
+  onObservationEditClose(observation?: any): void {
     this.newObservation = null;
     this.editObservation = null;
 
