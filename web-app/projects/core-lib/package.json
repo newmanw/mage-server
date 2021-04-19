@@ -1,6 +1,6 @@
 {
-  "name": "core-lib",
-  "version": "0.0.1",
+  "name": "@ngageoint/mage.web-core-lib",
+  "version": "5.4.4",
   "peerDependencies": {
     "@angular/common": "^9.1.13",
     "@angular/core": "^9.1.13"

@@ -19,7 +19,7 @@
       "dom"
     ],
     "paths": {
-      "core-lib": [
+      "@ngageoint/mage.web-core-lib": [
         "dist/core-lib/core-lib",
         "dist/core-lib"
       ]
