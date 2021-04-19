@@ -8,11 +8,8 @@ node_modules
 .test_run
 .vscode/
 coverage/
-dist/
-dist-test/
 docker/database/
 docker/server/resources/
-lib/
 npm-debug.log
 pnpm-debug.log
 scratch/
