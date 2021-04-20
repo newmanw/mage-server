@@ -1,10 +1,5 @@
-import { CollectionViewer, DataSource } from '@angular/cdk/collections'
-import { FixedSizeVirtualScrollStrategy } from '@angular/cdk/scrolling'
 import { Component, Input, OnInit } from '@angular/core'
-import { VirtualScrollerModule } from 'ngx-virtual-scroller'
-import { BehaviorSubject, Observable, Subscription } from 'rxjs'
-import { PagingDataSource } from '../../paging.cdk-data-source.adapter'
-import { pageForItemIndex, PagingParameters } from '../../paging.model'
+import { pageForItemIndex, PagingParameters, PagingDataSource } from '@ngageoint/web-core-lib/paging'
 import { StaticIcon } from '../static-icon.model'
 import { StaticIconService } from '../static-icon.service'
 

@@ -1,6 +1,6 @@
 import { Component, Output, EventEmitter, Input } from '@angular/core';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
-import { Feed } from 'src/app/feed/feed.model';
+import { Feed } from '@ngageoint/mage.web-core-lib/feed/feed.model';
 
 export interface ReorderEvent {
   type: string;

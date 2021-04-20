@@ -1,8 +1,8 @@
-import { HttpClient, HttpErrorResponse, HttpParams } from '@angular/common/http'
+import { HttpClient, HttpParams } from '@angular/common/http'
 import { Injectable } from '@angular/core';
-import { Observable, of, throwError } from 'rxjs'
+import { Observable, throwError } from 'rxjs'
 import { catchError } from 'rxjs/operators'
-import { PageOf, PagingParameters } from '../paging.model'
+import { PageOf, PagingParameters } from '@ngageoint/mage.web-core-lib/paging'
 import { StaticIcon, StaticIconReference } from './static-icon.model'
 
 

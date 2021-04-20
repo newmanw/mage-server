@@ -1,5 +1,5 @@
 import { Feature, FeatureCollection } from 'geojson';
-import { RegisteredStaticIconReference, SourceUrlStaticIconReference, StaticIconReference } from '../static-icon/static-icon.model'
+import { RegisteredStaticIconReference, SourceUrlStaticIconReference, StaticIconReference } from '@ngageoint/mage.web-core-lib/static-icon'
 
 export interface Feed {
   id: string;

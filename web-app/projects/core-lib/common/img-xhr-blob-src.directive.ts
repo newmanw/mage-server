@@ -1,5 +1,5 @@
+import { Directive, ElementRef, Inject, InjectionToken, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core'
 import { HttpClient } from '@angular/common/http'
-import { Directive, ElementRef, Inject, Injectable, InjectionToken, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core'
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser'
 import { Subscription } from 'rxjs'
 

@@ -1,7 +1,6 @@
-import { HttpClient } from '@angular/common/http'
 import { HttpClientTestingModule, HttpTestingController } from '@angular/common/http/testing'
 import { Component, DebugElement } from '@angular/core'
-import { async, ComponentFixture, TestBed, TestBedStatic } from '@angular/core/testing'
+import { async, ComponentFixture, TestBed } from '@angular/core/testing'
 import { By } from '@angular/platform-browser'
 import { ImgXhrBlobSrcDirective, ObjectUrlService, OBJECT_URL_SERVICE } from './img-xhr-blob-src.directive'
 

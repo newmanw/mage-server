@@ -20,8 +20,10 @@
     ],
     "paths": {
       "@ngageoint/mage.web-core-lib": [
-        "dist/core-lib/core-lib",
-        "dist/core-lib"
+        "dist/core-lib",
+      ],
+      "@ngageoint/mage.web-core-lib/*": [
+        "dist/core-lib/*"
       ]
     }
   },
