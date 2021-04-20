@@ -28,7 +28,7 @@ import { AddObservationComponent } from '../app/map/controls/add-observation.com
 import { LeafletComponent } from '../app/map/leaflet.component';
 import { ExportsComponent } from '../app/export/exports.component';
 
-import { FeedService } from '../app/feed/feed.service'
+import { FeedService } from '@ngageoint/mage.web-core-lib/feed'
 import { FeedPanelService } from '../app/feed-panel/feed-panel.service'
 import { MapPopupService } from '../app/map/map-popup.service'
 

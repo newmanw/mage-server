@@ -1,8 +1,8 @@
 import { Component, Input, Inject, OnChanges, SimpleChanges } from '@angular/core';
-import { Feed, StyledFeature } from '../feed.model';
+import { Feed, StyledFeature } from '@ngageoint/mage.web-core-lib/feed';
 import { MapService } from '../../upgrade/ajs-upgraded-providers';
 import { FeedPanelService } from 'src/app/feed-panel/feed-panel.service';
-import { contentPathOfIcon } from 'src/app/static-icon/static-icon.model'
+import { contentPathOfIcon } from '@ngageoint/mage.web-core-lib/static-icon'
 
 @Component({
   selector: 'feed-item',

@@ -1,8 +1,8 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core';
 import { FormControl, FormGroup } from '@angular/forms'
 import { debounceTime, map } from 'rxjs/operators'
-import { FeedTopic } from 'src/app/feed/feed.model'
-import { StaticIconReference } from '../../../../static-icon/static-icon.model'
+import { FeedTopic } from '@ngageoint/mage.web-core-lib/feed'
+import { StaticIconReference } from '@ngageoint/mage.web-core-lib/static-icon'
 import { FeedMetaData, feedMetaDataLean, FeedMetaDataNullable } from './feed-edit.model'
 
 export type IconModel = Readonly<

@@ -1,6 +1,6 @@
 import { Component, Inject } from '@angular/core'
 import { MAT_DIALOG_DATA } from '@angular/material/dialog'
-import { Feed } from 'src/app/feed/feed.model'
+import { Feed } from '@ngageoint/mage.web-core-lib/feed'
 
 @Component({
   selector: 'app-admin-feed-delete',

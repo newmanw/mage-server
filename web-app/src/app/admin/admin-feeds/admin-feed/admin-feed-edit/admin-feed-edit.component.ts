@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { StateService } from '@uirouter/angular';
 import * as _ from 'underscore';
-import { FeedTopic, Service } from '../../../../feed/feed.model';
+import { Service } from '@ngageoint/mage.web-core-lib/feed';
 import { AdminBreadcrumb } from '../../../admin-breadcrumb/admin-breadcrumb.model';
 import { FeedEditState, FeedMetaData } from './feed-edit.model'
 import { FeedEditService } from './feed-edit.service'

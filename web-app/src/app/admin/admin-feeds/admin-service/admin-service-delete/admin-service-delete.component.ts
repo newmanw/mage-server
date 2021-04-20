@@ -1,6 +1,6 @@
 import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA } from '@angular/material/dialog';
-import { Service, Feed } from 'src/app/feed/feed.model';
+import { Service, Feed } from '@ngageoint/mage.web-core-lib/feed';
 
 type ServiceWithFeeds = {
   service: Service

@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { Subject } from 'rxjs';
-import { Feed } from '../feed.model';
+import { Feed } from '@ngageoint/mage.web-core-lib/feed';
 import { Feature } from 'geojson';
 
 export enum FeedAction {

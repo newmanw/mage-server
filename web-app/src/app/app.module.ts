@@ -135,9 +135,8 @@ import { AdminFeedsModule } from './admin/admin-feeds/admin-feeds.module';
 import { ObservationPopupComponent } from './observation/observation-popup/observation-popup.component';
 import { UserPopupComponent } from './user/user-popup/user-popup.component';
 import { CdkDetailRowDirective } from './export/directives/cdk-detail-row.directive';
-import { StaticIconFormFieldComponent } from './static-icon/static-icon-form-field/static-icon-form-field.component'
-import { StaticIconModule } from './static-icon/static-icon.module'
-import { MageCommonModule } from './common/mage-common.module'
+import { StaticIconFormFieldComponent, StaticIconModule } from '@ngageoint/mage.web-core-lib/static-icon'
+import { MageCommonModule } from '@ngageoint/mage.web-core-lib/common'
 
 @NgModule({
   declarations: [

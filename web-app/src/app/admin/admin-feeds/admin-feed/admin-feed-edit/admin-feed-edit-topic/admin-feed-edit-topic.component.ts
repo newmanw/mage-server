@@ -1,6 +1,5 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output, SimpleChanges } from '@angular/core'
-import { FormControl } from '@angular/forms'
-import { FeedTopic, Service } from 'src/app/feed/feed.model'
+import { FeedTopic, Service } from '@ngageoint/mage.web-core-lib/feed'
 
 @Component({
   selector: 'app-choose-service-topic',

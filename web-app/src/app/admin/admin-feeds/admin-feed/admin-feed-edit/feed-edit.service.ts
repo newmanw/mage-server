@@ -2,8 +2,7 @@ import { forwardRef, Inject, Injectable } from '@angular/core'
 import * as _ from 'lodash'
 import { BehaviorSubject, Observable, PartialObserver, throwError } from 'rxjs'
 import { tap } from 'rxjs/operators'
-import { FeedExpanded, FeedTopic, Service } from '../../../../feed/feed.model'
-import { FeedPreviewOptions, FeedService } from '../../../../feed/feed.service'
+import { FeedExpanded, FeedTopic, Service, FeedPreviewOptions, FeedService } from '@ngageoint/mage.web-core-lib/feed'
 import { FeedEditState, FeedMetaData, feedMetaDataLean, feedPostFromEditState, freshEditState } from './feed-edit.model'
 
 

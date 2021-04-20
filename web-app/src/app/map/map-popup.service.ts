@@ -3,7 +3,7 @@ import { Marker, LeafletMouseEvent } from 'leaflet';
 import { UserPopupComponent } from '../user/user-popup/user-popup.component';
 import { ObservationPopupComponent } from '../observation/observation-popup/observation-popup.component';
 import { Feature } from 'geojson';
-import { Feed } from '../feed/feed.model';
+import { Feed } from '@ngageoint/mage.web-core-lib/feed';
 import { FeedItemMapPopupComponent } from '../feed/feed-item/feed-item-map/feed-item-map-popup.component';
 
 @Injectable({

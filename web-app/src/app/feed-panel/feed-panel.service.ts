@@ -1,7 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Feature } from 'geojson';
 import { Subject } from 'rxjs';
-import { Feed } from '../feed/feed.model';
+import { Feed } from '@ngageoint/mage.web-core-lib/feed';
 
 export interface ObservationEvent {
   observation: any;

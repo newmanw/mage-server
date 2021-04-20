@@ -1,9 +1,9 @@
 import { Component, Input, Inject, OnChanges, SimpleChanges } from '@angular/core';
-import { Feed } from '../../feed.model';
-import { MapService } from 'src/app/upgrade/ajs-upgraded-providers';
+import { Feed } from '@ngageoint/mage.web-core-lib/feed';
+import { MapService } from '../../../upgrade/ajs-upgraded-providers';
 import { Feature } from 'geojson';
-import { FeedPanelService } from 'src/app/feed-panel/feed-panel.service';
-import { contentPathOfIcon } from 'src/app/static-icon/static-icon.model'
+import { FeedPanelService } from '../../../feed-panel/feed-panel.service';
+import { contentPathOfIcon } from '@ngageoint/mage.web-core-lib/static-icon'
 
 @Component({
   selector: 'feed-item-summary',

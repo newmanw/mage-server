@@ -1,10 +1,10 @@
 import { NgModule } from '@angular/core'
 import { CommonModule } from '@angular/common'
-import { FeedItemSummaryComponent } from './feed-item-summary.component'
 import { MatIconModule } from '@angular/material/icon'
 import { MatListModule } from '@angular/material/list'
-import { MomentModule } from 'src/app/moment/moment.module'
-import { MageCommonModule } from 'src/app/common/mage-common.module'
+import { FeedItemSummaryComponent } from './feed-item-summary.component'
+import { MomentModule } from '../../../moment/moment.module'
+import { MageCommonModule } from '@ngageoint/mage.web-core-lib/common'
 
 @NgModule({
   declarations: [FeedItemSummaryComponent],

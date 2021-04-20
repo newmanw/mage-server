@@ -18,7 +18,7 @@
           "builder": "ngx-build-plus:browser",
           "options": {
             "extraWebpackConfig": "webpack.extra.js",
-            "outputPath": "dist",
+            "outputPath": "dist/app",
             "index": "src/index.html",
             "main": "src/main.ts",
             "polyfills": "src/polyfills.ts",
@@ -161,7 +161,7 @@
     "core-lib": {
       "projectType": "library",
       "root": "projects/core-lib",
-      "sourceRoot": "projects/core-lib/src",
+      "sourceRoot": "projects/core-lib",
       "prefix": "lib",
       "architect": {
         "build": {

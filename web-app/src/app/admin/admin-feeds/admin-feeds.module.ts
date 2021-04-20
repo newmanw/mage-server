@@ -39,9 +39,9 @@ import { AdminFeedEditConfigurationComponent } from './admin-feed/admin-feed-edi
 import { AdminServiceComponent } from './admin-service/admin-service.component';
 import { AdminServiceDeleteComponent } from './admin-service/admin-service-delete/admin-service-delete.component';
 import { AdminFeedEditTopicConfigurationComponent } from './admin-feed/admin-feed-edit/admin-feed-edit-topic/admin-feed-edit-topic-configuration.component';
-import { JsonSchemaModule } from 'src/app/json-schema/json-schema.module';
-import { FeedItemSummaryModule } from 'src/app/feed/feed-item/feed-item-summary/feed-item-summary.module';
-import { StaticIconModule } from '../../static-icon/static-icon.module'
+import { JsonSchemaModule } from '../../json-schema/json-schema.module';
+import { FeedItemSummaryModule } from '../../feed/feed-item/feed-item-summary/feed-item-summary.module';
+import { StaticIconModule } from '@ngageoint/mage.web-core-lib/static-icon'
 
 @NgModule({
   declarations: [
@@ -101,5 +101,4 @@ import { StaticIconModule } from '../../static-icon/static-icon.module'
     AdminServiceEditComponent
   ]
 })
-export class AdminFeedsModule {
-}
+export class AdminFeedsModule {}

@@ -1,7 +1,7 @@
 import { Component, Input, OnInit } from '@angular/core';
 import { Feature } from 'geojson';
 import { FeedPanelService } from 'src/app/feed-panel/feed-panel.service';
-import { Feed } from '../../feed.model';
+import { Feed } from '@ngageoint/mage.web-core-lib/feed';
 
 @Component({
   selector: 'feed-item-map-popup',

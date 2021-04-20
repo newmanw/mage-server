@@ -1,8 +1,7 @@
 import { Component, EventEmitter, Input, OnChanges, OnInit, Output } from '@angular/core';
 import { FormControl } from '@angular/forms';
 import { forkJoin } from 'rxjs';
-import { Service, ServiceType } from 'src/app/feed/feed.model';
-import { FeedService } from 'src/app/feed/feed.service';
+import { Service, ServiceType, FeedService } from '@ngageoint/mage.web-core-lib/feed';
 
 @Component({
   selector: 'app-create-service',

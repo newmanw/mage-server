@@ -5,7 +5,7 @@ import { MatTabGroup } from '@angular/material/tabs';
 import * as moment from 'moment';
 import { EventService, FilterService, MapService, ObservationService, UserService } from '../upgrade/ajs-upgraded-providers';
 import { FeedAction, FeedPanelService } from './feed-panel.service';
-import { FeedService } from '../feed/feed.service';
+import { FeedService } from '@ngageoint/mage.web-core-lib/feed';
 import { FeedItemService } from '../feed/feed-item/feed-item.service';
 
 @Component({

@@ -1,5 +1,5 @@
-import { StaticIconReference } from '../../../../static-icon/static-icon.model'
-import { Feed, FeedExpanded, FeedPost, FeedPreview, FeedTopic, Service } from '../../../../feed/feed.model'
+import { StaticIconReference } from '@ngageoint/mage.web-core-lib/static-icon'
+import { Feed, FeedExpanded, FeedPost, FeedPreview, FeedTopic, Service } from '@ngageoint/mage.web-core-lib/feed'
 
 type RequiredKeys<T> = { [K in keyof T]-?: {} extends { [P in K]: T[K] } ? never : K }[keyof T];
 type OptionalKeys<T> = { [K in keyof T]-?: {} extends { [P in K]: T[K] } ? K : never }[keyof T];

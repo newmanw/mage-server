@@ -1,6 +1,5 @@
 import { Component, Input, OnChanges, SimpleChanges } from '@angular/core';
-import { FeedService } from '../feed.service';
-import { Feed } from '../feed.model';
+import { Feed, FeedService } from '@ngageoint/mage.web-core-lib/feed';
 import { Feature } from 'geojson';
 
 @Component({
