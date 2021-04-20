@@ -30,7 +30,7 @@ const prettyBytes = require('pretty-bytes');
   });
   tar.pipe(out);
   tar.append(JSON.stringify(packageDesc, null, 2), { name: 'package/package.json' });
-  tar.directory('dist', 'package/dist/');
+  tar.directory('dist/app', 'package/dist/');
   await tar.finalize();
   const stats = await fs.stat(tarPath);
   return { path: tarPath, unpackedSize, stats };
