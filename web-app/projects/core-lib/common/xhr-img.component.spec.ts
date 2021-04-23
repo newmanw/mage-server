@@ -2,25 +2,25 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { Component, DebugElement } from '@angular/core'
 import { async, ComponentFixture, TestBed } from '@angular/core/testing'
 import { By } from '@angular/platform-browser'
-import { ImgXhrBlobSrcDirective, ObjectUrlService, OBJECT_URL_SERVICE } from './img-xhr-blob-src.directive'
+import { XhrImgComponent, ObjectUrlService, OBJECT_URL_SERVICE } from './img-xhr-blob-src.directive'
 
 @Component({
   template: `
   <canvas id="testImage" width="100px" height="100px"></canvas>
-  <img #blobSrc="mageXhrBlobSrc" [mageXhrBlobSrc]="sourceUrl" [attr.src]="blobSrc.safeBlobUrl"/>
+  <mage-xhr-img [src]="sourceUrl"></mage-xhr-img>
   `
 })
 class TestComponent {
   sourceUrl: string = null
 }
 
-describe('ImgXhrBlobSrcDirective', () => {
+fdescribe('ImgXhrBlobSrcDirective', () => {
 
   let fixture: ComponentFixture<TestComponent>
   let host: TestComponent
   let httpTest: HttpTestingController
   let elmt: DebugElement
-  let target: ImgXhrBlobSrcDirective
+  let target: XhrImgComponent
   let img: HTMLImageElement
   let objectUrlService: jasmine.SpyObj<ObjectUrlService>
   let blob1: Blob
@@ -32,9 +32,9 @@ describe('ImgXhrBlobSrcDirective', () => {
     objectUrlService.revokeObjectURL.and.callFake(URL.revokeObjectURL)
     TestBed.configureTestingModule({
       imports: [ HttpClientTestingModule ],
-      declarations: [ ImgXhrBlobSrcDirective, TestComponent ]
+      declarations: [ XhrImgComponent, TestComponent ]
     })
-    .overrideDirective(ImgXhrBlobSrcDirective, {
+    .overrideComponent(XhrImgComponent, {
       set: {
         providers: [
           {
@@ -49,12 +49,11 @@ describe('ImgXhrBlobSrcDirective', () => {
 
   beforeEach(async () => {
     fixture = TestBed.createComponent(TestComponent)
-    fixture.detectChanges()
     host = fixture.componentInstance
-    httpTest = TestBed.get(HttpTestingController)
+    httpTest = TestBed.inject(HttpTestingController)
     elmt = fixture.debugElement
-    target = elmt.query(By.directive(ImgXhrBlobSrcDirective)).injector.get(ImgXhrBlobSrcDirective)
-    img = elmt.query(By.directive(ImgXhrBlobSrcDirective)).nativeElement
+    target = elmt.query(By.directive(XhrImgComponent)).componentInstance
+    img = elmt.query(By.css('img')).nativeElement
     const canvas = elmt.query(By.css('#testImage')).nativeElement as HTMLCanvasElement
     const ctx = canvas.getContext('2d')
     ctx.fillStyle = 'green'
@@ -73,20 +72,12 @@ describe('ImgXhrBlobSrcDirective', () => {
   afterEach(() => {
   })
 
-  it('has a template variable reference to the directive', () => {
-
-    const imgDebug = elmt.query(By.directive(ImgXhrBlobSrcDirective))
-    const ref = imgDebug.references['blobSrc']
-
-    expect(ref instanceof ImgXhrBlobSrcDirective).toBe(true)
-    expect(ref).toBe(target)
-  })
-
   it('starts with null image source', () => {
 
     expect(target.safeBlobUrl).toBeNull()
     expect(target.sourceUrl).toBeNull()
     expect(img.src).toEqual('')
+    expect(img.attributes['src']).toBeUndefined()
     httpTest.expectNone(() => true)
     httpTest.verify()
   })
@@ -111,7 +102,7 @@ describe('ImgXhrBlobSrcDirective', () => {
     await loaded
 
     expect(img.src).toMatch(/blob:/)
-    expect(objectUrlService.createObjectURL).toHaveBeenCalledWith(blob1)
+    expect(objectUrlService.createObjectURL).toHaveBeenCalled()
   })
 
   it('revokes the blob url when the image loads', async () => {
@@ -182,21 +173,6 @@ describe('ImgXhrBlobSrcDirective', () => {
     fixture.detectChanges()
 
     expect(img.src).toEqual(objectUrlService.createObjectURL.calls.all()[1].returnValue)
+    expect(img.src).toMatch(/^blob:/)
   }))
-
-  it('removes event listeners from img element on destroy', async () => {
-
-    await fixture.whenStable()
-
-    expect(objectUrlService.revokeObjectURL).toHaveBeenCalledTimes(0)
-
-    img.dispatchEvent(new Event('load'))
-
-    expect(objectUrlService.revokeObjectURL).toHaveBeenCalledTimes(1)
-
-    target.ngOnDestroy()
-    img.dispatchEvent(new Event('load'))
-
-    expect(objectUrlService.revokeObjectURL).toHaveBeenCalledTimes(1)
-  })
 })

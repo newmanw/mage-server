@@ -1,16 +1,16 @@
 import { NgModule } from '@angular/core'
 import { BrowserModule } from '@angular/platform-browser'
-import { ImgXhrBlobSrcDirective } from './img-xhr-blob-src.directive'
+import { XhrImgComponent } from './xhr-img.component'
 
 @NgModule({
   imports: [
     BrowserModule
   ],
   declarations: [
-    ImgXhrBlobSrcDirective
+    XhrImgComponent
   ],
   exports: [
-    ImgXhrBlobSrcDirective
+    XhrImgComponent
   ]
 })
 export class MageCommonModule {}

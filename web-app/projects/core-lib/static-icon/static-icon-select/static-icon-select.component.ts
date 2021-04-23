@@ -1,5 +1,5 @@
-import { Component, Input, OnInit } from '@angular/core'
-import { pageForItemIndex, PagingParameters, PagingDataSource } from '@ngageoint/web-core-lib/paging'
+import { Component, OnInit } from '@angular/core'
+import { PagingParameters, PagingDataSource } from '@ngageoint/mage.web-core-lib/paging'
 import { StaticIcon } from '../static-icon.model'
 import { StaticIconService } from '../static-icon.service'
 

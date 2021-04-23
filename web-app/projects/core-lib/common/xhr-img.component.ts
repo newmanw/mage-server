@@ -1,24 +1,31 @@
-import { Directive, ElementRef, Inject, InjectionToken, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core'
+import { Component, ElementRef, Inject, InjectionToken, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core'
 import { HttpClient } from '@angular/common/http'
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser'
 import { Subscription } from 'rxjs'
 
-const selectorAttr = 'mageXhrBlobSrc'
+const selector = 'mage-xhr-img'
 
+/**
+ * This is a simple interface that includes the [methods](https://www.w3.org/TR/FileAPI/#creating-revoking)
+ * from the [URL API](https://developer.mozilla.org/en-US/docs/Web/API/URL) for
+ * managing blob URLs.  This allows a service to be injected into
+ * `XhrImgComponent` and overridden for testing.
+ */
 export interface ObjectUrlService {
   createObjectURL: (typeof URL)['createObjectURL']
   revokeObjectURL: (typeof URL)['revokeObjectURL']
 }
-export const OBJECT_URL_SERVICE = new InjectionToken<ObjectUrlService>(`${selectorAttr}.objectUrlService`)
+export const OBJECT_URL_SERVICE = new InjectionToken<ObjectUrlService>(`${selector}.objectUrlService`)
 
 /**
- * This directive allows fetching images by `XMLHttpRequest` rather than the
+ * This component allows fetching images by `XMLHttpRequest` rather than the
  * browser's native mechanism.  These image requests are subject to HTTP
  * interceptors that can add authorization headers to the request instead of
  * using cache-defeating URL query parameters to set an auth token.  Applying
  * headers to the browser's native `img` requests is impossible, so a query
  * parameter is necessary for authorization, but adding the parameter to the
- * URL effectively bypasses the browser's caching mechanism for images that
+ * URL effectively bypasses the browser's caching mechanism when the auth token
+ * changes for images that
  * should otherwise be subject to caching.
  *
  * The catch to fetching images by XHR is the response must be fetched as a
@@ -29,22 +36,17 @@ export const OBJECT_URL_SERVICE = new InjectionToken<ObjectUrlService>(`${select
  * resources.  See [Mozilla's docs](https://developer.mozilla.org/en-US/docs/Web/API/File/Using_files_from_web_applications#example_using_object_urls_to_display_images)
  * on the subject.
  *
- * The use of the directive is a bit cumbersome because Angular only allows
- * users to assign `SafeUrl` instances to an `img` `src` attribute from a
- * template, rather than code.  If the latter were allowed, this directive
- * could simply `this.imgElement.src = safeBlobUrl`.  Instead, the user of this
- * directive must assign the `src` attribute in the template by refrencing the
- * directive instance with a template reference variable, as follows.
+ * To use the component, simply add the tag to a template and bind the `src`
+ * attribute to the source URL of the desired image.
  * ```
- * <img [mageXhrBlobSrc]="someComponent.imageUrl" #blobSrc="mageXhrBlobSrc" [attr.src]="blobSrc.blobUrl"/>
+ * <mage-xhr-img [src]="someComponent.imageUrlRequiresAuth"></mage-xhr-img>
  * ```
- * The benefit, though, is that the directive encapsulates the logic of
- * cleaning up the object URLs that it creates to assign to the `img` tag's
- * `src`, preventing memory leaks.
+ * The component encapsulates the logic of creating and releasing the object
+ * URLs for the image data, preventing memory leaks.
  */
-@Directive({
-  selector: `img[${selectorAttr}]`,
-  exportAs: 'mageXhrBlobSrc',
+@Component({
+  selector: `${selector}`,
+  template: `<img [attr.src]="safeBlobUrl" (load)="onImgLoad()"/>`,
   providers: [
     {
       provide: OBJECT_URL_SERVICE,
@@ -52,27 +54,22 @@ export const OBJECT_URL_SERVICE = new InjectionToken<ObjectUrlService>(`${select
     }
   ]
 })
-export class ImgXhrBlobSrcDirective implements OnChanges, OnDestroy {
+export class XhrImgComponent implements OnChanges, OnDestroy {
 
-  @Input(selectorAttr)
+  @Input('src')
   sourceUrl: string | null = null
   safeBlobUrl: SafeUrl | null = null
 
-  private img: HTMLImageElement
   private blobUrl: string
-  private releaseImgSrc: () => void
   private subscription: Subscription
 
-  constructor(elmt: ElementRef, @Inject(OBJECT_URL_SERVICE) private objectUrlService: ObjectUrlService, private http: HttpClient, private sanitizer: DomSanitizer) {
-    this.img = elmt.nativeElement
-    this.releaseImgSrc = () => {
-      this.objectUrlService.revokeObjectURL(this.img.src)
-    }
-    this.img.addEventListener('load', this.releaseImgSrc)
-  }
+  constructor(@Inject(OBJECT_URL_SERVICE) private objectUrlService: ObjectUrlService, private http: HttpClient, private sanitizer: DomSanitizer) {}
 
   ngOnChanges(changes: SimpleChanges) {
     if (!changes.sourceUrl) {
+      return
+    }
+    if (changes.sourceUrl.isFirstChange() && !this.sourceUrl) {
       return
     }
     this.disposeCurrent()
@@ -89,17 +86,19 @@ export class ImgXhrBlobSrcDirective implements OnChanges, OnDestroy {
 
   ngOnDestroy() {
     this.disposeCurrent()
-    this.img.removeEventListener('load', this.releaseImgSrc)
+  }
+
+  onImgLoad() {
+    this.disposeCurrent()
   }
 
   private disposeCurrent() {
     if (this.blobUrl) {
       this.objectUrlService.revokeObjectURL(this.blobUrl)
     }
-    this.blobUrl = null
-    this.safeBlobUrl = null
     if (this.subscription) {
       this.subscription.unsubscribe()
     }
+    this.blobUrl = null
   }
 }

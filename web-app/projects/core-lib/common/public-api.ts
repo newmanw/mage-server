@@ -1,2 +1,2 @@
-export * from './img-xhr-blob-src.directive'
+export * from './xhr-img.component'
 export * from './mage-common.module'

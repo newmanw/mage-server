@@ -1,9 +1,8 @@
 import { HttpClient } from '@angular/common/http'
-import { Component, Input, OnChanges, OnDestroy, SimpleChanges } from '@angular/core'
+import { Component, OnChanges, OnDestroy, SimpleChanges } from '@angular/core'
 import { AbstractControl, ControlValueAccessor, FormControl, FormGroup, NG_VALIDATORS, NG_VALUE_ACCESSOR, ValidationErrors, Validator, Validators } from '@angular/forms'
 import { DomSanitizer } from '@angular/platform-browser'
-import { map } from 'rxjs/operators'
-import { RegisteredStaticIconReference, SourceUrlStaticIconReference, StaticIcon, StaticIconReference } from '../static-icon.model'
+import { StaticIcon, StaticIconReference } from '../static-icon.model'
 import { StaticIconService } from '../static-icon.service'
 
 
@@ -49,16 +48,11 @@ export class StaticIconFormFieldComponent implements OnChanges, OnDestroy, Contr
     this.onValidatorChange = fn
   }
 
-  ngOnChanges(changes: SimpleChanges) {
-  }
+  ngOnChanges(changes: SimpleChanges) { }
 
-  ngOnDestroy() {
+  ngOnDestroy() { }
 
-  }
-
-  onSelectIcon() {
-
-  }
+  onSelectIcon() { }
 
   writeValue(iconRef: StaticIconReference): void {
     this.iconRef = iconRef
@@ -147,12 +141,4 @@ function formValueForIconRef(x: StaticIconReference | null): IconRefFormValue {
     iconRefType,
     iconRefToken
   }
-}
-
-function asRegistered(iconRef: StaticIconReference): RegisteredStaticIconReference {
-  return iconRef as RegisteredStaticIconReference
-}
-
-function asSourceUrl(iconRef: StaticIconReference): SourceUrlStaticIconReference {
-  return iconRef as SourceUrlStaticIconReference
 }
