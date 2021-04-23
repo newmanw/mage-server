@@ -2,6 +2,7 @@
   "name": "@ngageoint/mage.web-core-lib",
   "version": "5.4.4",
   "peerDependencies": {
+    "@angular/cdk": "^9.2.4",
     "@angular/common": "^9.1.13",
     "@angular/core": "^9.1.13",
     "@angular/platform-browser": "~9.1.13",
