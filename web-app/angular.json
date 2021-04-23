@@ -3,7 +3,7 @@
   "version": 1,
   "newProjectRoot": "projects",
   "projects": {
-    "mage-app": {
+    "app": {
       "projectType": "application",
       "schematics": {
         "@schematics/angular:component": {
@@ -199,5 +199,5 @@
       }
     }
   },
-  "defaultProject": "mage-app"
+  "defaultProject": "app"
 }
