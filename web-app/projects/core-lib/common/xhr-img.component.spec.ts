@@ -2,7 +2,7 @@ import { HttpClientTestingModule, HttpTestingController } from '@angular/common/
 import { Component, DebugElement } from '@angular/core'
 import { async, ComponentFixture, TestBed } from '@angular/core/testing'
 import { By } from '@angular/platform-browser'
-import { XhrImgComponent, ObjectUrlService, OBJECT_URL_SERVICE } from './img-xhr-blob-src.directive'
+import { XhrImgComponent, ObjectUrlService, OBJECT_URL_SERVICE } from './xhr-img.component'
 
 @Component({
   template: `
@@ -14,7 +14,7 @@ class TestComponent {
   sourceUrl: string = null
 }
 
-fdescribe('ImgXhrBlobSrcDirective', () => {
+describe('ImgXhrBlobSrcDirective', () => {
 
   let fixture: ComponentFixture<TestComponent>
   let host: TestComponent
