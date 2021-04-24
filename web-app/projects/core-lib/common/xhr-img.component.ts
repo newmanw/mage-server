@@ -47,6 +47,7 @@ export const OBJECT_URL_SERVICE = new InjectionToken<ObjectUrlService>(`${select
 @Component({
   selector: `${selector}`,
   template: `<img [attr.src]="safeBlobUrl" (load)="onImgLoad()"/>`,
+  styles: [ `img { height: 100%; width: 100% }` ],
   providers: [
     {
       provide: OBJECT_URL_SERVICE,

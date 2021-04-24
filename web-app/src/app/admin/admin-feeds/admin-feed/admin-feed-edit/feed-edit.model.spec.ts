@@ -1,4 +1,4 @@
-import { Feed, FeedPost, FeedTopic, Service } from '../../../../feed/feed.model'
+import { Feed, FeedPost, FeedTopic, Service } from '@ngageoint/mage.web-core-lib/feed'
 import { FeedEditState, FeedMetaData, feedMetaDataLean, FeedMetaDataNullable, feedPostFromEditState } from './feed-edit.model'
 
 export type FeedMetaDataBooleanKeys = { [K in keyof FeedMetaData]: FeedMetaData[K] extends boolean ? K : never }[keyof FeedMetaData]

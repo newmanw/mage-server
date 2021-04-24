@@ -1,8 +1,9 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable } from '@angular/core';
-import { Feature } from 'geojson';
-import { BehaviorSubject, Observable, Subject } from 'rxjs';
-import { Feed, FeedContent, FeedExpanded, FeedPost, FeedPreview, FeedTopic, Service, ServiceType, StyledFeature } from './feed.model';
+import { Inject, Injectable } from '@angular/core';
+import { contentPathOfIcon } from '@ngageoint/mage.web-core-lib/static-icon'
+import { Feature } from 'geojson'
+import { BehaviorSubject, Observable, Subject } from 'rxjs'
+import { Feed, FeedContent, FeedExpanded, FeedPost, FeedPreview, FeedTopic, Service, ServiceType, StyledFeature } from './feed.model'
 
 
 export interface FeedPreviewOptions {
@@ -117,19 +118,15 @@ export class FeedService {
 
     const feedItems = this._feedItems.get(feed.id);
     this.http.post<FeedContent>(`/api/events/${event.id}/feeds/${feed.id}/content`, {}).subscribe(content => {
-      const style = feed.mapStyle || {
-        iconUrl: '/assets/images/default_marker.png'
-      }
-
+      const icon = feed.mapStyle?.icon || feed.icon
+      const iconUrl = icon ? `${contentPathOfIcon(icon)}` : '/assets/images/default_marker.png'
       const features = content.items.features;
       features.map((feature: StyledFeature) => {
         feature.id = feature.id.toString();
         feature.properties = feature.properties || {};
-        feature.style = style;
-
+        feature.style = { iconUrl } as any;
         return feature;
       });
-
       subject.next(content);
       feedItems.next(features);
     });

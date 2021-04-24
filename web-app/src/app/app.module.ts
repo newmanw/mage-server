@@ -135,7 +135,7 @@ import { AdminFeedsModule } from './admin/admin-feeds/admin-feeds.module';
 import { ObservationPopupComponent } from './observation/observation-popup/observation-popup.component';
 import { UserPopupComponent } from './user/user-popup/user-popup.component';
 import { CdkDetailRowDirective } from './export/directives/cdk-detail-row.directive';
-import { StaticIconFormFieldComponent, StaticIconModule } from '@ngageoint/mage.web-core-lib/static-icon'
+import { StaticIconModule } from '@ngageoint/mage.web-core-lib/static-icon'
 import { MageCommonModule } from '@ngageoint/mage.web-core-lib/common'
 
 @NgModule({

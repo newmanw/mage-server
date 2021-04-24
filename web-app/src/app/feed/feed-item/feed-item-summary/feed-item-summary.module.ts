@@ -5,6 +5,7 @@ import { MatListModule } from '@angular/material/list'
 import { FeedItemSummaryComponent } from './feed-item-summary.component'
 import { MomentModule } from '../../../moment/moment.module'
 import { MageCommonModule } from '@ngageoint/mage.web-core-lib/common'
+import { StaticIconModule } from '@ngageoint/mage.web-core-lib/static-icon'
 
 @NgModule({
   declarations: [FeedItemSummaryComponent],
@@ -14,7 +15,8 @@ import { MageCommonModule } from '@ngageoint/mage.web-core-lib/common'
     MatIconModule,
     MatListModule,
     MomentModule,
-    MageCommonModule
+    MageCommonModule,
+    StaticIconModule
   ]
 })
 export class FeedItemSummaryModule { }

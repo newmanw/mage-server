@@ -13,8 +13,8 @@
       <div class="card-title">{{primary}}</div>
       <div class="card-subtitle">{{secondary}}</div>
     </div>
-    <mat-icon mat-card-avatar *ngIf="!iconUrl" color="primary">place</mat-icon>
-    <img mat-card-avatar *ngIf="iconUrl" #blobSrc="mageXhrBlobSrc" [mageXhrBlobSrc]="iconUrl" [attr.src]="blobSrc.safeBlobUrl" />
+    <mat-icon mat-card-avatar *ngIf="!feed.icon" color="primary">place</mat-icon>
+    <mage-static-icon-img mat-card-avatar *ngIf="feed.icon" [iconRef]="feed.icon"></mage-static-icon-img>
   </div>
   <div mat-card-image>
     <map-clip class="map" [feature]=mapFeature></map-clip>

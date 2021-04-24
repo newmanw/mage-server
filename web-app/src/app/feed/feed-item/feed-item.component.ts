@@ -13,32 +13,29 @@ export class FeedItemComponent implements OnChanges {
   @Input() feed: Feed;
   @Input() item: StyledFeature;
 
-  hasContent = false;
-  timestamp: number;
-  primary: string;
-  secondary: string;
-  iconUrl?: string;
-  mapFeature: StyledFeature;
+  hasContent = false
+  timestamp: number
+  primary: string
+  secondary: string
+  mapFeature: StyledFeature
   properties = []
 
   constructor(private feedPanelService: FeedPanelService, @Inject(MapService) private mapService: any) {}
 
   ngOnChanges(_changes: SimpleChanges): void {
-    this.updateItem();
+    this.updateItem()
   }
 
   private updateItem(): void {
-    if (!this.feed || !this.item) return;
+    if (!this.feed || !this.item) {
+      return
+    }
 
-    this.mapFeature = { ...this.item };
-    this.mapFeature.style.iconUrl = '/assets/images/default_marker.png';
+    this.mapFeature = { ...this.item }
 
-    if (!this.item.properties) return;
-
-    // if (this.feed.mapStyle) {
-    //   this.iconUrl = this.feed.mapStyle.i;
-    // }
-    this.iconUrl = contentPathOfIcon(this.feed.icon)
+    if (!this.item.properties) {
+      return
+    }
 
     if (this.feed.itemTemporalProperty && this.item.properties[this.feed.itemTemporalProperty] != null) {
       this.timestamp = this.item.properties[this.feed.itemTemporalProperty];
@@ -72,5 +69,4 @@ export class FeedItemComponent implements OnChanges {
   onLocationClick(): void {
     this.mapService.zoomToFeatureInLayer(this.item, `feed-${this.feed.id}`);
   }
-
 }

@@ -3,7 +3,7 @@
 
   <div class="page-container">
     <div class="header" *ngIf="editState.originalFeed">
-      <img class="icon" *ngIf="editState.originalFeed.mapStyle?.iconUrl" [src]="editState.originalFeed.mapStyle?.iconUrl"/>
+      <mage-static-icon-img class="icon" *ngIf="editState.originalFeed?.icon" [iconRef]="editState.originalFeed?.icon"></mage-static-icon-img>
       <span class="header__title">{{editState.originalFeed.title}}</span>
     </div>
 

@@ -21,7 +21,7 @@ export interface Feed {
 }
 
 export interface MapStyle {
-  iconUrl?: string;
+  icon?: RegisteredStaticIconReference;
 }
 
 export type StyledFeature = Feature & { style: MapStyle }
