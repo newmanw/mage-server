@@ -93,18 +93,18 @@
           "options": {
             "extraWebpackConfig": "webpack.extra.js",
             "proxyConfig": "proxy.conf.json",
-            "browserTarget": "mage-app:build"
+            "browserTarget": "app:build"
           },
           "configurations": {
             "production": {
-              "browserTarget": "mage-app:build:production"
+              "browserTarget": "app:build:production"
             }
           }
         },
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "mage-app:build"
+            "browserTarget": "app:build"
           }
         },
         "test": {
@@ -148,11 +148,11 @@
           "builder": "@angular-devkit/build-angular:protractor",
           "options": {
             "protractorConfig": "e2e/protractor.conf.js",
-            "devServerTarget": "mage-app:serve"
+            "devServerTarget": "app:serve"
           },
           "configurations": {
             "production": {
-              "devServerTarget": "mage-app:serve:production"
+              "devServerTarget": "app:serve:production"
             }
           }
         }
@@ -162,7 +162,7 @@
       "projectType": "library",
       "root": "projects/core-lib",
       "sourceRoot": "projects/core-lib",
-      "prefix": "lib",
+      "prefix": "mage",
       "architect": {
         "build": {
           "builder": "@angular-devkit/build-ng-packagr:build",
