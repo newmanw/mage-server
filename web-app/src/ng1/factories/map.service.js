@@ -180,10 +180,18 @@ function MapService(EventService, LocationService, FeatureService, LocalStorageS
   }
 
   function onFeedItemsChanged(changed) {
-    const geospatialFilter = ({feed}) => { return feed.itemsHaveSpatialDimension; }
 
     // Filter out non geospatial feeds
+    const geospatialFilter = ({feed}) => { return feed.itemsHaveSpatialDimension; }
     changed.added.filter(geospatialFilter).forEach(({ feed, items }) => {
+      /*
+      TODO: this icon stuff is a bandaid (tm) hack. revisit later when this
+      transitions to angular x and static icon api gets better.  consider using
+      blob urls for marker icons as in StaticIconImgComponent/XhrImgComponent
+      or setting the icon url from the server.
+      */
+      const iconId = (feed.mapStyle && feed.mapStyle.icon) ? feed.mapStyle.icon.id : feed.icon ? feed.icon.id : null;
+      const iconUrl = iconId ? `/api/icons/${iconId}/content?access_token=${LocalStorageService.getToken()}` : '/assets/images/default_marker.png'
       service.createFeedLayer({
         id: `feed-${feed.id}`,
         name: feed.title,
@@ -201,7 +209,8 @@ function MapService(EventService, LocationService, FeatureService, LocalStorageS
           },
           onLayer: (layer, feature) => {
             MapPopupService.registerFeedItem(layer, feed, feature);
-          }
+          },
+          iconUrl
         }
       });
     });

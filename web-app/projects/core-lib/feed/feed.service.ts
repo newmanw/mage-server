@@ -17,6 +17,7 @@ export class FeedService {
 
   constructor(private http: HttpClient) { }
 
+  // TODO: there is probably a better solution than maintaining this map here
   private _feeds = new BehaviorSubject<Array<Feed>>([]);
   readonly feeds = this._feeds.asObservable();
 
@@ -114,23 +115,18 @@ export class FeedService {
   }
 
   fetchFeedItems(event: any, feed: Feed): Observable<FeedContent> {
-    const subject = new Subject<FeedContent>();
-
-    const feedItems = this._feedItems.get(feed.id);
+    const subject = new Subject<FeedContent>()
+    const feedItems = this._feedItems.get(feed.id)
     this.http.post<FeedContent>(`/api/events/${event.id}/feeds/${feed.id}/content`, {}).subscribe(content => {
-      const icon = feed.mapStyle?.icon || feed.icon
-      const iconUrl = icon ? `${contentPathOfIcon(icon)}` : '/assets/images/default_marker.png'
-      const features = content.items.features;
+      const features = content.items.features
       features.map((feature: StyledFeature) => {
-        feature.id = feature.id.toString();
-        feature.properties = feature.properties || {};
-        feature.style = { iconUrl } as any;
-        return feature;
-      });
-      subject.next(content);
-      feedItems.next(features);
-    });
-
-    return subject;
+        feature.id = String(feature.id)
+        feature.properties = feature.properties || {}
+        return feature
+      })
+      subject.next(content)
+      feedItems.next(features)
+    })
+    return subject
   }
 }

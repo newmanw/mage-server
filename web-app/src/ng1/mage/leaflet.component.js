@@ -417,7 +417,10 @@ class LeafletController {
             pane: pane,
             accuracy: feature.properties.accuracy
           };
-          if (feature.style && feature.style.iconUrl) {
+          if (layerInfo.options.iconUrl) {
+            options.iconUrl = layerInfo.options.iconUrl;
+          }
+          else if (feature.style && feature.style.iconUrl) {
             options.iconUrl = feature.style.iconUrl;
           }
           if (layerInfo.options.iconWidth) {
