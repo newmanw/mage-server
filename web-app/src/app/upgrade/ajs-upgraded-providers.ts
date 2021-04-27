@@ -1,6 +1,6 @@
 import { InjectionToken } from "@angular/core";
 export const MapService = new InjectionToken<any>('MapService');
-export const LocalStorageService = new InjectionToken<any>('LocalStorageService');
+export const LocalStorageService = new InjectionToken<LocalStorageService & any>('LocalStorageService');
 export const UserService = new InjectionToken<any>('UserService');
 export const Event = new InjectionToken<any>('Event');
 export const FilterService = new InjectionToken<any>('EventService');
@@ -86,3 +86,7 @@ export const observationServiceProvider = {
   useFactory: observationServiceFactory,
   deps: ['$injector']
 };
+
+export interface LocalStorageService {
+  getToken(): string | null
+}
