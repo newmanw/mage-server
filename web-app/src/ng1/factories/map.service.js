@@ -185,10 +185,12 @@ function MapService(EventService, LocationService, FeatureService, LocalStorageS
     const geospatialFilter = ({feed}) => { return feed.itemsHaveSpatialDimension; }
     changed.added.filter(geospatialFilter).forEach(({ feed, items }) => {
       /*
-      TODO: this icon stuff is a bandaid (tm) hack. revisit later when this
+      TODO: this icon stuff is a band-aid (R) hack. revisit later when this
       transitions to angular x and static icon api gets better.  consider using
       blob urls for marker icons as in StaticIconImgComponent/XhrImgComponent
-      or setting the icon url from the server.
+      or setting the icon url from the server in the web adapter layer.
+      caching works much better with urls that do not have the access token
+      query string parameter.
       */
       const iconId = (feed.mapStyle && feed.mapStyle.icon) ? feed.mapStyle.icon.id : feed.icon ? feed.icon.id : null;
       const iconUrl = iconId ? `/api/icons/${iconId}/content?access_token=${LocalStorageService.getToken()}` : '/assets/images/default_marker.png'
