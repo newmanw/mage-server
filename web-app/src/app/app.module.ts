@@ -1,5 +1,5 @@
 import { BrowserModule } from '@angular/platform-browser';
-import { NgModule, ApplicationRef } from '@angular/core';
+import { NgModule, ApplicationRef, DoBootstrap } from '@angular/core';
 
 import { UpgradeModule } from '@angular/upgrade/static';
 import { UIRouterUpgradeModule } from '@uirouter/angular-hybrid';
@@ -286,7 +286,7 @@ import { MageCommonModule } from '@ngageoint/mage.web-core-lib/common'
     { provide: HTTP_INTERCEPTORS, useClass: TokenInterceptorService, multi: true }
   ]
 })
-export class AppModule {
+export class AppModule implements DoBootstrap {
   // eslint-disable-next-line @typescript-eslint/no-empty-function
   public ngDoBootstrap(appRef: ApplicationRef): void {
   }
