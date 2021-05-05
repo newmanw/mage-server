@@ -1,8 +1,8 @@
 import { Observable, of, NextObserver, MonoTypeOperatorFunction, throwError } from 'rxjs'
 import { distinctUntilChanged, pluck } from 'rxjs/operators'
 import { FeedEditService, FeedEditStateObservers } from './feed-edit.service'
-import { FeedService } from '../../../../feed/feed.service'
-import { FeedExpanded, FeedPreview, FeedTopic, Service } from '../../../../feed/feed.model'
+import { FeedService } from '@ngageoint/mage.web-core-lib/feed/feed.service'
+import { FeedExpanded, FeedPreview, FeedTopic, Service } from '@ngageoint/mage.web-core-lib/feed/feed.model'
 import { FeedEditState, FeedMetaData, feedMetaDataLean, feedPostFromEditState } from './feed-edit.model'
 import * as _ from 'lodash'
 

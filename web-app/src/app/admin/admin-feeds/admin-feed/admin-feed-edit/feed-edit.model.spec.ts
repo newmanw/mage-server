@@ -171,7 +171,9 @@ describe('feedPostFromEditState', () => {
       itemsHaveIdentity: true,
       itemsHaveSpatialDimension: true,
       mapStyle: {
-        iconUrl: 'icon1'
+        icon: {
+          sourceUrl: 'icon1'
+        }
       },
       paramsSchema: {
         properties: {
@@ -244,7 +246,9 @@ describe('feedPostFromEditState', () => {
       itemsHaveIdentity: true,
       itemsHaveSpatialDimension: true,
       mapStyle: {
-        iconUrl: 'icon1'
+        icon: {
+          sourceUrl: 'icon1'
+        }
       },
       paramsSchema: {
         properties: {

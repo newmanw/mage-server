@@ -17,14 +17,13 @@ import { StateService } from '@uirouter/angular';
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
 import { BehaviorSubject, of } from 'rxjs'
 import { AdminBreadcrumbModule } from 'src/app/admin/admin-breadcrumb/admin-breadcrumb.module';
-import { MageCommonModule } from 'src/app/common/mage-common.module'
+import { MageCommonModule } from '@ngageoint/mage.web-core-lib/common'
 import { FeedItemSummaryComponent } from 'src/app/feed/feed-item/feed-item-summary/feed-item-summary.component';
-import { ServiceType } from 'src/app/feed/feed.model'
-import { FeedService } from 'src/app/feed/feed.service'
+import { ServiceType, FeedService } from '@ngageoint/mage.web-core-lib/feed'
 import { JsonSchemaWidgetAutocompleteComponent } from 'src/app/json-schema/json-schema-widget/json-schema-widget-autocomplete.component';
 import { JsonSchemaModule } from 'src/app/json-schema/json-schema.module';
 import { MomentModule } from 'src/app/moment/moment.module';
-import { StaticIconModule } from 'src/app/static-icon/static-icon.module'
+import { StaticIconModule } from '@ngageoint/mage.web-core-lib/static-icon'
 import { AdminServiceEditComponent } from '../../admin-service/admin-service-edit/admin-service-edit.component';
 import { AdminFeedEditConfigurationComponent } from './admin-feed-edit-configuration.component';
 import { AdminFeedEditItemPropertiesComponent } from './admin-feed-edit-item-properties/admin-feed-edit-item-properties.component';

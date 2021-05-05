@@ -6,7 +6,7 @@ import { MatSelectModule } from '@angular/material/select'
 import { By } from '@angular/platform-browser'
 import { NoopAnimationsModule } from '@angular/platform-browser/animations'
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search'
-import { FeedTopic, Service } from 'src/app/feed/feed.model'
+import { FeedTopic, Service } from '@ngageoint/mage.web-core-lib/feed'
 import { AdminFeedEditTopicComponent } from './admin-feed-edit-topic.component'
 
 describe('ChooseServiceTopicComponent', () => {

@@ -8,7 +8,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { NoopAnimationsModule } from '@angular/platform-browser/animations';
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
-import { Service, ServiceType } from 'src/app/feed/feed.model';
+import { Service, ServiceType } from '@ngageoint/mage.web-core-lib/feed';
 import { AdminServiceEditComponent } from './admin-service-edit.component';
 
 describe('AdminServiceEditComponent', () => {

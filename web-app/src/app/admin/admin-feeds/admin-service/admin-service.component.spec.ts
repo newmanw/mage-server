@@ -9,7 +9,7 @@ import { MatPaginatorModule } from '@angular/material/paginator'
 import { RawParams, StateOrName, StateService, TransitionOptions, TransitionPromise } from '@uirouter/angular';
 import { of } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
-import { Feed, FeedExpanded, ServiceType } from 'src/app/feed/feed.model';
+import { Feed, FeedExpanded, ServiceType } from '@ngageoint/mage.web-core-lib/feed/feed.model';
 import { JsonSchemaModule } from 'src/app/json-schema/json-schema.module';
 import { UserService } from 'src/app/upgrade/ajs-upgraded-providers';
 import { AdminBreadcrumbModule } from '../../admin-breadcrumb/admin-breadcrumb.module';
@@ -186,7 +186,9 @@ describe('AdminServiceComponent', () => {
     itemTemporalProperty: 'timestamp',
     updateFrequencySeconds: 915,
     mapStyle: {
-      iconUrl: 'https://example.com/icon.png'
+      icon: {
+        id: 'icon1a2b'
+      }
     },
     id: 'feedid1234'
   };
