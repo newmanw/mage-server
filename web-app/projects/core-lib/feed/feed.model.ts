@@ -8,7 +8,7 @@ export interface Feed {
   title: string;
   summary?: string;
   icon?: RegisteredStaticIconReference;
-  mapStyle?: MapStyle;
+  mapStyle?: RegisteredMapStyle;
   itemTemporalProperty?: string;
   itemPrimaryProperty?: string;
   itemSecondaryProperty?: string;
@@ -21,6 +21,10 @@ export interface Feed {
 }
 
 export interface MapStyle {
+  icon?: SourceUrlStaticIconReference
+}
+
+export interface RegisteredMapStyle {
   icon?: RegisteredStaticIconReference;
 }
 
