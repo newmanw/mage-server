@@ -55,7 +55,7 @@ class TestHostComponent {
   }
 }
 
-fdescribe('change detection', () => {
+describe('change detection', () => {
 
   let fixture: ComponentFixture<TestHostComponent>
   let host: TestHostComponent
