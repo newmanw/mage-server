@@ -10,33 +10,28 @@ class AdminController {
 
     this.userState = 'inactive';
     this.inactiveUsers = [];
-    this.stateAndData = this.UserPagingService.constructDefault();
+    const defaultUserQueries = this.UserPagingService.constructDefault()
+    this.stateAndData = {
+      inactive: defaultUserQueries.inactive
+    }
 
     this.deviceState = 'unregistered';
     this.unregisteredDevices = [];
-    this.deviceStateAndData = this.DevicePagingService.constructDefault();
-
+    const defaultDeviceQueries = this.DevicePagingService.constructDefault();
+    this.deviceStateAndData = {
+      unregistered: defaultDeviceQueries.unregistered
+    }
     this.setState();
   }
 
   $onInit() {
     this.currentAdminPanel = this.$stateParams.adminPanel || "";
-
-    this.stateAndData.delete('all');
-    this.stateAndData.delete('active');
-    this.stateAndData.delete('disabled');
-
     this.UserPagingService.refresh(this.stateAndData).then(() => {
       this.inactiveUsers = this.UserPagingService.users(this.stateAndData[this.userState]);
     });
-
-    this.deviceStateAndData.delete('all');
-    this.deviceStateAndData.delete('registered');
-
     this.DevicePagingService.refresh(this.deviceStateAndData).then(() => {
       this.unregisteredDevices = this.DevicePagingService.devices(this.deviceStateAndData[this.deviceState]);
     });
-
     this.$transitions.onSuccess({}, () => {
       this.setState();
     });
