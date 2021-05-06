@@ -139,7 +139,7 @@ export interface FetchFeedContent {
   (req: FetchFeedContentRequest): Promise<AppResponse<FeedContent, PermissionDeniedError | EntityNotFoundError>>
 }
 
-export interface FeedServiceTypeDescriptor extends Descriptor<'FeedServiceType'>, Pick<FeedServiceType, 'id' | 'title' | 'summary'> {
+export interface FeedServiceTypeDescriptor extends Descriptor<'FeedServiceType'>, Pick<FeedServiceType, 'id' | 'title' | 'summary' | 'pluginServiceTypeId'> {
   id: string
   configSchema: JsonObject | null
 }
@@ -148,6 +148,7 @@ export function FeedServiceTypeDescriptor(from: FeedServiceType): FeedServiceTyp
   return {
     descriptorOf: 'FeedServiceType',
     id: from.id as string,
+    pluginServiceTypeId: from.pluginServiceTypeId,
     title: from.title,
     summary: from.summary,
     configSchema: from.configSchema as JsonObject | null

@@ -76,6 +76,7 @@ describe('feeds web controller', function() {
         {
           descriptorOf: 'FeedServiceType',
           id: 'wfs',
+          pluginServiceTypeId: 'urn:ogc:wfs',
           title: 'Web Feature Service',
           summary: null,
           configSchema: {
@@ -88,6 +89,7 @@ describe('feeds web controller', function() {
         {
           descriptorOf: 'FeedServiceType',
           id: 'nws',
+          pluginServiceTypeId: 'https://www.weather.gov',
           title: 'National Weather Service',
           summary: null,
           configSchema: null
@@ -407,6 +409,7 @@ invalid request
         serviceType: {
           descriptorOf: 'FeedServiceType',
           id: uniqueId(),
+          pluginServiceTypeId: 'urn:test',
           title: 'Test Service Type',
           summary: null,
           configSchema: {},

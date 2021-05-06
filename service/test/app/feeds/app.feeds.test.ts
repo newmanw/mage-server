@@ -19,6 +19,7 @@ import { StaticIcon, StaticIconId, StaticIconImportFetch, StaticIconRepository }
 function mockServiceType(descriptor: FeedServiceTypeDescriptor): SubstituteOf<RegisteredFeedServiceType> {
   const mock = Sub.for<RegisteredFeedServiceType>()
   mock.id.returns!(descriptor.id)
+  mock.pluginServiceTypeId.returns!(descriptor.pluginServiceTypeId)
   mock.title.returns!(descriptor.title)
   mock.summary.returns!(descriptor.summary)
   mock.configSchema.returns!(descriptor.configSchema)
@@ -29,6 +30,7 @@ const someServiceTypeDescs: FeedServiceTypeDescriptor[] = [
   Object.freeze({
     descriptorOf: 'FeedServiceType',
     id: `ogc.wfs-${uniqid()}`,
+    pluginServiceTypeId: 'urn:ogc:wfs',
     title: 'OGC Web Feature Service',
     summary: 'An OGC Web Feature Service is a standard interface to query geospatial features.',
     configSchema: {
@@ -47,6 +49,7 @@ const someServiceTypeDescs: FeedServiceTypeDescriptor[] = [
   Object.freeze({
     descriptorOf: 'FeedServiceType',
     id: `ogc.oaf-${uniqid()}`,
+    pluginServiceTypeId: 'urn:ogc:oaf',
     title: 'OGC API - Features Service',
     summary: 'An OGC API - Features service is a standard interface to query geospatial features.  OAF is the modern evolution of WFS.',
     configSchema: {
