@@ -12,6 +12,13 @@ export class PluginResourceUrl extends URL {
 
   static readonly pluginProtocol = 'mage-plugin:'
 
+  /**
+   * Return the plugin module path from the given URL which is the path
+   * component of the URL with no leading slash.  Return `undefined` if the
+   * given URL does not have the appropriate {@link PluginResourceUrl.pluginProtocol | protocol}.
+   * @param source
+   * @returns
+   */
   static pluginPathOf(source: URL): string | undefined {
     if (source.protocol !== PluginResourceUrl.pluginProtocol) {
       return
@@ -19,8 +26,31 @@ export class PluginResourceUrl extends URL {
     return source.pathname.slice(1)
   }
 
-  constructor(readonly pluginModuleName: string, readonly resourcePath: string) {
-    super(`${PluginResourceUrl.pluginProtocol}///${pluginModuleName}/${resourcePath}`)
+  readonly pluginModuleName: string
+  readonly pluginResourcePath?: string
+
+  /**
+   * Create a URL with the `mage-plugin:` protocol whose absolute path is the
+   * concatenation of the given base plugin module name, and relative resource
+   * path.  The resulting URL will will be of the form
+   * `mage-plugin:///@example/module/sub/resource.ext`.
+   * The path of the constructed URL will always begin with a `/`, and will
+   * thus have no host/authority component.  The constructor will also join the
+   * two components with a single `/` as appropriate, regardless of trailing
+   * and/or leading `/` in the given components.
+   * @param pluginModuleName
+   * @param pluginResourcePath
+   */
+  constructor(
+    pluginModuleName: string,
+    pluginResourcePath?: string
+  ) {
+    pluginModuleName = pluginModuleName.replace(/^\/+/, '').replace(/\/+$/, '/')
+    pluginResourcePath = pluginResourcePath?.replace(/^\/+/, '').replace(/\/+$/, '/')
+    const joinSlash = pluginResourcePath && pluginModuleName[pluginModuleName.length - 1] !== '/' ? '/' : ''
+    super(`${PluginResourceUrl.pluginProtocol}///${pluginModuleName}${joinSlash}${pluginResourcePath || ''}`)
+    this.pluginModuleName = pluginModuleName
+    this.pluginResourcePath = pluginResourcePath
   }
 }
 

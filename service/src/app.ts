@@ -1,6 +1,6 @@
 import environment from './environment/env'
 import log from './logger'
-import { loadPlugins } from './main.impl/main.impl.plugins'
+import { loadPlugins as loadServicePlugins } from './main.impl/main.impl.plugins'
 import http from 'http'
 import fs from 'fs-extra'
 import mongoose from 'mongoose'
@@ -29,6 +29,7 @@ import { StaticIconRoutes, StaticIconsAppLayer } from './adapters/icons/adapters
 import { ListStaticIcons, GetStaticIcon, GetStaticIconContent } from './app.impl/icons/app.impl.icons'
 import { RoleBasedStaticIconPermissionService } from './permissions/permissions.icons'
 import { PluginUrlScheme } from './adapters/url_schemes/adapters.url_schemes.plugin'
+import { WebUiPluginRoutes } from './adapters/web_ui_plugins/adapters.web_ui_plugins.controllers.web'
 
 
 export interface MageService {
@@ -43,9 +44,10 @@ export interface MageService {
 export const MageReadyEvent = 'comingOfMage'
 export type BootConfig = {
   /**
-   * An array of plugin package names
+   * An array of service plugin package names
    */
-  plugins: string[]
+  servicePlugins?: string[]
+  webUiPlugins?: string[]
 }
 
 let service: MageService | null = null
@@ -86,13 +88,13 @@ export const boot = async function(config: BootConfig): Promise<MageService> {
   }
 
   const models = await initDatabase()
-  const repos = await initRepositories(models, config.plugins)
+  const repos = await initRepositories(models, config)
   const appLayer = await initAppLayer(repos)
 
   // load routes the old way
-  const app = await initRestInterface(repos, appLayer)
+  const app = await initRestInterface(repos, appLayer, config.webUiPlugins || [])
 
-  await loadPlugins(config.plugins, {
+  await loadServicePlugins(config.servicePlugins || [], {
     feeds: {
       serviceTypeRepo: repos.feeds.serviceTypeRepo
     },
@@ -217,7 +219,7 @@ const jsonSchemaService: JsonSchemaService = {
   }
 }
 
-async function initRepositories(models: DatabaseModels, pluginNames: string[]): Promise<Repositories> {
+async function initRepositories(models: DatabaseModels, config: BootConfig): Promise<Repositories> {
   const serviceTypeRepo = new MongooseFeedServiceTypeRepository(models.feeds.feedServiceTypeIdentity)
   const serviceRepo = new MongooseFeedServiceRepository(models.feeds.feedService)
   const feedRepo = new MongooseFeedRepository(models.feeds.feed, new SimpleIdFactory())
@@ -226,7 +228,7 @@ async function initRepositories(models: DatabaseModels, pluginNames: string[]): 
     models.icons.staticIcon,
     new SimpleIdFactory(),
     new FileSystemIconContentStore(),
-    [ new PluginUrlScheme(pluginNames) ])
+    [ new PluginUrlScheme(config.servicePlugins || []) ])
   return {
     feeds: {
       serviceTypeRepo, serviceRepo, feedRepo
@@ -308,9 +310,9 @@ function initFeedsAppLayer(repos: Repositories): AppLayer['feeds'] {
   }
 }
 
-async function initRestInterface(repos: Repositories, app: AppLayer): Promise<express.Application> {
+async function initRestInterface(repos: Repositories, app: AppLayer, webUiPlugins: string[]): Promise<express.Application> {
   const webLayer = await import('./express')
-  const webApp = webLayer.app
+  const webApi = webLayer.app
   const webAuth = webLayer.auth
   const appRequestFactory: WebAppRequestFactory = <Params = unknown>(req: express.Request, params: Params): AppRequest<UserDocument> & Params => {
     return {
@@ -324,21 +326,34 @@ async function initRestInterface(repos: Repositories, app: AppLayer): Promise<ex
       }
     }
   }
-  const feedsRoutes = FeedsRoutes(app.feeds, appRequestFactory)
-  const iconsRoutes = StaticIconRoutes(app.icons, appRequestFactory)
-  const eventFeedsRoutes = EventFeedsRoutes({ ...app.events, eventRepo: repos.events.eventRepo }, appRequestFactory)
   const bearerAuth = webAuth.passport.authenticate('bearer')
-  webApp.use('/api/feeds', [
+  const feedsRoutes = FeedsRoutes(app.feeds, appRequestFactory)
+  webApi.use('/api/feeds', [
     bearerAuth,
     feedsRoutes
   ])
-  webApp.use('/api/icons', [
+  const iconsRoutes = StaticIconRoutes(app.icons, appRequestFactory)
+  webApi.use('/api/icons', [
     bearerAuth,
     iconsRoutes
   ])
-  webApp.use('/api/events', [
+  const eventFeedsRoutes = EventFeedsRoutes({ ...app.events, eventRepo: repos.events.eventRepo }, appRequestFactory)
+  webApi.use('/api/events', [
     bearerAuth,
     eventFeedsRoutes
   ])
-  return webApp
+  /*
+  no /api prefix here, because this is not really part of the service api. the
+  only reason this is here is because there is currently no clean way to apply
+  authentication outside of this service main module. an ideal clean
+  architecture would decouple the authentication services from this service
+  module and its express/passport middleware, but that will require a larger
+  effort to refactor.
+  */
+  const webUiPluginRoutes = WebUiPluginRoutes(webUiPlugins)
+  webApi.use('/plugins', [
+    bearerAuth,
+    webUiPluginRoutes
+  ])
+  return webApi
 }

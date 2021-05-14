@@ -54,7 +54,8 @@
               "node_modules/systemjs/dist/system.js",
               "node_modules/systemjs/dist/extras/amd.js",
               "node_modules/systemjs/dist/extras/named-register.js"
-            ]
+            ],
+            "plugin": "~/post_build.js"
           },
           "configurations": {
             "production": {
