@@ -9,6 +9,7 @@
     "rxjs": "~6.6.7"
   },
   "dependencies": {
+    "@types/geojson": "^7946.0.7",
     "tslib": "^1.10.0"
   }
 }
