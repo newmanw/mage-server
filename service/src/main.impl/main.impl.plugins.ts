@@ -18,8 +18,8 @@ export async function loadPlugins(pluginModules: string[], deps: PluginDependenc
   for (const moduleName of pluginModules) {
     try {
       const hooks = await import(moduleName) as PluginHooks
-      await loadIconsHooks(moduleName, deps.icons.staticIconRepo, hooks)
-      await loadFeedsHooks(deps.feeds.serviceTypeRepo, moduleName, hooks)
+      await loadIconsHooks(moduleName, hooks, deps.icons.staticIconRepo)
+      await loadFeedsHooks(moduleName, hooks, deps.feeds.serviceTypeRepo)
     }
     catch (err) {
       console.log(`error loading plugin module: ${moduleName}`, err)

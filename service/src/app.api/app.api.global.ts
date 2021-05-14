@@ -25,7 +25,7 @@ export interface AppRequest<Principal = unknown, Context extends AppRequestConte
  * clients consume.  The interface provides one property, `descriptorOf`.
  * The `descriptorOf` property helps to identify the domain type the
  * descriptor represents.  This can be helpful because JSON documents may not
- * be immediately distinguishable in the wiled.  Child interfaces should
+ * be immediately distinguishable in the wild.  Child interfaces should
  * override the property to be a constant string value, e.g.,
  * ```
  * interface UserDescriptor extends Descriptor {

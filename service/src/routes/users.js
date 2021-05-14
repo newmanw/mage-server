@@ -306,12 +306,12 @@ module.exports = function (app, security) {
         sort = req.query.sort;
       }
 
-      new api.User().getAll({ filter: filter, populate: populate, limit: limit, start: start, sort: sort}, function (err, users, pageInfo) {
+      new api.User().getAll({ filter, populate, limit, start, sort }, function (err, users, pageInfo) {
         if (err) return next(err);
 
         let data = null;
 
-        if (pageInfo != null) {
+        if (pageInfo) {
           data = pageInfoTransformer.transform(pageInfo, req);
           data.users = userTransformer.transform(users, { path: req.getRoot() });
         } else {

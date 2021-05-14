@@ -1,8 +1,7 @@
 import uniqid from 'uniqid'
-import { FeedCreateUnresolved, FeedTopic, FeedCreateMinimal, MapStyle, ResolvedMapStyle, FeedCreateAttrs } from '../../../lib/entities/feeds/entities.feeds'
+import { FeedCreateUnresolved, FeedTopic, FeedCreateMinimal, ResolvedMapStyle, FeedCreateAttrs } from '../../../lib/entities/feeds/entities.feeds'
 import { expect } from 'chai'
 import { URL } from 'url'
-import { min, uniq } from 'lodash'
 
 describe('feed-create attribute factory', function() {
 
