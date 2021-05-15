@@ -29,7 +29,7 @@ import { StaticIconRoutes, StaticIconsAppLayer } from './adapters/icons/adapters
 import { ListStaticIcons, GetStaticIcon, GetStaticIconContent } from './app.impl/icons/app.impl.icons'
 import { RoleBasedStaticIconPermissionService } from './permissions/permissions.icons'
 import { PluginUrlScheme } from './adapters/url_schemes/adapters.url_schemes.plugin'
-import { WebUiPluginRoutes } from './adapters/web_ui_plugins/adapters.web_ui_plugins.controllers.web'
+import { WebUIPluginRoutes } from './adapters/web_ui_plugins/adapters.web_ui_plugins.controllers.web'
 
 
 export interface MageService {
@@ -47,7 +47,7 @@ export type BootConfig = {
    * An array of service plugin package names
    */
   servicePlugins?: string[]
-  webUiPlugins?: string[]
+  webUIPlugins?: string[]
 }
 
 let service: MageService | null = null
@@ -92,7 +92,7 @@ export const boot = async function(config: BootConfig): Promise<MageService> {
   const appLayer = await initAppLayer(repos)
 
   // load routes the old way
-  const app = await initRestInterface(repos, appLayer, config.webUiPlugins || [])
+  const app = await initRestInterface(repos, appLayer, config.webUIPlugins || [])
 
   await loadServicePlugins(config.servicePlugins || [], {
     feeds: {
@@ -310,7 +310,7 @@ function initFeedsAppLayer(repos: Repositories): AppLayer['feeds'] {
   }
 }
 
-async function initRestInterface(repos: Repositories, app: AppLayer, webUiPlugins: string[]): Promise<express.Application> {
+async function initRestInterface(repos: Repositories, app: AppLayer, webUIPlugins: string[]): Promise<express.Application> {
   const webLayer = await import('./express')
   const webApi = webLayer.app
   const webAuth = webLayer.auth
@@ -350,7 +350,7 @@ async function initRestInterface(repos: Repositories, app: AppLayer, webUiPlugin
   module and its express/passport middleware, but that will require a larger
   effort to refactor.
   */
-  const webUiPluginRoutes = WebUiPluginRoutes(webUiPlugins)
+  const webUiPluginRoutes = WebUIPluginRoutes(webUIPlugins)
   webApi.use('/plugins', [
     bearerAuth,
     webUiPluginRoutes

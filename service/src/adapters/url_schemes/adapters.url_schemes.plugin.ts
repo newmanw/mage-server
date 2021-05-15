@@ -71,22 +71,29 @@ export class PluginUrlScheme implements UrlScheme {
     if (Array.isArray(this.extraSearchPaths)) {
       resolveOpts.paths = this.extraSearchPaths
     }
-    let pluginMainFilePath
+    let manifestPath: string | null = null
     try {
-      pluginMainFilePath = require.resolve(longestMatchingPlugin, resolveOpts)
+      manifestPath = require.resolve(longestMatchingPlugin + '/package.json', resolveOpts)
+    }
+    catch (err) {
+      // no package.json, no problem
+    }
+    let mainFilePath
+    try {
+      mainFilePath = require.resolve(longestMatchingPlugin, resolveOpts)
     }
     catch (err) {
       return new UrlResolutionError(url, String(err))
     }
-    const pluginBaseDirPath = path.dirname(pluginMainFilePath)
+    const baseDir = path.dirname(manifestPath || mainFilePath)
     const contentRelPath = pluginPath.slice(longestMatchingPlugin.length + 1)
     if (!contentRelPath) {
       if (url.pathname.endsWith('/')) {
-        return pluginBaseDirPath
+        return baseDir
       }
-      return pluginMainFilePath
+      return mainFilePath
     }
-    const contentPath = path.join(pluginBaseDirPath, contentRelPath)
+    const contentPath = path.join(baseDir, contentRelPath)
     return contentPath
   }
 }

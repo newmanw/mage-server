@@ -8,7 +8,7 @@ describe.only('plugin url scheme', function() {
 
   const testNodeModules = path.resolve(__dirname, '..', '..', 'node_modules')
 
-  it('resolves content relative to dirname of the plugin main file', async function() {
+  it('resolves content relative to plugin base dir when main file is nested', async function() {
 
     const pluginName = '@adapters.url_schemes.plugin.test/plugin1'
     const scheme = new PluginUrlScheme([ pluginName ], [ testNodeModules ])
@@ -58,14 +58,14 @@ describe.only('plugin url scheme', function() {
     expect(localPath).to.equal(path.resolve(testNodeModules, pluginName))
   })
 
-  it('resolves path to base directory of package main file when the url has a trailing slash', function() {
+  it('resolves path to base directory of package when the url has a trailing slash', function() {
 
     const pluginName = '@adapters.url_schemes.plugin.test/plugin1'
     const scheme = new PluginUrlScheme([ pluginName ], [ testNodeModules ])
     const url = new URL(`mage-plugin:///${pluginName}/`)
     const localPath = scheme.localPathOfUrl(url)
 
-    expect(localPath).to.equal(path.resolve(testNodeModules, pluginName, 'lib'))
+    expect(localPath).to.equal(path.resolve(testNodeModules, pluginName))
   })
 
   it('does not throw when resolving the path of an absent module', function() {
