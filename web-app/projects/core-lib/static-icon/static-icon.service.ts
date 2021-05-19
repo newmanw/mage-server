@@ -74,7 +74,7 @@ export class StaticIconService {
     else if (ref.sourceUrl) {
       return this.fetchIconBySourceUrl(ref.sourceUrl)
     }
-    throw new Error('no icon id source url')
+    throw new Error('no icon id or source url')
   }
 
   registerIconUrl(url: string): Observable<StaticIcon> {
