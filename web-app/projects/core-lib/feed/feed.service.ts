@@ -1,6 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Inject, Injectable } from '@angular/core';
-import { contentPathOfIcon } from '@ngageoint/mage.web-core-lib/static-icon'
+import { Injectable } from '@angular/core';
 import { Feature } from 'geojson'
 import { BehaviorSubject, Observable, Subject } from 'rxjs'
 import { Feed, FeedContent, FeedExpanded, FeedPost, FeedPreview, FeedTopic, Service, ServiceType, StyledFeature } from './feed.model'
