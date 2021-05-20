@@ -45,8 +45,6 @@ import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatDatetimepickerModule } from '@nader-eloshaiker/mat-datetimepicker'
 import { MatMomentDatetimeModule } from '@nader-eloshaiker/mat-datetimepicker-moment'
 
-import { NgxMatDatetimePickerModule, NgxMatTimepickerModule, NgxMatNativeDateModule } from '@angular-material-components/datetime-picker';
-
 import { ZoomComponent } from './map/controls/zoom.component';
 import { AddObservationComponent } from './map/controls/add-observation.component';
 import { SwaggerComponent } from './swagger/swagger.component';
@@ -61,8 +59,8 @@ import { LeafletDirective } from './map/leaflet.upgrade.component';
 import { LayerHeaderComponent } from './map/layers/layer-header.component';
 import { LayerContentComponent } from './map/layers/layer-content.component';
 import { ColorPickerComponent } from './color-picker/color-picker.component';
-import { ExportsComponent } from './export/exports.component';
-import { ExportMetadataDialogComponent } from "./export/export-metadata-dialog.component";
+import { ExportComponent } from './export/export.component';
+import { ExportDialogComponent } from "./export/export-dialog.component";
 
 import { MapClipComponent } from './map/clip/clip.component';
 import { GeometryModule } from './geometry/geometry.module';
@@ -134,10 +132,10 @@ import { FeedPanelTabComponent } from './feed-panel/feed-panel-tab.component';
 import { AdminFeedsModule } from './admin/admin-feeds/admin-feeds.module';
 import { ObservationPopupComponent } from './observation/observation-popup/observation-popup.component';
 import { UserPopupComponent } from './user/user-popup/user-popup.component';
-import { CdkDetailRowDirective } from './export/directives/cdk-detail-row.directive';
 import { StaticIconModule } from '@ngageoint/mage.web-core-lib/static-icon'
 import { MageCommonModule } from '@ngageoint/mage.web-core-lib/common'
 import { AdminModule } from './admin/admin.module'
+import { DatetimePickerComponent } from './datetime-picker/datetime-picker.component';
 
 @NgModule({
   declarations: [
@@ -202,9 +200,9 @@ import { AdminModule } from './admin/admin.module'
     ObservationPopupComponent,
     UserPopupComponent,
     ColorPickerComponent,
-    ExportsComponent,
-    ExportMetadataDialogComponent,
-    CdkDetailRowDirective,
+    ExportComponent,
+    ExportDialogComponent,
+    DatetimePickerComponent,
     FeedPanelComponent,
   ],
   imports: [
@@ -216,10 +214,6 @@ import { AdminModule } from './admin/admin.module'
     ReactiveFormsModule,
     BrowserAnimationsModule,
     DragDropModule,
-    NgxMatSelectSearchModule,
-    NgxMatDatetimePickerModule,
-    NgxMatTimepickerModule,
-    NgxMatNativeDateModule,
     MatBadgeModule,
     MatDialogModule,
     MatButtonToggleModule,
@@ -245,7 +239,6 @@ import { AdminModule } from './admin/admin.module'
     MatExpansionModule,
     MatListModule,
     MatRippleModule,
-    NgxMatSelectSearchModule,
     MatChipsModule,
     MatSidenavModule,
     MatSnackBarModule,
@@ -262,15 +255,11 @@ import { AdminModule } from './admin/admin.module'
     AlphaModule,
     CheckboardModule,
     MatTableModule,
-    MatDialogModule,
     MatPaginatorModule,
     MatSortModule,
     MatSnackBarModule,
     MatDatepickerModule,
-    MatNativeDateModule,
-    NgxMatDatetimePickerModule,
-    NgxMatTimepickerModule,
-    NgxMatNativeDateModule,
+    NgxMatSelectSearchModule,
     AdminModule,
     AdminFeedsModule,
     FeedItemSummaryModule,

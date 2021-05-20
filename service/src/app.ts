@@ -103,16 +103,12 @@ export const boot = async function(config: BootConfig): Promise<MageService> {
     }
   })
 
-  await import('./schedule').then(jobSchedule => {
-    return new Promise<void>((resolve, reject) => {
-      jobSchedule.initialize(app, (err: any) => {
-        if (!err) {
-          return resolve()
-        }
-        reject(err)
-      })
-    })
-  })
+  try {
+    await import('./schedule').then(jobSchedule => jobSchedule.initialize())
+  }
+  catch (err) {
+    throw new Error('error initializing scheduled tasks: ' + err)
+  }
 
   const server = http.createServer(app)
   service = {

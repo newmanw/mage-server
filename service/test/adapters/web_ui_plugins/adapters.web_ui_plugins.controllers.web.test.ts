@@ -7,7 +7,7 @@ import { WebUIPluginRoutes } from '../../../lib/adapters/web_ui_plugins/adapters
 const jsonType = /application\/json/
 const searchPath = path.resolve(__dirname, '..', '..', 'node_modules', 'adapters.web_ui_plugins.controllers.web.test')
 
-describe.only('web ui plugins web controller', function() {
+describe('web ui plugins web controller', function() {
 
   const prefix = '/test/web_ui_plugins'
   const pluginModuleNames = [

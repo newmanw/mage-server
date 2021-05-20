@@ -1,7 +1,7 @@
 import { expect } from 'chai'
 import { PluginResourceUrl } from '../../lib/entities/entities.global'
 
-describe.only('PluginResourceUrl', function() {
+describe('PluginResourceUrl', function() {
 
   it('defines the protocol', function() {
     expect(PluginResourceUrl.pluginProtocol).to.equal('mage-plugin:')

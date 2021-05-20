@@ -4,7 +4,7 @@ import { URL } from 'url'
 import { PluginUrlScheme } from '../../../lib/adapters/url_schemes/adapters.url_schemes.plugin'
 import { UrlResolutionError } from '../../../lib/entities/entities.global'
 
-describe.only('plugin url scheme', function() {
+describe('plugin url scheme', function() {
 
   const testNodeModules = path.resolve(__dirname, '..', '..', 'node_modules')
 
