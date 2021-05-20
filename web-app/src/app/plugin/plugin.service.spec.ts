@@ -1,11 +1,29 @@
-import { PluginService } from './plugin.service'
+import { HttpClient } from '@angular/common/http'
+import { Compiler, Injector } from '@angular/core'
+import { of } from 'rxjs'
+import { LocalStorageService } from '../upgrade/ajs-upgraded-providers'
+import { PluginsById, PluginService } from './plugin.service'
 import { SystemJS } from './systemjs.service'
 
-describe('PluginService', () => {
+fdescribe('PluginService', () => {
 
+
+  let http: {
+    get: jasmine.Spy<HttpClient['get']>
+  }
+  let compiler: {
+    compileModuleAsync: jasmine.Spy<Compiler['compileModuleAsync']>
+  }
+  let injector: {
+    get: jasmine.Spy<Injector['get']>
+  }
   let system: {
     register: jasmine.Spy<SystemJS.Context['register']>,
     import: jasmine.Spy<SystemJS.Context['import']>
+  }
+  const token = String(Date.now())
+  const localStorageService: LocalStorageService = {
+    getToken() { return token }
   }
   let service: PluginService
 
@@ -15,7 +33,16 @@ describe('PluginService', () => {
       register: jasmine.createSpy('SystemJS.Context.register'),
       import: jasmine.createSpy('SystemJS.Context.import')
     }
-    service = new PluginService(system as unknown as SystemJS.Context)
+    http = {
+      get: jasmine.createSpy('HttpClient.get')
+    }
+    service = new PluginService(
+      http as unknown as HttpClient,
+      compiler as unknown as Compiler,
+      injector as unknown as Injector,
+      system as unknown as SystemJS.Context,
+      localStorageService
+    )
   })
 
   it('registers shared libraries', async () => {
@@ -87,6 +114,59 @@ describe('PluginService', () => {
     ]
     sharedLibs.forEach((moduleId: string) => {
       expect(system.register).toHaveBeenCalledWith(moduleId, [], jasmine.anything())
+    })
+  })
+
+  describe('available plugins', () => {
+
+    it('fetches and imports plugin modules but does not compile', async () => {
+
+      const Plugin1NgModule = class {}
+      const Plugin2NgModule = class {}
+      const pluginsById: PluginsById = {
+        plugin1: {
+          MAGE_WEB_HOOKS: {
+            module: Plugin1NgModule
+          }
+        },
+        plugin2: {
+          MAGE_WEB_HOOKS: {
+            module: Plugin2NgModule
+          }
+        }
+      }
+      http.get.and.returnValue(of(Object.keys(pluginsById)))
+      system.import.withArgs(`/plugins/plugin1?access_token=${token}`).and.returnValue(Promise.resolve(pluginsById.plugin1))
+      system.import.withArgs(`/plugins/plugin2?access_token=${token}`).and.returnValue(Promise.resolve(pluginsById.plugin2))
+      const plugins = await service.availablePlugins()
+
+      expect(plugins).toEqual(pluginsById)
+      expect(http.get).toHaveBeenCalledTimes(1)
+      expect(system.import).toHaveBeenCalledWith(`/plugins/plugin1?access_token=${token}`)
+      expect(system.import).toHaveBeenCalledWith(`/plugins/plugin2?access_token=${token}`)
+      expect(system.import).toHaveBeenCalledTimes(2)
+    })
+
+    it('saves the imported plugins and does not fetch again', async () => {
+
+      const Plugin1NgModule = class {}
+      const pluginsById: PluginsById = {
+        plugin1: {
+          MAGE_WEB_HOOKS: {
+            module: Plugin1NgModule
+          }
+        }
+      }
+      http.get.and.returnValue(of(Object.keys(pluginsById)))
+      system.import.withArgs(`/plugins/plugin1?access_token=${token}`).and.returnValue(Promise.resolve(pluginsById.plugin1))
+      const plugins = await service.availablePlugins()
+      const pluginsAgain = await service.availablePlugins()
+
+      expect(plugins).toEqual(pluginsById)
+      expect(pluginsAgain).toEqual(pluginsById)
+      expect(http.get).toHaveBeenCalledTimes(1)
+      expect(system.import).toHaveBeenCalledWith(`/plugins/plugin1?access_token=${token}`)
+      expect(system.import).toHaveBeenCalledTimes(1)
     })
   })
 })
