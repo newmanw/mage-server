@@ -5,8 +5,7 @@ import { LocalStorageService } from '../upgrade/ajs-upgraded-providers'
 import { PluginsById, PluginService } from './plugin.service'
 import { SystemJS } from './systemjs.service'
 
-fdescribe('PluginService', () => {
-
+describe('PluginService', () => {
 
   let http: {
     get: jasmine.Spy<HttpClient['get']>
