@@ -137,6 +137,7 @@ import { UserPopupComponent } from './user/user-popup/user-popup.component';
 import { CdkDetailRowDirective } from './export/directives/cdk-detail-row.directive';
 import { StaticIconModule } from '@ngageoint/mage.web-core-lib/static-icon'
 import { MageCommonModule } from '@ngageoint/mage.web-core-lib/common'
+import { AdminModule } from './admin/admin.module'
 
 @NgModule({
   declarations: [
@@ -270,6 +271,7 @@ import { MageCommonModule } from '@ngageoint/mage.web-core-lib/common'
     NgxMatDatetimePickerModule,
     NgxMatTimepickerModule,
     NgxMatNativeDateModule,
+    AdminModule,
     AdminFeedsModule,
     FeedItemSummaryModule,
     StaticIconModule,

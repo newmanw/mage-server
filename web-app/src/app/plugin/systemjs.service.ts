@@ -1,8 +1,7 @@
 import { InjectionToken } from '@angular/core'
-import { PluginModule } from './plugin.module'
 
 const system = (window as any).System as SystemJS.Context
-export const SYSTEMJS: InjectionToken<SystemJS.Context> = new InjectionToken('systemjs', { providedIn: PluginModule, factory: () => system })
+export const SYSTEMJS: InjectionToken<SystemJS.Context> = new InjectionToken('systemjs', { providedIn: 'root', factory: () => system })
 
 /**
  * The following type definitions are adaptations from

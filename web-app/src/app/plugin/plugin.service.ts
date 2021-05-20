@@ -62,15 +62,22 @@ import * as mageCorePlugin from '@ngageoint/mage.web-core-lib/plugin'
 import * as mageCorePaging from '@ngageoint/mage.web-core-lib/paging'
 import * as mageCoreStaticIcon from '@ngageoint/mage.web-core-lib/static-icon'
 
-import { Inject, Injectable } from '@angular/core'
-import { Observable } from 'rxjs'
+import { Inject, Injectable, Injector, NgModuleRef, Compiler } from '@angular/core'
+import { HttpClient } from '@angular/common/http'
+import { Observable, BehaviorSubject } from 'rxjs'
 import { SystemJS, SYSTEMJS } from './systemjs.service'
 import { PluginHooks } from '@ngageoint/mage.web-core-lib/plugin'
+import { LocalStorageService } from '../upgrade/ajs-upgraded-providers'
 
 function registerSharedLibInContext(system: SystemJS.Context, libId: string, lib: any): void {
   system.register(libId, [], _export => {
     return {
-      execute: () => _export(lib)
+      execute: () => {
+        _export(lib)
+        // deliberate undefined return because returning something here screws
+        // up systemjs
+        return void(0)
+      }
     }
   })
 }
@@ -100,7 +107,16 @@ function registerSharedLibInContext(system: SystemJS.Context, libId: string, lib
 })
 export class PluginService {
 
-  constructor(@Inject(SYSTEMJS) private system: SystemJS.Context) {
+  private plugins: Promise<PluginsById> | null = null
+
+  constructor(
+    private http: HttpClient,
+    private compiler: Compiler,
+    private injector: Injector,
+    @Inject(SYSTEMJS)
+    private system: SystemJS.Context,
+    @Inject(LocalStorageService)
+    private localStorageService: LocalStorageService) {
     const shareLib = (libId: string, lib: any) => registerSharedLibInContext(system, libId, lib)
     shareLib('@angular/core', ngCore)
     shareLib('@angular/common', ngCommon)
@@ -167,17 +183,63 @@ export class PluginService {
     shareLib('@ngageoint/mage.web-core-lib/static-icon', mageCoreStaticIcon)
   }
 
-  fetchAvailablePlugins(): Observable<PluginDescriptor[]> {
-    return rxjs.of([{ moduleId: 'mage-m2c2-web' }])
+  async availablePlugins(): Promise<PluginsById> {
+    if (this.plugins) {
+      return this.plugins
+    }
+    const token = this.localStorageService.getToken()
+    this.plugins = new Promise(resolve => {
+      this.http.get<string[]>('/plugins').subscribe(async (moduleIds) => {
+        const imports = moduleIds.map(moduleId => {
+          return this.system.import<PluginBundleModule>(`/plugins/${moduleId}?access_token=${token}`).then<[string, PluginBundleModule | null], [string, null]>(
+            pluginModule => {
+              return [ moduleId, pluginModule ]
+            },
+            err => {
+              console.error('error loading plugin', moduleId, err)
+              return [ moduleId, null ]
+            }
+          )
+        })
+        const pluginModules = await Promise.all(imports)
+        const pluginsById = {} as PluginsById
+        for (const plugin of pluginModules) {
+          if (plugin[1]) {
+            pluginsById[plugin[0]] = plugin[1]
+          }
+        }
+        resolve(pluginsById)
+      })
+    })
+    return this.plugins
   }
 
-  async loadPluginModule(moduleId: string): Promise<PluginHooks> {
-    const pluginModule = await this.system.import(moduleId)
-    const hooks = pluginModule.MAGE_WEB_HOOKS as PluginHooks
-    return hooks
+  async loadPluginModule(pluginId: string): Promise<NgModuleRef<unknown>> {
+    const plugins = await this.availablePlugins()
+    const plugin = plugins[pluginId]
+    if (!plugin) {
+      throw Error('plugin not found: ' + pluginId)
+    }
+    const hooks = plugin.MAGE_WEB_HOOKS
+    const moduleFactory = await this.compiler.compileModuleAsync(hooks.module)
+    const moduleRef = moduleFactory.create(this.injector)
+    return moduleRef
   }
 }
 
-export interface PluginDescriptor {
-  moduleId: string
+/**
+ * A map whose keys are bare module/package IDs of plugins, e.g.
+ * `@ngageoint/mage.web-core-lib`, and values are the `PluginHooks` object the
+ * plugin module exports.
+ */
+export interface PluginsById {
+  [moduleId: string]: {
+    MAGE_WEB_HOOKS: PluginHooks
+  }
 }
+
+export interface PluginBundleModule {
+  MAGE_WEB_HOOKS: PluginHooks
+  [exported: string]: any
+}
+

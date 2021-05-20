@@ -31,6 +31,7 @@ import { ExportsComponent } from '../app/export/exports.component';
 import { FeedService } from '@ngageoint/mage.web-core-lib/feed'
 import { FeedPanelService } from '../app/feed-panel/feed-panel.service'
 import { MapPopupService } from '../app/map/map-popup.service'
+import { PluginService } from '../app/plugin/plugin.service'
 
 import { FeedPanelComponent } from '../app/feed-panel/feed-panel.component';
 import { FeedItemMapPopupComponent } from '../app/feed/feed-item/feed-item-map/feed-item-map-popup.component'
@@ -68,7 +69,8 @@ app
 app
   .factory('FeedService', downgradeInjectable(FeedService))
   .factory('FeedPanelService', downgradeInjectable(FeedPanelService))
-  .factory('MapPopupService', downgradeInjectable(MapPopupService));
+  .factory('MapPopupService', downgradeInjectable(MapPopupService))
+  .factory('PluginService', downgradeInjectable(PluginService));
 
 // Downgraded Angular components
 app
@@ -429,19 +431,6 @@ function config($httpProvider, $stateProvider, $urlRouterProvider, $urlServicePr
     resolve: resolveAdmin()
   });
 
-  $stateProvider.state('admin.plugins', {
-    redirectTo: 'admin.plugins.dashboard',
-    url: '/plugins',
-    component: 'adminPlugins',
-    resolve: resolveAdmin()
-  });
-
-  $stateProvider.state('admin.plugins.dashboard', {
-    url: '/dashboard',
-    component: 'adminPluginsDashboard',
-    resolve: resolveAdmin()
-  });
-
   $stateProvider.state('profile', {
     url: '/profile',
     component: "userProfile",
@@ -453,7 +442,6 @@ function config($httpProvider, $stateProvider, $urlRouterProvider, $urlServicePr
     component: "about",
     resolve: resolveLogin()
   });
-
 }
 
 run.$inject = ['$rootScope', '$uibModal', '$state', 'Api'];

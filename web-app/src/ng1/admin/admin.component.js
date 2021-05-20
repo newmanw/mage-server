@@ -1,10 +1,13 @@
 import _ from 'underscore';
 
 class AdminController {
-  constructor($state, $stateParams, $transitions, UserPagingService, DevicePagingService) {
+  constructor($scope, $state, $stateParams, $stateRegistry, $transitions, pluginService, UserPagingService, DevicePagingService) {
+    this.$scope = $scope;
     this.$state = $state;
     this.$stateParams = $stateParams;
+    this.$stateRegistry = $stateRegistry;
     this.$transitions = $transitions;
+    this.pluginService = pluginService;
     this.UserPagingService = UserPagingService;
     this.DevicePagingService = DevicePagingService;
 
@@ -21,7 +24,11 @@ class AdminController {
     this.deviceStateAndData = {
       unregistered: defaultDeviceQueries.unregistered
     }
-    this.setState();
+
+    this.updateStateName();
+    this.pluginTabs = []
+    // TODO: add loading spinner mask
+    this.loading = true;
   }
 
   $onInit() {
@@ -33,16 +40,45 @@ class AdminController {
       this.unregisteredDevices = this.DevicePagingService.devices(this.deviceStateAndData[this.deviceState]);
     });
     this.$transitions.onSuccess({}, () => {
-      this.setState();
+      this.updateStateName();
+    });
+    this.pluginService.availablePlugins().then(plugins => {
+      const pluginTabs = []
+      for (const [ pluginId, plugin ] of Object.entries(plugins)) {
+        const { adminTab } = plugin.MAGE_WEB_HOOKS
+        if (adminTab) {
+          const stateNameSuffix = cleanNameOfPlugin(pluginId)
+          const stateName = `admin.plugin-${stateNameSuffix}`
+          this.$stateRegistry.register({
+            name: stateName,
+            url: `/${stateNameSuffix}`,
+            component: 'mageAdminPluginTabContentBridge',
+            resolve: {
+              pluginTab: async () => {
+                const module = await this.pluginService.loadPluginModule(pluginId)
+                const pluginTab = {
+                  module,
+                  tabContentComponent: adminTab.tabContentComponent
+                }
+                return pluginTab
+              }
+            }
+          })
+          pluginTabs.push({
+            title: adminTab.title,
+            state: stateName
+          })
+        }
+      }
+      this.$scope.$apply(() => {
+        this.pluginTabs =  pluginTabs;
+        this.loading = false;
+      })
     });
   }
 
-  setState() {
-    this.state = this.$state.current.url.match(/^\/[a-zA-Z]*/)[0];
-  }
-
-  onTabChanged($event) {
-    // this.$state.go($event.state);
+  updateStateName() {
+    this.stateName = this.$state.current.name;
   }
 
   userActivated($event) {
@@ -64,9 +100,13 @@ class AdminController {
   }
 }
 
-AdminController.$inject = ['$state', '$stateParams', '$transitions', 'UserPagingService', 'DevicePagingService'];
+AdminController.$inject = ['$scope', '$state', '$stateParams', '$stateRegistry', '$transitions', 'PluginService', 'UserPagingService', 'DevicePagingService'];
 
 export default {
   template: require('./admin.html'),
   controller: AdminController
 };
+
+function cleanNameOfPlugin(pluginId) {
+  return pluginId.replace(/[^\w-_]/, '-')
+}
