@@ -69,18 +69,6 @@ import { SystemJS, SYSTEMJS } from './systemjs.service'
 import { PluginHooks } from '@ngageoint/mage.web-core-lib/plugin'
 import { LocalStorageService } from '../upgrade/ajs-upgraded-providers'
 
-function registerSharedLibInContext(system: SystemJS.Context, libId: string, lib: any): void {
-  system.register(libId, [], _export => {
-    return {
-      execute: () => {
-        _export(lib)
-        // deliberate undefined return because returning something here screws
-        // up systemjs
-        return void(0)
-      }
-    }
-  })
-}
 
 /**
  * TODO: Evaluate all of the imports of shared libraries and how they affect
@@ -114,73 +102,84 @@ export class PluginService {
     private compiler: Compiler,
     private injector: Injector,
     @Inject(SYSTEMJS)
-    private system: SystemJS.Context,
+    private system: SystemJS.Registry,
     @Inject(LocalStorageService)
     private localStorageService: LocalStorageService) {
-    const shareLib = (libId: string, lib: any) => registerSharedLibInContext(system, libId, lib)
-    shareLib('@angular/core', ngCore)
-    shareLib('@angular/common', ngCommon)
-    shareLib('@angular/forms', ngForms)
-    shareLib('@angular/cdk/accordion', ngCdkAccordian)
-    shareLib('@angular/cdk/bidi', ngCdkBidi)
-    shareLib('@angular/cdk/clipboard', ngCdkClipboard)
-    shareLib('@angular/cdk/coercion', ngCdkCoercion)
-    shareLib('@angular/cdk/collections', ngCdkCollections)
-    shareLib('@angular/cdk/drag-drop', ngCdkDragDrop)
-    shareLib('@angular/cdk/keycodes', ngCdkKeycodes)
-    shareLib('@angular/cdk/layout', ngCdkLayout)
-    shareLib('@angular/cdk/observers', ngCdkObservers)
-    shareLib('@angular/cdk/overlay', ngCdkOverlay)
-    shareLib('@angular/cdk/platform', ngCdkPlatform)
-    shareLib('@angular/cdk/portal', ngCdkPortal)
-    shareLib('@angular/cdk/scrolling', ngCdkScrolling)
-    shareLib('@angular/cdk/stepper', ngCdkStepper)
-    shareLib('@angular/cdk/table', ngCdkTable)
-    shareLib('@angular/cdk/text-field', ngCdkTextField)
-    shareLib('@angular/cdk/tree', ngCdkTree)
-    shareLib('@angular/material/autocomplete', ngMatAutocomplete)
-    shareLib('@angular/material/badge', ngMatBadge)
-    shareLib('@angular/material/bottom-sheet', ngMatBottomSheet)
-    shareLib('@angular/material/button', ngMatButton)
-    shareLib('@angular/material/button-toggle', ngMatButtonToggle)
-    shareLib('@angular/material/card', ngMatCard)
-    shareLib('@angular/material/checkbox', ngMatCheckbox)
-    shareLib('@angular/material/chips', ngMatChips)
-    shareLib('@angular/material/core', ngMatCore)
-    shareLib('@angular/material/datepicker', ngMatDatepicker)
-    shareLib('@angular/material/dialog', ngMatDialog)
-    shareLib('@angular/material/divider', ngMatDivider)
-    shareLib('@angular/material/expansion', ngMatExpansion)
-    shareLib('@angular/material/form-field', ngMatFormField)
-    shareLib('@angular/material/grid-list', ngMatGridList)
-    shareLib('@angular/material/icon', ngMatIcon)
-    shareLib('@angular/material/input', ngMatInput)
-    shareLib('@angular/material/list', ngMatList)
-    shareLib('@angular/material/menu', ngMatMenu)
-    shareLib('@angular/material/paginator', ngMatPaginator)
-    shareLib('@angular/material/progress-bar', ngMatProgressBar)
-    shareLib('@angular/material/progress-spinner', ngMatProgressSpinner)
-    shareLib('@angular/material/radio', ngMatRadio)
-    shareLib('@angular/material/select', ngMatSelect)
-    shareLib('@angular/material/sidenav', ngMatSidenav)
-    shareLib('@angular/material/slide-toggle', ngMatSlideToggle)
-    shareLib('@angular/material/slider', ngMatSlider)
-    shareLib('@angular/material/snack-bar', ngMatSnackBar)
-    shareLib('@angular/material/sort', ngMatSort)
-    shareLib('@angular/material/stepper', ngMatStepper)
-    shareLib('@angular/material/table', ngMatTable)
-    shareLib('@angular/material/tabs', ngMatTabs)
-    shareLib('@angular/material/toolbar', ngMatToolbar)
-    shareLib('@angular/material/tooltip', ngMatTooltip)
-    shareLib('@angular/material/tree', ngMatTree)
-    shareLib('rxjs', rxjs)
-    shareLib('rxjs/operators', rxjsOperators)
-    shareLib('@ngageoint/mage.web-core-lib', mageCore)
-    shareLib('@ngageoint/mage.web-core-lib/common', mageCoreCommon)
-    shareLib('@ngageoint/mage.web-core-lib/feed', mageCoreFeed)
-    shareLib('@ngageoint/mage.web-core-lib/plugin', mageCorePlugin)
-    shareLib('@ngageoint/mage.web-core-lib/paging', mageCorePaging)
-    shareLib('@ngageoint/mage.web-core-lib/static-icon', mageCoreStaticIcon)
+    const providedLibs = {
+      '@angular/core': ngCore,
+      '@angular/common': ngCommon,
+      '@angular/forms': ngForms,
+      '@angular/cdk/accordion': ngCdkAccordian,
+      '@angular/cdk/bidi': ngCdkBidi,
+      '@angular/cdk/clipboard': ngCdkClipboard,
+      '@angular/cdk/coercion': ngCdkCoercion,
+      '@angular/cdk/collections': ngCdkCollections,
+      '@angular/cdk/drag-drop': ngCdkDragDrop,
+      '@angular/cdk/keycodes': ngCdkKeycodes,
+      '@angular/cdk/layout': ngCdkLayout,
+      '@angular/cdk/observers': ngCdkObservers,
+      '@angular/cdk/overlay': ngCdkOverlay,
+      '@angular/cdk/platform': ngCdkPlatform,
+      '@angular/cdk/portal': ngCdkPortal,
+      '@angular/cdk/scrolling': ngCdkScrolling,
+      '@angular/cdk/stepper': ngCdkStepper,
+      '@angular/cdk/table': ngCdkTable,
+      '@angular/cdk/text-field': ngCdkTextField,
+      '@angular/cdk/tree': ngCdkTree,
+      '@angular/material/autocomplete': ngMatAutocomplete,
+      '@angular/material/badge': ngMatBadge,
+      '@angular/material/bottom-sheet': ngMatBottomSheet,
+      '@angular/material/button': ngMatButton,
+      '@angular/material/button-toggle': ngMatButtonToggle,
+      '@angular/material/card': ngMatCard,
+      '@angular/material/checkbox': ngMatCheckbox,
+      '@angular/material/chips': ngMatChips,
+      '@angular/material/core': ngMatCore,
+      '@angular/material/datepicker': ngMatDatepicker,
+      '@angular/material/dialog': ngMatDialog,
+      '@angular/material/divider': ngMatDivider,
+      '@angular/material/expansion': ngMatExpansion,
+      '@angular/material/form-field': ngMatFormField,
+      '@angular/material/grid-list': ngMatGridList,
+      '@angular/material/icon': ngMatIcon,
+      '@angular/material/input': ngMatInput,
+      '@angular/material/list': ngMatList,
+      '@angular/material/menu': ngMatMenu,
+      '@angular/material/paginator': ngMatPaginator,
+      '@angular/material/progress-bar': ngMatProgressBar,
+      '@angular/material/progress-spinner': ngMatProgressSpinner,
+      '@angular/material/radio': ngMatRadio,
+      '@angular/material/select': ngMatSelect,
+      '@angular/material/sidenav': ngMatSidenav,
+      '@angular/material/slide-toggle': ngMatSlideToggle,
+      '@angular/material/slider': ngMatSlider,
+      '@angular/material/snack-bar': ngMatSnackBar,
+      '@angular/material/sort': ngMatSort,
+      '@angular/material/stepper': ngMatStepper,
+      '@angular/material/table': ngMatTable,
+      '@angular/material/tabs': ngMatTabs,
+      '@angular/material/toolbar': ngMatToolbar,
+      '@angular/material/tooltip': ngMatTooltip,
+      '@angular/material/tree': ngMatTree,
+      'rxjs': rxjs,
+      'rxjs/operators': rxjsOperators,
+      '@ngageoint/mage.web-core-lib': mageCore,
+      '@ngageoint/mage.web-core-lib/common': mageCoreCommon,
+      '@ngageoint/mage.web-core-lib/feed': mageCoreFeed,
+      '@ngageoint/mage.web-core-lib/plugin': mageCorePlugin,
+      '@ngageoint/mage.web-core-lib/paging': mageCorePaging,
+      '@ngageoint/mage.web-core-lib/static-icon': mageCoreStaticIcon,
+    }
+    const importMap = {}
+    Object.entries(providedLibs).forEach(([ libId, lib ]) => {
+      const libUrl = `app:${libId}`
+      system.set(libUrl, lib)
+      importMap[libId] = libUrl
+    })
+    const importMapElmt: HTMLScriptElement = document.createElement('script')
+    importMapElmt.type = 'systemjs-importmap'
+    importMapElmt.textContent = JSON.stringify({ imports: importMap }, null, 2)
+    document.body.appendChild(importMapElmt)
   }
 
   async availablePlugins(): Promise<PluginsById> {

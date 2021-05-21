@@ -98,7 +98,7 @@
     "rxjs": "~6.6.7",
     "select2": "4.0.7",
     "swagger-ui": "3.24.0",
-    "systemjs": "^6.1.9",
+    "systemjs": "^6.9.0",
     "tslib": "^1.10.0",
     "ui-select": "0.17.1",
     "underscore": "1.8.3",

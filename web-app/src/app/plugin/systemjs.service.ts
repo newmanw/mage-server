@@ -1,7 +1,7 @@
 import { InjectionToken } from '@angular/core'
 
 const system = (window as any).System as SystemJS.Context
-export const SYSTEMJS: InjectionToken<SystemJS.Context> = new InjectionToken('systemjs', { providedIn: 'root', factory: () => system })
+export const SYSTEMJS: InjectionToken<SystemJS.Registry> = new InjectionToken('systemjs', { providedIn: 'root', factory: () => system })
 
 /**
  * The following type definitions are adaptations from
