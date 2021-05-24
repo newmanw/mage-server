@@ -1,6 +1,6 @@
 {
   "name": "@ngageoint/mage.instance",
-  "version": "5.3.4",
+  "version": "5.5.0",
   "description": "Assemble a MAGE Server deployment from the core service, the web-app, and selected plugins.",
   "main": "lib/main.js",
   "scripts": {
