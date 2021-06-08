@@ -39,7 +39,7 @@ describe('PluginService', () => {
       http as unknown as HttpClient,
       compiler as unknown as Compiler,
       injector as unknown as Injector,
-      system as unknown as SystemJS.Context,
+      system as unknown as SystemJS.Registry,
       localStorageService
     )
   })
@@ -49,6 +49,7 @@ describe('PluginService', () => {
     const sharedLibs = [
       '@angular/core',
       '@angular/common',
+      '@angular/common/http',
       '@angular/forms',
       '@angular/cdk/accordion',
       '@angular/cdk/bidi',
@@ -114,6 +115,7 @@ describe('PluginService', () => {
     sharedLibs.forEach((moduleId: string) => {
       expect(system.register).toHaveBeenCalledWith(moduleId, [], jasmine.anything())
     })
+    expect(system.register.calls.count()).toEqual(sharedLibs.length)
   })
 
   describe('available plugins', () => {

@@ -70,6 +70,18 @@ import { SystemJS, SYSTEMJS } from './systemjs.service'
 import { PluginHooks } from '@ngageoint/mage.web-core-lib/plugin'
 import { LocalStorageService } from '../upgrade/ajs-upgraded-providers'
 
+function registerSharedLibInContext(system: SystemJS.Context, libId: string, lib: any): void {
+  system.register(libId, [], _export => {
+    return {
+      execute: () => {
+        _export(lib)
+        // deliberate undefined return because returning something here screws
+        // up systemjs
+        return void(0)
+      }
+    }
+  })
+}
 
 /**
  * TODO: Evaluate all of the imports of shared libraries and how they affect
@@ -106,6 +118,7 @@ export class PluginService {
     private system: SystemJS.Registry,
     @Inject(LocalStorageService)
     private localStorageService: LocalStorageService) {
+    const shareLib = (libId: string, lib: any) => registerSharedLibInContext(system, libId, lib)
     const providedLibs = {
       '@angular/core': ngCore,
       '@angular/common': ngCommon,
@@ -172,16 +185,9 @@ export class PluginService {
       '@ngageoint/mage.web-core-lib/paging': mageCorePaging,
       '@ngageoint/mage.web-core-lib/static-icon': mageCoreStaticIcon,
     }
-    const importMap = {}
-    Object.entries(providedLibs).forEach(([ libId, lib ]) => {
-      const libUrl = `app:${libId}`
-      system.set(libUrl, lib)
-      importMap[libId] = libUrl
+    Object.entries(providedLibs).forEach((libEntry) => {
+      shareLib(...libEntry)
     })
-    const importMapElmt: HTMLScriptElement = document.createElement('script')
-    importMapElmt.type = 'systemjs-importmap'
-    importMapElmt.textContent = JSON.stringify({ imports: importMap }, null, 2)
-    document.body.appendChild(importMapElmt)
   }
 
   async availablePlugins(): Promise<PluginsById> {
