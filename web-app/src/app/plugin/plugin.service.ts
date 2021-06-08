@@ -1,5 +1,6 @@
 import * as ngCore from '@angular/core'
 import * as ngCommon from '@angular/common'
+import * as ngCommonHttp from '@angular/common/http'
 import * as ngForms from '@angular/forms'
 import * as ngCdkAccordian from '@angular/cdk/accordion'
 import * as ngCdkBidi from '@angular/cdk/bidi'
@@ -108,6 +109,7 @@ export class PluginService {
     const providedLibs = {
       '@angular/core': ngCore,
       '@angular/common': ngCommon,
+      '@angular/common/http': ngCommonHttp,
       '@angular/forms': ngForms,
       '@angular/cdk/accordion': ngCdkAccordian,
       '@angular/cdk/bidi': ngCdkBidi,
