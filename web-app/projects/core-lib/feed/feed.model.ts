@@ -34,18 +34,25 @@ export interface FeedContent {
 }
 
 export interface ServiceType {
-  id: string;
-  title: string;
-  summary: string;
-  configSchema: any;
+  /**
+   * Well-known identifier that the feed plugin creator assigns
+   */
+  pluginServiceTypeId: string
+  /**
+   * The unique identifier MAGE server generates to reference the service type
+   */
+  id: string
+  title: string
+  summary: string
+  configSchema: any
 }
 
 export interface Service {
   id: string;
   title: string;
-  serviceType: ServiceType | string;
-  summary: string | null;
-  config: any;
+  serviceType: ServiceType | string
+  summary: string | null
+  config: any
 }
 
 export interface FeedTopic {
