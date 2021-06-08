@@ -19,9 +19,9 @@ describe('StaticIconService', () => {
         HttpClientTestingModule
       ]
     })
-    http = TestBed.get(HttpClient)
-    httpTest = TestBed.get(HttpTestingController)
-    service = TestBed.get(StaticIconService)
+    http = TestBed.inject(HttpClient)
+    httpTest = TestBed.inject(HttpTestingController)
+    service = TestBed.inject(StaticIconService)
   })
 
   afterEach(() => {
