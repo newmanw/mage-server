@@ -67,6 +67,7 @@ describe('AdminServiceEditComponent', () => {
 
   it('should create', () => {
     const serviceType: ServiceType = {
+      pluginServiceTypeId: 'plugin1:type1',
       id: 'serviceTypeId',
       title: 'ServiceType',
       summary: 'summary',
@@ -96,6 +97,7 @@ describe('AdminServiceEditComponent', () => {
     spyOn(component.cancelled, 'emit');
 
     const serviceType: ServiceType = {
+      pluginServiceTypeId: 'plugin1:type1',
       id: 'serviceTypeId',
       title: 'ServiceType',
       summary: 'summary',
@@ -124,6 +126,7 @@ describe('AdminServiceEditComponent', () => {
 
   it('should not have a cancel button if there are no services', () => {
     const serviceType: ServiceType = {
+      pluginServiceTypeId: 'plugin1:type1',
       id: 'serviceTypeId',
       title: 'ServiceType',
       summary: 'summary',
@@ -153,6 +156,7 @@ describe('AdminServiceEditComponent', () => {
 
   it('should have a disabled create service button if the service type is not selected', () => {
     const serviceType: ServiceType = {
+      pluginServiceTypeId: 'plugin1:type1',
       id: 'serviceTypeId',
       title: 'ServiceType',
       summary: 'summary',
@@ -182,6 +186,7 @@ describe('AdminServiceEditComponent', () => {
 
   it('should set the default value for a configSchema with a string', () => {
     const serviceType: ServiceType = {
+      pluginServiceTypeId: 'plugin1:type1',
       id: 'serviceTypeId',
       title: 'ServiceType',
       summary: 'summary',
@@ -221,6 +226,7 @@ describe('AdminServiceEditComponent', () => {
     spyOn(component.serviceCreated, 'emit');
 
     const serviceType: ServiceType = {
+      pluginServiceTypeId: 'plugin1:type1',
       id: 'serviceTypeId',
       title: 'ServiceType',
       summary: 'summary',
@@ -276,6 +282,7 @@ describe('AdminServiceEditComponent', () => {
     spyOn(component.cancelled, 'emit');
 
     const serviceType: ServiceType = {
+      pluginServiceTypeId: 'plugin1:type1',
       id: 'serviceTypeId',
       title: 'ServiceType',
       summary: 'summary',

@@ -122,6 +122,7 @@ describe('FeedEditComponent', () => {
 
   const serviceTypes: ServiceType[] = [
     {
+      pluginServiceTypeId: 'test:plugin1:type1',
       id: 'type1',
       title: 'Type 1',
       summary: 'Type 1 for testing',

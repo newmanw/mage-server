@@ -103,6 +103,7 @@ describe('AdminServiceComponent', () => {
   });
 
   const serviceType: ServiceType = {
+    pluginServiceTypeId: 'test:type1',
     id: 'servicetype1234',
     title: 'ServiceType',
     summary: 'summary',
@@ -115,6 +116,7 @@ describe('AdminServiceComponent', () => {
   };
 
   const serviceTypeObjectSchema: ServiceType = {
+    pluginServiceTypeId: 'test:type2',
     id: 'servicetype1234',
     title: 'ServiceType',
     summary: 'summary',
@@ -157,6 +159,7 @@ describe('AdminServiceComponent', () => {
       config: 'https://example.com',
       id: 'serviceid1234',
       serviceType: {
+        pluginServiceTypeId: 'test:type2',
         id: 'servicetype1234',
         title: 'ServiceType',
         summary: 'summary',
