@@ -198,6 +198,127 @@
           }
         }
       }
+    },
+    "core-lib-showcase": {
+      "projectType": "application",
+      "schematics": {
+        "@schematics/angular:component": {
+          "style": "scss"
+        }
+      },
+      "root": "projects/core-lib-showcase",
+      "sourceRoot": "projects/core-lib-showcase/src",
+      "prefix": "mage",
+      "architect": {
+        "build": {
+          "builder": "@angular-devkit/build-angular:browser",
+          "options": {
+            "outputPath": "dist/core-lib-showcase",
+            "index": "projects/core-lib-showcase/src/index.html",
+            "main": "projects/core-lib-showcase/src/main.ts",
+            "polyfills": "projects/core-lib-showcase/src/polyfills.ts",
+            "tsConfig": "projects/core-lib-showcase/tsconfig.app.json",
+            "aot": true,
+            "assets": [
+              "projects/core-lib-showcase/src/favicon.ico",
+              "projects/core-lib-showcase/src/assets"
+            ],
+            "styles": [
+              "projects/core-lib-showcase/src/styles.scss"
+            ],
+            "scripts": []
+          },
+          "configurations": {
+            "production": {
+              "fileReplacements": [
+                {
+                  "replace": "projects/core-lib-showcase/src/environments/environment.ts",
+                  "with": "projects/core-lib-showcase/src/environments/environment.prod.ts"
+                }
+              ],
+              "optimization": true,
+              "outputHashing": "all",
+              "sourceMap": false,
+              "extractCss": true,
+              "namedChunks": false,
+              "extractLicenses": true,
+              "vendorChunk": false,
+              "buildOptimizer": true,
+              "budgets": [
+                {
+                  "type": "initial",
+                  "maximumWarning": "2mb",
+                  "maximumError": "5mb"
+                },
+                {
+                  "type": "anyComponentStyle",
+                  "maximumWarning": "6kb",
+                  "maximumError": "10kb"
+                }
+              ]
+            }
+          }
+        },
+        "serve": {
+          "builder": "@angular-devkit/build-angular:dev-server",
+          "options": {
+            "browserTarget": "core-lib-showcase:build"
+          },
+          "configurations": {
+            "production": {
+              "browserTarget": "core-lib-showcase:build:production"
+            }
+          }
+        },
+        "extract-i18n": {
+          "builder": "@angular-devkit/build-angular:extract-i18n",
+          "options": {
+            "browserTarget": "core-lib-showcase:build"
+          }
+        },
+        "test": {
+          "builder": "@angular-devkit/build-angular:karma",
+          "options": {
+            "main": "projects/core-lib-showcase/src/test.ts",
+            "polyfills": "projects/core-lib-showcase/src/polyfills.ts",
+            "tsConfig": "projects/core-lib-showcase/tsconfig.spec.json",
+            "karmaConfig": "projects/core-lib-showcase/karma.conf.js",
+            "assets": [
+              "projects/core-lib-showcase/src/favicon.ico",
+              "projects/core-lib-showcase/src/assets"
+            ],
+            "styles": [
+              "projects/core-lib-showcase/src/styles.scss"
+            ],
+            "scripts": []
+          }
+        },
+        "lint": {
+          "builder": "@angular-devkit/build-angular:tslint",
+          "options": {
+            "tsConfig": [
+              "projects/core-lib-showcase/tsconfig.app.json",
+              "projects/core-lib-showcase/tsconfig.spec.json",
+              "projects/core-lib-showcase/e2e/tsconfig.json"
+            ],
+            "exclude": [
+              "**/node_modules/**"
+            ]
+          }
+        },
+        "e2e": {
+          "builder": "@angular-devkit/build-angular:protractor",
+          "options": {
+            "protractorConfig": "projects/core-lib-showcase/e2e/protractor.conf.js",
+            "devServerTarget": "core-lib-showcase:serve"
+          },
+          "configurations": {
+            "production": {
+              "devServerTarget": "core-lib-showcase:serve:production"
+            }
+          }
+        }
+      }
     }
   },
   "defaultProject": "app"
