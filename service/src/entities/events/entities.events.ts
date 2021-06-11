@@ -161,6 +161,11 @@ export interface MageEventsPluginHooks {
   mageEvent?: {
     /**
      * MAGE calls this hook after persisting a user's reported location.
+     *
+     * TODO: Evaluate whether this goes here to associate with MAGE events
+     * along with observations or somewhere else.  The reason for this
+     * placement intially is that user locations and observations only exist in
+     * the context of an event.
      */
     onUserLocations?: (locations: MageUserLocation[], user: MageUser, event: MageEvent) => any
     /**
