@@ -2,8 +2,10 @@ import { FeedsPluginHooks, FeedServiceTypeRepository } from '../entities/feeds/e
 import { loadFeedsHooks } from './plugin_hooks/main.impl.plugin_hooks.feeds'
 import { loadIconsHooks } from './plugin_hooks/main.impl.plugin_hooks.icons'
 import { IconPluginHooks, StaticIconRepository } from '../entities/icons/entities.icons'
+import { loadMageEventsHoooks } from './plugin_hooks/main.impl.plugin_hooks.events'
+import { MageEventsPluginHooks } from '../entities/events/entities.events'
 
-export type PluginHooks = FeedsPluginHooks & IconPluginHooks
+export type PluginHooks = MageEventsPluginHooks & FeedsPluginHooks & IconPluginHooks
 
 export interface PluginDependencies {
   feeds: {
@@ -18,6 +20,7 @@ export async function loadPlugins(pluginModules: string[], deps: PluginDependenc
   for (const moduleName of pluginModules) {
     try {
       const hooks = await import(moduleName) as PluginHooks
+      await loadMageEventsHoooks(moduleName, hooks)
       await loadIconsHooks(moduleName, hooks, deps.icons.staticIconRepo)
       await loadFeedsHooks(moduleName, hooks, deps.feeds.serviceTypeRepo)
     }

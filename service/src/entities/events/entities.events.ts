@@ -1,5 +1,7 @@
+import { Feature, Point } from 'geojson'
 import { FeedId } from '../feeds/entities.feeds'
 import { Team, TeamId } from '../teams/entities.teams'
+import { MageUser } from '../users/entities.users'
 
 export type MageEventId = number
 
@@ -141,4 +143,32 @@ export interface MageEventRepository {
    * @param feed the ID of the feed to remove from event
    */
   removeFeedsFromEvents(...feed: FeedId[]): Promise<number>
+}
+
+export interface Observation {
+
+}
+
+export interface MageUserLocation extends Feature<Point> {
+  properties: Feature['properties'] & {
+    timestamp: Date
+  }
+  // TODO: evaluate the rest of the properties for locations including
+  // teamIds and deviceId
+}
+
+export interface MageEventsPluginHooks {
+  mageEvent?: {
+    /**
+     * MAGE calls this hook after persisting a user's reported location.
+     */
+    onUserLocations?: (locations: MageUserLocation[], user: MageUser, event: MageEvent) => any
+    /**
+     * MAGE calls this hook after persisting a valid observation, new or
+     * updated.
+     *
+     * TODO: make it so
+     */
+    // onObservation?: (event: MageEvent, observation: Observation) => any
+  }
 }
