@@ -11,8 +11,8 @@ interface LoadFeedServiceTypes {
 
 /**
  * A plugin package that wishes to provide one or more [FeedServiceType]
- * implementations must implement include this interface in the top-level
- * export of the package.  For example,
+ * implementations must implement this interface in the top-level export of
+ * the package.  For example,
  * ```
  * export = {
  *   // ... other plugin hooks
