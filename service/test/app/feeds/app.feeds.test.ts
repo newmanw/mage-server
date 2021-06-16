@@ -4,7 +4,7 @@ import { Substitute as Sub, SubstituteOf, Arg } from '@fluffy-spoon/substitute'
 import { FeedServiceType, FeedTopic, FeedServiceTypeRepository, FeedServiceRepository, FeedServiceId, FeedServiceCreateAttrs, FeedsError, ErrInvalidServiceConfig, FeedService, FeedServiceConnection, RegisteredFeedServiceType, Feed, FeedCreateMinimal, FeedCreateUnresolved, FeedRepository, FeedId, FeedContent, FeedUpdateMinimal, FeedCreateAttrs } from '../../../lib/entities/feeds/entities.feeds'
 import { ListFeedServiceTypes, CreateFeedService, ListServiceTopics, PreviewTopics, ListFeedServices, PreviewFeed, CreateFeed, ListAllFeeds, FetchFeedContent, GetFeed, UpdateFeed, DeleteFeed, GetFeedService, DeleteFeedService, ListServiceFeeds } from '../../../lib/app.impl/feeds/app.impl.feeds'
 import { MageError, EntityNotFoundError, PermissionDeniedError, ErrPermissionDenied, permissionDenied, ErrInvalidInput, ErrEntityNotFound, InvalidInputError, PermissionDeniedErrorData, KeyPathError } from '../../../lib/app.api/app.api.errors'
-import { UserId } from '../../../lib/entities/authn/entities.authn'
+import { MageUserId } from '../../../lib/entities/users/entities.users'
 import { FeedsPermissionService, ListServiceTopicsRequest, FeedServiceTypeDescriptor, PreviewTopicsRequest, FeedPreview, FetchFeedContentRequest, FeedExpanded, GetFeedRequest, UpdateFeedRequest, DeleteFeedRequest, CreateFeedServiceRequest, GetFeedServiceRequest, DeleteFeedServiceRequest, ListServiceFeedsRequest, PreviewFeedRequest, CreateFeedRequest } from '../../../lib/app.api/feeds/app.api.feeds'
 import uniqid from 'uniqid'
 import { AppRequestContext, AppRequest } from '../../../lib/app.api/app.api.global'
@@ -2565,8 +2565,8 @@ class TestPermissionService implements FeedsPermissionService {
       [ListAllFeeds.name]: true,
     }
   } as { [user: string]: { [privilege: string]: boolean }}
-  readonly serviceAcls = new Map<FeedServiceId, Map<UserId, Set<string>>>()
-  readonly feedAcls = new Map<FeedId, Set<UserId>>()
+  readonly serviceAcls = new Map<FeedServiceId, Map<MageUserId, Set<string>>>()
+  readonly feedAcls = new Map<FeedId, Set<MageUserId>>()
 
   async ensureListServiceTypesPermissionFor(context: AppRequestContext<TestPrincipal>): Promise<null | PermissionDeniedError> {
     return this.checkPrivilege(context.requestingPrincipal().user, ListFeedServiceTypes.name)
@@ -2600,65 +2600,65 @@ class TestPermissionService implements FeedsPermissionService {
     return permissionDenied(FetchFeedContent.name, context.requestingPrincipal().user, feed)
   }
 
-  grantCreateService(user: UserId) {
+  grantCreateService(user: MageUserId) {
     this.grantPrivilege(user, CreateFeedService.name)
   }
 
-  grantListServices(user: UserId) {
+  grantListServices(user: MageUserId) {
     this.grantPrivilege(user, ListFeedServices.name)
   }
 
-  grantListTopics(user: UserId, service: FeedServiceId) {
+  grantListTopics(user: MageUserId, service: FeedServiceId) {
     this.grantServicePrivilege(user, service, ListServiceTopics.name)
   }
 
-  grantCreateFeed(user: UserId, service: FeedServiceId) {
+  grantCreateFeed(user: MageUserId, service: FeedServiceId) {
     this.grantServicePrivilege(user, service, CreateFeed.name)
   }
 
-  grantListFeeds(user: UserId) {
+  grantListFeeds(user: MageUserId) {
     this.grantPrivilege(user, ListAllFeeds.name)
   }
 
-  grantFetchFeedContent(user: UserId, feed: FeedId) {
-    const acl = this.feedAcls.get(feed) || new Set<UserId>()
+  grantFetchFeedContent(user: MageUserId, feed: FeedId) {
+    const acl = this.feedAcls.get(feed) || new Set<MageUserId>()
     acl.add(user)
     this.feedAcls.set(feed, acl)
   }
 
-  revokeListTopics(user: UserId, service: FeedServiceId) {
+  revokeListTopics(user: MageUserId, service: FeedServiceId) {
     const acl = this.serviceAcls.get(service)
     const servicePermissions = acl?.get(user)
     servicePermissions?.delete(ListServiceTopics.name)
   }
 
-  revokeListFeeds(user: UserId) {
+  revokeListFeeds(user: MageUserId) {
     this.revokePrivilege(user, ListAllFeeds.name)
   }
 
-  checkPrivilege(user: UserId, privilege: string, object?: string): null | PermissionDeniedError {
+  checkPrivilege(user: MageUserId, privilege: string, object?: string): null | PermissionDeniedError {
     if (!this.privleges[user]?.[privilege]) {
       return permissionDenied(privilege, user, object)
     }
     return null
   }
 
-  grantPrivilege(user: UserId, privilege: string): void {
+  grantPrivilege(user: MageUserId, privilege: string): void {
     const privs = this.privleges[user] || {}
     privs[privilege] = true
     this.privleges[user] = privs
   }
 
-  revokePrivilege(user: UserId, privilege: string): void {
+  revokePrivilege(user: MageUserId, privilege: string): void {
     const privs = this.privleges[user] || {}
     privs[privilege] = false
     this.privleges[user] = privs
   }
 
-  grantServicePrivilege(user: UserId, service: FeedServiceId, privilege: string): void {
+  grantServicePrivilege(user: MageUserId, service: FeedServiceId, privilege: string): void {
     let acl = this.serviceAcls.get(service)
     if (!acl) {
-      acl = new Map<UserId, Set<string>>()
+      acl = new Map<MageUserId, Set<string>>()
       this.serviceAcls.set(service, acl)
     }
     let servicePermissions = acl.get(user)
