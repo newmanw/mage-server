@@ -6,6 +6,7 @@ import { mongoTestAfterAllHook, mongoTestBeforeAllHook, MongoTestContext } from 
 import { BaseMongooseRepository, pageQuery } from '../../../lib/adapters/base/adapters.base.db.mongoose'
 import Substitute, { Arg } from '@fluffy-spoon/substitute'
 import { PagingParameters } from '../../../src/entities/entities.global'
+import uniqid from 'uniqid'
 import _ from 'lodash'
 
 describe('mongoose adapter layer base', function() {
@@ -29,7 +30,7 @@ describe('mongoose adapter layer base', function() {
   }, {
     toJSON: {
       getters: true,
-      versionKey: false
+      versionKey: false,
     }
   })
   let mongo: MongoTestContext
@@ -152,6 +153,7 @@ describe('mongoose adapter layer base', function() {
     })
 
     it('can remove properties in an update', async function() {
+
       const seed: Partial<BaseEntity> = {
         derp: 'spor',
         lerp: 'jeb',
@@ -195,6 +197,59 @@ describe('mongoose adapter layer base', function() {
 
       const removed = await repo.removeById(mongoose.Types.ObjectId().toHexString())
       expect(removed).to.be.null
+    })
+
+    describe.only('find all by id', function() {
+
+      it('finds records for given ids', async function() {
+
+        const seeds: Partial<BaseEntity>[] = [
+          {
+            derp: 'nar',
+            lerp: 'bur',
+            squee: false,
+            noo: 8
+          },
+          {
+            derp: 'loo',
+            lerp: 'doo',
+            squee: true,
+            noo: 22
+          },
+          {
+            derp: 'taw',
+            lerp: 'tee',
+            squee: true,
+            noo: 700
+          }
+        ]
+        const created = await Promise.all(seeds.map(x => repo.create(x)))
+        const found = await repo.findAllByIds([ created[1].id, created[2].id ])
+
+        expect(found).to.deep.equal({
+          [created[1].id]: created[1],
+          [created[2].id]: created[2]
+        })
+      })
+
+      it('sets unfound id keys to null', async function() {
+
+        const seed: Partial<BaseEntity> = {
+          derp: 'nar',
+          lerp: 'bur',
+          squee: false,
+          noo: 8
+        }
+        const created = await repo.create(seed)
+        const ids = [ mongoose.Types.ObjectId().toHexString(), created.id, mongoose.Types.ObjectId().toHexString() ]
+        const found = await repo.findAllByIds(ids)
+
+        expect(found).to.deep.equal({
+          [created.id]: created,
+          [ids[0]]: null,
+          [ids[2]]: null
+        })
+      })
     })
   })
 

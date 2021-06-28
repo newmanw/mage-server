@@ -26,9 +26,8 @@ export class BaseMongooseRepository<D extends mongoose.Document, M extends mongo
 
   constructor(model: M, mapping?: { docToEntity?: DocumentMapping<D, E>, entityToDocStub?: EntityMapping<D, E> }) {
     this.model = model
-    mapping = mapping || {}
-    this.entityForDocument = mapping.docToEntity || createDefaultDocMapping()
-    this.documentStubForEntity = mapping.entityToDocStub || createDefaultEntityMapping()
+    this.entityForDocument = mapping?.docToEntity || createDefaultDocMapping()
+    this.documentStubForEntity = mapping?.entityToDocStub || createDefaultEntityMapping()
   }
 
   async create(attrs: Partial<E>): Promise<E> {
@@ -48,7 +47,21 @@ export class BaseMongooseRepository<D extends mongoose.Document, M extends mongo
 
   async findById(id: any): Promise<E | null> {
     const doc = await this.model.findById(id)
-    return doc ? this.entityForDocument(doc) : null
+    return doc ? this.entityForDocument(doc) : null as any
+  }
+
+  async findAllByIds<ID>(ids: ID[]): Promise<ID extends string ? { [id: string]: E | null } : ID extends number ? { [id: number]: E | null } : never> {
+    const notFound = ids.reduce((notFound, id) => {
+      notFound[id] = null
+      return notFound
+    }, {} as any)
+    const docs = await this.model.find({ _id: { $in: ids }})
+    const found = {} as any
+    for (const doc of docs) {
+      found[doc.id] = this.entityForDocument(doc)
+      delete notFound[doc.id]
+    }
+    return { ...notFound, ...found }
   }
 
   async update(attrs: Partial<E> & EntityReference): Promise<E | null> {
