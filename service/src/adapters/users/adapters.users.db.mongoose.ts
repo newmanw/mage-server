@@ -18,4 +18,8 @@ export class MongooseUserRepository extends BaseMongooseRepository<MageUserDocum
   async update(attrs: Partial<User> & { id: UserId }): Promise<User | null> {
     throw new Error('method not allowed')
   }
+
+  async removeById(id: any): Promise<User | null> {
+    throw new Error('method not allowed')
+  }
 }
