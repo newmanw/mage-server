@@ -199,7 +199,7 @@ describe('mongoose adapter layer base', function() {
       expect(removed).to.be.null
     })
 
-    describe.only('find all by id', function() {
+    describe('find all by id', function() {
 
       it('finds records for given ids', async function() {
 

@@ -128,8 +128,8 @@ describe('event feeds use case interactions', function() {
 
     it('returns feeds for an event', async function() {
 
-      const feeds: Feed[] = [
-        {
+      const feeds: { [id: string]: Feed } = {
+        [event.feedIds[0]]: {
           id: event.feedIds[0],
           service: uniqid(),
           topic: 'topic1',
@@ -137,7 +137,7 @@ describe('event feeds use case interactions', function() {
           itemsHaveIdentity: true,
           itemsHaveSpatialDimension: true,
         },
-        {
+        [event.feedIds[1]]: {
           id: event.feedIds[1],
           service: uniqid(),
           topic: 'topic2',
@@ -145,16 +145,15 @@ describe('event feeds use case interactions', function() {
           itemsHaveIdentity: true,
           itemsHaveSpatialDimension: true,
         }
-      ]
-      event.feedIds = feeds.map(x => x.id)
-      app.feedRepo.findFeedsByIds(...event.feedIds).resolves(feeds)
+      }
+      app.feedRepo.findAllByIds(event.feedIds).resolves(feeds)
       app.permissionService.ensureEventReadPermission(Arg.all()).resolves(null)
       const req: ListEventFeedsRequest = requestBy('admin', { event: eventId })
       const res = await app.listEventFeeds(req)
 
       expect(res.error).to.be.null
-      expect(res.success).to.be.an('array')
-      expect(res.success).to.deep.equal(feeds)
+      expect(Array.isArray(res.success)).to.be.true
+      expect(res.success).to.have.deep.members(Object.values(feeds))
     })
 
     it('omits feed properties users should not see', async function() {
@@ -185,7 +184,7 @@ describe('event feeds use case interactions', function() {
         }
       }
       event.feedIds.push(feed.id)
-      app.feedRepo.findFeedsByIds(...event.feedIds).resolves([ feed ])
+      app.feedRepo.findAllByIds(event.feedIds).resolves({ [feed.id]: feed })
       app.permissionService.ensureEventReadPermission(Arg.all()).resolves(null)
       const req: ListEventFeedsRequest = requestBy('admin', { event: eventId })
       const res = await app.listEventFeeds(req)
@@ -216,14 +215,14 @@ describe('event feeds use case interactions', function() {
     it('checks permission for listing event feeds', async function() {
 
       const req: ListEventFeedsRequest = requestBy('admin', { event: event.id })
-      app.feedRepo.findFeedsByIds(...event.feedIds).resolves([])
+      app.feedRepo.findAllByIds(event.feedIds).resolves({})
       app.permissionService.ensureEventReadPermission(Arg.all()).resolves(permissionDenied('read_event_user', 'admin'))
       const res = await app.listEventFeeds(req)
 
       expect(res.success).to.be.null
       expect(res.error).to.be.instanceOf(MageError)
       expect(res.error?.code).to.equal(ErrPermissionDenied)
-      app.feedRepo.didNotReceive().findFeedsByIds(Arg.all())
+      app.feedRepo.didNotReceive().findAllByIds(Arg.all())
       app.permissionService.received(1).ensureEventReadPermission(req.context)
     })
   })

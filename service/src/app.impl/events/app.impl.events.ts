@@ -2,7 +2,7 @@ import { AddFeedToEvent, AddFeedToEventRequest, ListEventFeeds, ListEventFeedsRe
 import { MageEventRepository, MageEvent } from '../../entities/events/entities.events'
 import { entityNotFound, EntityNotFoundError, PermissionDeniedError, permissionDenied } from '../../app.api/app.api.errors'
 import { AppResponse } from '../../app.api/app.api.global'
-import { FeedRepository } from '../../entities/feeds/entities.feeds'
+import { Feed, FeedRepository } from '../../entities/feeds/entities.feeds'
 import { EventPermissionServiceImpl } from '../../permissions/permissions.events'
 
 /*
@@ -37,11 +37,15 @@ export function ListEventFeeds(permissionService: EventPermissionServiceImpl, ev
     if (denied) {
       return AppResponse.error<UserFeed[], PermissionDeniedError>(denied)
     }
-    const feeds = await feedRepo.findFeedsByIds(...event.feedIds)
-    const userFeeds = feeds.map(x => {
+    const feeds = await feedRepo.findAllByIds(event.feedIds)
+    const userFeeds = [] as Feed[]
+    Object.values(feeds).forEach(x => {
+      if (!x) {
+        return
+      }
       const userFeed = { ...x }
       delete userFeed['constantParams']
-      return userFeed
+      userFeeds.push(userFeed)
     })
     return AppResponse.success(userFeeds)
   }

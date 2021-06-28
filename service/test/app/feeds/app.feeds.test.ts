@@ -2505,7 +2505,7 @@ class TestFeedRepository implements FeedRepository {
     return this.db.get(feedId) || null
   }
 
-  async findFeedsByIds(...feedIds: FeedId[]): Promise<Feed[]> {
+  async findAllByIds(feedIds: FeedId[]): Promise<{ [id: string]: Feed | null }> {
     throw new Error('unimplemented')
   }
 

@@ -547,51 +547,53 @@ describe('feeds repositories', function() {
           itemsHaveIdentity: true,
           itemsHaveSpatialDimension: true,
         }))
-        const fetched = await repo.findFeedsByIds('0', '2')
+        const fetched = await repo.findAllByIds([ '0', '2' ])
 
-        expect(fetched).to.have.length(2)
-        expect(fetched).to.include.deep.members([ feeds[0], feeds[2] ])
+        expect(fetched).to.deep.equal({
+          '0': feeds[0],
+          '2': feeds[2],
+        })
       })
-    })
 
-    it('returns feed with object ids as strings', async function() {
+      it('returns feed with object ids as strings', async function() {
 
-      const stub: FeedCreateAttrs = {
-        service: mongoose.Types.ObjectId().toHexString(),
-        topic: uniqid(),
-        title: 'No Object IDs',
-        summary: 'Testing',
-        itemsHaveIdentity: true,
-        itemsHaveSpatialDimension: true
-      }
-      const created = await repo.create(stub)
-      const fetched = await repo.findById(created.id)
-      const rawFetched = await model.findOne({ _id: created.id }) as FeedDocument
+        const stub: FeedCreateAttrs = {
+          service: mongoose.Types.ObjectId().toHexString(),
+          topic: uniqid(),
+          title: 'No Object IDs',
+          summary: 'Testing',
+          itemsHaveIdentity: true,
+          itemsHaveSpatialDimension: true
+        }
+        const created = await repo.create(stub)
+        const fetched = await repo.findById(created.id)
+        const rawFetched = await model.findOne({ _id: created.id }) as FeedDocument
 
-      expect(rawFetched.service).to.be.instanceOf(mongoose.Types.ObjectId)
-      expect(created.service).to.be.a('string')
-      expect(fetched?.service).to.be.a('string')
-      expect(created.service).to.equal(rawFetched.service.toHexString())
-      expect(fetched?.service).to.equal(created.service)
-    })
+        expect(rawFetched.service).to.be.instanceOf(mongoose.Types.ObjectId)
+        expect(created.service).to.be.a('string')
+        expect(fetched?.service).to.be.a('string')
+        expect(created.service).to.equal(rawFetched.service.toHexString())
+        expect(fetched?.service).to.equal(created.service)
+      })
 
-    it('omits version key from json', async function() {
+      it('omits version key from json', async function() {
 
-      const stub: FeedCreateAttrs = {
-        service: mongoose.Types.ObjectId().toHexString(),
-        topic: uniqid(),
-        title: 'No Version Keys',
-        summary: 'Testing',
-        itemsHaveIdentity: true,
-        itemsHaveSpatialDimension: true
-      }
-      const created = await repo.create(stub)
-      const fetched = await repo.findById(created.id)
-      const rawFetched = await model.findOne({ _id: created.id }) as FeedDocument
+        const stub: FeedCreateAttrs = {
+          service: mongoose.Types.ObjectId().toHexString(),
+          topic: uniqid(),
+          title: 'No Version Keys',
+          summary: 'Testing',
+          itemsHaveIdentity: true,
+          itemsHaveSpatialDimension: true
+        }
+        const created = await repo.create(stub)
+        const fetched = await repo.findById(created.id)
+        const rawFetched = await model.findOne({ _id: created.id }) as FeedDocument
 
-      expect(created).to.not.have.property('__v')
-      expect(fetched).to.not.have.property('__v')
-      expect(rawFetched).to.have.property('__v')
+        expect(created).to.not.have.property('__v')
+        expect(fetched).to.not.have.property('__v')
+        expect(rawFetched).to.have.property('__v')
+      })
     })
 
     describe('finding feeds that reference a service', async function() {
