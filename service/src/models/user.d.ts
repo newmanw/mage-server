@@ -65,6 +65,8 @@ export type UserJson = Omit<UserDocument, '_id' | 'avatar' | 'roleId' | keyof mo
   avatarUrl?: string,
 } & (RolePopulated | RoleReferenced)
 
+export declare const Model: mongoose.Model<UserDocument>
+
 type RoleReferenced = {
   roleId: string,
   role: never
