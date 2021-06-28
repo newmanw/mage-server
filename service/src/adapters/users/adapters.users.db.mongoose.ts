@@ -1,7 +1,7 @@
 import { User, UserId, UserRepository } from '../../entities/users/entities.users'
 import { BaseMongooseRepository } from '../base/adapters.base.db.mongoose'
 import * as legacy from '../../models/user'
-import mongoose, { Model } from 'mongoose'
+import mongoose from 'mongoose'
 
 export const MageUserModelName = 'User'
 
