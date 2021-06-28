@@ -4,7 +4,7 @@
  * token to ensure the token cannot be duplicated.  The unused generic
  * parameter serves only to denote the type that MAGE injects for the token.
  */
- export interface InjectionToken<T> {
+export interface InjectionToken<T> {
 }
 
 export type InjectedTypeOf<T> = T extends InjectionToken<infer S> ? S : never
@@ -41,16 +41,16 @@ export type InitPluginHook<Req> = Req extends InjectionRequest<infer Services> ?
   init: (services: Injection<Req>) => any
 } : never
 
-import { Json } from '../entities/entities.json_types'
+import { EnsureJson } from '../entities/entities.json_types'
 
 /**
  * `PluginStateRepository` is a basic repository that supports persistence of a
  * single JSON document that MAGE ties to a plugin ID.  Plugins can use
  */
-export interface PluginStateRepository<State extends Json = Json> {
-  put(state: State): Promise<State>
-  patch(state: Partial<State>): Promise<State>
-  get(): Promise<State>
+export interface PluginStateRepository<State> {
+  put(state: EnsureJson<State>): Promise<EnsureJson<State>>
+  patch(state: Partial<EnsureJson<State>>): Promise<EnsureJson<State>>
+  get(): Promise<EnsureJson<State>>
 }
 
-export const PluginStateRepositoryToken: InjectionToken<PluginStateRepository> = Symbol('InjectPluginStateRepository')
+export const PluginStateRepositoryToken: InjectionToken<PluginStateRepository<any>> = Symbol('InjectPluginStateRepository')
