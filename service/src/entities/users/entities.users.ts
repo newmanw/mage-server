@@ -1,8 +1,8 @@
 
-export type MageUserId = string
+export type UserId = string
 
-export interface MageUser {
-  id: MageUserId
+export interface User {
+  id: UserId
   username: string
   displayName: string
   active: boolean
@@ -11,4 +11,9 @@ export interface MageUser {
   lastUpdated: Date
   email?: string
   // TODO: the rest of the properties
+}
+
+export interface UserRepository {
+  findById(id: UserId): Promise<User | null>
+  findAllByIds(ids: UserId[]): Promise<{ [id: string]: User | null }>
 }

@@ -9,7 +9,7 @@ import { MageEvent, MageEventRepository, EventPermission, rolesWithPermission } 
 import EventModel from '../models/event'
 import access from '../access'
 import mongoose from 'mongoose'
-import { MageUserId } from '../entities/users/entities.users'
+import { UserId } from '../entities/users/entities.users'
 import { MongooseMageEventRepository } from '../adapters/events/adapters.events.db.mongoose'
 
 export interface EventRequestContext extends AppRequestContext<UserDocument> {
@@ -62,7 +62,7 @@ export class EventPermissionServiceImpl {
     return permissionDenied(appPermission, user.username, event.id)
   }
 
-  async userHasEventPermission(event: MageEvent | MageEventDocument, userId: MageUserId, eventPermission: EventPermission): Promise<boolean> {
+  async userHasEventPermission(event: MageEvent | MageEventDocument, userId: UserId, eventPermission: EventPermission): Promise<boolean> {
     let teams: TeamMembership[] = await this.resolveTeams(event)
     // if asking for event read permission and user is part of a team in this event
     if (eventPermission === 'read') {

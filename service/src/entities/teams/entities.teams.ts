@@ -1,4 +1,4 @@
-import { MageUserId } from '../users/entities.users'
+import { UserId } from '../users/entities.users'
 import { MageEventId } from '../events/entities.events'
 
 export type TeamId = string
@@ -7,7 +7,7 @@ export interface Team {
   id: TeamId
   name: string
   description?: string
-  userIds: MageUserId[]
+  userIds: UserId[]
   acl: TeamAcl
   teamEventId?: MageEventId
 }
