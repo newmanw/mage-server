@@ -128,6 +128,7 @@ export type MageEventCreateAttrs = Pick<MageEvent, 'name' | 'description'>
 
 export interface MageEventRepository {
   findById(id: MageEventId): Promise<MageEvent | null>
+  findAllByIds(ids: MageEventId[]): Promise<{ [id: number]: MageEvent | null }>
   findEventsWithFeed(feed: FeedId): Promise<MageEvent[]>
   /**
    * Add a reference to the given feed ID on the given event.
