@@ -47,10 +47,10 @@ import { EnsureJson } from '../entities/entities.json_types'
  * `PluginStateRepository` is a basic repository that supports persistence of a
  * single JSON document that MAGE ties to a plugin ID.  Plugins can use
  */
-export interface PluginStateRepository<State> {
+export interface PluginStateRepository<State extends object> {
   put(state: EnsureJson<State>): Promise<EnsureJson<State>>
   patch(state: Partial<EnsureJson<State>>): Promise<EnsureJson<State>>
-  get(): Promise<EnsureJson<State>>
+  get(): Promise<EnsureJson<State> | null>
 }
 
 export const PluginStateRepositoryToken: InjectionToken<PluginStateRepository<any>> = Symbol('InjectPluginStateRepository')
