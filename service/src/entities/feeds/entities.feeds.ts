@@ -5,29 +5,6 @@ import { JSONSchema4 } from 'json-schema'
 import { URL } from 'url'
 import { RegisteredStaticIconReference, SourceUrlStaticIconReference, StaticIconId, StaticIconReference } from '../icons/entities.icons'
 
-interface LoadFeedServiceTypes {
-  (): Promise<FeedServiceType[]>
-}
-
-/**
- * A plugin package that wishes to provide one or more [FeedServiceType]
- * implementations must implement this interface in the top-level export of
- * the package.  For example,
- * ```
- * export = {
- *   // ... other plugin hooks
- *   feeds: {
- *     loadServiceTypes: () => Promise<FeedServiceType[]> {
- *       // resolve the service types
- *     }
- *   }
- * }
- */
-export interface FeedsPluginHooks {
-  feeds: {
-    readonly loadServiceTypes:  LoadFeedServiceTypes
-  }
-}
 
 export const ErrInvalidServiceConfig = Symbol.for('err.feeds.invalid_service_config')
 

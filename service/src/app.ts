@@ -1,6 +1,6 @@
 import environment from './environment/env'
 import log from './logger'
-import { loadPlugins as loadServicePlugins } from './main.impl/main.impl.plugins'
+import { InjectableServices, loadPlugins as loadServicePlugins } from './main.impl/main.impl.plugins'
 import http from 'http'
 import fs from 'fs-extra'
 import mongoose from 'mongoose'
@@ -30,6 +30,13 @@ import { ListStaticIcons, GetStaticIcon, GetStaticIconContent } from './app.impl
 import { RoleBasedStaticIconPermissionService } from './permissions/permissions.icons'
 import { PluginUrlScheme } from './adapters/url_schemes/adapters.url_schemes.plugin'
 import { WebUIPluginRoutes } from './adapters/web_ui_plugins/adapters.web_ui_plugins.controllers.web'
+import { InjectionToken } from './plugins.api'
+import { MageEventRepositoryToken } from './plugins.api/plugins.api.events'
+import { FeedRepositoryToken, FeedServiceRepositoryToken, FeedServiceTypeRepositoryToken } from './plugins.api/plugins.api.feeds'
+import { UserRepositoryToken } from './plugins.api/plugins.api.users'
+import { StaticIconRepositoryToken } from './plugins.api/pugins.api.icons'
+import { UserModel, MongooseUserRepository } from './adapters/users/adapters.users.db.mongoose'
+import { UserRepository } from './entities/users/entities.users'
 
 
 export interface MageService {
@@ -94,13 +101,20 @@ export const boot = async function(config: BootConfig): Promise<MageService> {
   // load routes the old way
   const app = await initRestInterface(repos, appLayer, config.webUIPlugins || [])
 
-  await loadServicePlugins(config.servicePlugins || [], {
-    feeds: {
-      serviceTypeRepo: repos.feeds.serviceTypeRepo
-    },
-    icons: {
-      staticIconRepo: repos.icons.staticIconRepo
-    }
+  const allServices = new Map<InjectionToken<any>, any>([
+    [FeedServiceTypeRepositoryToken, repos.feeds.serviceTypeRepo],
+    [FeedServiceRepositoryToken, repos.feeds.serviceRepo],
+    [FeedRepositoryToken, repos.feeds.feedRepo],
+    [MageEventRepositoryToken, repos.events.eventRepo],
+    [StaticIconRepositoryToken, repos.icons.staticIconRepo],
+    [UserRepositoryToken, repos.users.userRepo],
+  ])
+  const injectService: InjectableServices = <Service>(token: InjectionToken<Service>) => {
+    return allServices.get(token)
+  }
+
+  await loadServicePlugins(config.servicePlugins || [], injectService, (pluginId: string, routes: express.Router) => {
+    throw new Error('todo: add plugin routes')
   })
 
   try {
@@ -136,6 +150,9 @@ type DatabaseModels = {
   }
   icons: {
     staticIcon: StaticIconModel
+  },
+  users: {
+    user: UserModel
   }
 }
 
@@ -188,6 +205,9 @@ async function initDatabase(): Promise<DatabaseModels> {
     },
     icons: {
       staticIcon: StaticIconModel(conn)
+    },
+    users: {
+      user: require('./models/user').Model
     }
   }
 }
@@ -203,6 +223,9 @@ type Repositories = {
   },
   icons: {
     staticIconRepo: StaticIconRepository
+  },
+  users: {
+    userRepo: UserRepository
   }
 }
 
@@ -225,6 +248,7 @@ async function initRepositories(models: DatabaseModels, config: BootConfig): Pro
     new SimpleIdFactory(),
     new FileSystemIconContentStore(),
     [ new PluginUrlScheme(config.servicePlugins || []) ])
+  const userRepo = new MongooseUserRepository(models.users.user)
   return {
     feeds: {
       serviceTypeRepo, serviceRepo, feedRepo
@@ -234,6 +258,9 @@ async function initRepositories(models: DatabaseModels, config: BootConfig): Pro
     },
     icons: {
       staticIconRepo
+    },
+    users: {
+      userRepo
     }
   }
 }

@@ -1,4 +1,5 @@
-import { FeedServiceTypeRepository, FeedsPluginHooks } from '../../entities/feeds/entities.feeds'
+import { FeedServiceTypeRepository } from '../../entities/feeds/entities.feeds'
+import { FeedsPluginHooks } from '../../plugins.api/plugins.api.feeds'
 
 
 export async function loadFeedsHooks(moduleName: string, hooks: Partial<FeedsPluginHooks>, serviceTypeRepo: FeedServiceTypeRepository): Promise<void> {

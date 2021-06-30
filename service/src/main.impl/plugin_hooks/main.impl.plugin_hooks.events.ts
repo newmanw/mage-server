@@ -1,5 +1,5 @@
-import { MageEventsPluginHooks } from '../../entities/events/entities.events'
 import LocationApi from '../../api/location'
+import { MageEventsPluginHooks } from '../../plugins.api/plugins.api.events'
 
 export const loadMageEventsHoooks = async (moduleName: string, hooks: MageEventsPluginHooks) => {
   const { mageEvent } = hooks

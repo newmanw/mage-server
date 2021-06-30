@@ -5,11 +5,11 @@ import mongoose from 'mongoose'
 
 export const MageUserModelName = 'User'
 
-export type MageUserDocument = legacy.UserDocument
-export type MageUserModel = mongoose.Model<MageUserDocument>
-export const MageEventSchema = legacy.Model.schema
+export type UserDocument = legacy.UserDocument
+export type UserModel = mongoose.Model<UserDocument>
+export const UserSchema = legacy.Model.schema
 
-export class MongooseUserRepository extends BaseMongooseRepository<MageUserDocument, MageUserModel, User> implements UserRepository {
+export class MongooseUserRepository extends BaseMongooseRepository<UserDocument, UserModel, User> implements UserRepository {
 
   async create(): Promise<User> {
     throw new Error('method not allowed')

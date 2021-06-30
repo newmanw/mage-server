@@ -22,24 +22,28 @@ export type Injection<Req extends InjectionRequest<any>> = {
  * services from the core MAGE service.  This usually is to inject one or more
  * repositories to interact with the MAGE database.
  */
-export type InitPluginHook<Req> = Req extends InjectionRequest<infer Services> ? {
-  /**
-   * Specify the services to inject with a dictionary of string keys to
-   * {@link InjectionToken} values.
-   */
-  injectInit: InjectionRequest<Services>,
-  /**
-   * MAGE injects the {@link InitPluginHook.injectInit | requested services} in
-   * the object argument to this method.  The keys of the object are the same
-   * as those that {@link InitPluginHook.injectInit} define, and the values are
-   * the services corresponding to the injection tokens associated with those
-   * keys.
-   *
-   * This method can use the injected services to initialize more plugin hooks,
-   * and return those hooks so MAGE can integrate them accordingly.
-   */
-  init: (services: Injection<Req>) => any
-} : never
+export type InitPluginHook<Req = undefined> =
+  Req extends InjectionRequest<infer Services> ? {
+    /**
+     * Specify the services to inject with a dictionary of string keys to
+     * {@link InjectionToken} values.
+     */
+    inject: InjectionRequest<Services>,
+    /**
+     * MAGE injects the {@link InitPluginHook.inject | requested services} in
+     * the object argument to this method.  The keys of the object are the same
+     * as those that {@link InitPluginHook.inject} define, and the values are
+     * the services corresponding to the injection tokens associated with those
+     * keys.
+     *
+     * This method can use the injected services to initialize more plugin hooks,
+     * and return those hooks so MAGE can integrate them accordingly.
+     */
+    (services: Injection<Req>): Promise<any>
+  } : {
+    inject?: undefined
+    (): Promise<any>
+  }
 
 import { EnsureJson } from '../entities/entities.json_types'
 
