@@ -1,6 +1,6 @@
 import environment from './environment/env'
 import log from './logger'
-import { InjectableServices, loadPlugins as loadServicePlugins } from './main.impl/main.impl.plugins'
+import { InjectableServices, integratePluginHooks } from './main.impl/main.impl.plugins'
 import http from 'http'
 import fs from 'fs-extra'
 import mongoose from 'mongoose'
@@ -30,7 +30,7 @@ import { ListStaticIcons, GetStaticIcon, GetStaticIconContent } from './app.impl
 import { RoleBasedStaticIconPermissionService } from './permissions/permissions.icons'
 import { PluginUrlScheme } from './adapters/url_schemes/adapters.url_schemes.plugin'
 import { WebUIPluginRoutes } from './adapters/web_ui_plugins/adapters.web_ui_plugins.controllers.web'
-import { InjectionToken } from './plugins.api'
+import { InitPluginHook, InjectionToken } from './plugins.api'
 import { MageEventRepositoryToken } from './plugins.api/plugins.api.events'
 import { FeedRepositoryToken, FeedServiceRepositoryToken, FeedServiceTypeRepositoryToken } from './plugins.api/plugins.api.feeds'
 import { UserRepositoryToken } from './plugins.api/plugins.api.users'
@@ -112,10 +112,19 @@ export const boot = async function(config: BootConfig): Promise<MageService> {
   const injectService: InjectableServices = <Service>(token: InjectionToken<Service>) => {
     return allServices.get(token)
   }
-
-  await loadServicePlugins(config.servicePlugins || [], injectService, (pluginId: string, routes: express.Router) => {
+  const pluginRoutes = (pluginId: string, routes: express.Router) => {
     throw new Error('todo: add plugin routes')
-  })
+  }
+  for (const pluginId of config.servicePlugins || []) {
+    console.info(`loading plugin ${pluginId}...`)
+    try {
+      const initPlugin: InitPluginHook = await import(pluginId)
+      await integratePluginHooks(pluginId, initPlugin, injectService, pluginRoutes)
+    }
+    catch (err) {
+      console.error(`error loading plugin ${pluginId}`, err)
+    }
+  }
 
   try {
     await import('./schedule').then(jobSchedule => jobSchedule.initialize())
