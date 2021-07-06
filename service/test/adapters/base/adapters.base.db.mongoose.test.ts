@@ -199,7 +199,7 @@ describe('mongoose adapter layer base', function() {
       expect(removed).to.be.null
     })
 
-    describe('find all by id', function() {
+    describe.only('find all by id', function() {
 
       it('finds records for given ids', async function() {
 
@@ -249,6 +249,18 @@ describe('mongoose adapter layer base', function() {
           [ids[0]]: null,
           [ids[2]]: null
         })
+      })
+
+      it('resolves empty object without querying when id list is empty', async function() {
+
+        const mockModel = Substitute.for<mongoose.Model<BaseDocument>>()
+        const disconnectedRepo = new BaseMongooseRepository<BaseDocument, BaseModel, BaseEntity>(mockModel)
+        const found = await disconnectedRepo.findAllByIds([])
+
+        expect(found).to.deep.equal({})
+        mockModel.didNotReceive().find(Arg.all())
+        mockModel.didNotReceive().findById(Arg.all())
+        mockModel.didNotReceive().findOne(Arg.all())
       })
     })
   })

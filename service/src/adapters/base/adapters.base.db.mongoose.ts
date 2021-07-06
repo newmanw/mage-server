@@ -51,6 +51,9 @@ export class BaseMongooseRepository<D extends mongoose.Document, M extends mongo
   }
 
   async findAllByIds<ID>(ids: ID[]): Promise<ID extends string ? { [id: string]: E | null } : ID extends number ? { [id: number]: E | null } : never> {
+    if (!ids.length) {
+      return {} as any
+    }
     const notFound = ids.reduce((notFound, id) => {
       notFound[id] = null
       return notFound
