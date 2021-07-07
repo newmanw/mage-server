@@ -133,7 +133,7 @@
     "supertest": "6.0.1",
     "ts-mockito": "^2.5.0",
     "typescript": "^3.9.7",
-    "wtfnode": "^0.8.1"
+    "wtfnode": "^0.8.4"
   },
   "nyc": {
     "temp-dir": "./.test_run",

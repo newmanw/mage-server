@@ -39,10 +39,10 @@ export type InitPluginHook<Req = undefined> =
      * This method can use the injected services to initialize more plugin hooks,
      * and return those hooks so MAGE can integrate them accordingly.
      */
-    (services: Injection<Req>): Promise<any>
+    init(services: Injection<Req>): Promise<any>
   } : {
     inject?: undefined
-    (): Promise<any>
+    init(): Promise<any>
   }
 
 import { EnsureJson } from '../entities/entities.json_types'

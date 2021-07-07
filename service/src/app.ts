@@ -40,7 +40,7 @@ import { UserRepository } from './entities/users/entities.users'
 
 
 export interface MageService {
-  app: express.Application
+  webController: express.Application
   server: http.Server
   open(): this
 }
@@ -98,9 +98,11 @@ export const boot = async function(config: BootConfig): Promise<MageService> {
   const repos = await initRepositories(models, config)
   const appLayer = await initAppLayer(repos)
 
-  // load routes the old way
-  const app = await initRestInterface(repos, appLayer, config.webUIPlugins || [])
-
+  const { webController, addAuthenticatedPluginRoutes } = await initWebLayer(repos, appLayer, config.webUIPlugins || [])
+  const routesForPluginId: { [pluginId: string]: express.Router } = {}
+  const collectPluginRoutesToSort = (pluginId: string, routes: express.Router) => {
+    routesForPluginId[pluginId] = routes
+  }
   const allServices = new Map<InjectionToken<any>, any>([
     [FeedServiceTypeRepositoryToken, repos.feeds.serviceTypeRepo],
     [FeedServiceRepositoryToken, repos.feeds.serviceRepo],
@@ -112,18 +114,19 @@ export const boot = async function(config: BootConfig): Promise<MageService> {
   const injectService: InjectableServices = <Service>(token: InjectionToken<Service>) => {
     return allServices.get(token)
   }
-  const pluginRoutes = (pluginId: string, routes: express.Router) => {
-    throw new Error('todo: add plugin routes')
-  }
   for (const pluginId of config.servicePlugins || []) {
     console.info(`loading plugin ${pluginId}...`)
     try {
       const initPlugin: InitPluginHook = await import(pluginId)
-      await integratePluginHooks(pluginId, initPlugin, injectService, pluginRoutes)
+      await integratePluginHooks(pluginId, initPlugin, injectService, collectPluginRoutesToSort)
     }
     catch (err) {
       console.error(`error loading plugin ${pluginId}`, err)
     }
+  }
+  const pluginRoutePathsDescending = Object.keys(routesForPluginId).sort().reverse()
+  for (const pluginId of pluginRoutePathsDescending) {
+    addAuthenticatedPluginRoutes(pluginId, routesForPluginId[pluginId])
   }
 
   try {
@@ -133,14 +136,14 @@ export const boot = async function(config: BootConfig): Promise<MageService> {
     throw new Error('error initializing scheduled tasks: ' + err)
   }
 
-  const server = http.createServer(app)
+  const server = http.createServer(webController)
   service = {
-    app,
+    webController,
     server,
     open(): MageService {
       server.listen(environment.port, environment.address,
         () => log.info(`MAGE Server listening at address ${environment.address} on port ${environment.port}`))
-      app.emit(MageReadyEvent, service)
+      webController.emit(MageReadyEvent, service)
       return this
     }
   }
@@ -342,9 +345,11 @@ function initFeedsAppLayer(repos: Repositories): AppLayer['feeds'] {
   }
 }
 
-async function initRestInterface(repos: Repositories, app: AppLayer, webUIPlugins: string[]): Promise<express.Application> {
+async function initWebLayer(repos: Repositories, app: AppLayer, webUIPlugins: string[]):
+  Promise<{ webController: express.Application, addAuthenticatedPluginRoutes: (pluginId: string, routes: express.Router) => void }> {
+  // load routes the old way
   const webLayer = await import('./express')
-  const webApi = webLayer.app
+  const webController = webLayer.app
   const webAuth = webLayer.auth
   const appRequestFactory: WebAppRequestFactory = <Params = unknown>(req: express.Request, params: Params): AppRequest<UserDocument> & Params => {
     return {
@@ -359,18 +364,19 @@ async function initRestInterface(repos: Repositories, app: AppLayer, webUIPlugin
     }
   }
   const bearerAuth = webAuth.passport.authenticate('bearer')
+  // load routes the new way
   const feedsRoutes = FeedsRoutes(app.feeds, appRequestFactory)
-  webApi.use('/api/feeds', [
+  webController.use('/api/feeds', [
     bearerAuth,
     feedsRoutes
   ])
   const iconsRoutes = StaticIconRoutes(app.icons, appRequestFactory)
-  webApi.use('/api/icons', [
+  webController.use('/api/icons', [
     bearerAuth,
     iconsRoutes
   ])
   const eventFeedsRoutes = EventFeedsRoutes({ ...app.events, eventRepo: repos.events.eventRepo }, appRequestFactory)
-  webApi.use('/api/events', [
+  webController.use('/api/events', [
     bearerAuth,
     eventFeedsRoutes
   ])
@@ -383,9 +389,14 @@ async function initRestInterface(repos: Repositories, app: AppLayer, webUIPlugin
   effort to refactor.
   */
   const webUiPluginRoutes = WebUIPluginRoutes(webUIPlugins)
-  webApi.use('/plugins', [
+  webController.use('/ui_plugins', [
     bearerAuth,
     webUiPluginRoutes
   ])
-  return webApi
+  return {
+    webController,
+    addAuthenticatedPluginRoutes: (pluginId: string, routes: express.Router) => {
+      webController.use(`/plugins/${pluginId}`, [ bearerAuth, routes ])
+    }
+  }
 }

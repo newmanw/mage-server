@@ -14,18 +14,18 @@ export interface InjectableServices {
   <Service>(token: InjectionToken<Service>): Service
 }
 
-export async function integratePluginHooks(pluginId: string, initPlugin: InitPluginHook<any>, injectService: InjectableServices, addWebRoutesFromPlugin: (pluginId: string, routes: Router) => void): Promise<void> {
+export async function integratePluginHooks(pluginId: string, plugin: InitPluginHook<any>, injectService: InjectableServices, addWebRoutesFromPlugin: (pluginId: string, routes: Router) => void): Promise<void> {
   let injection: Injection<any> | null = null
   let hooks: PluginHooks
-  if (initPlugin.inject) {
+  if (plugin.inject) {
     injection = {}
-    for (const [ serviceKey, serviceToken ] of Object.entries(initPlugin.inject)) {
+    for (const [ serviceKey, serviceToken ] of Object.entries(plugin.inject)) {
       injection[serviceKey] = injectService(serviceToken)
     }
-    hooks = await initPlugin(injection)
+    hooks = await plugin.init(injection)
   }
   else {
-    hooks = await initPlugin()
+    hooks = await plugin.init()
   }
   await loadMageEventsHoooks(pluginId, hooks)
   await loadIconsHooks(pluginId, hooks, injectService(StaticIconRepositoryToken))
