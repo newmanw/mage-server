@@ -36,17 +36,15 @@ jobs:
         uses: actions/setup-node@v1
         with:
           node-version: ${{ matrix.node }}
-      - name: Server test and build
+      - name: Server build
         run: |
           npm install
-          npm test
         env:
           CI: true
-      - name: Web test and build
+      - name: Web build
         run: |
           cd web-app
           npm install
-          npm run test-headless
           npm run build
         env:
           CI: true
