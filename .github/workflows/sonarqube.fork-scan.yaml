@@ -91,7 +91,7 @@ jobs:
           find . -name sonar-project.properties -not -path './.git/*' -delete
           touch "${RUNNER_TEMP}/sonar-project.properties"
       - name: scan
-        uses: SonarSource/sonarqube-scan-action@v8
+        uses: SonarSource/sonarqube-scan-action@4d1dc0c91ee400dcf8a6dddf2f705ac36542e304 # v8.4.0
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
