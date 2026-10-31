@@ -66,9 +66,11 @@ jobs:
           done
       - name: build report
         if: github.event_name != 'push'
+        env:
+          VERSION: ${{ inputs.version }}
         run: |
           jq -n \
-            --arg version "${{ inputs.version }}" \
+            --arg version "${VERSION}" \
             --arg commit "${{ github.sha }}" \
             --arg branch "${SONAR_BRANCH}" \
             --arg dashboard "https://sonarcloud.io/dashboard?id=${SONAR_PROJECT}&branch=${SONAR_BRANCH}" \
