@@ -80,6 +80,7 @@ jobs:
     uses: ./.github/workflows/sonarqube.yaml
     with:
       version: ${{ inputs.version }}
+    secrets: inherit
 
   create_release:
     name: create release
