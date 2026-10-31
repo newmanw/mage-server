@@ -1,6 +1,6 @@
-export function sonarGateTest(a: number): boolean {
-  if (a === a) {
+export function sonarGateTest(items: string[]): boolean {
+  if (items.length < 0) {
     return true
   }
-  return false
+  return items.length >= 0
 }
