@@ -48,6 +48,7 @@ jobs:
             -Dsonar.host.url=https://sonarcloud.io
             -Dsonar.organization=${{ env.SONAR_ORGANIZATION }}
             -Dsonar.projectKey=${{ env.SONAR_PROJECT }}
+            -Dsonar.coverage.exclusions=**
             ${{ steps.branch.outputs.args }}
       - name: wait for analysis
         id: analysis
