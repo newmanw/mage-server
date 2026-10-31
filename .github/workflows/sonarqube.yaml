@@ -7,6 +7,11 @@ on:
       - master
   pull_request:
   workflow_dispatch:
+    inputs:
+      ref:
+        description: The tag, branch, or commit to scan, defaults to the branch this runs from
+        type: string
+        required: false
   workflow_call:
     inputs:
       version:
@@ -18,8 +23,7 @@ env:
   SONAR_API: https://sonarcloud.io/api
   SONAR_ORGANIZATION: ${{ github.repository_owner }}
   SONAR_PROJECT: ${{ github.repository_owner }}_${{ github.event.repository.name }}
-  SONAR_BRANCH: ${{ github.ref_name }}
-  REPORT_FILE: mage-${{ inputs.version || github.sha }}-sonarqube.json
+  SONAR_BRANCH: ${{ inputs.ref || github.ref_name }}
 
 jobs:
   sonarqube:
@@ -32,12 +36,27 @@ jobs:
       - name: checkout
         uses: actions/checkout@v7
         with:
+          ref: ${{ inputs.ref }}
           # full history for accurate blame and new code detection
           fetch-depth: 0
       - name: branch args
         id: branch
         if: github.event_name != 'pull_request'
+        env:
+          REF: ${{ inputs.ref }}
+          VERSION: ${{ inputs.version }}
         run: |
+          if [[ ! "${SONAR_BRANCH}" =~ ^[A-Za-z0-9._/-]+$ ]]
+          then
+            echo "ERROR: invalid ref ${SONAR_BRANCH}"
+            exit 1
+          fi
+          commit=$(git rev-parse HEAD)
+          name=${VERSION:-${REF:-${commit}}}
+          {
+            echo "COMMIT=${commit}"
+            echo "REPORT_FILE=mage-${name//\//-}-sonarqube.json"
+          } >> "${GITHUB_ENV}"
           echo "args=-Dsonar.branch.name=${SONAR_BRANCH}" >> "${GITHUB_OUTPUT}"
       - name: scan
         uses: SonarSource/sonarqube-scan-action@4d1dc0c91ee400dcf8a6dddf2f705ac36542e304 # v8.4.0
@@ -108,7 +127,7 @@ jobs:
         run: |
           jq -n \
             --arg version "${VERSION}" \
-            --arg commit "${{ github.sha }}" \
+            --arg commit "${COMMIT}" \
             --arg branch "${SONAR_BRANCH}" \
             --arg dashboard "https://sonarcloud.io/dashboard?id=${SONAR_PROJECT}&branch=${SONAR_BRANCH}" \
             --slurpfile quality_gate quality_gate.json \
