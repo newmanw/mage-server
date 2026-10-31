@@ -4,3 +4,4 @@ export function sonarGateTest(items: string[]): boolean {
   }
   return items.length >= 0
 }
+
